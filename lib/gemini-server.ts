@@ -3,16 +3,20 @@
 import { GoogleGenAI, Type, GenerateContentResponse, Content } from "@google/genai";
 import { Message } from '@/lib/types';
 
-// This function lazily initializes the GoogleGenAI client.
-// It checks for process.env.GEMINI_API_KEY (used by Vercel integrations)
-// and falls back to process.env.API_KEY for other environments.
+let ai: GoogleGenAI | null = null;
+
+// This function lazily initializes the GoogleGenAI client as a singleton.
 const getAiClient = () => {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("API key not found. Please set GEMINI_API_KEY or API_KEY in your environment variables.");
+  if (!ai) {
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    if (!apiKey) {
+      throw new Error("API key not found. Please set GEMINI_API_KEY or API_KEY in your environment variables.");
+    }
+    ai = new GoogleGenAI({ apiKey });
   }
-  return new GoogleGenAI({ apiKey });
+  return ai;
 };
+
 
 // @google/genai-api-guideline-fix: Use 'gemini-2.5-flash' for general text tasks.
 const modelName = 'gemini-2.5-flash';
@@ -46,8 +50,8 @@ export const generateChatResponse = async (
     config?: { temperature?: number, topP?: number }
 ): Promise<GenerateContentResponse | null> => {
     try {
-        const ai = getAiClient();
-        const result = await ai.models.generateContent({
+        const client = getAiClient();
+        const result = await client.models.generateContent({
             model: modelName,
             contents: history,
             config: {
@@ -65,7 +69,7 @@ export const generateChatResponse = async (
 
 export const extractDataFromText = async (text: string): Promise<{ entities: any[], knowledge: string[] }> => {
     try {
-        const ai = getAiClient();
+        const client = getAiClient();
         const prompt = `
             From the following text, perform two tasks:
             1. Extract key entities (people, places, organizations, projects, concepts).
@@ -81,7 +85,7 @@ export const extractDataFromText = async (text: string): Promise<{ entities: any
             ---
         `;
 
-        const result = await ai.models.generateContent({
+        const result = await client.models.generateContent({
             model: modelName,
             contents: prompt,
             config: {
@@ -129,7 +133,7 @@ export const generateProactiveSuggestion = async (history: Content[]): Promise<s
     if (history.length < 2) return null; // Needs at least one user/model exchange
 
     try {
-           const ai = getAiClient();
+           const client = getAiClient();
            const conversationHistoryText = history
                 .slice(-4)
                 .filter((m): m is { role: string; parts: { text: string }[] } => 
@@ -140,7 +144,7 @@ export const generateProactiveSuggestion = async (history: Content[]): Promise<s
 
            const prompt = `Based on the last few messages of this conversation, suggest a relevant proactive action. For example, if they are talking about a person, suggest mentioning them with @. If they discuss planning, suggest creating a task. Be concise and phrase it as a question. If no action is obvious, return an empty string. Conversation:\n\n${conversationHistoryText}`;
 
-           const result = await ai.models.generateContent({ model: modelName, contents: prompt });
+           const result = await client.models.generateContent({ model: modelName, contents: prompt });
            // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
            if (!result || !result.text) {
             return null;
@@ -157,7 +161,7 @@ export const generateTitleFromHistory = async (history: Content[]): Promise<stri
     if (history.length === 0) return null;
 
     try {
-        const ai = getAiClient();
+        const client = getAiClient();
         const conversationHistoryText = history
             .filter((m): m is { role: string; parts: { text: string }[] } =>
                 typeof m === 'object' && m !== null && Array.isArray(m.parts) && m.parts.length > 0
@@ -167,7 +171,7 @@ export const generateTitleFromHistory = async (history: Content[]): Promise<stri
         
         const prompt = `Based on the following conversation, create a short and concise title (5 words or less). Do not add quotes or any other formatting.\n\n---\n\n${conversationHistoryText}`;
 
-        const result = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const result = await client.models.generateContent({ model: modelName, contents: prompt });
         // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
         if (!result || !result.text) {
             return null;
@@ -182,9 +186,9 @@ export const generateTitleFromHistory = async (history: Content[]): Promise<stri
 
 export const generateSummary = async (text: string): Promise<string | null> => {
     try {
-        const ai = getAiClient();
+        const client = getAiClient();
         const prompt = `Provide a concise summary of the following text:\n\n---\n\n${text}`;
-        const result = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const result = await client.models.generateContent({ model: modelName, contents: prompt });
         // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
         return result?.text?.trim() || null;
     } catch (e) {
@@ -198,7 +202,7 @@ export const regenerateUserPrompt = async (
     history: Content[]
 ): Promise<string | null> => {
     try {
-        const ai = getAiClient();
+        const client = getAiClient();
         const conversationHistoryText = history
             .filter((m): m is { role: string; parts: { text: string }[] } =>
                 typeof m === 'object' && m !== null && Array.isArray(m.parts) && m.parts.length > 0
@@ -219,7 +223,7 @@ export const regenerateUserPrompt = async (
             User's message to rewrite: "${promptToRewrite}"
         `;
 
-        const result = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const result = await client.models.generateContent({ model: modelName, contents: prompt });
         // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
         if (!result || !result.text) {
             return null;

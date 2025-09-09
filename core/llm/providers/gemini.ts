@@ -8,22 +8,34 @@ import { ILLMProvider, HistoryContent, IModelConfig } from '../types';
 const modelName = 'gemini-2.5-flash';
 
 export class GeminiProvider implements ILLMProvider {
-    private ai: GoogleGenAI;
+    private ai: GoogleGenAI | null = null;
 
-    constructor() {
-        const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-        if (!apiKey) {
-            throw new Error("API key not found. Please set GEMINI_API_KEY or API_KEY in your environment variables.");
+    /**
+     * Lazily initializes and returns the GoogleGenAI client instance.
+     * This prevents the API key check from running at module import time,
+     * which is crucial for compatibility with build environments like Vercel.
+     * @private
+     * @returns {GoogleGenAI} The initialized GoogleGenAI client.
+     */
+    private getClient(): GoogleGenAI {
+        if (!this.ai) {
+            const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+            if (!apiKey) {
+                throw new Error("API key not found. Please set GEMINI_API_KEY or API_KEY in your environment variables.");
+            }
+            this.ai = new GoogleGenAI({ apiKey });
         }
-        this.ai = new GoogleGenAI({ apiKey });
+        return this.ai;
     }
+
 
     /**
      * @inheritdoc
      */
     async generateContent(history: HistoryContent[], systemInstruction: string, config?: IModelConfig): Promise<string> {
         try {
-            const result = await this.ai.models.generateContent({
+            const client = this.getClient();
+            const result = await client.models.generateContent({
                 model: modelName,
                 contents: history,
                 config: {
@@ -51,6 +63,10 @@ export class GeminiProvider implements ILLMProvider {
      * @inheritdoc
      */
     async generateEmbedding(text: string): Promise<number[]> {
+        // This is a placeholder and doesn't need the client, but it's good practice
+        // to imagine it would in a real scenario.
+        // const client = this.getClient();
+        
         // NOTE: This remains a placeholder as the GenAI SDK does not have a dedicated embedding endpoint.
         // In a production scenario, this would be replaced with a direct API call to an embedding model.
         // console.warn("`generateEmbedding` is a placeholder. Using a simulated text-hash-based embedding.");
