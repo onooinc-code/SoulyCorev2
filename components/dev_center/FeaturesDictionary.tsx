@@ -1,12 +1,11 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Feature, FeatureStatus, UiUxSubFeature } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlusIcon, TrashIcon, EditIcon, XIcon } from '../Icons';
-import { useAppContext } from '@/components/providers/AppProvider';
+import { useConversation } from '@/components/providers/ConversationProvider';
 import { useLog } from '../providers/LogProvider';
 
 const statusOptions: FeatureStatus[] = ['✅ Completed', '🟡 Needs Improvement', '🔴 Needs Refactor', '⚪ Planned'];
@@ -19,7 +18,6 @@ const statusColorMap: Record<FeatureStatus, string> = {
 };
 
 // A component to safely render JSON content from a string or an object
-// FIX: Rewritten to handle both string and object data types to fix parsing errors from JSONB columns.
 const SafeJsonRenderer = ({ jsonData, type }: { jsonData: string | object | null; type: 'files' | 'ux' }) => {
     try {
         if (!jsonData) {
@@ -137,7 +135,7 @@ const FeatureItem = ({ feature, onEdit, onDelete }: FeatureItemProps) => {
 
 
 const FeaturesDictionary = () => {
-    const { setStatus, clearError } = useAppContext();
+    const { setStatus, clearError } = useConversation();
     const { log } = useLog();
     const [features, setFeatures] = useState<Feature[]>([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -175,7 +173,6 @@ const FeaturesDictionary = () => {
         let featureForForm: Partial<Feature>;
         if (feature) {
             featureForForm = { ...feature };
-            // FIX: Ensure JSON fields are stringified for textarea display to prevent '[object Object]' bug.
             if (typeof featureForForm.ui_ux_breakdown_json === 'object' && featureForForm.ui_ux_breakdown_json !== null) {
                 featureForForm.ui_ux_breakdown_json = JSON.stringify(featureForForm.ui_ux_breakdown_json, null, 2);
             }
@@ -201,8 +198,8 @@ const FeaturesDictionary = () => {
         if (!currentFeature || !currentFeature.name) return;
         
         try {
-            if (currentFeature.ui_ux_breakdown_json) JSON.parse(currentFeature.ui_ux_breakdown_json);
-            if (currentFeature.key_files_json) JSON.parse(currentFeature.key_files_json);
+            if (currentFeature.ui_ux_breakdown_json) JSON.parse(currentFeature.ui_ux_breakdown_json as string);
+            if (currentFeature.key_files_json) JSON.parse(currentFeature.key_files_json as string);
         } catch (e) {
             const errorMessage = "Invalid JSON format in one of the fields. Please check and try again.";
             setStatus({ error: errorMessage});
@@ -271,22 +268,22 @@ const FeaturesDictionary = () => {
                 </div>
                 <div className="p-6 space-y-4 overflow-y-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input value={currentFeature?.name || ''} onChange={e => setCurrentFeature({...currentFeature, name: e.target.value})} placeholder="Feature Name" className="w-full p-2 bg-gray-700 rounded-lg text-sm"/>
-                        <select value={currentFeature?.status || '⚪ Planned'} onChange={e => setCurrentFeature({...currentFeature, status: e.target.value as FeatureStatus})} className="w-full p-2 bg-gray-700 rounded-lg text-sm">
+                        <input value={currentFeature?.name || ''} onChange={e => setCurrentFeature(f => f ? {...f, name: e.target.value} : null)} placeholder="Feature Name" className="w-full p-2 bg-gray-700 rounded-lg text-sm"/>
+                        <select value={currentFeature?.status || '⚪ Planned'} onChange={e => setCurrentFeature(f => f ? {...f, status: e.target.value as FeatureStatus} : null)} className="w-full p-2 bg-gray-700 rounded-lg text-sm">
                             {statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                         </select>
                     </div>
-                    <textarea value={currentFeature?.overview || ''} onChange={e => setCurrentFeature({...currentFeature, overview: e.target.value})} placeholder="Overview" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={3}></textarea>
-                    <textarea value={currentFeature?.logic_flow || ''} onChange={e => setCurrentFeature({...currentFeature, logic_flow: e.target.value})} placeholder="Logic & Data Flow" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={4}></textarea>
+                    <textarea value={currentFeature?.overview || ''} onChange={e => setCurrentFeature(f => f ? {...f, overview: e.target.value} : null)} placeholder="Overview" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={3}></textarea>
+                    <textarea value={currentFeature?.logic_flow || ''} onChange={e => setCurrentFeature(f => f ? {...f, logic_flow: e.target.value} : null)} placeholder="Logic & Data Flow" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={4}></textarea>
                     <div>
                         <label className="text-xs text-gray-400">UI/UX Breakdown (Must be a valid JSON Array)</label>
-                        <textarea value={currentFeature?.ui_ux_breakdown_json || '[]'} onChange={e => setCurrentFeature({...currentFeature, ui_ux_breakdown_json: e.target.value})} className="w-full p-2 bg-gray-700 rounded-lg text-sm font-mono" rows={4}></textarea>
+                        <textarea value={currentFeature?.ui_ux_breakdown_json as string || '[]'} onChange={e => setCurrentFeature(f => f ? {...f, ui_ux_breakdown_json: e.target.value} : null)} className="w-full p-2 bg-gray-700 rounded-lg text-sm font-mono" rows={4}></textarea>
                     </div>
                      <div>
                         <label className="text-xs text-gray-400">Key Files (Must be a valid JSON Array of strings)</label>
-                        <textarea value={currentFeature?.key_files_json || '[]'} onChange={e => setCurrentFeature({...currentFeature, key_files_json: e.target.value})} className="w-full p-2 bg-gray-700 rounded-lg text-sm font-mono" rows={3}></textarea>
+                        <textarea value={currentFeature?.key_files_json as string || '[]'} onChange={e => setCurrentFeature(f => f ? {...f, key_files_json: e.target.value} : null)} className="w-full p-2 bg-gray-700 rounded-lg text-sm font-mono" rows={3}></textarea>
                     </div>
-                    <textarea value={currentFeature?.notes || ''} onChange={e => setCurrentFeature({...currentFeature, notes: e.target.value})} placeholder="Notes & Improvements" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={3}></textarea>
+                    <textarea value={currentFeature?.notes || ''} onChange={e => setCurrentFeature(f => f ? {...f, notes: e.target.value} : null)} placeholder="Notes & Improvements" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={3}></textarea>
                 </div>
                 <div className="flex gap-2 p-4 border-t border-gray-700 flex-shrink-0">
                     <button onClick={handleSaveFeature} className="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-500">Save Feature</button>
@@ -318,8 +315,6 @@ const FeaturesDictionary = () => {
                 <div className="flex-1 overflow-y-auto pr-2 space-y-3">
                     {features.length > 0 ? (
                         features.map(feature => (
-                           // FIX: Wrap FeatureItem component in a div with the key to resolve TypeScript error.
-                           // The 'key' prop is for React's reconciliation and should be on the wrapping element of a list, not passed to the component's props.
                            <div key={feature.id}>
                                 <FeatureItem 
                                     feature={feature} 

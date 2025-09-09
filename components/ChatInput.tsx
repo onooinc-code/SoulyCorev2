@@ -1,12 +1,11 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SendIcon, PaperclipIcon, XIcon, PromptsIcon } from './Icons';
 import LoadingIndicator from './LoadingIndicator';
 import type { Contact, Prompt } from '@/lib/types';
-import { useAppContext } from '@/components/providers/AppProvider';
+import { useConversation } from '@/components/providers/ConversationProvider';
 import { useLog } from './providers/LogProvider';
 import dynamic from 'next/dynamic';
 
@@ -22,7 +21,7 @@ interface ChatInputProps {
 }
 
 const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
-    const { setStatus, startWorkflow } = useAppContext();
+    const { setStatus, startWorkflow } = useConversation();
     const { log } = useLog();
     const [content, setContent] = useState('');
     const [contacts, setContacts] = useState<Contact[]>([]);

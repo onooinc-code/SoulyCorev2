@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Entity, Tool } from '@/lib/types';
-import { useAppContext } from '@/components/providers/AppProvider';
+import { useConversation } from '@/components/providers/ConversationProvider';
 import { XIcon, TrashIcon, PlusIcon, EditIcon, SearchIcon } from './Icons';
 import { motion } from 'framer-motion';
 import { useLog } from './providers/LogProvider';
@@ -10,7 +11,7 @@ import { useLog } from './providers/LogProvider';
 type Tab = 'structured' | 'procedural' | 'settings';
 
 const MemoryCenter = () => {
-    const { setStatus, clearError } = useAppContext();
+    const { setStatus, clearError } = useConversation();
     const { log } = useLog();
     
     const [activeTab, setActiveTab] = useState<Tab>('structured');

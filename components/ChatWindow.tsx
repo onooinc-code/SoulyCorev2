@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useAppContext } from '@/components/providers/AppProvider';
+import { useConversation } from '@/components/providers/ConversationProvider';
 import Message from './Message';
 import ChatInput from './ChatInput';
 import type { Message as MessageType, Contact } from '@/lib/types';
@@ -44,7 +43,7 @@ const ChatWindow = () => {
         regenerateUserPromptAndGetResponse,
         backgroundTaskCount,
         activeWorkflow
-    } = useAppContext();
+    } = useConversation();
     const { log } = useLog();
     
     const messagesEndRef = useRef<HTMLDivElement>(null);

@@ -1,16 +1,15 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Prompt, PromptChainStep } from '@/lib/types';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { XIcon, PlusIcon, TrashIcon, EditIcon, MenuIcon, UserCircleIcon, ArrowDownOnSquareIcon, WarningIcon } from './Icons';
-import { useAppContext } from '@/components/providers/AppProvider';
+import { useConversation } from '@/components/providers/ConversationProvider';
 import { useLog } from './providers/LogProvider';
 
 const PromptsHub = () => {
-    const { setStatus, clearError } = useAppContext();
+    const { setStatus, clearError } = useConversation();
     const { log } = useLog();
     const [prompts, setPrompts] = useState<Prompt[]>([]);
     const [currentPrompt, setCurrentPrompt] = useState<Partial<Prompt> | null>(null);
@@ -157,18 +156,18 @@ const PromptsHub = () => {
             <div className="flex items-center gap-4 text-sm">
                 <span>Type:</span>
                 <label className="flex items-center gap-2">
-                    <input type="radio" value="single" checked={currentPrompt?.type === 'single'} onChange={() => setCurrentPrompt(p => ({...p, type: 'single'}))} />
+                    <input type="radio" value="single" checked={currentPrompt?.type === 'single'} onChange={() => setCurrentPrompt(p => p ? ({...p, type: 'single'}) : null)} />
                     Single
                 </label>
                  <label className="flex items-center gap-2">
-                    <input type="radio" value="chain" checked={currentPrompt?.type === 'chain'} onChange={() => setCurrentPrompt(p => ({...p, type: 'chain', chain_definition: p?.chain_definition || [] }))} />
+                    <input type="radio" value="chain" checked={currentPrompt?.type === 'chain'} onChange={() => setCurrentPrompt(p => p ? ({...p, type: 'chain', chain_definition: p?.chain_definition || [] }) : null)} />
                     Workflow (Chain)
                 </label>
             </div>
-            <input value={currentPrompt?.name || ''} onChange={e => setCurrentPrompt({...currentPrompt, name: e.target.value})} placeholder="Prompt Name (e.g., 'Meeting Summarizer')" className="w-full p-2 bg-gray-700 rounded-lg text-sm"/>
+            <input value={currentPrompt?.name || ''} onChange={e => setCurrentPrompt(p => p ? {...p, name: e.target.value} : null)} placeholder="Prompt Name (e.g., 'Meeting Summarizer')" className="w-full p-2 bg-gray-700 rounded-lg text-sm"/>
             
             {currentPrompt?.type === 'single' ? (
-                <textarea value={currentPrompt?.content || ''} onChange={e => setCurrentPrompt({...currentPrompt, content: e.target.value})} placeholder="Prompt Content..." className="w-full p-2 bg-gray-700 rounded-lg text-sm font-mono" rows={5}></textarea>
+                <textarea value={currentPrompt?.content || ''} onChange={e => setCurrentPrompt(p => p ? {...p, content: e.target.value} : null)} placeholder="Prompt Content..." className="w-full p-2 bg-gray-700 rounded-lg text-sm font-mono" rows={5}></textarea>
             ) : (
                 <WorkflowBuilder 
                     chainDefinition={currentPrompt?.chain_definition || []}
@@ -178,8 +177,8 @@ const PromptsHub = () => {
             )}
             
             <div className="flex gap-4">
-                <input value={currentPrompt?.folder || ''} onChange={e => setCurrentPrompt({...currentPrompt, folder: e.target.value})} placeholder="Folder (Optional)" className="w-full p-2 bg-gray-700 rounded-lg text-sm"/>
-                <input value={currentPrompt?.tags?.join(', ') || ''} onChange={e => setCurrentPrompt({...currentPrompt, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)})} placeholder="Tags, comma-separated" className="w-full p-2 bg-gray-700 rounded-lg text-sm"/>
+                <input value={currentPrompt?.folder || ''} onChange={e => setCurrentPrompt(p => p ? {...p, folder: e.target.value} : null)} placeholder="Folder (Optional)" className="w-full p-2 bg-gray-700 rounded-lg text-sm"/>
+                <input value={currentPrompt?.tags?.join(', ') || ''} onChange={e => setCurrentPrompt(p => p ? {...p, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)} : null)} placeholder="Tags, comma-separated" className="w-full p-2 bg-gray-700 rounded-lg text-sm"/>
             </div>
             <div className="flex gap-2">
                 <button onClick={handleSavePrompt} className="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-500">Save Prompt</button>
@@ -294,7 +293,6 @@ const WorkflowStepCard = ({ step, onUpdate, onRemove, singlePrompts, availableIn
                              const isInvalid = mapping.source === 'stepOutput' && (!mapping.step || !availableInputSteps.includes(mapping.step));
                             return (
                                 <div key={varName} className={`flex items-center gap-2 p-2 rounded-md ${isInvalid ? 'bg-red-900/50 ring-1 ring-red-500' : 'bg-gray-800/50'}`}>
-                                    {/* FIX: Wrapped the WarningIcon component in a span to pass the `title` attribute for the tooltip, resolving a TypeScript error where `title` is not a direct prop of the SVG component. */}
                                     {isInvalid && <span title={`Invalid source: Step ${mapping.step} is not available before the current step.`}><WarningIcon className="w-4 h-4 text-red-400 flex-shrink-0" /></span>}
                                     <span className="text-gray-300 font-mono bg-gray-700 px-1.5 py-0.5 rounded">{`{{${varName}}}`}</span>
                                     <span className="text-gray-500">&larr;</span>

@@ -1,18 +1,17 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Contact } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { PlusIcon, TrashIcon, EditIcon } from './Icons';
-import { useAppContext } from '@/components/providers/AppProvider';
+import { useConversation } from '@/components/providers/ConversationProvider';
 import { useLog } from './providers/LogProvider';
 
 type SortKey = keyof Contact;
 
 const ContactsHub = () => {
-    const { setStatus, clearError } = useAppContext();
+    const { setStatus, clearError } = useConversation();
     const { log } = useLog();
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [isFormOpen, setIsFormOpen] = useState(false);

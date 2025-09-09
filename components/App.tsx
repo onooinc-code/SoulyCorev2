@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -20,7 +19,8 @@ import {
     TasksIcon,
 } from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAppContext } from '@/components/providers/AppProvider';
+import { useConversation } from '@/components/providers/ConversationProvider';
+import { useUIState } from '@/components/providers/UIStateProvider';
 import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';
 import dynamic from 'next/dynamic';
 import LogOutputPanel from './LogOutputPanel';
@@ -96,6 +96,8 @@ export const App = () => {
         createNewConversation, 
         clearMessages, 
         currentConversation, 
+    } = useConversation();
+    const {
         isConversationPanelOpen, 
         setConversationPanelOpen,
         isConversationPanelMinimized,
@@ -105,7 +107,7 @@ export const App = () => {
         changeFontSize,
         activeView,
         setActiveView,
-    } = useAppContext();
+    } = useUIState();
 
     const [isGlobalSettingsOpen, setGlobalSettingsOpen] = useState(false);
     const [isBookmarksOpen, setBookmarksOpen] = useState(false);

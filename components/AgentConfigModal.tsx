@@ -1,11 +1,10 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { Conversation } from '@/lib/types';
 import { XIcon } from './Icons';
-import { useAppContext } from '@/components/providers/AppProvider';
+import { useConversation } from '@/components/providers/ConversationProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLog } from './providers/LogProvider';
 
@@ -16,7 +15,7 @@ interface AgentConfigModalProps {
 }
 
 const AgentConfigModal = ({ isOpen, onClose, conversation }: AgentConfigModalProps) => {
-    const { updateCurrentConversation, setStatus, clearError } = useAppContext();
+    const { updateCurrentConversation, setStatus, clearError } = useConversation();
     const { log } = useLog();
     const [systemPrompt, setSystemPrompt] = useState('');
     const [useSemanticMemory, setUseSemanticMemory] = useState(false);
@@ -34,7 +33,7 @@ const AgentConfigModal = ({ isOpen, onClose, conversation }: AgentConfigModalPro
             setEnableProactiveSuggestions(conversation.enableProactiveSuggestions ?? true);
             setEnableAutoSummarization(conversation.enableAutoSummarization ?? true);
         }
-    }, [conversation, isOpen, log]);
+    }, [conversation, isOpen]);
 
     const handleSave = async () => {
         if (!conversation) return;
