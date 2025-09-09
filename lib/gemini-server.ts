@@ -1,0 +1,233 @@
+
+
+import { GoogleGenAI, Type, GenerateContentResponse, Content } from "@google/genai";
+import { Message } from '@/lib/types';
+
+// This function lazily initializes the GoogleGenAI client.
+// It checks for process.env.GEMINI_API_KEY (used by Vercel integrations)
+// and falls back to process.env.API_KEY for other environments.
+const getAiClient = () => {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API key not found. Please set GEMINI_API_KEY or API_KEY in your environment variables.");
+  }
+  return new GoogleGenAI({ apiKey });
+};
+
+// @google/genai-api-guideline-fix: Use 'gemini-2.5-flash' for general text tasks.
+const modelName = 'gemini-2.5-flash';
+
+export const generateEmbedding = async (text: string): Promise<number[]> => {
+    // NOTE: As the GenAI SDK does not have a dedicated embedding endpoint, this function simulates
+    // the embedding process. In a production scenario with a specific embedding model, this
+    // would be replaced with a direct API call to that model.
+    console.warn("`generateEmbedding` is a placeholder. Using a simulated text-hash-based embedding.");
+    
+    // Simple hashing to create a deterministic vector from text
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+        const char = text.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash |= 0; // Convert to 32bit integer
+    }
+
+    const embedding = Array(768).fill(0).map((_, i) => {
+        // Create a pseudo-random but deterministic vector based on the hash
+        return Math.sin(hash + i * 0.1);
+    });
+
+    return embedding;
+};
+
+
+export const generateChatResponse = async (
+    history: Content[],
+    systemInstruction: string,
+    config?: { temperature?: number, topP?: number }
+): Promise<GenerateContentResponse | null> => {
+    try {
+        const ai = getAiClient();
+        const result = await ai.models.generateContent({
+            model: modelName,
+            contents: history,
+            config: {
+                systemInstruction: systemInstruction || "You are a helpful AI assistant.",
+                temperature: config?.temperature ?? 0.7,
+                topP: config?.topP ?? 0.95,
+            }
+        });
+        return result;
+    } catch (e) {
+        console.error("Chat generation failed:", e);
+        return null;
+    }
+};
+
+export const extractDataFromText = async (text: string): Promise<{ entities: any[], knowledge: string[] }> => {
+    try {
+        const ai = getAiClient();
+        const prompt = `
+            From the following text, perform two tasks:
+            1. Extract key entities (people, places, organizations, projects, concepts).
+            2. Extract distinct, self-contained chunks of information that could be useful knowledge for the future.
+            
+            Return the result as a single JSON object with two keys: "entities" and "knowledge".
+            - "entities" should be an array of objects, each with "name", "type", and "details" properties.
+            - "knowledge" should be an array of strings. Do not extract trivial statements.
+
+            Text:
+            ---
+            ${text}
+            ---
+        `;
+
+        const result = await ai.models.generateContent({
+            model: modelName,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        entities: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    name: { type: Type.STRING },
+                                    type: { type: Type.STRING },
+                                    details: { type: Type.STRING }
+                                },
+                                required: ['name', 'type', 'details']
+                            }
+                        },
+                        knowledge: {
+                            type: Type.ARRAY,
+                            items: { type: Type.STRING }
+                        }
+                    },
+                    required: ['entities', 'knowledge']
+                }
+            }
+        });
+        
+        // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
+        if (!result || !result.text) {
+            console.error("Data extraction failed: No text in response.");
+            return { entities: [], knowledge: [] };
+        }
+        const jsonStr = result.text.trim();
+        return JSON.parse(jsonStr);
+
+    } catch (e) {
+        console.error("Data extraction failed:", e);
+        return { entities: [], knowledge: [] };
+    }
+};
+
+export const generateProactiveSuggestion = async (history: Content[]): Promise<string | null> => {
+    if (history.length < 2) return null; // Needs at least one user/model exchange
+
+    try {
+           const ai = getAiClient();
+           const conversationHistoryText = history
+                .slice(-4)
+                .filter((m): m is { role: string; parts: { text: string }[] } => 
+                    typeof m === 'object' && m !== null && Array.isArray(m.parts) && m.parts.length > 0
+                )
+                .map(m => `${m.role}: ${m.parts[0].text}`)
+                .join('\n');
+
+           const prompt = `Based on the last few messages of this conversation, suggest a relevant proactive action. For example, if they are talking about a person, suggest mentioning them with @. If they discuss planning, suggest creating a task. Be concise and phrase it as a question. If no action is obvious, return an empty string. Conversation:\n\n${conversationHistoryText}`;
+
+           const result = await ai.models.generateContent({ model: modelName, contents: prompt });
+           // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
+           if (!result || !result.text) {
+            return null;
+           }
+           return result.text.trim() || null;
+
+    } catch(e) {
+        console.error("Suggestion generation failed:", e);
+        return null;
+    }
+}
+
+export const generateTitleFromHistory = async (history: Content[]): Promise<string | null> => {
+    if (history.length === 0) return null;
+
+    try {
+        const ai = getAiClient();
+        const conversationHistoryText = history
+            .filter((m): m is { role: string; parts: { text: string }[] } =>
+                typeof m === 'object' && m !== null && Array.isArray(m.parts) && m.parts.length > 0
+            )
+            .map(m => `${m.role}: ${m.parts[0].text}`)
+            .join('\n');
+        
+        const prompt = `Based on the following conversation, create a short and concise title (5 words or less). Do not add quotes or any other formatting.\n\n---\n\n${conversationHistoryText}`;
+
+        const result = await ai.models.generateContent({ model: modelName, contents: prompt });
+        // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
+        if (!result || !result.text) {
+            return null;
+        }
+        return result.text.trim().replace(/["']/g, ""); // Remove quotes
+
+    } catch(e) {
+        console.error("Title generation failed:", e);
+        return null;
+    }
+};
+
+export const generateSummary = async (text: string): Promise<string | null> => {
+    try {
+        const ai = getAiClient();
+        const prompt = `Provide a concise summary of the following text:\n\n---\n\n${text}`;
+        const result = await ai.models.generateContent({ model: modelName, contents: prompt });
+        // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
+        return result?.text?.trim() || null;
+    } catch (e) {
+        console.error("Summary generation failed:", e);
+        return null;
+    }
+};
+
+export const regenerateUserPrompt = async (
+    promptToRewrite: string,
+    history: Content[]
+): Promise<string | null> => {
+    try {
+        const ai = getAiClient();
+        const conversationHistoryText = history
+            .filter((m): m is { role: string; parts: { text: string }[] } =>
+                typeof m === 'object' && m !== null && Array.isArray(m.parts) && m.parts.length > 0
+            )
+            .map(m => `${m.role}: ${m.parts[0].text}`)
+            .join('\n');
+        
+        const prompt = `
+            Based on the following conversation history, professionally rewrite the user's final message.
+            The rewritten message should be clearer, more effective, and maintain the original intent.
+            Return ONLY the rewritten message text, without any additional explanation, formatting, or quotation marks.
+
+            Conversation History:
+            ---
+            ${conversationHistoryText}
+            ---
+
+            User's message to rewrite: "${promptToRewrite}"
+        `;
+
+        const result = await ai.models.generateContent({ model: modelName, contents: prompt });
+        // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
+        if (!result || !result.text) {
+            return null;
+        }
+        return result.text.trim();
+
+    } catch (e) {
+        console.error("User prompt regeneration failed:", e);
+        return null;
+    }
+};

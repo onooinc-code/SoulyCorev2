@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HedraCore v2: Agent Tooling Feature Demonstrator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            background-image:
+                radial-gradient(at 20% 80%, hsla(260, 84%, 40%, 0.4) 0px, transparent 50%),
+                radial-gradient(at 80% 20%, hsla(190, 74%, 35%, 0.4) 0px, transparent 50%);
+            animation: gradient-animation 20s ease infinite alternate;
+        }
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4b5563; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #4f46e5; }
+        input:checked + .slider:before { transform: translateX(16px); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.6); border-radius: 4px; border: 2px solid #111827;}
+        ::-webkit-scrollbar-thumb:hover { background: rgba(79, 70, 229, 0.8); }
+        .feature-table th { position: sticky; top: 0; background: rgba(17, 24, 39, 0.9); backdrop-filter: blur(10px); z-index: 10; }
+        .fade-in { animation: fadeIn 1s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .arabic { font-family: 'Cairo', sans-serif; direction: rtl; }
+        .exp-panel summary { cursor: pointer; outline: none; }
+        .exp-panel summary::marker { color: #a5b4fc; }
+        .exp-panel[open] summary { margin-bottom: 0.5rem; }
+        .crazy-idea-card { transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; }
+        .crazy-idea-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 0 30px rgba(79, 70, 229, 0.5); border-color: rgba(165, 180, 252, 0.5); }
+    </style>
+</head>
+<body class="text-gray-200 antialiased">
+
+    <div class="w-full min-h-screen p-4 sm:p-6 lg:p-8">
+        
+        <header class="max-w-7xl mx-auto text-center mb-8 fade-in">
+            <h1 class="text-4xl font-bold tracking-tight text-white">HedraCore Agent Tooling</h1>
+            <p class="mt-2 text-lg text-indigo-300">A Framework for Personal Agent Capabilities (v3)</p>
+        </header>
+
+        <main id="feature-app" class="glass-panel rounded-2xl shadow-2xl overflow-hidden fade-in" style="animation-delay: 200ms;">
+            <div class="p-6 border-b border-gray-700/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <h2 class="text-xl font-semibold">Tooling Feature Registry</h2>
+                 <button id="export-button" onclick="exportFeatures()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500">
+                    Export (<span id="selected-count">0</span>) to Clipboard
+                </button>
+            </div>
+
+            <div class="overflow-y-auto" style="height: 80vh;">
+                <!-- English Table -->
+                <div class="p-6">
+                    <h3 class="text-2xl font-bold text-indigo-300 mb-4">English Features List</h3>
+                    <table class="min-w-full divide-y divide-gray-700/50 feature-table">
+                        <thead class="bg-gray-800/50">
+                            <tr>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-white sm:pl-6"><input type="checkbox" onchange="toggleAll(this, 'en')" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500"></th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">Feature Name</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white hidden md:table-cell">Category</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">Description & Business Goal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feature-list-en" class="divide-y divide-gray-800 bg-gray-900/30"></tbody>
+                    </table>
+                </div>
+
+                <!-- Arabic Table -->
+                <div class="p-6">
+                    <div class="h-px bg-indigo-500/30 my-8"></div>
+                    <h3 class="text-2xl font-bold text-indigo-300 mb-4 arabic">قائمة الخصائص باللغة العربية</h3>
+                    <table class="min-w-full divide-y divide-gray-700/50 feature-table">
+                        <thead class="bg-gray-800/50">
+                            <tr>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-white sm:pl-6"><input type="checkbox" onchange="toggleAll(this, 'ar')" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500"></th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">Feature Name (English)</th>
+                                <th scope="col" class="px-3 py-3.5 text-right text-sm font-semibold text-white hidden md:table-cell arabic">الفئة</th>
+                                <th scope="col" class="px-3 py-3.5 text-right text-sm font-semibold text-white arabic">الوصف</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feature-list-ar" class="divide-y divide-gray-800 bg-gray-900/30"></tbody>
+                    </table>
+                </div>
+
+                <!-- Arabic Explanations -->
+                <div class="p-6 mt-4">
+                    <div class="h-px bg-indigo-500/30 my-8"></div>
+                    <h3 class="text-2xl font-bold text-center text-indigo-300 mb-6 arabic">شرح تفصيلي للخصائص مع أمثلة UI/UX</h3>
+                    <div id="arabic-explanations" class="space-y-4"></div>
+                </div>
+
+                <!-- Crazy Ideas -->
+                <div class="p-6 mt-4">
+                     <div class="h-px bg-indigo-500/30 my-8"></div>
+                     <h3 class="text-2xl font-bold text-center text-indigo-300 mb-6 arabic">أفكار إبداعية ومستقبلية "Crazy Ideas"</h3>
+                     <div id="crazy-ideas-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+            </div>
+        </main>
+        
+    </div>
+
+    <script>
+        const features = [
+            // Tool Management & Discovery (15 features)
+            { id: "mgmt1", category_en: "Tool Management", name: "Personal Tool Registry API", description_en: "API endpoints (CRUD) for managing the user's private tools, allowing programmatic control over the agent's capabilities.", business_goal_en: "Enable automation and integration with other developer workflows by providing a programmatic interface for tool management.", category_ar: "إدارة الأدوات", description_ar: "نقاط نهاية API (CRUD) لإدارة الأدوات الخاصة بالمستخدم، مما يتيح التحكم البرمجي في قدرات الوكيل.", example_ar: "مثال: واجهة المستخدم تستدعي `GET /api/v2/tools` لعرض جميع الأدوات المثبتة." },
+            { id: "mgmt2", category_en: "Tool Management", name: "Import Tool from OpenAPI/JSON Schema", description_en: "Import a tool by providing an OpenAPI/JSON Schema definition, which auto-generates the configuration UI and input validation.", business_goal_en: "Rapidly onboard existing APIs and services as tools with minimal manual effort, increasing integration speed.", category_ar: "إدارة الأدوات", description_ar: "استيراد أداة عبر توفير تعريف OpenAPI أو JSON Schema، مما يولد واجهة التكوين والتحقق تلقائيًا.", example_ar: "مثال: رفع ملف `stripe_api.json` يقوم بإنشاء أداة Stripe مع جميع نقاط النهاية الخاصة بها." },
+            { id: "mgmt3", category_en: "Tool Management", name: "Import Tool from Git Repository", description_en: "Install a tool directly from a private or public Git repository, with automatic tracking of version updates.", business_goal_en: "Maintain a single source of truth for tool code and streamline the development-to-deployment pipeline for custom tools.", category_ar: "إدارة الأدوات", description_ar: "تثبيت أداة مباشرة من مستودع Git (خاص أو عام)، مع تتبع تلقائي للتحديثات.", example_ar: "مثال: توفير رابط مستودع GitHub لأداة خاصة يقوم بتنزيلها وتثبيتها." },
+            { id: "mgmt4", category_en: "Tool Management", name: "Centralized Tool Dashboard", description_en: "A single UI to view all installed tools, their status (active/inactive), version, and usage statistics.", business_goal_en: "Provide a clear, high-level overview of all agent capabilities and their operational status for easy management.", category_ar: "إدارة الأدوات", description_ar: "لوحة تحكم مركزية لعرض جميع الأدوات المثبتة، حالتها، إصدارها، وإحصائيات الاستخدام.", example_ar: "مثال: واجهة تعرض بطاقة لكل أداة مع معلوماتها الأساسية وحالة الصحة." },
+            { id: "mgmt5", category_en: "Tool Management", name: "Agent-Specific Tool Access Control", description_en: "Granularly control which tools each 'Brain' or agent is allowed to access and execute.", business_goal_en: "Create specialized agents by curating their capabilities and enhance security by limiting their permissions.", category_ar: "إدارة الأدوات", description_ar: "التحكم الدقيق في الأدوات التي يمكن لكل 'Brain' أو Agent الوصول إليها وتنفيذها.", example_ar: "مثال: السماح لـ 'Work Brain' فقط باستخدام أداة Google Calendar، بينما يُمنع 'Personal Brain'." },
+            { id: "mgmt6", category_en: "Tool Management", name: "Secure Credential Vault API", description_en: "An encrypted vault for storing API keys and secrets, accessed via a secure endpoint and never exposed in plaintext.", business_goal_en: "Securely manage all credentials required by tools, preventing secret leakage and enhancing overall system security.", category_ar: "إدارة الأدوات", description_ar: "خزنة مشفرة لتخزين مفاتيح API والبيانات الحساسة، يتم الوصول إليها عبر endpoint آمن.", example_ar: "مثال: الأداة تستدعي `secrets.get('STRIPE_API_KEY')` من داخل بيئة التشغيل المعزولة." },
+            { id: "mgmt7", category_en: "Tool Management", name: "Tool Versioning and Rollback", description_en: "Manage tool versions, get notified of updates from the Git source, and choose to update or roll back to a previous version.", business_goal_en: "Ensure stability by allowing safe testing of new tool versions and quick recovery from breaking changes.", category_ar: "إدارة الأدوات", description_ar: "إدارة إصدارات الأدوات، مع إشعارات بالتحديثات والقدرة على التحديث أو العودة لإصدار سابق.", example_ar: "مثال: تحديث أداة إلى الإصدار 2.0، ثم إعادتها إلى 1.9 بعد اكتشاف مشكلة." },
+            { id: "mgmt8", category_en: "Tool Management", name: "Tool Health Monitoring", description_en: "The system periodically runs health checks on tools to ensure they are functioning correctly (endpoints are live, auth is valid).", business_goal_en: "Proactively detect and report issues with tool integrations, ensuring agent reliability and reducing downtime.", category_ar: "إدارة الأدوات", description_ar: "يقوم النظام بإجراء فحوصات صحية دورية على الأدوات للتأكد من أنها تعمل بشكل صحيح.", example_ar: "مثال: إشعار يفيد بأن 'مفتاح API الخاص بأداة Twitter لم يعد صالحًا'." },
+            { id: "mgmt9", category_en: "Tool Management", name: "Tool Sandboxing Configuration", description_en: "A UI to configure the sandboxed execution environment for each tool (network access, file system permissions, environment variables).", business_goal_en: "Enhance security by enforcing the principle of least privilege for every tool, isolating it from the core system.", category_ar: "إدارة الأدوات", description_ar: "واجهة لتكوين بيئة التشغيل المعزولة (sandbox) لكل أداة (قيود الشبكة، أذونات الملفات).", example_ar: "مثال: منع أداة من الوصول إلى الإنترنت بشكل كامل أو قصرها على نطاقات محددة." },
+            { id: "mgmt10", category_en: "Tool Management", name: "UI Generator from Schema", description_en: "When a tool's inputs are defined with a schema, the system automatically generates a graphical UI for configuring it.", business_goal_en: "Simplify the tool setup process for the user and reduce configuration errors through a guided interface.", category_ar: "إدارة الأدوات", description_ar: "عند تعريف مدخلات الأداة بـ schema، يقوم النظام بإنشاء واجهة رسومية لتكوينها تلقائيًا.", example_ar: "مثال: تعريف مدخل 'color' مع `type: 'color'` ينشئ منتقي ألوان في الإعدادات." },
+            { id: "mgmt11", category_en: "Tool Management", name: "Tool Usage Analytics", description_en: "Visualize which tools are used most frequently, by which agents, and in which contexts (e.g., chat, automation).", business_goal_en: "Understand which capabilities are most valuable and identify opportunities for workflow optimization or tool improvement.", category_ar: "إدارة الأدوات", description_ar: "تصورات بيانية توضح الأدوات الأكثر استخدامًا، ومن أي Agents، وفي أي سياقات.", example_ar: "مثال: رسم بياني يوضح أن أداة 'Code Interpreter' هي الأكثر استخدامًا." },
+            { id: "mgmt12", category_en: "Tool Management", name: "Pre-flight Configuration Validation", description_en: "Validate the tool's configuration (e.g., test API connectivity with provided credentials) before saving.", business_goal_en: "Provide immediate feedback on configuration validity, preventing runtime errors and improving user confidence.", category_ar: "إدارة الأدوات", description_ar: "التحقق من صحة التكوين (مثل اختبار اتصال API) قبل الحفظ.", example_ar: "مثال: عند إدخال مفتاح API، يقوم النظام باختباره فورًا ويعرض علامة نجاح أو فشل." },
+            { id: "mgmt13", category_en: "Tool Management", name: "Environment-specific Configurations", description_en: "Ability to define different configurations for the same tool for different environments (e.g., development, production).", business_goal_en: "Allow safe testing and development using staging credentials without affecting production tools.", category_ar: "إدارة الأدوات", description_ar: "القدرة على تحديد تكوينات مختلفة لنفس الأداة لبيئات مختلفة (تطوير، إنتاج).", example_ar: "مثال: استخدام مفتاح Stripe API التجريبي في وضع التطوير، والمفتاح الحقيقي في الإنتاج." },
+            { id: "mgmt14", category_en: "Tool Management", name: "Tool Dependency Declaration", description_en: "Tools can declare dependencies on other tools in their manifest, and the system can ensure they are installed.", business_goal_en: "Create more complex and modular tools by allowing them to build upon the functionality of others.", category_ar: "إدارة الأدوات", description_ar: "يمكن للأدوات أن تعلن عن اعتمادها على أدوات أخرى، ويضمن النظام تثبيتها.", example_ar: "مثال: أداة 'GenerateReport' تعتمد على أداة 'FetchSalesData'." },
+            { id: "mgmt15", category_en: "Tool Management", name: "Tool Cost Tracking & Budgeting API", description_en: "Track costs associated with tools that use paid APIs, with the ability to set budgets and receive alerts via an API.", business_goal_en: "Maintain financial control and prevent unexpected expenses from automated agent actions.", category_ar: "إدارة الأدوات", description_ar: "تتبع التكاليف المرتبطة بالأدوات التي تستخدم APIs مدفوعة، مع إمكانية وضع ميزانيات وتلقي تنبيهات.", example_ar: "مثال: تعيين ميزانية 10 دولارات شهريًا لأداة OpenAI API عبر استدعاء API." },
+
+            // In-Conversation Usage (15 features)
+            { id: "use1", category_en: "In-Conversation Usage", name: "Autonomous Tool Use (Function Calling)", description_en: "The agent automatically detects when a tool is needed, selects the best one, forms the correct arguments, and executes it.", business_goal_en: "Seamlessly extend the agent's capabilities beyond its base knowledge, enabling it to perform actions and access real-time data.", category_ar: "الاستخدام في المحادثة", description_ar: "يكتشف الوكيل تلقائيًا الحاجة إلى أداة، يختارها، يشكل الحجج الصحيحة، وينفذها.", example_ar: "مثال: سؤال 'ما هو الطقس في القاهرة؟' يجعل الوكيل يستدعي أداة الطقس." },
+            { id: "use2", category_en: "In-Conversation Usage", name: "Manual Tool Invocation", description_en: "Explicitly call a tool using a special command prefix (e.g., `/search [query]`) for direct control.", business_goal_en: "Give the user direct, unambiguous control over tool execution for precise tasks and testing.", category_ar: "الاستخدام في المحادثة", description_ar: "استدعاء أداة بشكل صريح باستخدام أمر مسبوق بعلامة خاصة (مثل `/search`).", example_ar: "مثال: كتابة `/search 'أفضل المطاعم الإيطالية'` لتجاوز الاختيار التلقائي للوكيل." },
+            { id: "use3", category_en: "In-Conversation Usage", name: "Intelligent Tool Chaining", description_en: "The agent can use the output of one tool as the input for another to solve multi-step problems autonomously.", business_goal_en: "Automate complex, multi-step tasks by allowing the agent to reason about and sequence its actions.", category_ar: "الاستخدام في المحادثة", description_ar: "يمكن للوكيل استخدام مخرجات أداة كمدخلات لأداة أخرى لحل المشاكل متعددة الخطوات.", example_ar: "مثال: 'ابحث عن أحدث مقال عن الذكاء الاصطناعي ثم لخصه'." },
+            { id: "use4", category_en: "In-Conversation Usage", name: "User Confirmation Step (Pre-execution)", description_en: "For potentially destructive or costly actions, the agent presents the planned tool call and asks for user permission before executing.", business_goal_en: "Provide a critical safety layer, preventing unintended consequences from autonomous actions.", category_ar: "الاستخدام في المحادثة", description_ar: "للإجراءات الخطيرة، يعرض الوكيل خطة استدعاء الأداة ويطلب موافقة المستخدم قبل التنفيذ.", example_ar: "مثال: 'هل أنت متأكد من أنك تريد حذف الملف `report.docx`؟'" },
+            { id: "use5", category_en: "In-Conversation Usage", name: "Rich Interactive Outputs", description_en: "Tools can return structured data that is rendered as interactive UI components like charts, maps, or forms.", business_goal_en: "Present complex tool outputs in a much more intuitive and usable format than raw text or JSON.", category_ar: "الاستخدام في المحادثة", description_ar: "يمكن للأدوات إرجاع بيانات منظمة يتم عرضها كمكونات واجهة مستخدم تفاعلية.", example_ar: "مثال: أداة الطقس تعرض بطاقة تفاعلية مع درجات الحرارة وتوقعات الأيام القادمة." },
+            { id: "use6", category_en: "In-Conversation Usage", name: "Live Execution Indicator & Logs", description_en: "The UI shows 'Thinking with [Tool Name]...' and allows expanding a view to see live execution logs from the tool.", business_goal_en: "Provide transparency into the agent's actions and aid in debugging tool execution in real-time.", category_ar: "الاستخدام في المحادثة", description_ar: "تظهر الواجهة مؤشرًا مباشرًا عند استخدام أداة، مع إمكانية عرض سجلات التنفيذ الحية.", example_ar: "مثال: عرض 'جارٍ تنفيذ `CodeInterpreter`...' مع سجل يظهر تقدم الكود." },
+            { id: "use7", category_en: "In-Conversation Usage", name: "User-Guided Tool Correction", description_en: "If the agent uses the wrong tool or parameters, the user can correct it and re-run the turn.", business_goal_en: "Improve the agent's performance over time by providing explicit feedback on its tool-use decisions.", category_ar: "الاستخدام في المحادثة", description_ar: "إذا استخدم الوكيل أداة خاطئة، يمكن للمستخدم تصحيحه وإعادة تشغيل الدورة.", example_ar: "مثال: 'لا، لا تحسب ذلك، استخدم أداة `search` بدلاً من ذلك'." },
+            { id: "use8", category_en: "In-Conversation Usage", name: "Tool Ambiguity Resolution", description_en: "If a prompt could be handled by multiple tools, the agent asks for clarification on which one to use.", business_goal_en: "Prevent incorrect actions by resolving ambiguity upfront, ensuring the agent aligns with user intent.", category_ar: "الاستخدام في المحادثة", description_ar: "إذا كان يمكن التعامل مع الطلب بأدوات متعددة، يطلب الوكيل توضيحًا.", example_ar: "مثال: 'هل تقصد البحث في الملفات المحلية أم على الويب؟'" },
+            { id: "use9", category_en: "In-Conversation Usage", name: "Tool Result Caching API", description_en: "An API to cache results from tool executions for a configurable period to improve speed and reduce redundant API calls.", business_goal_en: "Optimize performance and reduce costs by avoiding repeated execution of the same tool call with the same parameters.", category_ar: "الاستخدام في المحادثة", description_ar: "API لتخزين نتائج تنفيذ الأدوات مؤقتًا لتحسين السرعة وتقليل استدعاءات API المتكررة.", example_ar: "مثال: يتم تخزين نتيجة تحويل العملات مؤقتًا لمدة 10 دقائق." },
+            { id: "use10", category_en: "In-Conversation Usage", name: "Background Tool Execution API", description_en: "An API to run a long-running tool in the background, with another endpoint to check status and retrieve the result.", business_goal_en: "Prevent the UI from locking up while waiting for slow tasks, improving the user experience.", category_ar: "الاستخدام في المحادثة", description_ar: "API لتشغيل أداة تستغرق وقتًا طويلاً في الخلفية، ونقطة نهاية أخرى للتحقق من الحالة.", example_ar: "مثال: `POST /api/v2/tools/execute_async` يبدأ التحليل ويعيد `jobId`." },
+            { id: "use11", category_en: "In-Conversation Usage", name: "Tool Output Streaming", description_en: "For tools that produce continuous output (like code execution), stream the output back to the UI in real-time.", business_goal_en: "Provide immediate feedback for long-running processes, enhancing the interactive feel of the tool.", category_ar

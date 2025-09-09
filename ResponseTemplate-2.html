@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulyCore | تصحيح المسار</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+        :root {
+            --bg-color: #12101c;
+            --surface-color: #1c182c;
+            --primary-color: #a450e8;
+            --secondary-color: #00bcd4;
+            --text-color: #e0e0e0;
+            --header-color: #ffffff;
+            --border-color: #3a3252;
+            --shadow-color: rgba(164, 80, 232, 0.2);
+            --success-color: #4caf50;
+            --error-color: #f44336;
+            --font-size-base: 1rem; /* 16px */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.8;
+            direction: rtl;
+            font-size: var(--font-size-base);
+            transition: font-size 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 80px 20px;
+            background: linear-gradient(135deg, rgba(28, 24, 44, 0.9), rgba(18, 16, 28, 0.95)), url('https://www.transparenttextures.com/patterns/starring.png');
+            border-bottom: 3px solid var(--primary-color);
+            margin-bottom: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header h1 {
+            font-size: 3.8em;
+            color: var(--header-color);
+            margin: 0;
+            font-weight: 700;
+            text-shadow: 0 0 20px var(--shadow-color);
+            animation: fadeIn 1s ease-out;
+        }
+
+        header p {
+            font-size: 1.4em;
+            color: #b0a8d8;
+            margin-top: 15px;
+            animation: fadeIn 1.2s ease-out;
+        }
+        
+        .section {
+            animation: fadeIn 1s ease-out;
+            animation-fill-mode: both;
+        }
+
+        h2 {
+            font-size: 2.8em;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-top: 60px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        h3 {
+            font-size: 1.9em;
+            color: var(--secondary-color);
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: slideInRight 0.8s ease-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px var(--shadow-color);
+        }
+        
+        .icon {
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
+        }
+        
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            color: var(--primary-color);
+        }
+        
+        pre.mermaid {
+            background-color: #0d1117;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px auto;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 15px rgba(0, 189, 212, 0.1);
+        }
+        
+        blockquote {
+            background-color: rgba(244, 67, 54, 0.05);
+            border-right: 5px solid var(--error-color);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .floating-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        .float-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .float-btn:hover {
+            background-color: #8e44ad;
+            transform: scale(1.1);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 80px;
+            padding: 30px;
+            border-top: 1px solid var(--border-color);
+            color: #888;
+        }
+        
+        .card ul {
+            padding-right: 20px;
+        }
+        .card code {
+            font-family: monospace;
+            background: #2a243e;
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #c792ea;
+        }
+    </style>
+    <script type="module">
+        try {
+            const mermaid = (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
+            mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose', fontFamily: '"Cairo", sans-serif' });
+        } catch(e) {
+            console.error("Could not load Mermaid.js", e);
+        }
+    </script>
+</head>
+<body>
+    
+    <div class="floating-buttons">
+        <button id="zoom-in" class="float-btn">+</button>
+        <button id="zoom-out" class="float-btn">-</button>
+    </div>
+
+    <header>
+        <h1 id="main-title">اعتذار وتصحيح مسار</h1>
+        <p id="main-subtitle">تقرير التنفيذ رقم 2: الالتزام الصارم بسير العمل المطلوب</p>
+    </header>
+
+    <div class="container">
+        <div class="section" style="animation-delay: 0.2s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                ملخص التنفيذ
+            </h2>
+            <div class="card">
+                <h3>اعتذار وتوضيح</h3>
+                <blockquote>أعتذر بصدق عن ردي السابق. لقد أسأت فهم البروتوكول وقمت بتنفيذ ميزة (عارض التقارير داخل التطبيق) لم تكن مطلوبة، مما خالف سير العمل المتفق عليه. كان هذا خطأ، والهدف الأساسي من هذه الاستجابة هو تصحيح هذا الخطأ والعودة إلى المسار الصحيح.</blockquote>
+                <p>لقد استوعبت الآن أن الهدف هو التركيز فقط على تعديل التطبيق الأساسي وفقًا لطلبك، مع وضع جميع الشروحات والتفاصيل في ملفات التقارير هذه.</p>
+            </div>
+        </div>
+        
+        <div class="section" style="animation-delay: 0.4s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2.25 2.25 0 003.072 0l-.548-.547a2.25 2.25 0 01.02-3.182l2.122-2.121a2.25 2.25 0 00-3.182-3.182L16.5 7.5M5.572 7.572a2.25 2.25 0 000 3.182l.547.547a2.25 2.25 0 01-3.182.02l-2.121-2.122a2.25 2.25 0 00-3.182 3.182L7.5 16.5m.518-4.471A2.25 2.25 0 0010.5 9.75h3.75a2.25 2.25 0 001.685-3.882" />
+                </svg>
+                الإجراءات التصحيحية
+            </h2>
+            <div class="card">
+                <h3>تمت إزالة الميزة غير المطلوبة</h3>
+                <p>لإعادة المشروع إلى الحالة المطلوبة، قمت بتنفيذ الإجراءات التالية:</p>
+                <ul>
+                    <li><strong>حذف الملفات الجديدة:</strong> تم حذف الملفات التي تم إنشاؤها لهذه الميزة، وهي:
+                        <ul>
+                            <li><code>app/api/responses/latest/route.ts</code> (نقطة النهاية API لعرض التقرير)</li>
+                            <li><code>components/ResponseViewerModal.tsx</code> (واجهة المستخدم العائمة لعرض التقرير)</li>
+                        </ul>
+                    </li>
+                    <li><strong>تنظيف الكود:</strong> تم تعديل الملفات التالية لإزالة أي إشارة أو استدعاء للميزة المحذوفة:
+                        <ul>
+                            <li><code>components/providers/AppProvider.tsx</code>: إزالة الحالة المتعلقة بفتح وإغلاق نافذة عرض التقرير.</li>
+                            <li><code>components/App.tsx</code>: إزالة استيراد وعرض المكون الخاص بنافذة التقرير.</li>
+                            <li><code>components/Header.tsx</code>: إزالة الزر الذي كان يفتح نافذة عرض التقرير.</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p>بذلك، عاد التطبيق إلى حالته الأصلية قبل الإضافة الخاطئة، مع التزامي الكامل الآن بسير العمل الصحيح.</p>
+            </div>
+        </div>
+        
+        <div class="section" style="animation-delay: 0.6s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.804 4.196A.75.75 0 0017.25 3H6.75a.75.75 0 00-.554.196L3.125 6.25m17.75 0l-3.071-2.054a.75.75 0 00-.554-.196H3.125m17.75 0l-1.15 7.693a.75.75 0 01-.741.657H4.216a.75.75 0 01-.741-.657L2.325 6.25m17.75 0H2.325m0 0l-1.15-2.054A.75.75 0 01.625 3H21a.75.75 0 01.554.196L20.875 6.25m-1.75 10.5a.75.75 0 01-1.5 0v-2.25a.75.75 0 011.5 0v2.25z" />
+                </svg>
+                الالتزام المستقبلي بسير العمل
+            </h2>
+            <div class="card">
+                <p>أؤكد مرة أخرى على فهمي الكامل لآلية العمل الصحيحة وسألتزم بها في جميع الطلبات المستقبلية. المخطط التالي يوضح سير العمل الذي سأتبعه بدقة:</p>
+                <pre class="mermaid">
+                    graph TD
+                        A[طلب المستخدم] --> B{معالجة الطلب بواسطة الوكيل};
+                        B --> C[إنشاء تغييرات الكود (XML)];
+                        B --> D[إنشاء تقرير HTML تفصيلي];
+                        C --> E[إرسال الاستجابة الفورية (XML فقط)];
+                        D --> F[إنشاء ملف ResponseTemplate-X.html];
+                        E --> G((المخرجات النهائية));
+                        F --> G;
+                </pre>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>SoulyCore Cognitive Architecture v2.0 - © 2025</p>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const zoomInBtn = document.getElementById('zoom-in');
+            const zoomOutBtn = document.getElementById('zoom-out');
+            const body = document.body;
+            
+            let currentFontSize = 1; // 1rem
+
+            zoomInBtn.addEventListener('click', () => {
+                currentFontSize += 0.1;
+                body.style.setProperty('--font-size-base', `${currentFontSize}rem`);
+            });
+            
+            zoomOutBtn.addEventListener('click', () => {
+                if (currentFontSize > 0.5) { // Set a minimum size
+                    currentFontSize -= 0.1;
+                    body.style.setProperty('--font-size-base', `${currentFontSize}rem`);
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

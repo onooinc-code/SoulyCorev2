@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulyCore: Conversation UI/UX Feature Demonstrator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            background-image:
+                radial-gradient(at 20% 20%, hsla(216, 84%, 40%, 0.3) 0px, transparent 50%),
+                radial-gradient(at 80% 80%, hsla(280, 74%, 35%, 0.3) 0px, transparent 50%);
+            animation: gradient-animation 15s ease infinite;
+        }
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .glass-panel {
+            background: rgba(31, 41, 55, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #4b5563;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4f46e5;
+        }
+        input:checked + .slider:before {
+            transform: translateX(16px);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(79, 70, 229, 0.6);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(79, 70, 229, 0.8);
+        }
+        .feature-table th {
+            position: sticky;
+            top: 0;
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .fade-in {
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-gray-200 antialiased">
+
+    <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <header class="text-center mb-8 fade-in">
+            <h1 class="text-4xl font-bold tracking-tight text-white">SoulyCore Conversation UI/UX</h1>
+            <p class="mt-2 text-lg text-indigo-300">Feature Demonstrator & Idea Incubator</p>
+        </header>
+
+        <main id="feature-app" class="glass-panel rounded-2xl shadow-2xl overflow-hidden fade-in" style="animation-delay: 200ms;">
+            <div class="p-6 border-b border-gray-700/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <h2 class="text-xl font-semibold">Feature Registry</h2>
+                <div class="flex items-center gap-4">
+                    <p class="text-sm text-gray-400"><span id="selected-count">0</span> features selected</p>
+                    <button onclick="exportFeatures()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-500 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500">
+                        Export Selected
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-y-auto" style="height: 70vh;">
+                <table class="min-w-full divide-y divide-gray-700/50 feature-table">
+                    <thead class="bg-gray-800/50">
+                        <tr>
+                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-white sm:pl-6"><input type="checkbox" onchange="toggleAll(this)" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500"></th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">Feature Name</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white hidden md:table-cell">Category</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">Description & Examples</th>
+                            <th scope="col" class="px-3 py-3.5 text-center text-sm font-semibold text-white">Enable</th>
+                        </tr>
+                    </thead>
+                    <tbody id="feature-list" class="divide-y divide-gray-800 bg-gray-900/30">
+                        <!-- Features will be dynamically inserted here by the script -->
+                    </tbody>
+                </table>
+                
+                <div class="p-6 mt-4">
+                     <h3 class="text-2xl font-bold text-center text-indigo-300 mb-6">Speculative & "Crazy" Ideas</h3>
+                     <div id="crazy-ideas-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                         <!-- Crazy ideas will be inserted here -->
+                     </div>
+                </div>
+
+            </div>
+        </main>
+        
+    </div>
+
+    <script>
+        const features = [
+            // --- Conversation UI (Sidebar) ---
+            { category: "Conversation UI", name: "AI-Generated Conversation Icons", description: "The AI automatically assigns a relevant emoji or generates a mini icon based on the conversation's content for quick visual identification.", example: "A conversation about coding gets a `</>` icon; a chat about finance gets a `$` icon." },
+            { category: "Conversation UI", name: "Conversation 'Memory Load'", description: "A small visual indicator (e.g., a series of dots) next to each chat showing how much semantic and structured memory is associated with it.", example: "A heavily-discussed project chat has 5 dots, while a new chat has 1." },
+            { category: "Conversation UI", name: "Conversation Templates", description: "Start new chats from pre-defined templates that include system prompts, memory settings, and even initial messages.", example: "User selects 'Meeting Notes Template' which starts with a prompt 'Summarize the following meeting transcript...'." },
+            { category: "Conversation UI", name: "Multi-Conversation View", description: "A split-screen or tabbed view to interact with multiple conversations at once.", example: "User drags a conversation to the right side of the screen to open it side-by-side with the current one." },
+            { category: "Conversation UI", name: "Conversation Pinning & Grouping", description: "Pin important chats to the top and group conversations into collapsible folders.", example: "User creates a 'Q3 Projects' folder and drags relevant chats into it." },
+            { category: "Conversation UI", name: "Shared Conversations", description: "Invite team members to a conversation, with indicators for who is currently viewing or typing.", example: "User shares a read-only link to a conversation with a colleague." },
+        ];
+
+        const crazyIdeas = [
+            { name: "Generative Tools", description: "The AI writes, tests, and deploys a new, simple tool on the fly based on a user's natural language request. **Example**: 'Create a tool that converts markdown to PDF'." },
+            { name: "Tool Fusion", description: "The AI combines the capabilities of multiple simple tools to create a new, temporary 'meta-tool' for a complex task, without any user intervention." },
+            { name: "Proactive Tool Suggestion", description: "The AI analyzes your conversations and workflow patterns, then proactively suggests new tools from the marketplace that would be beneficial." },
+            { name: "Human-in-the-Loop Tool", description: "A special tool that, when called, sends a request to a designated human (or a service like Mechanical Turk) to perform a task the AI cannot, then returns the result to the agent." },
+            { name: "Cognitive Dissonance Tool", description: "A tool that intentionally seeks out conflicting information or counter-arguments to the user's current line of inquiry to help prevent confirmation bias." },
+            { name: "Tool Evolution", description: "The AI can suggest and, with permission, automatically apply modifications to a tool's source code based on user feedback or observed failures to improve its performance over time." },
+            { name: "GUI Builder Tool", description: "The AI, when asked to present complex data, calls a tool that generates an interactive HTML/JS GUI on the fly, which is then rendered directly in the chat window." },
+            { name: "Swarm Intelligence", description: "Multiple agents can use their tools in parallel on a shared problem, coordinating their results to arrive at a solution faster and more robustly than a single agent." }
+        ];
+
+        const featureList = document.getElementById('feature-list');
+        const crazyIdeasList = document.getElementById('crazy-ideas-list');
+        let featureId = 0;
+
+        features.forEach(feature => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-gray-800/50 transition-colors";
+            tr.innerHTML = `
+                <td class="py-4 pl-4 pr-3 text-sm sm:pl-6">
+                    <input type="checkbox" name="feature" class="feature-checkbox h-4 w-4 rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500">
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-white">${feature.name}</td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-400 hidden md:table-cell">${feature.category}</td>
+                <td class="px-3 py-4 text-sm text-gray-400">
+                    <p class="text-gray-300">${feature.description}</p>
+                    <p class="text-indigo-300 italic text-xs mt-1">${feature.example.replace(/\*\*Example\*\*:/g, '<strong class="text-indigo-300 font-semibold">Example:</strong>')}</p>
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-center">
+                    <label class="toggle-switch">
+                        <input type="checkbox" ${featureId++ % 3 === 0 ? 'checked' : ''}>
+                        <span class="slider"></span>
+                    </label>
+                </td>
+            `;
+            featureList.appendChild(tr);
+        });
+
+        crazyIdeas.forEach(idea => {
+            const div = document.createElement('div');
+            div.className = "glass-panel p-6 rounded-xl transform hover:-translate-y-1 transition-transform duration-300";
+            div.innerHTML = `
+                <h4 class="font-bold text-lg text-white mb-2">${idea.name}</h4>
+                <p class="text-sm text-gray-400">${idea.description.replace(/\*\*Example\*\*:/g, '<br><strong class="text-indigo-300 font-semibold">Example:</strong>')}</p>
+            `;
+            crazyIdeasList.appendChild(div);
+        });
+        
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('.feature-checkbox:checked').length;
+            document.getElementById('selected-count').textContent = count;
+        }
+
+        document.querySelectorAll('.feature-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedCount);
+        });
+        
+        function toggleAll(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.feature-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = masterCheckbox.checked;
+            });
+            updateSelectedCount();
+        }
+
+        function exportFeatures() {
+            const selected = document.querySelectorAll('.feature-checkbox:checked');
+            if (selected.length === 0) {
+                alert("No features selected to export.");
+                return;
+            }
+            let exportText = "Selected SoulyCore Conversation UI Features:\n\n";
+            selected.forEach(checkbox => {
+                const row = checkbox.closest('tr');
+                const name = row.children[1].textContent;
+                const category = row.children[2].textContent;
+                const description = row.children[3].querySelector('p:first-child').textContent;
+                exportText += `[${category}] ${name}\n- ${description}\n\n`;
+            });
+            console.log(exportText);
+            alert(`Exported ${selected.length} features to the console! (This is a demo)`);
+        }
+    </script>
+</body>
+</html>

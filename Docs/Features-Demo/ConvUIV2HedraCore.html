@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HedraCore v2: Conversation UI/UX Feature Demonstrator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            background-image:
+                radial-gradient(at 20% 20%, hsla(216, 84%, 40%, 0.4) 0px, transparent 50%),
+                radial-gradient(at 80% 80%, hsla(280, 74%, 35%, 0.4) 0px, transparent 50%);
+            animation: gradient-animation 20s ease infinite alternate;
+        }
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4b5563; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #4f46e5; }
+        input:checked + .slider:before { transform: translateX(16px); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.6); border-radius: 4px; border: 2px solid #111827; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(79, 70, 229, 0.8); }
+        .feature-table th { position: sticky; top: 0; background: rgba(17, 24, 39, 0.9); backdrop-filter: blur(10px); z-index: 10;}
+        .fade-in { animation: fadeIn 1s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .arabic { font-family: 'Cairo', sans-serif; direction: rtl; }
+        .exp-panel summary { cursor: pointer; outline: none; }
+        .exp-panel summary::marker { color: #a5b4fc; }
+        .exp-panel[open] summary { margin-bottom: 0.5rem; }
+        .crazy-idea-card { transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; }
+        .crazy-idea-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 0 30px rgba(79, 70, 229, 0.5); border-color: rgba(165, 180, 252, 0.5); }
+    </style>
+</head>
+<body class="text-gray-200 antialiased">
+
+    <div class="w-full min-h-screen p-4 sm:p-6 lg:p-8">
+        
+        <header class="max-w-7xl mx-auto text-center mb-8 fade-in">
+            <h1 class="text-4xl font-bold tracking-tight text-white">HedraCore Conversation UI/UX</h1>
+            <p class="mt-2 text-lg text-indigo-300">Feature Demonstrator & Idea Incubator (v3)</p>
+        </header>
+
+        <main id="feature-app" class="glass-panel rounded-2xl shadow-2xl overflow-hidden fade-in" style="animation-delay: 200ms;">
+            <div class="p-6 border-b border-gray-700/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <h2 class="text-xl font-semibold">Feature Registry</h2>
+                <button id="export-button" onclick="exportFeatures()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500">
+                    Export (<span id="selected-count">0</span>) to Clipboard
+                </button>
+            </div>
+
+            <div class="overflow-y-auto" style="height: 80vh;">
+                <!-- English Table -->
+                <div class="p-6">
+                    <h3 class="text-2xl font-bold text-indigo-300 mb-4">English Features List</h3>
+                    <table class="min-w-full divide-y divide-gray-700/50 feature-table">
+                        <thead class="bg-gray-800/50">
+                            <tr>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-white sm:pl-6"><input type="checkbox" onchange="toggleAll(this, 'en')" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500"></th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">Feature Name</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white hidden md:table-cell">Category</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">Description & Business Goal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feature-list-en" class="divide-y divide-gray-800 bg-gray-900/30"></tbody>
+                    </table>
+                </div>
+
+                <!-- Arabic Table -->
+                <div class="p-6">
+                    <div class="h-px bg-indigo-500/30 my-8"></div>
+                    <h3 class="text-2xl font-bold text-indigo-300 mb-4 arabic">قائمة الخصائص باللغة العربية</h3>
+                    <table class="min-w-full divide-y divide-gray-700/50 feature-table">
+                        <thead class="bg-gray-800/50">
+                            <tr>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-white sm:pl-6"><input type="checkbox" onchange="toggleAll(this, 'ar')" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500"></th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">Feature Name (English)</th>
+                                <th scope="col" class="px-3 py-3.5 text-right text-sm font-semibold text-white hidden md:table-cell arabic">الفئة</th>
+                                <th scope="col" class="px-3 py-3.5 text-right text-sm font-semibold text-white arabic">الوصف</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feature-list-ar" class="divide-y divide-gray-800 bg-gray-900/30"></tbody>
+                    </table>
+                </div>
+                
+                <!-- Arabic Explanations -->
+                <div class="p-6 mt-4">
+                    <div class="h-px bg-indigo-500/30 my-8"></div>
+                    <h3 class="text-2xl font-bold text-center text-indigo-300 mb-6 arabic">شرح تفصيلي للخصائص مع أمثلة UI/UX</h3>
+                    <div id="arabic-explanations" class="space-y-4"></div>
+                </div>
+
+                <!-- Crazy Ideas -->
+                <div class="p-6 mt-4">
+                     <div class="h-px bg-indigo-500/30 my-8"></div>
+                     <h3 class="text-2xl font-bold text-center text-indigo-300 mb-6 arabic">أفكار إبداعية ومستقبلية "Crazy Ideas"</h3>
+                     <div id="crazy-ideas-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+
+            </div>
+        </main>
+        
+    </div>
+
+    <script>
+        const features = [
+            // Research & Analysis (10 features)
+            { id: "res1", category_en: "Research & Analysis", name: "Multi-Source Query Federation", description_en: "Execute a single query in parallel across multiple personal sources (semantic memory, structured memory, local files) and merge the results into a unified response.", business_goal_en: "To provide comprehensive answers by synthesizing information from all available data silos in a single step.", category_ar: "البحث والتحليل", description_ar: "إرسال استعلام واحد يتم تنفيذه بالتوازي عبر مصادر متعددة ودمج النتائج في استجابة موحدة.", example_ar: "مثال: الاستعلام عن 'ملخص أداء مشروع ألفا' يجلب البيانات من محادثات سابقة، وتقرير مالي من ملف PDF، وتفاصيل المشروع من الذاكرة الهيكلية." },
+            { id: "res2", category_en: "Research & Analysis", name: "Real-time Web Search Integration", description_en: "Automatically include live web search results when the model detects that the required information is time-sensitive or not present in its memory.", business_goal_en: "To ensure the AI always provides the most current and relevant information for queries about recent events or data.", category_ar: "البحث والتحليل", description_ar: "تضمين نتائج بحث الويب الحية تلقائيًا عندما يكتشف النموذج أن المعلومات المطلوبة غير موجودة في ذاكرته.", example_ar: "مثال: السؤال عن 'سعر سهم Tesla اليوم' يؤدي إلى بحث فوري على الويب وتقديم الإجابة المحدثة." },
+            { id: "res3", category_en: "Research & Analysis", name: "Cited & Verifiable Sources", description_en: "Every piece of information provided by the model from its memory or the web is accompanied by its original source (URL, filename, conversation ID) for verification.", business_goal_en: "To increase trust and transparency by allowing the user to validate the AI's claims and sources.", category_ar: "البحث والتحليل", description_ar: "كل معلومة يقدمها النموذج تكون مصحوبة بمصدرها الأصلي للتحقق منها.", example_ar: "مثال: الإجابة: '..وفقًا لوثيقة project_brief.docx، فإن الموعد النهائي هو..'" },
+            { id: "res4", category_en: "Research & Analysis", name: "Long-Form Document Analysis", description_en: "The ability to ingest and analyze long documents (books, research papers) and generate interactive summaries or answer complex questions about them.", business_goal_en: "To drastically reduce the time needed to extract key insights from dense, long-form content.", category_ar: "البحث والتحليل", description_ar: "القدرة على استيعاب وتحليل وثائق طويلة وإنشاء ملخصات تفاعلية.", example_ar: "مثال: تحميل ملف PDF بحجم 200 صفحة والسؤال 'ما هي المخاطر الرئيسية المذكورة في الفصل الخامس؟'" },
+            { id: "res5", category_en: "Research & Analysis", name: "Cross-Conversation Synthesis", description_en: "Ask a question that the model answers by synthesizing information aggregated from multiple different conversations.", business_goal_en: "To uncover hidden patterns and connections across different projects or time periods without manual review.", category_ar: "البحث والتحليل", description_ar: "طرح سؤال يجيب عليه النموذج من خلال تجميع وتحليل المعلومات من عدة محادثات مختلفة.", example_ar: "مثال: 'ما هي الأفكار المشتركة التي تمت مناقشتها حول التسويق في جميع محادثات الربع الأول؟'" },
+            { id: "res6", category_en: "Research & Analysis", name: "Hypothesis Generation", description_en: "Based on a set of data or a problem description, the AI generates several plausible hypotheses or potential explanations.", business_goal_en: "To accelerate the research and brainstorming process by providing structured starting points for investigation.", category_ar: "البحث والتحليل", description_ar: "بناءً على مجموعة بيانات، يقوم الذكاء الاصطناعي بتوليد عدة فرضيات أو تفسيرات محتملة.", example_ar: "مثال: 'بالنظر إلى انخفاض المبيعات، ما هي الأسباب المحتملة؟'" },
+            { id: "res7", category_en: "Research & Analysis", name: "Fact-Checking Mode", description_en: "When enabled, the AI cross-references its generated statements against its sources and flags any claims it cannot verify.", business_goal_en: "To increase the reliability of generated content, especially for reports or critical documents.", category_ar: "البحث والتحليل", description_ar: "يقوم الذكاء الاصطناعي بالتحقق من صحة عباراته مقابل مصادره ويضع علامة على الادعاءات غير المؤكدة.", example_ar: "مثال: يضع النموذج علامة [Verification Needed] بجانب إحصائية لم يجد لها مصدرًا مباشرًا." },
+            { id: "res8", category_en: "Research & Analysis", name: "Comparative Analysis", description_en: "Provide two or more documents/sources and ask the AI to generate a detailed comparative analysis, highlighting similarities and differences.", business_goal_en: "To automate the tedious task of comparing documents, such as vendor proposals or research papers.", category_ar: "البحث والتحليل", description_ar: "تقديم وثيقتين أو أكثر وطلب تحليل مقارن مفصل.", example_ar: "مثال: 'قارن بين هذين العقدين وسلط الضوء على الاختلافات في شروط الدفع'." },
+            { id: "res9", category_en: "Research & Analysis", name: "Trend Analysis from Conversations", description_en: "The AI periodically analyzes conversation history to identify recurring topics, questions, or problems.", business_goal_en: "To provide meta-insights into personal work patterns, knowledge gaps, or frequently discussed subjects.", category_ar: "البحث والتحليل", description_ar: "يحلل الذكاء الاصطناعي سجل المحادثات لتحديد المواضيع أو الأسئلة المتكررة.", example_ar: "مثال: يقدم تقريرًا: 'لقد ذكرت \"تحسين الأداء\" في 15 محادثة هذا الشهر'." },
+            { id: "res10", category_en: "Research & Analysis", name: "Structured Data Extraction API", description_en: "An API endpoint that takes unstructured text and returns structured JSON based on a provided schema.", business_goal_en: "To automate the process of converting unstructured data like emails or notes into structured data for databases or applications.", category_ar: "البحث والتحليل", description_ar: "نقطة نهاية API تأخذ نصًا غير منظم وتعيد JSON منظمًا بناءً على schema محدد.", example_ar: "مثال: إرسال بريد إلكتروني إلى `/api/extract` مع schema لـ 'جهة اتصال' لاستخراج الاسم والبريد الإلكتروني." },
+
+            // Context Management (10 features)
+            { id: "ctx1", category_en: "Context Management", name: "Manual Context Injection API", description_en: "An API endpoint to directly inject temporary data from any external API or database into the current conversation's context.", business_goal_en: "To allow seamless integration with other systems by providing the AI with real-time, external data on-demand.", category_ar: "إدارة السياق", description_ar: "القدرة على إدخال بيانات بشكل مباشر من أي API خارجي أو database إلى سياق المحادثة الحالي بشكل مؤقت.", example_ar: "مثال: استدعاء `/api/context/inject` مع بيانات JSON من نظام CRM لإضافتها إلى سياق المحادثة التالية." },
+            { id: "ctx2", category_en: "Context Management", name: "Context 'Pinning'", description_en: "Pin a specific message or piece of information to the top of the conversation's context, making it a permanent reference for the model in that chat.", business_goal_en: "To ensure the AI consistently adheres to key instructions or facts throughout a long and complex conversation.", category_ar: "إدارة السياق", description_ar: "تثبيت رسالة أو معلومة معينة في الجزء العلوي من سياق المحادثة لتكون مرجعًا دائمًا للنموذج.", example_ar: "مثال: تثبيت رسالة 'الهدف الرئيسي لهذا المشروع هو زيادة الكفاءة بنسبة 15%'." },
+            { id: "ctx3", category_en: "Context Management", name: "Context Scope Control", description_en: "Manually specify the context scope (last 5 messages, this conversation only, all memory) for a single query using a prefix or command.", business_goal_en: "To give the user precise control over the AI's search space, improving response relevance and speed.", category_ar: "إدارة السياق", description_ar: "تحديد نطاق السياق يدويًا (آخر 5 رسائل، هذه المحادثة فقط، كل المحادثات) لكل استعلام.", example_ar: "مثال: كتابة `/query_global` لتوجيه النموذج للبحث في جميع المحادثات والذاكرة." },
+            { id: "ctx4", category_en: "Context Management", name: "Volatile Memory Context", description_en: "Add information to a 'volatile memory' that expires after a short period or a set number of messages, ideal for temporary secrets.", business_goal_en: "To securely provide sensitive information like API keys for a single task without persisting them in long-term memory.", category_ar: "إدارة السياق", description_ar: "إضافة معلومات إلى 'ذاكرة متطايرة' تنتهي صلاحيتها بعد فترة قصيرة أو عدد معين من الرسائل.", example_ar: "مثال: '/temp_context [API_KEY] for 3 messages' لإدخال مفتاح API مؤقت." },
+            { id: "ctx5", category_en: "Context Management", name: "Pre-flight Context Review", description_en: "Before sending a message, display a summary of the context that will be sent to the model, with the ability to edit or remove parts of it.", business_goal_en: "To optimize cost and improve accuracy by allowing the user to prune irrelevant information from the context before making an API call.", category_ar: "إدارة السياق", description_ar: "قبل إرسال الرسالة، عرض ملخص للسياق الذي سيتم إرساله إلى النموذج مع القدرة على تعديله.", example_ar: "مثال: الضغط على زر 'Review Context' يظهر نافذة منبثقة بها: 'سيتم إرسال آخر 10 رسائل + وثيقة X'." },
+            { id: "ctx6", category_en: "Context Management", name: "Conversation Forking", description_en: "Create a duplicate of the current conversation at a specific message to explore an alternative line of inquiry without losing the original chat.", business_goal_en: "To enable non-destructive exploration of different ideas or scenarios based on a common starting point.", category_ar: "إدارة السياق", description_ar: "إنشاء نسخة من المحادثة الحالية عند رسالة معينة لاستكشاف مسار بديل.", example_ar: "مثال: 'تفرع من هذه النقطة' لإنشاء محادثة جديدة تبدأ من هذه الرسالة." },
+            { id: "ctx7", category_en: "Context Management", name: "Conversation Merging", description_en: "Select two conversations and merge them into a single, chronologically sorted conversation.", business_goal_en: "To consolidate related discussions that were accidentally started in separate chats.", category_ar: "إدارة السياق", description_ar: "تحديد محادثتين ودمجهما في محادثة واحدة مرتبة زمنيًا.", example_ar: "مثال: دمج محادثة 'أفكار المشروع' مع 'ملاحظات اجتماع المشروع'." },
+            { id: "ctx8", category_en: "Context Management", name: "Automatic Context Summarization", description_en: "For very long conversations, the model automatically replaces older messages with a condensed summary in the context window.", business_goal_en: "To manage long-term context efficiently within token limits without losing the gist of the conversation's history.", category_ar: "إدارة السياق", description_ar: "يقوم النموذج تلقائيًا باستبدال الرسائل القديمة بملخص مكثف في نافذة السياق.", example_ar: "مثال: بدلاً من إرسال 100 رسالة قديمة، يرسل 'ملخص: تمت مناقشة X و Y'." },
+            { id: "ctx9", category_en: "Context Management", name: "Visual Context Graph", description_en: "A visual graph that shows the current context, including pinned items, recent messages, and memories being used for the next query.", business_goal_en: "To provide a transparent and intuitive view of what the AI is 'thinking about'.", category_ar: "إدارة السياق", description_ar: "رسم بياني مرئي يوضح السياق الحالي، بما في ذلك العناصر المثبتة والرسائل الأخيرة والذكريات المستخدمة.", example_ar: "مثال: لوحة جانبية تعرض فقاعات تمثل كل جزء من السياق." },
+            { id: "ctx10", category_en: "Context Management", name: "Contextual Personas", description_en: "Switch the AI's 'persona' (e.g., programmer, marketing expert, devil's advocate) which alters its system prompt and the type of context it prioritizes.", business_goal_en: "To tailor the AI's expertise and response style to the specific task at hand.", category_ar: "إدارة السياق", description_ar: "تبديل 'شخصية' الذكاء الاصطناعي لتغيير أسلوب استجابته.", example_ar: "مثال: اختيار شخصية 'مبرمج' يجعل النموذج يعطي الأولوية للأمثلة البرمجية." },
+
+            // Message Interaction (15 features)
+            { id: "msg1", category_en: "Message Interaction", name: "AI-Generated Message Tags", description_en: "The model automatically applies tags to messages to classify them (e.g., #question, #decision, #task, #idea).", business_goal_en: "To make conversations easily searchable and scannable for key information types, improving knowledge retrieval.", category_ar: "التفاعل مع الرسائل", description_ar: "يقوم النموذج تلقائيًا بوضع علامات (tags) على الرسائل لتصنيفها (سؤال، قرار، مهمة، فكرة).", example_ar: "مثال: رسالة 'يجب علينا إنهاء التصميم بحلول يوم الجمعة' تحصل تلقائيًا على علامة 'Task'." },
+            { id: "msg2", category_en: "Message Interaction", name: "Inline Message Threads", description_en: "Reply directly to a specific message, creating a nested visual thread to keep discussions organized.", business_goal_en: "To maintain context in complex conversations by linking questions directly to the messages they refer to.", category_ar: "التفاعل مع الرسائل", description_ar: "الرد مباشرة على رسالة معينة، مما يخلق سلسلة مرئية متداخلة للحفاظ على تنظيم المناقشات.", example_ar: "مثال: النقر على 'رد' على رسالة قديمة للنموذج لطرح سؤال توضيحي حول تلك النقطة المحددة." },
+            { id: "msg3", category_en: "Message Interaction", name: "Message Version History", description_en: "Track edits made to your messages or regenerated model responses, with the ability to revert to previous versions.", business_goal_en: "To maintain a clear audit trail of changes and easily compare different versions of a prompt or response.", category_ar: "التفاعل مع الرسائل", description_ar: "تتبع التعديلات التي تم إجراؤها على رسالتك أو استجابات النموذج المُعاد إنشاؤها.", example_ar: "مثال: النقر على 'تم التعديل' يعرض نافذة تقارن بين النص الأصلي والجديد." },
+            { id: "msg4", category_en: "Message Interaction", name: "Export Message as... (JSON, MD)", description_en: "Export an individual message or an entire conversation to various formats like JSON, Markdown, or PDF.", business_goal_en: "To easily share or archive conversation outputs for use in reports, documentation, or other applications.", category_ar: "التفاعل مع الرسائل", description_ar: "تصدير رسالة فردية أو محادثة كاملة إلى تنسيقات مختلفة.", example_ar: "مثال: النقر على 'تصدير' على ملخص اجتماع وحفظه كملف Markdown." },
+            { id: "msg5", category_en: "Message Interaction", name: "Convert to Task/Event API", description_en: "With one click, convert any message into a task in a personal task manager or an event in a calendar via API integration.", business_goal_en: "To streamline workflows by turning actionable insights from conversations into concrete tasks without leaving the application.", category_ar: "التفاعل مع الرسائل", description_ar: "تحويل أي رسالة بنقرة واحدة إلى مهمة في مدير المهام الشخصي أو حدث في التقويم عبر API.", example_ar: "مثال: النقر على 'إنشاء مهمة' على رسالة 'لا تنس مراجعة التقرير' يضيفها إلى Todoist." },
+            { id: "msg6", category_en: "Message Interaction", name: "Multi-Message Selection & Actions", description_en: "Select multiple messages at once to perform bulk actions on them (e.g., delete, export, summarize).", business_goal_en: "To improve efficiency when managing or organizing large amounts of information within a conversation.", category_ar: "التفاعل مع الرسائل", description_ar: "تحديد عدة رسائل دفعة واحدة لتنفيذ إجراءات جماعية عليها.", example_ar: "مثال: تحديد ثلاث رسائل تحتوي على أفكار والنقر على 'تلخيص المحدد'." },
+            { id: "msg7", category_en: "Message Interaction", name: "Diff View for Regenerated Responses", description_en: "When regenerating a response, show a side-by-side 'diff' view highlighting the differences between the old and new response.", business_goal_en: "To make it easy to see exactly what changed and evaluate the quality of the regenerated content.", category_ar: "التفاعل مع الرسائل", description_ar: "عند إعادة إنشاء استجابة، عرض مقارنة توضح الاختلافات بين الاستجابة القديمة والجديدة.", example_ar: "مثال: النص المحذوف يظهر باللون الأحمر، والنص الجديد باللون الأخضر." },
+            { id: "msg8", category_en: "Message Interaction", name: "Interactive UI Components in Messages", description_en: "The model can return interactive UI components (checkboxes, sliders, input fields) directly in its responses for data collection.", business_goal_en: "To create a more dynamic and engaging user experience by allowing structured input directly within the conversation flow.", category_ar: "التفاعل مع الرسائل", description_ar: "يمكن للنموذج إرجاع مكونات واجهة مستخدم تفاعلية مباشرة في استجاباته.", example_ar: "مثال: النموذج يعرض استطلاعًا صغيرًا مع أزرار اختيار لجمع تفضيلات المستخدم." },
+            { id: "msg9", category_en: "Message Interaction", name: "Code Block Actions", description_en: "Additional buttons on code blocks for one-click actions like Run, Copy, Save as Gist, and Explain Code.", business_goal_en: "To turn the chat into a powerful coding assistant by integrating common developer actions directly into the UI.", category_ar: "التفاعل مع الرسائل", description_ar: "أزرار إضافية على كتل الأكواد (تشغيل، نسخ، حفظ، شرح).", example_ar: "مثال: النقر على 'Run' على كتلة Python لتنفيذها في بيئة sandbox ورؤية المخرجات." },
+            { id: "msg10", category_en: "Message Interaction", name: "Message Bookmarking", description_en: "Bookmark important messages across any conversation for quick access from a centralized Bookmarks hub.", business_goal_en: "To create a persistent, cross-conversation 'reading list' of key insights and action items.", category_ar: "التفاعل مع الرسائل", description_ar: "حفظ الرسائل المهمة عبر أي محادثة للوصول السريع إليها من مركز الإشارات المرجعية.", example_ar: "مثال: حفظ قرار مهم تم اتخاذه في محادثة مشروع للرجوع إليه لاحقًا." },
+            { id: "msg11", category_en: "Message Interaction", name: "Audio Playback for Text", description_en: "A text-to-speech button on model responses to have them read aloud.", business_goal_en: "To provide an alternative, hands-free way to consume information and improve accessibility.", category_ar: "التفاعل مع الرسائل", description_ar: "زر تحويل النص إلى كلام على استجابات النموذج لقراءتها بصوت عالٍ.", example_ar: "مثال: النقر على أيقونة مكبر الصوت للاستماع إلى ملخص طويل أثناء القيام بمهمة أخرى." },
+            { id: "msg12", category_en: "Message Interaction", name: "Conversation Summary Generation", description_en: "On-demand generation of a concise summary of the entire conversation up to the current point.", business_goal_en: "To quickly get up to speed on a long or old conversation without having to read the entire history.", category_ar: "التفاعل مع الرسائل", description_ar: "إنشاء ملخص موجز للمحادثة بأكملها عند الطلب.", example_ar: "مثال: النقر على 'تلخيص المحادثة' في قائمة الخيارات للحصول على النقاط الرئيسية." },
+            { id: "msg13", category_en: "Message Interaction", name: "Permalinks for Messages", description_en: "Generate a unique, shareable link to a specific message within a conversation.", business_goal_en: "To easily reference specific points in a conversation when communicating externally (e.g., in an email or document).", category_ar: "التفاعل مع الرسائل", description_ar: "إنشاء رابط فريد قابل للمشاركة لرسالة معينة داخل المحادثة.", example_ar: "مثال: نسخ رابط رسالة قرار ولصقه في مستند إدارة المشروع." },
+            { id: "msg14", category_en: "Message Interaction", name: "Message Pinning within Conversation", description_en: "Pin a message to the top of the chat window for easy reference within that specific session.", business_goal_en: "To keep key information, like a question being investigated, visible while scrolling through a conversation.", category_ar: "التفاعل مع الرسائل", description_ar: "تثبيت رسالة في الجزء العلوي من نافذة الدردشة للرجوع إليها بسهولة.", example_ar: "مثال: تثبيت سؤال المستخدم أثناء استكشاف إجابات متعددة من النموذج." },
+            { id: "msg15", category_en: "Message Interaction", name: "Cognitive Inspector Link", description_en: "A button on each message to open a detailed view of the backend cognitive process (context assembly, memory extraction) for that turn.", business_goal_en: "To provide transparency into the AI's reasoning process for power users and debugging.", category_ar: "التفاعل مع الرسائل", description_ar: "زر على كل رسالة لفتح عرض مفصل للعملية المعرفية الخلفية لتلك الدورة.", example_ar: "مثال: النقر على 'Inspect' لرؤية السياق الدقيق الذي تم إرساله إلى النموذج." },
+
+            // Input & Composition (10 features)
+            { id: "inp1", category_en: "Input & Composition", name: "Voice-to-Text with Real-time Transcription", description_en: "Dictate messages via voice with real-time transcription and automatic punctuation.", business_goal_en: "To provide a hands-free method for interacting with the AI, increasing accessibility and convenience.", category_ar: "الإدخال والتأليف", description_ar: "إملاء الرسائل صوتيًا مع عرض النص المكتوب في الوقت الفعلي وتصحيحه تلقائيًا.", example_ar: "مثال: النقر على أيقونة الميكروفون والتحدث، مع ظهور الكلمات في مربع الإدخال فورًا." },
+            { id: "inp2", category_en: "Input & Composition", name: "Prompt Enhancement Suggestions", description_en: "As you type a prompt, the AI suggests ways to improve its quality to make it clearer and more effective.", business_goal_en: "To help the user craft better prompts, leading to higher quality and more accurate AI responses.", category_ar: "الإدخال والتأليف", description_ar: "اقتراحات لتحسين جودة الـ prompt أثناء كتابته لجعله أكثر وضوحًا وفعالية.", example_ar: "مثال: كتابة 'لخص الاجتماع' تظهر اقتراحًا: 'هل تريد إضافة نص الاجتماع؟'" },
+            { id: "inp3", category_en: "Input & Composition", name: "Scratchpad Panel", description_en: "A side panel for drafting notes and ideas, allowing you to assemble information before composing the final prompt.", business_goal_en: "To facilitate complex query construction by providing a dedicated space for brainstorming and organizing thoughts.", category_ar: "الإدخال والتأليف", description_ar: "لوحة جانبية لكتابة الملاحظات والأفكار وتجميع المعلومات قبل صياغة الـ prompt النهائي.", example_ar: "مثال: تدوين نقاط متعددة في الـ Scratchpad ثم سحبها وإفلاتها في مربع الإدخال." },
+            { id: "inp4", category_en: "Input & Composition", name: "Multi-line Editing with Syntax Highlighting", description_en: "An advanced input editor that supports multi-line text and code with syntax highlighting.", business_goal_en: "To improve the experience of writing and editing complex, code-heavy prompts.", category_ar: "الإدخال والتأليف", description_ar: "محرر إدخال متقدم يدعم كتابة نصوص طويلة وأكواد مع تمييز الصيغة.", example_ar: "مثال: لصق كتلة كود Python في مربع الإدخال ورؤيتها ملونة بشكل صحيح قبل الإرسال." },
+            { id: "inp5", category_en: "Input & Composition", name: "Slash Commands for Shortcuts", description_en: "Use commands starting with '/' for quick access to actions (e.g., `/summarize`, `/clear_context`).", business_goal_en: "To provide power-user shortcuts that speed up common and repetitive tasks.", category_ar: "الإدخال والتأليف", description_ar: "استخدام أوامر تبدأ بـ '/' للوصول السريع إلى الإجراءات.", example_ar: "مثال: كتابة `/summarize` تلخص تلقائيًا آخر 10 رسائل." },
+            { id: "inp6", category_en: "Input & Composition", name: "Drag-and-Drop File Uploads", description_en: "Drag and drop files (images, text, PDFs) directly into the input box for upload and analysis.", business_goal_en: "To create a fluid and intuitive workflow for providing the AI with document-based context.", category_ar: "الإدخال والتأليف", description_ar: "سحب وإفلات الملفات مباشرة في مربع الإدخال لتحميلها.", example_ar: "مثال: سحب ملف PDF من سطح المكتب إلى نافذة الدردشة لتحليله." },
+            { id: "inp7", category_en: "Input & Composition", name: "Prompt Templates & Variables", description_en: "Save and reuse complex prompts as templates, with support for variables that can be filled in before sending.", business_goal_en: "To standardize and accelerate repetitive tasks that require structured prompts.", category_ar: "الإدخال والتأليف", description_ar: "حفظ وإعادة استخدام الـ prompts المعقدة كقوالب، مع دعم للمتغيرات.", example_ar: "مثال: استخدام قالب 'تقرير أسبوعي' الذي يطلب ملء متغيرات مثل `{{project_name}}`." },
+            { id: "inp8", category_en: "Input & Composition", name: "In-place Text Generation", description_en: "Highlight text in any application, press a hotkey, and have the AI rewrite, summarize, or expand it in place.", business_goal_en: "To integrate the AI's capabilities directly into the user's existing writing workflows across the OS.", category_ar: "الإدخال والتأليف", description_ar: "تظليل نص في أي تطبيق والضغط على مفتاح اختصار لجعل الذكاء الاصطناعي يعيد كتابته.", example_ar: "مثال: تحديد فقرة في بريد إلكتروني والضغط على `Cmd+J` لتلخيصها." },
+            { id: "inp9", category_en: "Input & Composition", name: "Clipboard as Context", description_en: "A keyboard shortcut that automatically includes the current clipboard content as context for the next prompt.", business_goal_en: "To make it incredibly fast to ask questions about content from any application without copy-pasting.", category_ar: "الإدخال والتأليف", description_ar: "اختصار لوحة مفاتيح يدرج محتوى الحافظة (clipboard) تلقائيًا كسياق.", example_ar: "مثال: نسخ رسالة خطأ، ثم كتابة 'اشرح هذا' مع استخدام الاختصار." },
+            { id: "inp10", category_en: "Input & Composition", name: "Scheduled Send", description_en: "Schedule a prompt to be sent to the AI at a future time.", business_goal_en: "To queue up tasks or reminders for the AI to process at a more convenient time.", category_ar: "الإدخال والتأليف", description_ar: "جدولة إرسال prompt إلى الذكاء الاصطناعي في وقت لاحق.", example_ar: "مثال: جدولة prompt 'لخص لي أخبار اليوم' ليتم تشغيله كل صباح الساعة 8." },
+
+            // Data & Visualization (5)
+            { id: "viz1", category_en: "Data & Visualization", name: "Dynamic Chart Generation", description_en: "Convert tabular data into interactive charts (line, bar, pie) directly in the conversation.", business_goal_en: "To quickly visualize and understand data without needing external tools.", category_ar: "البيانات والتصور", description_ar: "تحويل البيانات الجدولية إلى رسوم بيانية تفاعلية.", example_ar: "مثال: لصق بيانات مبيعات وطلب 'اعرض هذه البيانات كرسم بياني خطي'." },
+            { id: "viz2", category_en: "Data & Visualization", name: "Editable Tables", description_en: "Ability to edit data directly in tables generated by the model and resubmit them for further analysis.", business_goal_en: "To enable iterative data analysis and what-if scenarios within the chat.", category_ar: "البيانات والتصور", description_ar: "القدرة على تعديل البيانات مباشرة في الجداول التي ينشئها النموذج.", example_ar: "مثال: تغيير قيمة في جدول بيانات ثم مطالبة النموذج بإعادة حساب الإجمالي." },
+            { id: "viz3", category_en: "Data & Visualization", name: "Mind Map Generation", description_en: "Generate an interactive, hierarchical mind map from a block of text or brainstorming session.", business_goal_en: "To visually structure complex information and explore relationships between concepts.", category_ar: "البيانات والتصور", description_ar: "إنشاء خريطة ذهنية تفاعلية من نص أو جلسة عصف ذهني.", example_ar: "مثال: 'أنشئ خريطة ذهنية من هذا المستند حول استراتيجية التسويق'." },
+            { id: "viz4", category_en: "Data & Visualization", name: "Gantt Chart Generation", description_en: "Create project timelines and Gantt charts from a list of tasks and dates.", business_goal_en: "To simplify project planning and visualization directly within the conversation.", category_ar: "البيانات والتصور", description_ar: "إنشاء جداول زمنية للمشاريع ومخططات Gantt من قائمة المهام والتواريخ.", example_ar: "مثال: 'أنشئ مخطط Gantt لهذه المهام'." },
+            { id: "viz5", category_en: "Data & Visualization", name: "Data Dashboard Builder", description_en: "Ask the AI to generate a simple, interactive dashboard with multiple charts and KPIs from a given dataset.", business_goal_en: "To create quick, custom data dashboards for analysis without needing a dedicated BI tool.", category_ar: "البيانات والتصور", description_ar: "اطلب من الذكاء الاصطناعي إنشاء لوحة معلومات تفاعلية بسيطة.", example_ar: "مثال: 'أنشئ لوحة معلومات من ملف CSV هذا'." },
+
+             // Automation & Workflows (5)
+            { id: "auto1", category_en: "Automation & Workflows", name: "Multi-Step Workflow Builder", description_en: "A visual interface to build multi-step workflows where the output of one step is the input for the next.", business_goal_en: "To automate complex, multi-stage tasks and create powerful, reusable processes.", category_ar: "الأتمتة وسير العمل", description_ar: "واجهة مرئية لبناء سير عمل متعدد الخطوات.", example_ar: "مثال: بناء سير عمل: 1. لخص المقال. 2. استخرج النقاط الرئيسية. 3. اكتب تغريدة على تويتر." },
+            { id: "auto2", category_en: "Automation & Workflows", name: "Trigger-Based Automations", description_en: "Run a workflow automatically based on triggers like a specific time, an incoming email, or a file change.", business_goal_en: "To create a 'set it and forget it' system for routine information processing tasks.", category_ar: "الأتمتة وسير العمل", description_ar: "تشغيل سير عمل تلقائيًا بناءً على محفزات.", example_ar: "مثال: 'عندما يصل بريد إلكتروني جديد من \"المدير\"، قم بتلخيصه وإضافته كمهمة'." },
+            { id: "auto3", category_en: "Automation & Workflows", name: "Session State API", description_en: "An API to programmatically manage conversation state, allowing external scripts to drive conversations with the AI.", business_goal_en: "To enable deep integration with other systems, allowing them to use the AI as a service for complex reasoning.", category_ar: "الأتمتة وسير العمل", description_ar: "API لإدارة حالة المحادثة برمجيًا، مما يسمح للبرامج الخارجية بتوجيه المحادثات.", example_ar: "مثال: برنامج Python يرسل بيانات إلى المحادثة، ويحصل على نتيجة، ثم يرسل الخطوة التالية." },
+            { id: "auto4", category_en: "Automation & Workflows", name: "Human-in-the-Loop Steps", description_en: "Add a 'Human Approval' step to a workflow, which pauses the automation and waits for user input before proceeding.", business_goal_en: "To combine the speed of automation with the safety of manual oversight for critical tasks.", category_ar: "الأتمتة وسير العمل", description_ar: "إضافة خطوة 'موافقة بشرية' إلى سير العمل، مما يوقف الأتمتة مؤقتًا.", example_ar: "مثال: سير عمل لإرسال فاتورة يتوقف لطلب الموافقة على المبلغ النهائي." },
+            { id: "auto5", category_en: "Automation & Workflows", name: "Conditional Logic in Workflows", description_en: "Add 'if/then/else' logic to workflows based on the output of a previous step.", business_goal_en: "To create more intelligent and adaptable automations that can handle different scenarios.", category_ar: "الأتمتة وسير العمل", description_ar: "إضافة منطق 'if/then/else' إلى سير العمل بناءً على مخرجات خطوة سابقة.", example_ar: "مثال: 'إذا كان البريد الإلكتروني عاجلاً، فأرسل إشعارًا؛ وإلا، فقم بإنشاء مهمة'." }
+        ];
+
+        const crazyIdeas = [
+            { id: "ci1", name: "Conversational UI Builder", name_ar: "باني الواجهات الحوارية", description_ar: "بدلاً من النماذج الثابتة، تقوم ببناء واجهة المستخدم الخاصة بالمركز عبر محادثة. 'أضف قناة جديدة من نوع webhook، واجعلها تستجيب بـ JSON، وقم بتشغيل سير عمل X'.", example_ar: "الهدف: جعل عملية التكوين سريعة وبديهية للغاية." },
+            { id: "ci2", name: "Adaptive Channel Throttling", name_ar: "التحكم التكيفي في القنوات", description_ar: "يتعلم النظام تلقائيًا حدود معدل الاستخدام (rate limits) لواجهات برمجة التطبيقات الخارجية ويضبط سرعة الإرسال ديناميكيًا لتجنب الحظر، مع زيادة السرعة عند الإمكان.", example_ar: "الهدف: تحقيق أقصى إنتاجية مع الحفاظ على استقرار التكامل." },
+            { id: "ci3", name: "Cross-Channel Conversation Stitching", name_ar: "ربط المحادثات عبر القنوات", description_ar: "إذا بدأ مستخدم محادثة على WhatsApp ثم تابع عبر البريد الإلكتروني، يقوم النظام بالتعرف عليه ودمج المحادثتين في خيط واحد موحد.", example_ar: "الهدف: إنشاء تجربة مستخدم سلسة ومتكاملة بغض النظر عن القناة المستخدمة." }
+        ];
+
+        const uiMocks = {
+            "ui1": `<div class="p-2 border border-dashed border-gray-600 rounded-md text-xs not-prose">
+                        <div class="bg-gray-800 p-2 rounded-md shadow-lg">
+                            <input type="text" placeholder="ابحث عن الإجراءات أو الملفات..." class="w-full bg-transparent text-white placeholder-gray-400 focus:outline-none"/>
+                            <div class="mt-2 border-t border-gray-700 pt-2 text-gray-300">محادثة جديدة...</div>
+                        </div>
+                     </div>`,
+            "ui4": `<div class="p-2 border border-dashed border-gray-600 rounded-md text-xs not-prose flex gap-1">
+                        <div class="p-2 bg-gray-700 rounded-t-md">محادثة</div>
+                        <div class="p-2 bg-indigo-600 text-white rounded-t-md">مركز الذاكرة</div>
+                        <div class="p-2 bg-gray-700 rounded-t-md">مركز المطورين</div>
+                     </div>`,
+            "comm1": `<div class="p-2 border border-dashed border-gray-600 rounded-md text-xs not-prose space-y-2">
+                         <div class="bg-gray-800 p-2 rounded flex justify-between items-center"><span>Webhook: New Lead</span> <span class="text-green-400">● نشط</span></div>
+                         <div class="bg-gray-800 p-2 rounded flex justify-between items-center"><span>Static: App Notifications</span> <span class="text-green-400">● نشط</span></div>
+                         <div class="bg-gray-800 p-2 rounded flex justify-between items-center"><span>Dynamic: WhatsApp</span> <span class="text-red-400">● خطأ في المصادقة</span></div>
+                      </div>`,
+            "dyn2": `<div class="p-2 border border-dashed border-gray-600 rounded-md text-xs not-prose flex items-center gap-2">
+                        <div class="bg-gray-800 p-2 rounded w-1/2">
+                            <p class="font-bold">Payload وارد</p>
+                            <pre class="text-purple-300">{\n  "user": "Ali",\n  "issue": "Login failed"\n}</pre>
+                        </div>
+                        <div class="text-indigo-400">→</div>
+                        <div class="bg-gray-800 p-2 rounded w-1/2">
+                            <p class="font-bold">متغيرات النظام</p>
+                            <p><code>{{contact_name}}</code> ← <code>payload.user</code></p>
+                            <p><code>{{ticket_title}}</code> ← <code>payload.issue</code></p>
+                        </div>
+                     </div>`
+        };
+        
+        function getPlausibleTechSpec(featureId) {
+            const specs = {
+                "ui1": `Component: CommandPalette.tsx\nState Management: Zustand or similar for global state.\nAction Registry: A central object mapping action names to functions.`,
+                "ui4": `Library: A tab management library like 'react-tabs'.\nState: Stored in AppProvider to persist across the app.\nRouting: Optionally sync active tab with URL parameters.`,
+                "comm1": `API Endpoint: GET /api/v2/comm/channels\nDB Table: 'comm_channels' with columns for type, config, status.\nHealth Check: A cron job that pings each channel's endpoint.`,
+                "dyn1": `API Endpoint: POST /api/v2/comm/channels/webhook\nReturns: { "url": "https://.../webhook/{unique_id}", "status": "created" }\nBackend: A generic handler at /api/v2/webhook/{id} that routes to the trigger engine.`
+            };
+            return specs[featureId] || "API Endpoint: TBD\nRequest Body: TBD\nResponse: TBD";
+        }
+        
+        function populateContent() {
+            const allFeatures = [...uiuxFeatures, ...commFeatures];
+            const listUiUx = document.getElementById('feature-list-uiux');
+            const listComm = document.getElementById('feature-list-comm');
+            const explanations = document.getElementById('arabic-explanations');
+            const crazyList = document.getElementById('crazy-ideas-list');
+            
+            listUiUx.innerHTML = '';
+            listComm.innerHTML = '';
+            explanations.innerHTML = '';
+            crazyList.innerHTML = '';
+
+            uiuxFeatures.forEach(feature => {
+                const trAr = document.createElement('tr');
+                trAr.className = "hover:bg-gray-800/50 transition-all duration-200 hover:shadow-lg arabic";
+                trAr.innerHTML = `
+                    <td class="py-4 pl-4 pr-3 text-sm sm:pl-6"><input type="checkbox" name="feature" data-feature-id="${feature.id}" class="feature-checkbox h-4 w-4 rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500"></td>
+                    <td class="px-3 py-4 text-sm font-medium text-white text-left" style="direction: ltr;"><a href="#exp-${feature.id}">${feature.name}</a></td>
+                    <td class="px-3 py-4 text-sm text-gray-400 hidden md:table-cell">${feature.category_ar}</td>
+                    <td class="px-3 py-4 text-sm text-gray-300">${feature.description_ar}<p class="text-indigo-400 italic text-xs mt-2">${feature.example_ar}</p></td>
+                `;
+                listUiUx.appendChild(trAr);
+            });
+            
+            commFeatures.forEach(feature => {
+                 const trAr = document.createElement('tr');
+                trAr.className = "hover:bg-gray-800/50 transition-all duration-200 hover:shadow-lg arabic";
+                trAr.innerHTML = `
+                    <td class="py-4 pl-4 pr-3 text-sm sm:pl-6"><input type="checkbox" name="feature" data-feature-id="${feature.id}" class="feature-checkbox h-4 w-4 rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500"></td>
+                    <td class="px-3 py-4 text-sm font-medium text-white text-left" style="direction: ltr;"><a href="#exp-${feature.id}">${feature.name}</a></td>
+                    <td class="px-3 py-4 text-sm text-gray-400 hidden md:table-cell">${feature.category_ar}</td>
+                    <td class="px-3 py-4 text-sm text-gray-300">${feature.description_ar}<p class="text-indigo-400 italic text-xs mt-2">${feature.example_ar}</p></td>
+                `;
+                listComm.appendChild(trAr);
+            });
+
+            allFeatures.forEach(feature => {
+                const details = document.createElement('details');
+                details.className = "card exp-panel transition-all duration-300 open:ring-2 open:ring-indigo-500/80";
+                details.id = `exp-${feature.id}`;
+                details.innerHTML = `
+                    <summary class="font-semibold text-lg text-indigo-300 arabic flex justify-between items-center"><span>${feature.name}</span><span class="text-sm font-normal text-gray-400">${feature.category_ar}

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HedraCore | بناء الذاكرة الإجرائية (نظام الأدوات)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --bg-color: #12101c; --surface-color: #1c182c; --primary-color: #a450e8; --secondary-color: #00bcd4; --text-color: #e0e0e0; --header-color: #ffffff; --border-color: #3a3252; --shadow-color: rgba(164, 80, 232, 0.2); --success-color: #4caf50; --error-color: #f44336; --font-size-base: 1rem;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+        body { font-family: 'Cairo', sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); line-height: 1.8; direction: rtl; font-size: var(--font-size-base); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 80px 20px; background: linear-gradient(135deg, rgba(28, 24, 44, 0.9), rgba(18, 16, 28, 0.95)); border-bottom: 3px solid var(--primary-color); margin-bottom: 50px; position: relative; overflow: hidden; }
+        header h1 { font-size: 3.8em; color: var(--header-color); margin: 0; font-weight: 700; text-shadow: 0 0 20px var(--shadow-color); animation: fadeIn 1s ease-out; }
+        header p { font-size: 1.4em; color: #b0a8d8; margin-top: 15px; animation: fadeIn 1.2s ease-out; }
+        .section { animation: fadeIn 1s ease-out; animation-fill-mode: both; }
+        h2 { font-size: 2.8em; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-top: 60px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+        h3 { font-size: 1.9em; color: var(--secondary-color); margin-top: 40px; margin-bottom: 20px; }
+        .card { background-color: var(--surface-color); border-radius: 12px; padding: 25px 30px; margin-bottom: 25px; border: 1px solid var(--border-color); box-shadow: 0 8px 30px rgba(0,0,0,0.3); animation: slideInRight 0.8s ease-out; }
+        .header-icon { width: 48px; height: 48px; color: var(--primary-color); flex-shrink: 0; }
+        .card ul { padding-right: 20px; }
+        .card code { font-family: monospace; background: #2a243e; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; color: #c792ea; direction: ltr; display: inline-block; }
+        footer { text-align: center; margin-top: 80px; padding: 30px; border-top: 1px solid var(--border-color); color: #888; }
+        blockquote { background-color: rgba(0, 188, 212, 0.05); border-right: 5px solid var(--secondary-color); padding: 15px 20px; margin: 20px 0; border-radius: 8px; font-style: italic; }
+    </style>
+     <script type="module">
+        try {
+            const mermaid = (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
+            mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose', fontFamily: '"Cairo", sans-serif' });
+        } catch(e) { console.error("Could not load Mermaid.js", e); }
+    </script>
+</head>
+<body class="arabic">
+    <header>
+        <h1 id="main-title">المرحلة الأولى: بناء الذاكرة الإجرائية</h1>
+        <p id="main-subtitle">تقرير التنفيذ رقم 9: تأسيس نظام إدارة الأدوات (Tools Hub)</p>
+    </header>
+
+    <div class="container">
+        <div class="section" style="animation-delay: 0.2s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                ملخص التنفيذ
+            </h2>
+            <div class="card">
+                <p>تنفيذًا للمرحلة الأولى من خارطة الطريق المقترحة في التقرير السابق، قمت ببناء الأساس الكامل لـ "الذاكرة الإجرائية" (Procedural Memory). هذا هو النظام الذي سيسمح للوكيل المستقل (Autonomous Agent) بفهم واستخدام "الأدوات" لتنفيذ مهام حقيقية في العالم الرقمي، مثل البحث على الويب أو تشغيل كود.</p>
+                <p>هذا التحديث يضيف نظامًا متكاملاً لإدارة الأدوات، بدءًا من قاعدة البيانات ووصولاً إلى واجهة المستخدم، مما يمهد الطريق لتطوير وكيل ذكاء اصطناعي متقدم في المرحلة التالية.</p>
+            </div>
+        </div>
+        
+        <div class="section" style="animation-delay: 0.4s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                التغييرات في قاعدة البيانات (Backend)
+            </h2>
+            <div class="card">
+                <h3>1. إضافة جدول `tools` جديد</h3>
+                <p>تم تعديل سكربت <code>scripts/create-tables.js</code> لإضافة جدول جديد مخصص لتخزين الأدوات. هذا الجدول هو جوهر الذاكرة الإجرائية.</p>
+                <ul>
+                    <li><code>name</code>: اسم فريد للأداة (مثل 'web_search').</li>
+                    <li><code>description</code>: وصف لما تفعله الأداة.</li>
+                    <li><code>schema_json</code>: حقل JSONB يحتوي على تعريف دقيق لمدخلات ومخرجات الأداة باستخدام JSON Schema. هذا يسمح للوكيل بفهم كيفية استخدام الأداة بشكل صحيح.</li>
+                </ul>
+                <h3>2. واجهات خلفية (API) جديدة لإدارة الأدوات</h3>
+                <p>تم إنشاء نقاط نهاية API جديدة (CRUD) للتعامل مع الأدوات:</p>
+                <ul>
+                    <li><code>GET /api/tools</code>: لجلب جميع الأدوات.</li>
+                    <li><code>POST /api/tools</code>: لإنشاء أداة جديدة.</li>
+                    <li><code>PUT /api/tools/[toolId]</code>: لتحديث أداة موجودة.</li>
+                    <li><code>DELETE /api/tools/[toolId]</code>: لحذف أداة.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section" style="animation-delay: 0.6s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                التغييرات في واجهة المستخدم (Frontend)
+            </h2>
+            <div class="card">
+                <h3>1. مركز الأدوات الجديد (Tools Hub)</h3>
+                <p>تم إنشاء مكون جديد بالكامل <code>components/ToolsHub.tsx</code>. هذه الواجهة توفر للمستخدم القدرة على:</p>
+                <ul>
+                    <li>عرض قائمة بجميع الأدوات المتاحة للوكيل.</li>
+                    <li>إضافة أدوات جديدة عن طريق تحديد اسمها ووصفها وتعريف الـ Schema الخاص بها.</li>
+                    <li>تعديل وحذف الأدوات الموجودة.</li>
+                </ul>
+                <blockquote>هذه الواجهة هي مركز التحكم في "قدرات" الوكيل. كل أداة تضيفها هنا هي مهارة جديدة يكتسبها.</blockquote>
+                 <pre class="mermaid">
+                    graph TD
+                        A[المستخدم] --> B(يفتح Tools Hub);
+                        B --> C{إضافة/تعديل أداة};
+                        C --> D[إرسال طلب إلى API];
+                        D --> E[تحديث جدول `tools`];
+                        E --> F(الوكيل يكتسب قدرة جديدة);
+                </pre>
+                <h3>2. التكامل مع واجهة التطبيق الرئيسية</h3>
+                <ul>
+                    <li>تمت إضافة أيقونة جديدة "Tools" في شريط التنقل العمودي <code>NavigationRail.tsx</code>.</li>
+                    <li>تم ربط الأيقونة بمركز الأدوات الجديد في <code>App.tsx</code>.</li>
+                    <li>تمت إضافة خيار "Tools Hub" إلى قائمة النقر بزر الماوس الأيمن.</li>
+                </ul>
+            </div>
+        </div>
+
+         <div class="section" style="animation-delay: 0.8s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                الخطوات التالية
+            </h2>
+            <div class="card">
+                <p>لقد قمنا الآن ببناء البنية التحتية الكاملة للذاكرة الإجرائية. الخطوة التالية المنطقية هي تحديث <strong>محرك الوكيل المستقل</strong> في <code>AgentCenter</code> لاستخدام هذه الأدوات. سيشمل ذلك تعديل دورة ReAct لتشمل خطوة "اختيار الأداة" و "تنفيذ الأداة" بناءً على الذاكرة التي قمنا ببنائها للتو.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>HedraCore Cognitive Architecture v3.0 - © 2025</p>
+    </footer>
+</body>
+</html>

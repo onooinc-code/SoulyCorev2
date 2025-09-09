@@ -1,0 +1,328 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulyCore | شرح مصطلح Pipeline</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+        :root {
+            --bg-color: #12101c;
+            --surface-color: #1c182c;
+            --primary-color: #a450e8;
+            --secondary-color: #00bcd4;
+            --text-color: #e0e0e0;
+            --header-color: #ffffff;
+            --border-color: #3a3252;
+            --shadow-color: rgba(164, 80, 232, 0.2);
+            --success-color: #4caf50;
+            --error-color: #f44336;
+            --font-size-base: 1rem; /* 16px */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.8;
+            direction: rtl;
+            font-size: var(--font-size-base);
+            transition: font-size 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 80px 20px;
+            background: linear-gradient(135deg, rgba(28, 24, 44, 0.9), rgba(18, 16, 28, 0.95)), url('https://www.transparenttextures.com/patterns/starring.png');
+            border-bottom: 3px solid var(--primary-color);
+            margin-bottom: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header h1 {
+            font-size: 3.8em;
+            color: var(--header-color);
+            margin: 0;
+            font-weight: 700;
+            text-shadow: 0 0 20px var(--shadow-color);
+            animation: fadeIn 1s ease-out;
+        }
+
+        header p {
+            font-size: 1.4em;
+            color: #b0a8d8;
+            margin-top: 15px;
+            animation: fadeIn 1.2s ease-out;
+        }
+        
+        .section {
+            animation: fadeIn 1s ease-out;
+            animation-fill-mode: both;
+        }
+
+        h2 {
+            font-size: 2.8em;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-top: 60px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        h3 {
+            font-size: 1.9em;
+            color: var(--secondary-color);
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: slideInRight 0.8s ease-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px var(--shadow-color);
+        }
+        
+        .icon {
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
+        }
+        
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            color: var(--primary-color);
+        }
+        
+        pre.mermaid {
+            background-color: #0d1117;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px auto;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 15px rgba(0, 189, 212, 0.1);
+        }
+        
+        blockquote {
+            background-color: rgba(0, 188, 212, 0.05);
+            border-right: 5px solid var(--secondary-color);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-style: italic;
+        }
+
+        .floating-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        .float-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .float-btn:hover {
+            background-color: #8e44ad;
+            transform: scale(1.1);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 80px;
+            padding: 30px;
+            border-top: 1px solid var(--border-color);
+            color: #888;
+        }
+        
+        .card ul {
+            padding-right: 20px;
+        }
+        .card code {
+            font-family: monospace;
+            background: #2a243e;
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #c792ea;
+        }
+    </style>
+    <script type="module">
+        try {
+            const mermaid = (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
+            mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose', fontFamily: '"Cairo", sans-serif' });
+        } catch(e) {
+            console.error("Could not load Mermaid.js", e);
+        }
+    </script>
+</head>
+<body>
+    
+    <div class="floating-buttons">
+        <button id="zoom-in" class="float-btn">+</button>
+        <button id="zoom-out" class="float-btn">-</button>
+    </div>
+
+    <header>
+        <h1 id="main-title">شرح مصطلح Pipeline في SoulyCore</h1>
+        <p id="main-subtitle">تقرير رقم 4: نظرة عميقة على محركات التشغيل المعرفية</p>
+    </header>
+
+    <div class="container">
+
+        <div class="section" style="animation-delay: 0.2s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2.25 2.25 0 003.072 0l-.548-.547a2.25 2.25 0 01.02-3.182l2.122-2.121a2.25 2.25 0 00-3.182-3.182L16.5 7.5M5.572 7.572a2.25 2.25 0 000 3.182l.547.547a2.25 2.25 0 01-3.182.02l-2.121-2.122a2.25 2.25 0 00-3.182 3.182L7.5 16.5m.518-4.471A2.25 2.25 0 0010.5 9.75h3.75a2.25 2.25 0 001.685-3.882" /></svg>
+                ما هو الـ Pipeline؟
+            </h2>
+            <div class="card">
+                <h3>تشبيه من الواقع: خط التجميع في المصنع</h3>
+                <p>أفضل طريقة لفهم مصطلح "Pipeline" في البرمجة هي تشبيهه بخط تجميع في مصنع. تدخل المواد الخام من جهة، وتمر عبر عدة محطات، كل محطة تضيف جزءًا أو تقوم بعملية معينة، وفي النهاية يخرج المنتج النهائي من الجهة الأخرى.</p>
+                <p>في عالم البرمجيات، الـ Pipeline هو نفسه تمامًا، لكن المواد الخام هي "البيانات". إنه سلسلة من خطوات المعالجة المتتالية، حيث تكون مخرجات كل خطوة هي مدخلات للخطوة التالية. الهدف هو أتمتة عملية معقدة عن طريق تقسيمها إلى مهام أصغر ومنظمة.</p>
+                <blockquote>ببساطة، الـ Pipeline هو "خط تجميع" برمجي يقوم بأتمتة المهام المعقدة، مما يضمن تنفيذها بنفس الترتيب والجودة في كل مرة.</blockquote>
+            </div>
+        </div>
+        
+        <div class="section" style="animation-delay: 0.4s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                الـ Pipelines في مشروعنا SoulyCore
+            </h2>
+            <div class="card">
+                <p>في تطبيقنا، نستخدم نوعين رئيسيين من الـ Pipelines، وهما يمثلان "مسار القراءة" و "مسار الكتابة" لذاكرة الذكاء الاصطناعي.</p>
+                
+                <h3>1. Context Assembly Pipeline (خط تجميع السياق - مسار القراءة)</h3>
+                <p><strong>الهدف:</strong> تحضير "وجبة معلومات" مركزة ومناسبة للذكاء الاصطناعي <strong>قبل</strong> أن يبدأ في التفكير لتكوين إجابته. هذا يضمن أن الإجابة ستكون دقيقة وذات صلة.</p>
+                <pre class="mermaid">
+                    graph TD
+                        A[استعلام المستخدم] --> B{Context Assembly Pipeline};
+                        B --> C[1. استعلام الذاكرة العرضية<br>(آخر المحادثات)];
+                        B --> D[2. استعلام الذاكرة الدلالية<br>(المعرفة ذات الصلة)];
+                        B --> E[3. استعلام الذاكرة المنظمة<br>(الكيانات المذكورة)];
+                        C --> F;
+                        D --> F;
+                        E --> F[4. تجميع وتنقية السياق];
+                        F --> G[تكوين الـ Prompt النهائي];
+                        G --> H((إرسال إلى نموذج الذكاء الاصطناعي));
+                </pre>
+
+                <h3>2. Memory Extraction Pipeline (خط استخلاص الذاكرة - مسار الكتابة)</h3>
+                <p><strong>الهدف:</strong> تعليم الذكاء الاصطناعي من المحادثة <strong>بعد</strong> انتهائها. هذا الـ pipeline يعمل في الخلفية ليقوم بتحليل المحادثة واستخلاص معلومات جديدة وتخزينها في الذاكرة طويلة الأمد.</p>
+                <pre class="mermaid">
+                    graph TD
+                        A[المحادثة الأخيرة<br>(سؤال المستخدم وإجابة النموذج)] --> B{Memory Extraction Pipeline};
+                        B --> C[1. استخلاص الكيانات والمعرفة بواسطة LLM];
+                        C --> D[2. تخزين الكيانات الجديدة<br>في الذاكرة المنظمة];
+                        C --> E[3. تخزين المعرفة الجديدة<br>في الذاكرة الدلالية];
+                        D --> F((تحديث الذاكرة طويلة الأمد));
+                        E --> F;
+                </pre>
+            </div>
+        </div>
+
+        <div class="section" style="animation-delay: 0.6s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8.25 8.25 0 0112 20.25a8.25 8.25 0 01-5.657-2.073m11.314-11.314a8.25 8.25 0 010 11.668M4.343 4.343a8.25 8.25 0 0111.668 0m-11.668 0L12 12" /></svg>
+                المكونات (Components) والأدوات (Tools)
+            </h2>
+            <div class="card">
+                <h3>ما هي المكونات؟</h3>
+                <p>المكونات هي <strong>الخطوات الفردية</strong> أو "المحطات" على خط التجميع (الـ Pipeline). كل مربع في الرسوم البيانية أعلاه يمثل مكونًا. على سبيل المثال، في <code>Context Assembly Pipeline</code>، المكونات هي:</p>
+                <ul>
+                    <li>مكون استعلام الذاكرة العرضية.</li>
+                    <li>مكون استعلام الذاكرة الدلالية.</li>
+                    <li>مكون تجميع السياق.</li>
+                </ul>
+
+                <h3>ما هي الأدوات؟</h3>
+                <p>الأدوات هي <strong>الخدمات أو الوحدات البرمجية</strong> التي يستخدمها كل مكون لتنفيذ مهمته. إذا كان المكون هو "الفعل"، فالأداة هي "الشيء" المستخدم لتنفيذ هذا الفعل. الأدوات الرئيسية التي تستخدمها الـ pipelines في مشروعنا هي:</p>
+                <ul>
+                    <li><code>EpisodicMemoryModule</code>: أداة للتعامل مع ذاكرة المحادثات.</li>
+                    <li><code>SemanticMemoryModule</code>: أداة للتعامل مع ذاكرة المعرفة (Pinecone).</li>
+                    <li><code>StructuredMemoryModule</code>: أداة للتعامل مع ذاكرة الكيانات (PostgreSQL).</li>
+                    <li><code>LLM Provider (Gemini)</code>: الأداة الأساسية التي تمثل نموذج الذكاء الاصطناعي نفسه، وتستخدم في خطوات مثل "استخلاص المعرفة".</li>
+                </ul>
+                <blockquote>باختصار: الـ Pipeline ينظم عمل <strong>المكونات</strong>، وكل مكون يستخدم <strong>الأدوات</strong> المناسبة لإنجاز مهمته.</blockquote>
+            </div>
+        </div>
+        
+    </div>
+
+    <footer>
+        <p>SoulyCore Cognitive Architecture v2.0 - © 2025</p>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const zoomInBtn = document.getElementById('zoom-in');
+            const zoomOutBtn = document.getElementById('zoom-out');
+            const body = document.body;
+            
+            let currentFontSize = 1; // 1rem
+
+            zoomInBtn.addEventListener('click', () => {
+                currentFontSize += 0.1;
+                body.style.setProperty('--font-size-base', `${currentFontSize}rem`);
+            });
+            
+            zoomOutBtn.addEventListener('click', () => {
+                if (currentFontSize > 0.5) { // Set a minimum size
+                    currentFontSize -= 0.1;
+                    body.style.setProperty('--font-size-base', `${currentFontSize}rem`);
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

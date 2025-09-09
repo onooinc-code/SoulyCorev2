@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HedraCore v3: مقترح نظام الوكيل المستقل (Autonomous Agent)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;700&display=swap');
+        :root {
+            --bg-color: #12101c; --surface-color: #1c182c; --primary-color: #a450e8; --secondary-color: #00bcd4; --text-color: #e0e0e0; --header-color: #ffffff; --border-color: #3a3252; --shadow-color: rgba(164, 80, 232, 0.2); --success-color: #4caf50; --error-color: #f44336; --warning-color: #ff9800; --font-size-base: 1rem;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        body { font-family: 'Cairo', sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); line-height: 1.8; direction: rtl; font-size: var(--font-size-base); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 80px 20px; background: linear-gradient(135deg, rgba(28, 24, 44, 0.9), rgba(18, 16, 28, 0.95)); border-bottom: 3px solid var(--primary-color); margin-bottom: 50px; position: relative; overflow: hidden; }
+        header h1 { font-size: 3.8em; color: var(--header-color); margin: 0; font-weight: 700; text-shadow: 0 0 20px var(--shadow-color); animation: fadeIn 1s ease-out; }
+        header p { font-size: 1.4em; color: #b0a8d8; margin-top: 15px; animation: fadeIn 1.2s ease-out; }
+        h2 { font-size: 2.8em; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-top: 60px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+        h3 { font-size: 1.9em; color: var(--secondary-color); margin-top: 40px; margin-bottom: 20px; }
+        .card { background-color: var(--surface-color); border-radius: 12px; padding: 25px 30px; margin-bottom: 25px; border: 1px solid var(--border-color); box-shadow: 0 8px 30px rgba(0,0,0,0.3); animation: fadeIn 1s ease-out; }
+        .header-icon { width: 48px; height: 48px; color: var(--primary-color); flex-shrink: 0; }
+        .arabic { font-family: 'Cairo', sans-serif; direction: rtl; }
+        .feature-table th, .feature-table td { padding: 12px 15px; }
+        .feature-table thead { background: rgba(17, 24, 39, 0.9); }
+        .mockup { border: 2px dashed var(--border-color); padding: 1rem; border-radius: 8px; background-color: rgba(0,0,0,0.2); margin-top: 1rem; }
+        code { font-family: monospace; background: #2a243e; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; color: #c792ea; direction: ltr; display: inline-block; }
+    </style>
+</head>
+<body class="arabic">
+    <header>
+        <h1 id="main-title">مقترح نظام الوكيل المستقل (Autonomous Agent)</h1>
+        <p id="main-subtitle">لتحقيق الأهداف المعقدة عبر سلسلة من المهام التفاعلية والذاتية</p>
+    </header>
+    <div class="container">
+        <div class="card">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
+                الرؤية والهدف
+            </h2>
+            <p>الهدف هو إنشاء وكيل ذكاء اصطناعي مستقل يمكنه أخذ هدف نهائي من المستخدم (مثل "ابحث عن أفضل 3 مرشحين لوظيفة مهندس برمجيات وقارن بينهم في جدول") ثم يقوم بتقسيم هذا الهدف إلى خطوات، وتنفيذ كل خطوة، وتحليل النتائج، وتحديد الخطوة التالية، حتى يصل إلى الحل النهائي. هذا يختلف عن مجرد طرح سؤال وانتظار إجابة، بل هو عملية تفاعلية وذكية ومستمرة.</p>
+            <p>يعتمد هذا النظام على نمط يُعرف بـ <strong>ReAct (Reason + Act)</strong>، حيث يقوم الوكيل بالتفكير (Reason) لتكوين خطة، ثم يتصرف (Act) بتنفيذ خطوة (مثل إرسال prompt أو استخدام أداة)، ثم يلاحظ النتيجة، ثم يعود للتفكير مرة أخرى لتحديد الخطوة التالية.</p>
+        </div>
+
+        <div class="card">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                مواصفات الواجهة الخلفية (Backend)
+            </h2>
+            <table class="min-w-full divide-y divide-gray-700/50 feature-table">
+                <thead class="bg-gray-800/50">
+                    <tr>
+                        <th scope="col" class="px-3 py-3.5 text-right text-sm font-semibold text-white">الميزة (Feature Name)</th>
+                        <th scope="col" class="px-3 py-3.5 text-right text-sm font-semibold text-white">الفئة</th>
+                        <th scope="col" class="px-3 py-3.5 text-right text-sm font-semibold text-white">الوصف والهدف</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800 bg-gray-900/30">
+                    <tr>
+                        <td class="px-3 py-4 text-sm font-medium text-white" style="direction: ltr;">Agent Execution Loop</td>
+                        <td class="px-3 py-4 text-sm text-gray-400">Core Engine</td>
+                        <td class="px-3 py-4 text-sm text-gray-300">المحرك الأساسي الذي يدير دورة (التفكير -> الفعل -> الملاحظة). هو المسؤول عن الحفاظ على حالة المهمة وتمرير المعلومات بين الخطوات.</td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-4 text-sm font-medium text-white" style="direction: ltr;">Goal Decomposition Prompt</td>
+                        <td class="px-3 py-4 text-sm text-gray-400">Prompt Engineering</td>
+                        <td class="px-3 py-4 text-sm text-gray-300">تصميم system prompt رئيسي يمكن الوكيل من تحليل الهدف النهائي وتقسيمه إلى خطوات قابلة للتنفيذ وتحديد متى اكتمل الهدف.</td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-4 text-sm font-medium text-white" style="direction: ltr;">Agent Run State Database</td>
+                        <td class="px-3 py-4 text-sm text-gray-400">Database</td>
+                        <td class="px-3 py-4 text-sm text-gray-300">جدول جديد في قاعدة البيانات <code>agent_runs</code> لتخزين حالة كل مهمة، بما في ذلك الهدف، التاريخ، كل الخطوات (prompts والردود)، والنتيجة النهائية.</td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-4 text-sm font-medium text-white" style="direction: ltr;">Agent Control API</td>
+                        <td class="px-3 py-4 text-sm text-gray-400">API</td>
+                        <td class="px-3 py-4 text-sm text-gray-300">نقاط نهاية API جديدة (<code>/api/agents/runs</code>) لبدء مهمة جديدة، والحصول على حالتها الحالية، وإرسال أوامر تحكم مثل الإيقاف.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                مواصفات واجهة المستخدم (UI/UX)
+            </h2>
+             <table class="min-w-full divide-y divide-gray-700/50 feature-table">
+                <thead class="bg-gray-800/50">
+                    <tr>
+                        <th scope="col" class="px-3 py-3.5 text-right text-sm font-semibold text-white">الميزة (Feature Name)</th>
+                        <th scope="col" class="px-3 py-3.5 text-right text-sm font-semibold text-white">الفئة</th>
+                        <th scope="col" class="px-3 py-3.5 text-right text-sm font-semibold text-white">الوصف والهدف</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800 bg-gray-900/30">
+                    <tr>
+                        <td class="px-3 py-4 text-sm font-medium text-white" style="direction: ltr;">Goal Definition Interface</td>
+                        <td class="px-3 py-4 text-sm text-gray-400">UI</td>
+                        <td class="px-3 py-4 text-sm text-gray-300">واجهة مستخدم بسيطة (يمكن أن تكون جزءًا من نافذة محادثة جديدة) حيث يقوم المستخدم بإدخال الهدف النهائي المطلوب من الوكيل.</td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-4 text-sm font-medium text-white" style="direction: ltr;">Live Execution Monitor</td>
+                        <td class="px-3 py-4 text-sm text-gray-400">UI/UX</td>
+                        <td class="px-3 py-4 text-sm text-gray-300">أهم جزء في الواجهة: شاشة عرض حية تعرض "أفكار" الوكيل، والـ prompts التي يرسلها، والنتائج التي يتلقاها في الوقت الفعلي. هذا يبني الثقة ويسمح بالمراقبة.</td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-4 text-sm font-medium text-white" style="direction: ltr;">Execution Control Buttons</td>
+                        <td class="px-3 py-4 text-sm text-gray-400">UX</td>
+                        <td class="px-3 py-4 text-sm text-gray-300">أزرار واضحة (إيقاف مؤقت، استئناف، إنهاء) للتحكم في مهمة الوكيل أثناء تشغيلها، مما يمنح المستخدم السيطرة الكاملة.</td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-4 text-sm font-medium text-white" style="direction: ltr;">Final Report View</td>
+                        <td class="px-3 py-4 text-sm text-gray-400">UI</td>
+                        <td class="px-3 py-4 text-sm text-gray-300">عرض ملخص نهائي بعد اكتمال المهمة، يوضح جميع الخطوات التي تم اتخاذها، والنتيجة النهائية، وأي أخطاء حدثت.</td>
+                    </tr>
+                </tbody>
+            </table>
+            <h3 class="arabic">نموذج مقترح لواجهة المراقبة الحية (Live Execution Monitor)</h3>
+            <div class="mockup">
+                <div class="p-4 bg-gray-800 rounded-lg">
+                    <div class="border-b border-gray-700 pb-2 mb-2">
+                        <p><strong>الهدف:</strong> ابحث عن أفضل المرشحين لوظيفة مهندس برمجيات.</p>
+                        <p><strong>الحالة:</strong> <span class="text-green-400">قيد التنفيذ... (الخطوة 2 من 5)</span></p>
+                    </div>
+                    <div class="space-y-3 text-sm" style="direction: ltr;">
+                        <p class="text-gray-400">[Step 1] ✅ Thought: I need to search for relevant CVs first. Action: search_documents('software engineer CVs').</p>
+                        <p class="text-yellow-400">[Step 2] ⏳ Thought: I have found 3 CVs. Now I need to analyze each one to extract key skills. Action: analyze_document('cv1.pdf').</p>
+                        <p class="text-gray-600">[Step 3] ⏸️ Thought: ...</p>
+                    </div>
+                    <div class="flex gap-2 justify-end mt-4">
+                        <button class="px-3 py-1 bg-yellow-600 text-xs rounded-md">إيقاف مؤقت</button>
+                        <button class="px-3 py-1 bg-red-600 text-xs rounded-md">إنهاء المهمة</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                أفكار إبداعية ومستقبلية
+            </h2>
+            <ul class="list-disc list-inside">
+                <li><strong>التصحيح الذاتي للوكيل:</strong> يكتشف الوكيل أنه ارتكب خطأ، فيقوم بمراجعة خطواته السابقة، وتصحيح خطته، والمحاولة مرة أخرى بدون تدخل بشري.</li>
+                <li><strong>الوكلاء التعاونيون:</strong> مهمة معقدة يتم تقسيمها وتوزيعها على عدة وكلاء متخصصين (وكيل بحث، وكيل كتابة كود) يعملون معًا لتحقيق الهدف.</li>
+                <li><strong>إنشاء الأدوات أثناء العمل:</strong> إذا احتاج الوكيل إلى أداة غير موجودة (مثل محول صيغ معين)، فإنه يكتب الكود الخاص بها، يختبرها، ثم يستخدمها لإكمال مهمته.</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
