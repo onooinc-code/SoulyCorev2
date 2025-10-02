@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -187,8 +188,11 @@ const TasksHub = () => {
                     <>
                         <h3 className="text-sm font-semibold text-gray-400 mb-2">Pending ({pendingTasks.length})</h3>
                         <div className="space-y-2">
+                            {/* FIX: Wrap TaskItem in a div with the key prop to resolve TypeScript error. */}
                             {pendingTasks.map(task => (
-                                <TaskItem key={task.id} task={task} onToggle={() => handleToggleStatus(task)} onEdit={() => handleOpenForm(task)} onDelete={() => handleDeleteTask(task.id)} />
+                                <div key={task.id}>
+                                    <TaskItem task={task} onToggle={() => handleToggleStatus(task)} onEdit={() => handleOpenForm(task)} onDelete={() => handleDeleteTask(task.id)} />
+                                </div>
                             ))}
                         </div>
                         
@@ -196,8 +200,11 @@ const TasksHub = () => {
                             <>
                                 <h3 className="text-sm font-semibold text-gray-400 mt-6 mb-2">Completed ({completedTasks.length})</h3>
                                 <div className="space-y-2">
+                                    {/* FIX: Wrap TaskItem in a div with the key prop to resolve TypeScript error. */}
                                     {completedTasks.map(task => (
-                                        <TaskItem key={task.id} task={task} onToggle={() => handleToggleStatus(task)} onEdit={() => handleOpenForm(task)} onDelete={() => handleDeleteTask(task.id)} />
+                                        <div key={task.id}>
+                                            <TaskItem task={task} onToggle={() => handleToggleStatus(task)} onEdit={() => handleOpenForm(task)} onDelete={() => handleDeleteTask(task.id)} />
+                                        </div>
                                     ))}
                                 </div>
                             </>

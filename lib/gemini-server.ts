@@ -1,6 +1,7 @@
 
 
-import { GoogleGenAI, Type, GenerateContentResponse, Content } from "@google/genai";
+
+import { GoogleGenAI, Type, GenerateContentResponse, Content, Tool, FunctionDeclaration } from "@google/genai";
 import { Message } from '@/lib/types';
 
 let ai: GoogleGenAI | null = null;
@@ -63,6 +64,39 @@ export const generateChatResponse = async (
         return result;
     } catch (e) {
         console.error("Chat generation failed:", e);
+        return null;
+    }
+};
+
+/**
+ * Generates content from the Gemini model with support for function calling tools.
+ * @param history The conversation history.
+ * @param systemInstruction The system instruction for the agent.
+ * @param tools The list of available tools for the model.
+ * @param config Optional model configuration.
+ * @returns The full GenerateContentResponse from the API.
+ */
+export const generateAgentContent = async (
+    history: Content[],
+    systemInstruction: string,
+    tools?: Tool[],
+    config?: { temperature?: number, topP?: number }
+): Promise<GenerateContentResponse | null> => {
+    try {
+        const client = getAiClient();
+        const result = await client.models.generateContent({
+            model: modelName,
+            contents: history,
+            config: {
+                systemInstruction: systemInstruction || "You are a helpful AI agent.",
+                temperature: config?.temperature ?? 0.7,
+                topP: config?.topP ?? 0.95,
+                ...(tools && { tools: tools }),
+            }
+        });
+        return result;
+    } catch (e) {
+        console.error("Agent content generation failed:", e);
         return null;
     }
 };
