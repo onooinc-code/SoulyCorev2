@@ -61,6 +61,7 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         setContextMenuEnabled(prev => !prev);
     }, []);
 
+
     const handleSetActiveView = useCallback((view: string) => {
         // If a chat is selected, automatically switch to the chat view
         if (view === 'chat') {

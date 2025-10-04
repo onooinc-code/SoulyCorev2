@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -25,26 +26,31 @@ interface ContextMenuProps {
     position: { x: number; y: number };
     isOpen: boolean;
     onClose: () => void;
-    quickActions?: MenuItem[];
 }
 
 const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect | null }) => {
     const menuRef = useRef<HTMLDivElement>(null);
-    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [positionStyle, setPositionStyle] = useState({});
 
     useEffect(() => {
         if (parentRect && menuRef.current) {
             const menuRect = menuRef.current.getBoundingClientRect();
-            let x = parentRect.right;
-            let y = parentRect.top;
+            let styles: React.CSSProperties = {};
 
-            if (x + menuRect.width > window.innerWidth) {
-                x = parentRect.left - menuRect.width;
+            // Position right
+            if (parentRect.right + menuRect.width > window.innerWidth) {
+                styles.right = `${window.innerWidth - parentRect.left}px`;
+            } else {
+                styles.left = `${parentRect.right}px`;
             }
-            if (y + menuRect.height > window.innerHeight) {
-                y = window.innerHeight - menuRect.height;
+
+            // Position top
+            if (parentRect.top + menuRect.height > window.innerHeight) {
+                styles.bottom = `${window.innerHeight - parentRect.bottom}px`;
+            } else {
+                styles.top = `${parentRect.top}px`;
             }
-            setPosition({ x, y });
+            setPositionStyle(styles);
         }
     }, [parentRect]);
     
@@ -55,7 +61,7 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.95, x: -10 }}
             transition={{ duration: 0.1 }}
-            style={{ top: position.y, left: position.x }}
+            style={positionStyle}
             className="fixed w-60 bg-gray-800/80 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl z-[101] p-1.5"
         >
             {items.map((item, index) => {
@@ -67,6 +73,7 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
                      <button
                         key={item.label}
                         disabled={item.disabled}
+                        onClick={item.action}
                         className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {Icon && <Icon className="w-4 h-4" />}
@@ -99,7 +106,7 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
             }
         };
         
-        if (isOpen && menuRef.current) {
+        if (isOpen) {
             // Defer adjustment until menu is rendered to get correct dimensions
             requestAnimationFrame(() => {
                 if (!menuRef.current) return;
@@ -126,6 +133,7 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside, true);
             document.removeEventListener('keydown', handleKeyDown, true);
+            clearTimeout(subMenuTimer.current);
         };
     }, [isOpen, onClose, position]);
     
@@ -135,13 +143,24 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
             subMenuTimer.current = window.setTimeout(() => {
                 setActiveSubMenu(item.label);
                 setActiveSubMenuRect(e.currentTarget.getBoundingClientRect());
-            }, 100);
+            }, 150);
         } else {
              subMenuTimer.current = window.setTimeout(() => {
                 setActiveSubMenu(null);
-             }, 200);
+             }, 300);
         }
     };
+
+    const handleMouseLeave = () => {
+        clearTimeout(subMenuTimer.current);
+        subMenuTimer.current = window.setTimeout(() => {
+            setActiveSubMenu(null);
+        }, 300);
+    };
+
+    const handleSubMenuEnter = () => {
+        clearTimeout(subMenuTimer.current);
+    }
     
     return (
         <AnimatePresence>
@@ -155,10 +174,8 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                     transition={{ duration: 0.1 }}
                     style={{ top: adjustedPosition.y, left: adjustedPosition.x }}
                     className="fixed w-64 bg-gray-800/80 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl z-[100] p-1.5"
-                    onMouseLeave={() => {
-                        clearTimeout(subMenuTimer.current);
-                        subMenuTimer.current = window.setTimeout(() => setActiveSubMenu(null), 300);
-                    }}
+                    onMouseLeave={handleMouseLeave}
+                    onMouseEnter={handleSubMenuEnter}
                 >
                     {items.map((item, index) => {
                         if (item.isSeparator) {
@@ -187,11 +204,28 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                     })}
                 </motion.div>
                 
-                <AnimatePresence>
-                    {activeSubMenu && items.find(i => i.label === activeSubMenu)?.children && (
-                        <SubMenu items={items.find(i => i.label === activeSubMenu)!.children!} parentRect={activeSubMenuRect} />
-                    )}
-                </AnimatePresence>
+                <div onMouseEnter={handleSubMenuEnter} onMouseLeave={handleMouseLeave}>
+                    <AnimatePresence>
+                        {activeSubMenu && items.find(i => i.label === activeSubMenu)?.children && (
+                            <SubMenu 
+                                // FIX: Correctly handled MenuItem types in the sub-menu's `map` function to prevent adding an `action` prop to separator items, which resolved a TypeScript error. Separators are now returned as-is, preserving the discriminated union's integrity.
+                                items={items.find(i => i.label === activeSubMenu)!.children!.map(child => {
+                                    if (child.isSeparator) {
+                                        return child;
+                                    }
+                                    return {
+                                        ...child,
+                                        action: () => {
+                                            if (child.action) child.action();
+                                            onClose();
+                                        }
+                                    };
+                                })} 
+                                parentRect={activeSubMenuRect} 
+                            />
+                        )}
+                    </AnimatePresence>
+                </div>
                 </>
             )}
         </AnimatePresence>

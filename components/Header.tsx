@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -160,7 +161,7 @@ const Header = () => {
             <div className="flex items-center justify-between w-full max-w-4xl mx-auto gap-4">
                 {!isConversationPanelOpen && (
                     <div className="flex-shrink-0">
-                        {/* FIX: Passed the SidebarLeftIcon component as a child to satisfy the required 'children' prop on ToolbarButton. */}
+                        {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
                         <ToolbarButton onClick={() => setConversationPanelOpen(true)} title="Show Sidebar" color="gray">
                             <SidebarLeftIcon className="w-5 h-5 transform rotate-180" />
                         </ToolbarButton>
@@ -200,30 +201,30 @@ const Header = () => {
                     <div className="w-px h-6 bg-gray-600 mx-1"></div>
                     {currentConversation && (
                         <>
-                            {/* FIX: Passed the SparklesIcon component as a child to satisfy the required 'children' prop on ToolbarButton. */}
+                            {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
                             <ToolbarButton onClick={handleGenerateTitle} title="Generate new title with AI" color="purple">
                                 <SparklesIcon className="w-5 h-5" />
                             </ToolbarButton>
-                            {/* FIX: Passed the EditIcon component as a child to satisfy the required 'children' prop on ToolbarButton. */}
+                            {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
                             <ToolbarButton onClick={handleEdit} title="Rename conversation" color="blue">
                                 <EditIcon className="w-5 h-5" />
                             </ToolbarButton>
-                            {/* FIX: Passed the TrashIcon component as a child to satisfy the required 'children' prop on ToolbarButton. */}
+                            {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
                             <ToolbarButton onClick={handleDelete} title="Delete conversation" color="red">
                                 <TrashIcon className="w-5 h-5" />
                             </ToolbarButton>
                             <div className="w-px h-6 bg-gray-600 mx-1"></div>
                         </>
                     )}
-                    {/* FIX: Passed the MinusIcon component as a child to satisfy the required 'children' prop on ToolbarButton. */}
+                    {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
                     <ToolbarButton onClick={() => changeFontSize('decrease')} title="Decrease font size" color="gray">
                         <MinusIcon className="w-5 h-5" />
                     </ToolbarButton>
-                    {/* FIX: Passed the PlusIcon component as a child to satisfy the required 'children' prop on ToolbarButton. */}
+                    {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
                     <ToolbarButton onClick={() => changeFontSize('increase')} title="Increase font size" color="gray">
                         <PlusIcon className="w-5 h-5" />
                     </ToolbarButton>
-                    {/* FIX: Passed the LogIcon component as a child to satisfy the required 'children' prop on ToolbarButton. */}
+                    {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
                     <ToolbarButton onClick={() => setLogPanelOpen(prev => !prev)} title="Toggle Log Panel" color="cyan">
                         <LogIcon className="w-5 h-5" />
                     </ToolbarButton>

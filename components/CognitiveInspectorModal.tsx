@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -9,6 +10,11 @@ interface CognitiveInspectorModalProps {
     isOpen: boolean;
     onClose: () => void;
     messageId: string | null;
+}
+
+interface InspectionData {
+    pipelineRun: PipelineRun;
+    pipelineSteps: PipelineRunStep[];
 }
 
 const PipelineStep = ({ step }: { step: PipelineRunStep }) => (
@@ -68,7 +74,7 @@ const PipelineStep = ({ step }: { step: PipelineRunStep }) => (
 );
 
 const CognitiveInspectorModal = ({ isOpen, onClose, messageId }: CognitiveInspectorModalProps) => {
-    const [inspectionData, setInspectionData] = useState<{ pipelineRun: PipelineRun; pipelineSteps: PipelineRunStep[] } | null>(null);
+    const [inspectionData, setInspectionData] = useState<InspectionData | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
