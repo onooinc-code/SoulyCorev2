@@ -1,10 +1,8 @@
-
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XIcon } from './Icons';
+import { XIcon, InfoIcon } from './Icons';
 import type { PipelineRun, PipelineRunStep } from '@/lib/types';
 
 interface CognitiveInspectorModalProps {
@@ -103,6 +101,21 @@ const CognitiveInspectorModal = ({ isOpen, onClose, messageId }: CognitiveInspec
         if (!inspectionData) return <p className="text-gray-500 text-center">No data to display.</p>;
         
         const { pipelineRun, pipelineSteps } = inspectionData;
+
+        if (pipelineRun.status === 'not_found') {
+            return (
+                <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 p-8 bg-gray-900/50 rounded-lg border-2 border-dashed border-gray-700">
+                    <InfoIcon className="w-12 h-12 text-indigo-400 mb-4" />
+                    <h3 className="text-xl font-bold text-gray-200 mb-2">No Cognitive Data Available</h3>
+                    <p className="max-w-md mb-4">No detailed cognitive process was logged for this message. This is expected for:</p>
+                    <ul className="text-sm text-left list-disc list-inside space-y-1">
+                        <li>Messages created before the logging system was implemented.</li>
+                        <li>Responses generated via the "Regenerate" function.</li>
+                        <li>Messages where the background cognitive task is still in progress.</li>
+                    </ul>
+                </div>
+            );
+        }
 
         return (
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
