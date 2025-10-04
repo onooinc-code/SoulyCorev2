@@ -4,8 +4,6 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import ServicesPanel from './ServicesPanel';
 import LogsPanel from './LogsPanel';
-// FIX: Removed BellIcon import as it is not an exported member.
-import { BellIcon } from '../Icons';
 
 type Tab = 'services' | 'logs';
 

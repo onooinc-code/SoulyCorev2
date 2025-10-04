@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -26,8 +27,11 @@ const ServicesPanel = () => {
         <div className="space-y-6">
             <StatsRow services={mockDataSources} />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {/* FIX: Wrapped the iterated ServiceCard component in a div with the key prop to resolve a TypeScript error where the key was being passed down as a prop. */}
                 {mockDataSources.map(service => (
-                    <ServiceCard key={service.id} service={service} />
+                    <div key={service.id}>
+                        <ServiceCard service={service} />
+                    </div>
                 ))}
             </div>
         </div>
