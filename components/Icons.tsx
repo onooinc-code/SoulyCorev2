@@ -14,6 +14,10 @@ export * from './icons/PowerIcon';
 export * from './icons/ScissorsIcon';
 export * from './icons/DevicePhoneMobileIcon';
 export * from './icons/EyeSlashIcon';
+export * from './icons/CircleStackIcon';
+export * from './icons/WrenchScrewdriverIcon';
+export * from './icons/CommandLineIcon';
+export * from './icons/CloudIcon';
 
 // Existing icons
 export * from './icons/ArrowDownOnSquareIcon';

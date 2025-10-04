@@ -390,6 +390,20 @@ async function createTables() {
         `;
         console.log("Table 'tasks' created or already exists.", tasksTable.command);
 
+        const dataSourcesTable = await sql`
+            CREATE TABLE IF NOT EXISTS data_sources (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                name VARCHAR(255) NOT NULL,
+                provider VARCHAR(255) NOT NULL,
+                type VARCHAR(50) NOT NULL, -- 'vector', 'relational_db', 'document_db', 'blob', 'cache', 'other'
+                status VARCHAR(50) NOT NULL DEFAULT 'disconnected', -- 'connected', 'disconnected', 'error', 'needs_config'
+                config_json JSONB,
+                "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                "lastUpdatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+        console.log("Table 'data_sources' created or already exists.", dataSourcesTable.command);
+
 
         // Insert default settings if they don't exist
         await sql`

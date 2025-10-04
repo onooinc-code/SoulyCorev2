@@ -1,4 +1,3 @@
-
 import { Role } from './app';
 
 export interface Conversation {
@@ -304,6 +303,24 @@ export interface Task {
     status: 'pending' | 'completed';
     due_date: Date | null;
     completed_at: Date | null;
+    createdAt: Date;
+    lastUpdatedAt: Date;
+}
+
+export type DataSourceType = 'vector' | 'relational_db' | 'document_db' | 'blob' | 'cache' | 'key_value' | 'graph' | 'object_storage' | 'file_system';
+export type DataSourceStatus = 'connected' | 'disconnected' | 'error' | 'needs_config' | 'full' | 'unsupported' | 'unstable';
+
+export interface DataSource {
+    id: string;
+    name: string;
+    provider: string; // e.g., 'Vercel', 'Pinecone', 'Upstash', 'Self-Hosted'
+    type: DataSourceType;
+    status: DataSourceStatus;
+    stats: {
+        label: string;
+        value: string | number;
+    }[];
+    config_json?: Record<string, any>;
     createdAt: Date;
     lastUpdatedAt: Date;
 }

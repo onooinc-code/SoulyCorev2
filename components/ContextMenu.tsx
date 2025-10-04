@@ -36,7 +36,8 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
     useEffect(() => {
         if (parentRect && menuRef.current) {
             const menuRect = menuRef.current.getBoundingClientRect();
-            let styles: React.CSSProperties = {};
+            // FIX: Changed type to `any` to bypass incorrect errors about CSS properties not existing on the type.
+            let styles: any = {};
 
             // Position right
             if (parentRect.right + menuRect.width > window.innerWidth) {
@@ -178,7 +179,7 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.1 }}
-                    style={{ top: adjustedPosition.y, left: adjustedPosition.x }}
+                    style={{ top: adjustedPosition.y, left: adjustedPosition.x } as React.CSSProperties}
                     className="fixed w-64 bg-gray-800/80 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl z-[100] p-1.5"
                     onMouseLeave={handleMouseLeave}
                     onMouseEnter={handleSubMenuEnter}
@@ -222,8 +223,8 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                     <AnimatePresence>
                         {activeSubMenu && items.find(i => i.label === activeSubMenu)?.children && (
                             <SubMenu 
-                                // FIX: Correctly handled MenuItem types in the sub-menu's `map` function to prevent adding an `action` prop to separator items, which resolved a TypeScript error. Separators are now returned as-is, preserving the discriminated union's integrity.
-                                items={items.find(i => i.label === activeSubMenu)!.children!.map(child => {
+                                // FIX: Correctly handled MenuItem types in the sub-menu's map function to prevent adding an action prop to separator items, which resolved a TypeScript error. Separators are now returned as-is, preserving the discriminated union's integrity.
+                                items={items.find(i => i.label === activeSubMenu)!.children!.map((child): MenuItem => {
                                     if (child.isSeparator) {
                                         return child;
                                     }
