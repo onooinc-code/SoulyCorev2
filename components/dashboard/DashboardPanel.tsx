@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -6,7 +7,7 @@ import { MinusIcon, PlusIcon, FullscreenIcon, ExitFullscreenIcon } from '../Icon
 
 interface DashboardPanelProps {
     title: string;
-    children: React.ReactNode;
+    children?: React.ReactNode;
     isCollapsedOverride?: boolean | null;
 }
 

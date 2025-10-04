@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useEffect } from 'react';
@@ -54,7 +53,7 @@ const NavigationRail = ({ setBookmarksOpen, setGlobalSettingsOpen }: {
         { viewName: 'prompts_hub', label: 'Prompts Hub', icon: PromptsIcon, tooltip: "Create and manage reusable prompt templates." },
         { viewName: 'tools_hub', label: 'Tools Hub', icon: ToolsIcon, tooltip: "Manage agent tools and capabilities." },
         { viewName: 'tasks_hub', label: 'Tasks Hub', icon: TasksIcon, tooltip: "Manage your tasks and to-do lists." },
-        { viewName: 'data_grid', label: 'Data Grid', icon: CircleStackIcon, tooltip: "Manage all data sources and storage." },
+        { viewName: 'data_hub', label: 'Data Hub', icon: CircleStackIcon, tooltip: "Manage all data sources and storage." },
         { viewName: 'dev_center', label: 'Dev Center', icon: CodeIcon, tooltip: "Access developer tools and project documentation." },
     ];
 

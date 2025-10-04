@@ -1,9 +1,10 @@
+
 import React from 'react';
 
 interface ToolbarButtonProps {
     onClick: React.MouseEventHandler<HTMLButtonElement>;
     title: string;
-    children: React.ReactNode;
+    children?: React.ReactNode;
     color: string;
     disabled?: boolean;
 }

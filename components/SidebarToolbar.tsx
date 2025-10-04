@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React from 'react';
@@ -14,7 +13,7 @@ const SidebarToolbar = ({ isMinimized }: { isMinimized: boolean }) => {
         toggleMobileView,
         isZenMode,
         toggleZenMode,
-        setDataGridWidgetOpen
+        setDataHubWidgetOpen
     } = useUIState();
 
     const buttonClass = "w-full flex items-center gap-2 p-2 rounded-md text-sm transition-colors";
@@ -22,14 +21,14 @@ const SidebarToolbar = ({ isMinimized }: { isMinimized: boolean }) => {
     return (
         <div className={`p-2 mt-auto border-t border-gray-700/50 ${isMinimized ? 'flex flex-col items-center gap-2' : 'space-y-1'}`}>
             <button
-                onClick={() => setDataGridWidgetOpen(true)}
-                title="Open Data Grid Status Widget"
+                onClick={() => setDataHubWidgetOpen(true)}
+                title="Open Data Hub Status Widget"
                 className={`${buttonClass} text-gray-300 hover:bg-gray-700`}
             >
                 <CircleStackIcon className="w-5 h-5 flex-shrink-0" />
                 {!isMinimized && (
                     <span className="flex-1 text-left">
-                        Data Grid Status
+                        Data Hub Status
                     </span>
                 )}
             </button>

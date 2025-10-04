@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -30,13 +29,11 @@ interface ContextMenuProps {
 
 const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect | null }) => {
     const menuRef = useRef<HTMLDivElement>(null);
-    // FIX: Explicitly type useState to React.CSSProperties to avoid errors on assignment.
     const [positionStyle, setPositionStyle] = useState<React.CSSProperties>({});
 
     useEffect(() => {
         if (parentRect && menuRef.current) {
             const menuRect = menuRef.current.getBoundingClientRect();
-            // FIX: Changed type to `any` to bypass incorrect errors about CSS properties not existing on the type.
             let styles: any = {};
 
             // Position right
@@ -94,7 +91,6 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
     const [activeSubMenuRect, setActiveSubMenuRect] = useState<DOMRect | null>(null);
     
-    // FIX: Correctly type useRef for timeout IDs.
     const subMenuTimer = useRef<number | undefined>();
 
     useEffect(() => {
@@ -136,13 +132,11 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside, true);
             document.removeEventListener('keydown', handleKeyDown, true);
-            // FIX: Use window.clearTimeout to avoid ambiguity with NodeJS types.
             window.clearTimeout(subMenuTimer.current);
         };
     }, [isOpen, onClose, position]);
     
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>, item: MenuItem) => {
-        // FIX: Use window.clearTimeout to avoid ambiguity with NodeJS types.
         window.clearTimeout(subMenuTimer.current);
         if (item.children) {
             subMenuTimer.current = window.setTimeout(() => {
@@ -157,7 +151,6 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     };
 
     const handleMouseLeave = () => {
-        // FIX: Use window.clearTimeout to avoid ambiguity with NodeJS types.
         window.clearTimeout(subMenuTimer.current);
         subMenuTimer.current = window.setTimeout(() => {
             setActiveSubMenu(null);
@@ -165,7 +158,6 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     };
 
     const handleSubMenuEnter = () => {
-        // FIX: Use window.clearTimeout to avoid ambiguity with NodeJS types and to resolve "Expected 1 arguments, but got 0" error.
         window.clearTimeout(subMenuTimer.current);
     }
     
@@ -223,17 +215,21 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                     <AnimatePresence>
                         {activeSubMenu && items.find(i => i.label === activeSubMenu)?.children && (
                             <SubMenu 
-                                // FIX: Correctly handled MenuItem types in the sub-menu's map function to prevent adding an action prop to separator items, which resolved a TypeScript error. Separators are now returned as-is, preserving the discriminated union's integrity.
                                 items={items.find(i => i.label === activeSubMenu)!.children!.map((child): MenuItem => {
+// FIX: Replaced spread operator with explicit property assignment to avoid TypeScript errors when mapping over a discriminated union type.
+// This ensures that an 'action' property is not incorrectly merged with a separator-type menu item.
                                     if (child.isSeparator) {
                                         return child;
                                     }
                                     return {
-                                        ...child,
+                                        label: child.label,
                                         action: () => {
                                             if (child.action) child.action();
                                             onClose();
-                                        }
+                                        },
+                                        icon: child.icon,
+                                        disabled: child.disabled,
+                                        children: child.children,
                                     };
                                 })} 
                                 parentRect={activeSubMenuRect} 

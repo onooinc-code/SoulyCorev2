@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState } from 'react';
@@ -39,32 +38,26 @@ const DashboardCenter = () => {
             <main className="flex-1 p-4 overflow-y-auto space-y-4">
                 <HeaderPanel />
                 
-                {/* FIX: Moved HedraGoalsPanel inside the DashboardPanel as a child to satisfy the `children` prop requirement. */}
                 <DashboardPanel title="Hedra Strategic Goals" isCollapsedOverride={allPanelsCollapsed}>
                     <HedraGoalsPanel />
                 </DashboardPanel>
                 
-                {/* FIX: Moved StatsPanel inside the DashboardPanel as a child to satisfy the `children` prop requirement. */}
                 <DashboardPanel title="System Statistics" isCollapsedOverride={allPanelsCollapsed}>
                     <StatsPanel />
                 </DashboardPanel>
 
-                {/* FIX: Moved DocumentationPanel inside the DashboardPanel as a child to satisfy the `children` prop requirement. */}
                 <DashboardPanel title="Project Documentations" isCollapsedOverride={allPanelsCollapsed}>
                     <DocumentationPanel />
                 </DashboardPanel>
 
-                {/* FIX: Moved ActionsPanel inside the DashboardPanel as a child to satisfy the `children` prop requirement. */}
                 <DashboardPanel title="Action Center" isCollapsedOverride={allPanelsCollapsed}>
                     <ActionsPanel />
                 </DashboardPanel>
 
-                {/* FIX: Moved DecisionsPanel inside the DashboardPanel as a child to satisfy the `children` prop requirement. */}
                 <DashboardPanel title="Needed Decisions" isCollapsedOverride={allPanelsCollapsed}>
                     <DecisionsPanel />
                 </DashboardPanel>
 
-                {/* FIX: Moved ReportsPanel inside the DashboardPanel as a child to satisfy the `children` prop requirement. */}
                 <DashboardPanel title="Important Reports" isCollapsedOverride={allPanelsCollapsed}>
                     <ReportsPanel />
                 </DashboardPanel>

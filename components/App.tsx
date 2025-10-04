@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -57,12 +56,12 @@ const TasksHub = dynamic(() => import('@/components/TasksHub'), {
     loading: () => <div className="w-full h-full flex items-center justify-center"><p>Loading Tasks Hub...</p></div>
 });
 
-const DataGridCenter = dynamic(() => import('@/components/data_grid/DataGridCenter'), {
+const DataHubCenter = dynamic(() => import('@/components/data_hub/DataHubCenter'), {
     ssr: false,
-    loading: () => <div className="w-full h-full flex items-center justify-center"><p>Loading Data Grid...</p></div>
+    loading: () => <div className="w-full h-full flex items-center justify-center"><p>Loading Data Hub...</p></div>
 });
 
-const DataGridWidget = dynamic(() => import('@/components/data_grid/DataGridWidget'), {
+const DataHubWidget = dynamic(() => import('@/components/data_hub/DataHubWidget'), {
     ssr: false,
     loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><p className="text-white">Loading...</p></div>
 });
@@ -109,8 +108,8 @@ export const App = () => {
         isContextMenuEnabled,
         isMobileView,
         isZenMode,
-        isDataGridWidgetOpen,
-        setDataGridWidgetOpen,
+        isDataHubWidgetOpen,
+        setDataHubWidgetOpen,
     } = useUIState();
 
     const [isGlobalSettingsOpen, setGlobalSettingsOpen] = useState(false);
@@ -163,7 +162,7 @@ export const App = () => {
                 { label: 'Prompts Hub', icon: PromptsIcon, action: () => setActiveView('prompts_hub') },
                 { label: 'Tools Hub', icon: ToolsIcon, action: () => setActiveView('tools_hub') },
                 { label: 'Tasks Hub', icon: TasksIcon, action: () => setActiveView('tasks_hub') },
-                { label: 'Data Grid', icon: CircleStackIcon, action: () => setActiveView('data_grid') },
+                { label: 'Data Hub', icon: CircleStackIcon, action: () => setActiveView('data_hub') },
             ]},
             { label: 'Developer', icon: CodeIcon, children: [
                 { label: 'Dashboard Center', icon: DashboardIcon, action: () => setActiveView('dashboard') },
@@ -199,7 +198,7 @@ export const App = () => {
             case 'tools_hub': return <ToolsHub />;
             case 'tasks_hub': return <TasksHub />;
             case 'dev_center': return <DevCenter />;
-            case 'data_grid': return <DataGridCenter />;
+            case 'data_hub': return <DataHubCenter />;
             case 'chat':
             default:
                 return <ChatWindow />;
@@ -244,7 +243,7 @@ export const App = () => {
                 {isBookmarksOpen && <BookmarksModal isOpen={isBookmarksOpen} setIsOpen={setBookmarksOpen} />}
                 {isShortcutsModalOpen && <ShortcutsModal isOpen={isShortcutsModalOpen} onClose={() => setShortcutsModalOpen(false)} />}
                 {isAddKnowledgeModalOpen && <AddKnowledgeModal isOpen={isAddKnowledgeModalOpen} onClose={() => setAddKnowledgeModalOpen(false)} />}
-                {isDataGridWidgetOpen && <DataGridWidget isOpen={isDataGridWidgetOpen} onClose={() => setDataGridWidgetOpen(false)} />}
+                {isDataHubWidgetOpen && <DataHubWidget isOpen={isDataHubWidgetOpen} onClose={() => setDataHubWidgetOpen(false)} />}
                 
                 <ContextMenu
                     isOpen={contextMenu.isOpen}

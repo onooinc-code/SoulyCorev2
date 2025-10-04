@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -22,8 +21,8 @@ interface UIStateContextType {
     toggleMobileView: () => void;
     isZenMode: boolean;
     toggleZenMode: () => void;
-    isDataGridWidgetOpen: boolean;
-    setDataGridWidgetOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isDataHubWidgetOpen: boolean;
+    setDataHubWidgetOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -37,7 +36,7 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [isContextMenuEnabled, setContextMenuEnabled] = useState(true);
     const [isMobileView, setIsMobileView] = useState(false);
     const [isZenMode, setZenMode] = useState(false);
-    const [isDataGridWidgetOpen, setDataGridWidgetOpen] = useState(false);
+    const [isDataHubWidgetOpen, setDataHubWidgetOpen] = useState(false);
 
     useEffect(() => {
         const savedFontSize = localStorage.getItem('app-font-size');
@@ -129,8 +128,8 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         toggleMobileView,
         isZenMode,
         toggleZenMode,
-        isDataGridWidgetOpen,
-        setDataGridWidgetOpen,
+        isDataHubWidgetOpen,
+        setDataHubWidgetOpen,
     };
 
     return (
