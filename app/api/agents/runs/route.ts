@@ -123,7 +123,7 @@ Your task is to use the available tools to achieve this phase's goal.
 
                 } else {
                     // The model provided a final answer for the phase
-                    const finalAnswerForPhase = agentResponse.text;
+                    const finalAnswerForPhase = agentResponse.text || '';
                     phaseResults.push(finalAnswerForPhase);
 
                     // c. LOG the final step for this phase
