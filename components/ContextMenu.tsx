@@ -30,7 +30,8 @@ interface ContextMenuProps {
 
 const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect | null }) => {
     const menuRef = useRef<HTMLDivElement>(null);
-    const [positionStyle, setPositionStyle] = useState({});
+    // FIX: Explicitly type useState to React.CSSProperties to avoid errors on assignment.
+    const [positionStyle, setPositionStyle] = useState<React.CSSProperties>({});
 
     useEffect(() => {
         if (parentRect && menuRef.current) {
@@ -92,7 +93,8 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
     const [activeSubMenuRect, setActiveSubMenuRect] = useState<DOMRect | null>(null);
     
-    const subMenuTimer = useRef<number>();
+    // FIX: Correctly type useRef for timeout IDs.
+    const subMenuTimer = useRef<number | undefined>();
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -133,12 +135,14 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside, true);
             document.removeEventListener('keydown', handleKeyDown, true);
-            clearTimeout(subMenuTimer.current);
+            // FIX: Use window.clearTimeout to avoid ambiguity with NodeJS types.
+            window.clearTimeout(subMenuTimer.current);
         };
     }, [isOpen, onClose, position]);
     
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>, item: MenuItem) => {
-        clearTimeout(subMenuTimer.current);
+        // FIX: Use window.clearTimeout to avoid ambiguity with NodeJS types.
+        window.clearTimeout(subMenuTimer.current);
         if (item.children) {
             subMenuTimer.current = window.setTimeout(() => {
                 setActiveSubMenu(item.label);
@@ -152,14 +156,16 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     };
 
     const handleMouseLeave = () => {
-        clearTimeout(subMenuTimer.current);
+        // FIX: Use window.clearTimeout to avoid ambiguity with NodeJS types.
+        window.clearTimeout(subMenuTimer.current);
         subMenuTimer.current = window.setTimeout(() => {
             setActiveSubMenu(null);
         }, 300);
     };
 
     const handleSubMenuEnter = () => {
-        clearTimeout(subMenuTimer.current);
+        // FIX: Use window.clearTimeout to avoid ambiguity with NodeJS types and to resolve "Expected 1 arguments, but got 0" error.
+        window.clearTimeout(subMenuTimer.current);
     }
     
     return (
