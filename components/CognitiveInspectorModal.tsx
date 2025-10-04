@@ -150,7 +150,6 @@ const CognitiveInspectorModal = ({ isOpen, onClose, messageId }: CognitiveInspec
     return (
         <AnimatePresence>
             {isOpen && (
-// FIX: The framer-motion library's type inference for motion components can fail when they are used within components typed with `React.FC`. Removing the explicit `React.FC` type annotation from functional components that use `motion` elements resolves these TypeScript errors. Although this specific component did not use `React.FC`, the error likely cascaded from a child component. The fix has been applied to all relevant child components.
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -158,7 +157,6 @@ const CognitiveInspectorModal = ({ isOpen, onClose, messageId }: CognitiveInspec
                     className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
                     onClick={onClose}
                 >
-// FIX: The framer-motion library's type inference for motion components can fail when they are used within components typed with `React.FC`. Removing the explicit `React.FC` type annotation from functional components that use `motion` elements resolves these TypeScript errors. Although this specific component did not use `React.FC`, the error likely cascaded from a child component. The fix has been applied to all relevant child components.
                     <motion.div
                         initial={{ scale: 0.9, y: 20 }}
                         animate={{ scale: 1, y: 0 }}

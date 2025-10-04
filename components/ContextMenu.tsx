@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -73,7 +72,6 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     return (
         <AnimatePresence>
             {isOpen && (
-// FIX: The framer-motion library's type inference for motion components can fail when they are used within components typed with `React.FC`. Removing the explicit `React.FC` type annotation resolves this TypeScript error.
                 <motion.div
                     ref={menuRef}
                     initial={{ opacity: 0, scale: 0.95 }}

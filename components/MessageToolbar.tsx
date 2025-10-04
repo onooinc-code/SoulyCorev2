@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -84,7 +82,6 @@ const MessageToolbar = ({
                 </button>
                 <AnimatePresence>
                     {isMenuOpen && (
-// FIX: The framer-motion library's type inference for motion components can fail when they are used within components typed with `React.FC`. Removing the explicit `React.FC` type annotation from functional components that use `motion` elements resolves these TypeScript errors. Although this specific component did not use `React.FC`, the error likely cascaded from a child component. The fix has been applied to all relevant child components.
                         <motion.div
                             ref={menuRef}
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}

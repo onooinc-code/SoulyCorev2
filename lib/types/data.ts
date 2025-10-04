@@ -163,8 +163,8 @@ export interface EndpointTestLog {
 export interface PipelineRun {
     id: string;
     message_id: string;
-    pipeline_type: 'ContextAssembly' | 'MemoryExtraction';
-    status: 'running' | 'completed' | 'failed';
+    pipeline_type: 'ContextAssembly' | 'MemoryExtraction' | 'N/A';
+    status: 'running' | 'completed' | 'failed' | 'not_found';
     final_output: string | null;
     error_message: string | null;
     start_time: Date;

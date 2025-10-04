@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -173,7 +171,6 @@ const BrainManagementTab = () => {
 
             <AnimatePresence>
                 {isFormOpen && (
-// FIX: The framer-motion library's type inference for motion components can fail when they are used within components typed with `React.FC`. Removing the explicit `React.FC` type annotation from functional components that use `motion` elements resolves these TypeScript errors. Although this specific component did not use `React.FC`, the error likely cascaded from a child component. The fix has been applied to all relevant child components.
                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden flex-shrink-0">
                         {renderForm()}
                     </motion.div>
