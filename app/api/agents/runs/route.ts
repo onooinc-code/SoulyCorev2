@@ -103,7 +103,13 @@ Your task is to use the available tools to achieve this phase's goal.
                 // b. ACT: Check if the model chose to use a tool or provide a final answer
                 if (agentResponse.functionCalls && agentResponse.functionCalls.length > 0) {
                     const toolCall = agentResponse.functionCalls[0];
-                    const observation = executeTool(toolCall);
+                    
+                    // FIX: Add a guard to ensure toolCall.name is defined before proceeding.
+                    if (!toolCall.name) {
+                        throw new Error("Agent response contained a tool call with no name.");
+                    }
+                    
+                    const observation = executeTool({ name: toolCall.name, args: toolCall.args });
                     
                     // c. LOG the tool step
                     await sql<AgentRunStep>`
