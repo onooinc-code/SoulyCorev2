@@ -11,4 +11,113 @@
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideInRight { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
-        body { font-family: 'Cairo', sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); line-height: 1.8; direction: rtl; font-size:
+        body { font-family: 'Cairo', sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); line-height: 1.8; direction: rtl; font-size: var(--font-size-base); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 80px 20px; background: linear-gradient(135deg, rgba(28, 24, 44, 0.9), rgba(18, 16, 28, 0.95)); border-bottom: 3px solid var(--primary-color); margin-bottom: 50px; position: relative; overflow: hidden; }
+        header h1 { font-size: 3.8em; color: var(--header-color); margin: 0; font-weight: 700; text-shadow: 0 0 20px var(--shadow-color); animation: fadeIn 1s ease-out; }
+        header p { font-size: 1.4em; color: #b0a8d8; margin-top: 15px; animation: fadeIn 1.2s ease-out; }
+        .section { animation: fadeIn 1s ease-out; animation-fill-mode: both; }
+        h2 { font-size: 2.8em; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-top: 60px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+        h3 { font-size: 1.9em; color: var(--secondary-color); margin-top: 40px; margin-bottom: 20px; }
+        .card { background-color: var(--surface-color); border-radius: 12px; padding: 25px 30px; margin-bottom: 25px; border: 1px solid var(--border-color); box-shadow: 0 8px 30px rgba(0,0,0,0.3); animation: slideInRight 0.8s ease-out; }
+        .header-icon { width: 48px; height: 48px; color: var(--primary-color); flex-shrink: 0; }
+        pre.mermaid { background-color: #0d1117; padding: 20px; border-radius: 8px; margin: 25px auto; text-align: center; border: 1px solid var(--border-color); box-shadow: 0 0 15px rgba(0, 189, 212, 0.1); }
+        blockquote { background-color: rgba(255, 152, 0, 0.1); border-right: 5px solid var(--warning-color); padding: 15px 20px; margin: 20px 0; border-radius: 8px; font-weight: 600; }
+        .card ul { padding-right: 20px; }
+        .card code { font-family: monospace; background: #2a243e; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; color: #c792ea; direction: ltr; display: inline-block; }
+        footer { text-align: center; margin-top: 80px; padding: 30px; border-top: 1px solid var(--border-color); color: #888; }
+    </style>
+    <script type="module">
+        try {
+            const mermaid = (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
+            mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose', fontFamily: '"Cairo", sans-serif' });
+        } catch(e) { console.error("Could not load Mermaid.js", e); }
+    </script>
+</head>
+<body class="arabic">
+    <header>
+        <h1 id="main-title">تقرير شامل عن مركز البيانات (Data Hub)</h1>
+        <p id="main-subtitle">تقرير رقم 6: تحليل معماري، توضيح التسمية، وتحديث وثائق المشروع</p>
+    </header>
+
+    <div class="container">
+        <div class="section" style="animation-delay: 0.2s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                ملخص تنفيذي
+            </h2>
+            <div class="card">
+                <p>بناءً على طلبك لمراجعة الوثائق وتقديم تقرير عن "datagrid hub"، قمت بتحليل شامل لبنية المشروع والوثائق المتاحة. اتضح أن الميزة التي تشير إليها تُعرف في الكود الفعلي باسم <strong>"Data Hub"</strong> وموجودة في المسار <code>components/data_hub</code>. يقدم هذا التقرير شرحًا تفصيليًا لهذه الميزة.</p>
+                <p>بالإضافة إلى ذلك، لاحظت أن وثائق المشروع كانت مجزأة عبر عدة ملفات. لتحسين الوضوح وتسهيل العمليات المستقبلية، قمت بإجراء <strong>إصلاح شامل للتوثيق</strong>، حيث تم تحويل ملف <code>README.md</code> الرئيسي إلى فهرس مركزي وموثوق للمشروع بأكمله، يجمع المعلومات الأساسية من جميع المصادر الأخرى.</p>
+            </div>
+        </div>
+        
+        <div class="section" style="animation-delay: 0.4s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                توضيح التسمية: <code>data_grid</code> مقابل <code>data_hub</code>
+            </h2>
+            <div class="card">
+                <h3>أيهما الصحيح؟</h3>
+                <p>من خلال مراجعة الكود، تأكدت من أن الميزة المنفذة بالكامل هي <strong>Data Hub</strong>. المجلد <code>components/data_grid</code> موجود ولكنه فارغ تمامًا، مما يشير إلى أنه كان اسمًا مبدئيًا أو فكرة تم التخلي عنها.</p>
+                <blockquote>الاسم الصحيح والمستخدم في التطبيق هو <strong>Data Hub</strong>. يهدف هذا المركز إلى أن يكون لوحة تحكم شاملة لجميع مصادر البيانات والخدمات المتصلة بالنظام، وليس مجرد "شبكة بيانات" (Data Grid).</blockquote>
+                <p>بناءً على هذا، يبدو أن مجلد <code>data_grid</code> هو مجلد مهمل ويمكن حذفه في المستقبل كجزء من عمليات تنظيف الكود لتقليل الفوضى في المشروع.</p>
+            </div>
+        </div>
+
+        <div class="section" style="animation-delay: 0.6s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2.25 2.25 0 003.072 0l-.548-.547a2.25 2.25 0 01.02-3.182l2.122-2.121a2.25 2.25 0 00-3.182-3.182L16.5 7.5M5.572 7.572a2.25 2.25 0 000 3.182l.547.547a2.25 2.25 0 01-3.182.02l-2.121-2.122a2.25 2.25 0 00-3.182 3.182L7.5 16.5m.518-4.471A2.25 2.25 0 0010.5 9.75h3.75a2.25 2.25 0 001.685-3.882" /></svg>
+                تحليل معماري لـ Data Hub
+            </h2>
+            <div class="card">
+                <h3>المكونات الرئيسية</h3>
+                <p>يتكون مركز البيانات من عدة مكونات تعمل معًا لتوفير واجهة متكاملة:</p>
+                <pre class="mermaid" dir="ltr">
+                    graph TD
+                        A[DataHubCenter.tsx] --> B{Tab Navigation};
+                        B --> C[ServicesPanel.tsx];
+                        B --> D[LogsPanel.tsx];
+                        C --> E[StatsRow.tsx];
+                        C --> F[ServiceCard.tsx];
+                        
+                        subgraph Sidebar
+                            G[SidebarToolbar.tsx] --> H(DataHubWidget.tsx);
+                        end
+
+                        style A fill:#a450e8,stroke:#333,stroke-width:2px,color:#fff
+                        style B fill:#1c182c,stroke:#a450e8,stroke-width:2px
+                        style G fill:#00bcd4,stroke:#333,stroke-width:2px,color:#fff
+                </pre>
+                <ul>
+                    <li><code>DataHubCenter.tsx</code>: المكون الرئيسي الذي يعمل كحاوية لمركز البيانات بأكمله وينظم التنقل بين التبويبات.</li>
+                    <li><code>ServicesPanel.tsx</code>: التبويب الرئيسي الذي يعرض جميع خدمات البيانات المتصلة على شكل شبكة من البطاقات.</li>
+                    <li><code>ServiceCard.tsx</code>: بطاقة فردية تمثل خدمة بيانات واحدة (مثل Vercel Postgres أو Pinecone)، وتعرض حالتها وإحصائياتها الأساسية.</li>
+                    <li><code>StatsRow.tsx</code>: شريط إحصائيات في أعلى اللوحة يلخص الحالة العامة لجميع الخدمات (كم عدد المتصل، المنقطع، إلخ).</li>
+                    <li><code>LogsPanel.tsx</code>: تبويب مخصص لعرض السجلات (logs) المجمعة من جميع مصادر البيانات (حاليًا هو مجرد placeholder).</li>
+                    <li><code>DataHubWidget.tsx</code>: واجهة مصغرة (widget) يمكن الوصول إليها من الشريط الجانبي الرئيسي، توفر نظرة سريعة على حالة جميع الخدمات دون الحاجة لفتح المركز بالكامل.</li>
+                </ul>
+            </div>
+        </div>
+
+         <div class="section" style="animation-delay: 0.8s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                ملخص التغييرات الإضافية
+            </h2>
+             <div class="card">
+                <h3>تحسين وثائق المشروع</h3>
+                <p>لتحسين وضوح المشروع وتجنب الالتباس في المستقبل، قمت بالتغييرات التالية على الوثائق:</p>
+                <ul>
+                    <li><strong><code>README.md</code>:</strong> تم تحويله بالكامل ليصبح الفهرس الرئيسي للمشروع. يحتوي الآن على شرح مفصل لبنية المجلدات، سير عمل التطوير، والرؤية العامة للمشروع، مما يجعله نقطة البداية لأي مطور.</li>
+                    <li><strong><code>DOCUMENTATION.md</code>:</strong> تم تحديثه ليصبح مجرد مؤشر يشير إلى ملف <code>README.md</code> الجديد، مما يقلل من تكرار المعلومات.</li>
+                    <li><strong>هذا التقرير:</strong> تم إنشاء هذا الملف (<code>Docs/Res/ResponseTemplate-6.html</code>) لتوثيق هذا التحليل والتغييرات التي تم إجراؤها.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <p>SoulyCore Cognitive Architecture v3.0 - © 2025</p>
+    </footer>
+</body>
+</html>
