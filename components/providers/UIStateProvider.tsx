@@ -15,6 +15,8 @@ interface UIStateContextType {
     isLogPanelOpen: boolean;
     setLogPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
     changeFontSize: (direction: 'increase' | 'decrease') => void;
+    isContextMenuEnabled: boolean;
+    toggleContextMenu: () => void;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -25,6 +27,7 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [isConversationPanelMinimized, setIsConversationPanelMinimized] = useState(false);
     const [isLogPanelOpen, setLogPanelOpen] = useState(false);
     const [fontSize, setFontSize] = useState('base');
+    const [isContextMenuEnabled, setContextMenuEnabled] = useState(true);
 
     useEffect(() => {
         const savedFontSize = localStorage.getItem('app-font-size');
@@ -54,6 +57,10 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         });
     }, []);
 
+    const toggleContextMenu = useCallback(() => {
+        setContextMenuEnabled(prev => !prev);
+    }, []);
+
     const handleSetActiveView = useCallback((view: string) => {
         // If a chat is selected, automatically switch to the chat view
         if (view === 'chat') {
@@ -74,6 +81,8 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         isLogPanelOpen,
         setLogPanelOpen,
         changeFontSize,
+        isContextMenuEnabled,
+        toggleContextMenu,
     };
 
     return (

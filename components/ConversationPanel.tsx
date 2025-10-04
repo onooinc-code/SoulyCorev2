@@ -8,6 +8,7 @@ import { PlusIcon, SparklesIcon, EditIcon, TrashIcon, SearchIcon, XIcon, Sidebar
 import { useLog } from './providers/LogProvider';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { Conversation } from '@/lib/types';
+import SidebarToolbar from './SidebarToolbar';
 
 // Helper function to format relative dates
 const getRelativeTime = (date: Date): string => {
@@ -209,6 +210,7 @@ const ConversationPanel = ({ isMinimized }: ConversationPanelProps) => {
                 ))}
                 </AnimatePresence>
             </div>
+            <SidebarToolbar isMinimized={isMinimized} />
         </div>
     );
 };

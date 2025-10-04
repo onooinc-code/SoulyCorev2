@@ -1,23 +1,11 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import ChatWindow from '@/components/ChatWindow';
 import MorningBriefing from '@/components/MorningBriefing';
-import { 
-    XIcon, MemoryIcon, PlusIcon, TrashIcon, SparklesIcon,
-    SidebarLeftIcon, LogIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon,
-    FullscreenIcon, ExitFullscreenIcon, ClearIcon, KnowledgeIcon,
-    KeyboardIcon,
-    PromptsIcon,
-    RefreshIcon,
-    MinusIcon,
-    BrainIcon,
-    DashboardIcon,
-    RocketLaunchIcon,
-    ToolsIcon,
-    TasksIcon,
-} from '@/components/Icons';
+import { XIcon, MemoryIcon, PlusIcon, TrashIcon, SparklesIcon, SidebarLeftIcon, LogIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon, FullscreenIcon, ExitFullscreenIcon, ClearIcon, KnowledgeIcon, KeyboardIcon, PromptsIcon, RefreshIcon, MinusIcon, BrainIcon, DashboardIcon, RocketLaunchIcon, ToolsIcon, TasksIcon, CopyIcon, ScissorsIcon, ClipboardPasteIcon } from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
@@ -107,6 +95,7 @@ export const App = () => {
         changeFontSize,
         activeView,
         setActiveView,
+        isContextMenuEnabled,
     } = useUIState();
 
     const [isGlobalSettingsOpen, setGlobalSettingsOpen] = useState(false);
@@ -123,8 +112,17 @@ export const App = () => {
 
     const handleContextMenu = (event: React.MouseEvent) => {
         event.preventDefault();
+        if (!isContextMenuEnabled) return;
+
+        const selection = window.getSelection()?.toString() || '';
+        const hasSelection = selection.length > 0;
 
         const menuItems: MenuItem[] = [
+            // Clipboard Actions
+            { label: 'Copy', icon: CopyIcon, action: () => document.execCommand('copy'), disabled: !hasSelection },
+            { label: 'Cut', icon: ScissorsIcon, action: () => document.execCommand('cut'), disabled: !hasSelection },
+            { label: 'Paste', icon: ClipboardPasteIcon, action: () => document.execCommand('paste') },
+            { isSeparator: true },
             // Main Actions (Ungrouped)
             { label: 'New Chat', icon: PlusIcon, action: createNewConversation, disabled: !createNewConversation },
             { label: 'Clear Messages', icon: ClearIcon, action: () => currentConversation && clearMessages(currentConversation.id), disabled: !currentConversation },
