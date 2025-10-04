@@ -161,7 +161,7 @@ const Header = () => {
             <div className="flex items-center justify-between w-full max-w-4xl mx-auto gap-4">
                 {!isConversationPanelOpen && (
                     <div className="flex-shrink-0">
-                        {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
+                        {/* FIX: The ToolbarButton component requires a child element for its icon, but was being self-closed. This adds the required SidebarLeftIcon as a child. */}
                         <ToolbarButton onClick={() => setConversationPanelOpen(true)} title="Show Sidebar" color="gray">
                             <SidebarLeftIcon className="w-5 h-5 transform rotate-180" />
                         </ToolbarButton>
@@ -201,30 +201,30 @@ const Header = () => {
                     <div className="w-px h-6 bg-gray-600 mx-1"></div>
                     {currentConversation && (
                         <>
-                            {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
+                            {/* FIX: The ToolbarButton component requires a child element for its icon, but was being self-closed. This adds the required SparklesIcon as a child. */}
                             <ToolbarButton onClick={handleGenerateTitle} title="Generate new title with AI" color="purple">
                                 <SparklesIcon className="w-5 h-5" />
                             </ToolbarButton>
-                            {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
+                            {/* FIX: The ToolbarButton component requires a child element for its icon, but was being self-closed. This adds the required EditIcon as a child. */}
                             <ToolbarButton onClick={handleEdit} title="Rename conversation" color="blue">
                                 <EditIcon className="w-5 h-5" />
                             </ToolbarButton>
-                            {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
+                            {/* FIX: The ToolbarButton component requires a child element for its icon, but was being self-closed. This adds the required TrashIcon as a child. */}
                             <ToolbarButton onClick={handleDelete} title="Delete conversation" color="red">
                                 <TrashIcon className="w-5 h-5" />
                             </ToolbarButton>
                             <div className="w-px h-6 bg-gray-600 mx-1"></div>
                         </>
                     )}
-                    {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
+                    {/* FIX: The ToolbarButton component requires a child element for its icon, but was being self-closed. This adds the required MinusIcon as a child. */}
                     <ToolbarButton onClick={() => changeFontSize('decrease')} title="Decrease font size" color="gray">
                         <MinusIcon className="w-5 h-5" />
                     </ToolbarButton>
-                    {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
+                    {/* FIX: The ToolbarButton component requires a child element for its icon, but was being self-closed. This adds the required PlusIcon as a child. */}
                     <ToolbarButton onClick={() => changeFontSize('increase')} title="Increase font size" color="gray">
                         <PlusIcon className="w-5 h-5" />
                     </ToolbarButton>
-                    {/* FIX: The ToolbarButton component requires a child element, but was self-closed. Added the required icon as a child. */}
+                    {/* FIX: The ToolbarButton component requires a child element for its icon, but was being self-closed. This adds the required LogIcon as a child. */}
                     <ToolbarButton onClick={() => setLogPanelOpen(prev => !prev)} title="Toggle Log Panel" color="cyan">
                         <LogIcon className="w-5 h-5" />
                     </ToolbarButton>

@@ -11,6 +11,8 @@ import React from 'react';
 export * from './icons/ClipboardPasteIcon';
 export * from './icons/PowerIcon';
 export * from './icons/ScissorsIcon';
+export * from './icons/DevicePhoneMobileIcon';
+export * from './icons/EyeSlashIcon';
 
 // Existing icons
 export * from './icons/ArrowDownOnSquareIcon';

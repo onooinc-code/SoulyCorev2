@@ -187,9 +187,17 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                             <button
                                 key={item.label}
                                 onMouseEnter={(e) => handleMouseEnter(e, item)}
-                                onClick={() => {
-                                    if (item.action) item.action();
-                                    onClose();
+                                onClick={(e) => {
+                                    if (item.children) {
+                                        // On click/tap, toggle the submenu. This is for mobile/touch support.
+                                        e.stopPropagation();
+                                        setActiveSubMenu(prev => prev === item.label ? null : item.label);
+                                        setActiveSubMenuRect(e.currentTarget.getBoundingClientRect());
+                                    } else if (item.action) {
+                                        // If it's a direct action, execute it and close the menu.
+                                        item.action();
+                                        onClose();
+                                    }
                                 }}
                                 disabled={item.disabled}
                                 className="w-full flex items-center justify-between text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"

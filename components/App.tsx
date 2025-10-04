@@ -95,6 +95,8 @@ export const App = () => {
         activeView,
         setActiveView,
         isContextMenuEnabled,
+        isMobileView,
+        isZenMode
     } = useUIState();
 
     const [isGlobalSettingsOpen, setGlobalSettingsOpen] = useState(false);
@@ -192,11 +194,15 @@ export const App = () => {
         <div onContextMenu={handleContextMenu} className="font-sans">
             <MorningBriefing />
             <UniversalProgressIndicator />
-            <main className="flex h-screen w-screen overflow-hidden bg-gray-900 text-gray-100">
-                <NavigationRail 
-                    setBookmarksOpen={setBookmarksOpen}
-                    setGlobalSettingsOpen={setGlobalSettingsOpen}
-                />
+             <main className={`flex h-screen w-screen overflow-hidden bg-gray-900 text-gray-100 transition-all duration-300 ease-in-out ${isMobileView ? 'max-w-md mx-auto my-4 shadow-2xl rounded-2xl border-2 border-gray-700' : ''}`}>
+                <AnimatePresence>
+                    {!isZenMode && (
+                        <NavigationRail 
+                            setBookmarksOpen={setBookmarksOpen}
+                            setGlobalSettingsOpen={setGlobalSettingsOpen}
+                        />
+                    )}
+                </AnimatePresence>
                 <AnimatePresence>
                     {isConversationPanelOpen && (
                         <motion.div

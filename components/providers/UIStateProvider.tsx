@@ -17,6 +17,10 @@ interface UIStateContextType {
     changeFontSize: (direction: 'increase' | 'decrease') => void;
     isContextMenuEnabled: boolean;
     toggleContextMenu: () => void;
+    isMobileView: boolean;
+    toggleMobileView: () => void;
+    isZenMode: boolean;
+    toggleZenMode: () => void;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -28,6 +32,8 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [isLogPanelOpen, setLogPanelOpen] = useState(false);
     const [fontSize, setFontSize] = useState('base');
     const [isContextMenuEnabled, setContextMenuEnabled] = useState(true);
+    const [isMobileView, setIsMobileView] = useState(false);
+    const [isZenMode, setZenMode] = useState(false);
 
     useEffect(() => {
         const savedFontSize = localStorage.getItem('app-font-size');
@@ -61,6 +67,37 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         setContextMenuEnabled(prev => !prev);
     }, []);
 
+    const toggleMobileView = useCallback(() => {
+        setIsMobileView(prev => !prev);
+    }, []);
+
+    const handleSetConversationPanelOpen = useCallback((value: React.SetStateAction<boolean>) => {
+        const newValue = typeof value === 'function' ? value(isConversationPanelOpen) : value;
+        if (newValue) {
+            setZenMode(false); // Deactivate Zen Mode if a panel is opened
+        }
+        setConversationPanelOpen(newValue);
+    }, [isConversationPanelOpen]);
+
+    const handleSetLogPanelOpen = useCallback((value: React.SetStateAction<boolean>) => {
+        const newValue = typeof value === 'function' ? value(isLogPanelOpen) : value;
+        if (newValue) {
+            setZenMode(false); // Deactivate Zen Mode if a panel is opened
+        }
+        setLogPanelOpen(newValue);
+    }, [isLogPanelOpen]);
+
+    const toggleZenMode = useCallback(() => {
+        setZenMode(prev => {
+            const newZenMode = !prev;
+            if (newZenMode) {
+                // When activating Zen Mode, hide all panels
+                setConversationPanelOpen(false);
+                setLogPanelOpen(false);
+            }
+            return newZenMode;
+        });
+    }, []);
 
     const handleSetActiveView = useCallback((view: string) => {
         // If a chat is selected, automatically switch to the chat view
@@ -76,14 +113,18 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         activeView,
         setActiveView: handleSetActiveView,
         isConversationPanelOpen,
-        setConversationPanelOpen,
+        setConversationPanelOpen: handleSetConversationPanelOpen,
         isConversationPanelMinimized,
         setIsConversationPanelMinimized,
         isLogPanelOpen,
-        setLogPanelOpen,
+        setLogPanelOpen: handleSetLogPanelOpen,
         changeFontSize,
         isContextMenuEnabled,
         toggleContextMenu,
+        isMobileView,
+        toggleMobileView,
+        isZenMode,
+        toggleZenMode,
     };
 
     return (
