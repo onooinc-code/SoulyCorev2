@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -118,38 +117,45 @@ export const App = () => {
         const hasSelection = selection.length > 0;
 
         const menuItems: MenuItem[] = [
-            // Clipboard Actions
-            { label: 'Copy', icon: CopyIcon, action: () => document.execCommand('copy'), disabled: !hasSelection },
-            { label: 'Cut', icon: ScissorsIcon, action: () => document.execCommand('cut'), disabled: !hasSelection },
-            { label: 'Paste', icon: ClipboardPasteIcon, action: () => document.execCommand('paste') },
-            { isSeparator: true },
-            // Main Actions (Ungrouped)
             { label: 'New Chat', icon: PlusIcon, action: createNewConversation, disabled: !createNewConversation },
-            { label: 'Clear Messages', icon: ClearIcon, action: () => currentConversation && clearMessages(currentConversation.id), disabled: !currentConversation },
-            { label: 'Delete Conversation', icon: TrashIcon, action: () => alert("Not implemented"), disabled: !currentConversation },
             { isSeparator: true },
-            // View Group
-            { label: 'Toggle Conversations', icon: SidebarLeftIcon, action: () => setConversationPanelOpen(prev => !prev) },
-            { label: 'Minimize Conversations', icon: SidebarLeftIcon, action: () => setIsConversationPanelMinimized(prev => !prev) },
-            { label: 'Toggle Log Panel', icon: LogIcon, action: () => setLogPanelOpen(prev => !prev) },
-            { label: 'Increase Font Size', icon: PlusIcon, action: () => changeFontSize('increase') },
-            { label: 'Decrease Font Size', icon: MinusIcon, action: () => changeFontSize('decrease') },
+            { label: 'Clipboard', icon: ClipboardPasteIcon, children: [
+                { label: 'Copy', icon: CopyIcon, action: () => document.execCommand('copy'), disabled: !hasSelection },
+                { label: 'Cut', icon: ScissorsIcon, action: () => document.execCommand('cut'), disabled: !hasSelection },
+                { label: 'Paste', icon: ClipboardPasteIcon, action: () => navigator.clipboard.readText().then(text => {
+                    const target = event.target as HTMLElement;
+                    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+                        (target as HTMLInputElement | HTMLTextAreaElement).value += text;
+                    }
+                })},
+            ]},
+            { label: 'Conversation', icon: SidebarLeftIcon, children: [
+                 { label: 'Clear Messages', icon: ClearIcon, action: () => currentConversation && clearMessages(currentConversation.id), disabled: !currentConversation },
+                 { label: 'Delete Conversation', icon: TrashIcon, action: () => alert("Not implemented"), disabled: !currentConversation },
+            ]},
+             { label: 'View', icon: SettingsIcon, children: [
+                { label: 'Toggle Conversations', icon: SidebarLeftIcon, action: () => setConversationPanelOpen(prev => !prev) },
+                { label: 'Minimize Conversations', icon: MinusIcon, action: () => setIsConversationPanelMinimized(prev => !prev) },
+                { label: 'Toggle Log Panel', icon: LogIcon, action: () => setLogPanelOpen(prev => !prev) },
+                { label: 'Increase Font Size', icon: PlusIcon, action: () => changeFontSize('increase') },
+                { label: 'Decrease Font Size', icon: MinusIcon, action: () => changeFontSize('decrease') },
+            ]},
             { isSeparator: true },
-             // Memory & Hubs Group
+            { label: 'Hubs', icon: DashboardIcon, children: [
+                { label: 'Memory Center', icon: MemoryIcon, action: () => setActiveView('memory_center') },
+                { label: 'Contacts Hub', icon: UsersIcon, action: () => setActiveView('contacts_hub') },
+                { label: 'Prompts Hub', icon: PromptsIcon, action: () => setActiveView('prompts_hub') },
+                { label: 'Tools Hub', icon: ToolsIcon, action: () => setActiveView('tools_hub') },
+                { label: 'Tasks Hub', icon: TasksIcon, action: () => setActiveView('tasks_hub') },
+            ]},
+            { label: 'Developer', icon: CodeIcon, children: [
+                { label: 'Dashboard Center', icon: DashboardIcon, action: () => setActiveView('dashboard') },
+                { label: 'Agent Center', icon: RocketLaunchIcon, action: () => setActiveView('agent_center') },
+                { label: 'Brain Center', icon: BrainIcon, action: () => setActiveView('brain_center') },
+                { label: 'Dev Center', icon: CodeIcon, action: () => setActiveView('dev_center') },
+            ]},
+            { isSeparator: true },
             { label: 'Add Knowledge Snippet', icon: KnowledgeIcon, action: () => setAddKnowledgeModalOpen(true) },
-            { label: 'Memory Center', icon: MemoryIcon, action: () => setActiveView('memory_center') },
-            { label: 'Contacts Hub', icon: UsersIcon, action: () => setActiveView('contacts_hub') },
-            { label: 'Prompts Hub', icon: PromptsIcon, action: () => setActiveView('prompts_hub') },
-            { label: 'Tools Hub', icon: ToolsIcon, action: () => setActiveView('tools_hub') },
-            { label: 'Tasks Hub', icon: TasksIcon, action: () => setActiveView('tasks_hub') },
-            { isSeparator: true },
-            // Development Group
-            { label: 'Dashboard Center', icon: DashboardIcon, action: () => setActiveView('dashboard') },
-            { label: 'Agent Center', icon: RocketLaunchIcon, action: () => setActiveView('agent_center') },
-            { label: 'Brain Center', icon: BrainIcon, action: () => setActiveView('brain_center') },
-            { label: 'Dev Center', icon: CodeIcon, action: () => setActiveView('dev_center') },
-            { isSeparator: true },
-            // Application Group
             { label: 'Keyboard Shortcuts', icon: KeyboardIcon, action: () => setShortcutsModalOpen(true) },
         ];
         

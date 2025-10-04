@@ -38,29 +38,29 @@ const DashboardCenter = () => {
             <main className="flex-1 p-4 overflow-y-auto space-y-4">
                 <HeaderPanel />
                 
-                {/* Fix: Passed the HedraGoalsPanel component as a child to satisfy the required 'children' prop on DashboardPanel. */}
+                {/* FIX: Passed the HedraGoalsPanel component as a child to satisfy the required 'children' prop on DashboardPanel. */}
                 <DashboardPanel title="Hedra Strategic Goals" isCollapsedOverride={allPanelsCollapsed}>
                     <HedraGoalsPanel />
                 </DashboardPanel>
                 
-                {/* Fix: Passed the StatsPanel component as a child to satisfy the required 'children' prop on DashboardPanel. */}
+                {/* FIX: Passed the StatsPanel component as a child to satisfy the required 'children' prop on DashboardPanel. */}
                 <DashboardPanel title="System Statistics" isCollapsedOverride={allPanelsCollapsed}>
                     <StatsPanel />
                 </DashboardPanel>
 
-                {/* Fix: Passed the DocumentationPanel component as a child to satisfy the required 'children' prop on DashboardPanel. */}
+                {/* FIX: Passed the DocumentationPanel component as a child to satisfy the required 'children' prop on DashboardPanel. */}
                 <DashboardPanel title="Project Documentations" isCollapsedOverride={allPanelsCollapsed}>
                     <DocumentationPanel />
                 </DashboardPanel>
-                {/* Fix: Passed the ActionsPanel component as a child to satisfy the required 'children' prop on DashboardPanel. */}
+                {/* FIX: Passed the ActionsPanel component as a child to satisfy the required 'children' prop on DashboardPanel. */}
                 <DashboardPanel title="Action Center" isCollapsedOverride={allPanelsCollapsed}>
                     <ActionsPanel />
                 </DashboardPanel>
-                {/* Fix: Passed the DecisionsPanel component as a child to satisfy the required 'children' prop on DashboardPanel. */}
+                {/* FIX: Passed the DecisionsPanel component as a child to satisfy the required 'children' prop on DashboardPanel. */}
                 <DashboardPanel title="Needed Decisions" isCollapsedOverride={allPanelsCollapsed}>
                     <DecisionsPanel />
                 </DashboardPanel>
-                {/* Fix: Passed the ReportsPanel component as a child to satisfy the required 'children' prop on DashboardPanel. */}
+                {/* FIX: Passed the ReportsPanel component as a child to satisfy the required 'children' prop on DashboardPanel. */}
                 <DashboardPanel title="Important Reports" isCollapsedOverride={allPanelsCollapsed}>
                     <ReportsPanel />
                 </DashboardPanel>
