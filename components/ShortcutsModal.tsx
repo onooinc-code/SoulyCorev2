@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React from 'react';
@@ -12,8 +11,9 @@ interface ShortcutsModalProps {
 }
 
 const shortcuts = [
+    { key: 'Cmd/Ctrl + K', description: 'Open Command Palette' },
     { key: 'Cmd/Ctrl + N', description: 'Create a new chat' },
-    { key: 'Cmd/Ctrl + K', description: 'Open Memory Center' },
+    { key: 'Cmd/Ctrl + M', description: 'Open Memory Center' },
     { key: 'Enter', description: 'Send message (in chat input)' },
     { key: 'Shift + Enter', description: 'Add a new line (in chat input)' },
     { key: 'Escape', description: 'Close modals or context menu' },

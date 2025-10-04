@@ -1,0 +1,53 @@
+
+import {
+    PlusIcon, MemoryIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon,
+    LogIcon, BrainIcon, DashboardIcon, PromptsIcon, RocketLaunchIcon, ToolsIcon, TasksIcon,
+    CircleStackIcon
+} from '@/components/Icons';
+// FIX: IconType was not exported from @/components/Icons. Defined it here locally.
+// Also imported Dispatch and SetStateAction for the ActionFunctions interface.
+import type { SVGProps, Dispatch, SetStateAction } from 'react';
+
+export type IconType = React.FC<SVGProps<SVGSVGElement>>;
+
+export interface Action {
+    id: string;
+    name: string;
+    keywords?: string[];
+    group: string;
+    icon: IconType;
+    action: () => void;
+}
+
+interface ActionFunctions {
+    createNewConversation: () => void;
+    setActiveView: (view: string) => void;
+    // FIX: Changed types to support functional updates (e.g., prev => !prev)
+    setBookmarksOpen: Dispatch<SetStateAction<boolean>>;
+    setGlobalSettingsOpen: Dispatch<SetStateAction<boolean>>;
+    setLogPanelOpen: Dispatch<SetStateAction<boolean>>;
+}
+
+export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
+    // Navigation
+    { id: 'new-chat', name: 'New Chat', keywords: ['conversation', 'new'], group: 'Navigation', icon: PlusIcon, action: fns.createNewConversation },
+    { id: 'go-dashboard', name: 'Go to Dashboard', keywords: ['home', 'main'], group: 'Navigation', icon: DashboardIcon, action: () => fns.setActiveView('dashboard') },
+    
+    // Hubs
+    { id: 'open-memory', name: 'Open Memory Center', keywords: ['knowledge', 'entities', 'structured'], group: 'Hubs', icon: MemoryIcon, action: () => fns.setActiveView('memory_center') },
+    { id: 'open-contacts', name: 'Open Contacts Hub', keywords: ['people', 'users'], group: 'Hubs', icon: UsersIcon, action: () => fns.setActiveView('contacts_hub') },
+    { id: 'open-prompts', name: 'Open Prompts Hub', keywords: ['templates', 'workflows'], group: 'Hubs', icon: PromptsIcon, action: () => fns.setActiveView('prompts_hub') },
+    { id: 'open-tools', name: 'Open Tools Hub', keywords: ['capabilities', 'functions'], group: 'Hubs', icon: ToolsIcon, action: () => fns.setActiveView('tools_hub') },
+    { id: 'open-tasks', name: 'Open Tasks Hub', keywords: ['todo', 'list'], group: 'Hubs', icon: TasksIcon, action: () => fns.setActiveView('tasks_hub') },
+    { id: 'open-data', name: 'Open Data Hub', keywords: ['database', 'storage', 'services'], group: 'Hubs', icon: CircleStackIcon, action: () => fns.setActiveView('data_hub') },
+
+    // Developer Hubs
+    { id: 'open-agent', name: 'Open Agent Center', keywords: ['autonomous', 'runs'], group: 'Developer', icon: RocketLaunchIcon, action: () => fns.setActiveView('agent_center') },
+    { id: 'open-brain', name: 'Open Brain Center', keywords: ['cognitive', 'architecture'], group: 'Developer', icon: BrainIcon, action: () => fns.setActiveView('brain_center') },
+    { id: 'open-dev', name: 'Open Dev Center', keywords: ['developer', 'api'], group: 'Developer', icon: CodeIcon, action: () => fns.setActiveView('dev_center') },
+
+    // Modals & Panels
+    { id: 'open-bookmarks', name: 'Open Bookmarks', keywords: ['saved', 'messages'], group: 'Modals', icon: BookmarkListIcon, action: () => fns.setBookmarksOpen(true) },
+    { id: 'open-settings', name: 'Open Global Settings', keywords: ['configuration', 'options'], group: 'Modals', icon: SettingsIcon, action: () => fns.setGlobalSettingsOpen(true) },
+    { id: 'toggle-log', name: 'Toggle Log Panel', keywords: ['developer', 'output', 'console'], group: 'Panels', icon: LogIcon, action: () => fns.setLogPanelOpen(prev => !prev) },
+];

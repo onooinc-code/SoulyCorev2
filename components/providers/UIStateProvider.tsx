@@ -22,6 +22,8 @@ interface UIStateContextType {
     toggleZenMode: () => void;
     isDataHubWidgetOpen: boolean;
     setDataHubWidgetOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isCommandPaletteOpen: boolean;
+    setCommandPaletteOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -36,6 +38,7 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [isMobileView, setIsMobileView] = useState(false);
     const [isZenMode, setZenMode] = useState(false);
     const [isDataHubWidgetOpen, setDataHubWidgetOpen] = useState(false);
+    const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
     useEffect(() => {
         const savedFontSize = localStorage.getItem('app-font-size');
@@ -129,6 +132,8 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         toggleZenMode,
         isDataHubWidgetOpen,
         setDataHubWidgetOpen,
+        isCommandPaletteOpen,
+        setCommandPaletteOpen,
     };
 
     return (

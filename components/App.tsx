@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -16,6 +15,7 @@ import ContextMenu, { MenuItem } from './ContextMenu';
 import UniversalProgressIndicator from './UniversalProgressIndicator';
 import NavigationRail from './NavigationRail';
 import ConversationPanel from './ConversationPanel';
+import { getActionsRegistry } from '@/lib/actionsRegistry';
 
 const ContactsHub = dynamic(() => import('@/components/ContactsHub'), {
   ssr: false,
@@ -88,6 +88,9 @@ const AddKnowledgeModal = dynamic(() => import('@/components/AddKnowledgeModal')
     ssr: false,
     loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><p className="text-white">Loading...</p></div>
 });
+const CommandPalette = dynamic(() => import('@/components/CommandPalette'), {
+    ssr: false,
+});
 
 
 export const App = () => {
@@ -111,6 +114,8 @@ export const App = () => {
         isZenMode,
         isDataHubWidgetOpen,
         setDataHubWidgetOpen,
+        isCommandPaletteOpen,
+        setCommandPaletteOpen,
     } = useUIState();
 
     const [isGlobalSettingsOpen, setGlobalSettingsOpen] = useState(false);
@@ -185,7 +190,16 @@ export const App = () => {
 
     useKeyboardShortcuts({
         'mod+n': createNewConversation,
-        'mod+k': () => setActiveView('memory_center'),
+        'mod+k': () => setCommandPaletteOpen(true),
+        'mod+m': () => setActiveView('memory_center'),
+    });
+
+    const actions = getActionsRegistry({
+        createNewConversation,
+        setActiveView,
+        setBookmarksOpen,
+        setGlobalSettingsOpen,
+        setLogPanelOpen,
     });
     
     const renderActiveView = () => {
@@ -245,6 +259,12 @@ export const App = () => {
                 {isShortcutsModalOpen && <ShortcutsModal isOpen={isShortcutsModalOpen} onClose={() => setShortcutsModalOpen(false)} />}
                 {isAddKnowledgeModalOpen && <AddKnowledgeModal isOpen={isAddKnowledgeModalOpen} onClose={() => setAddKnowledgeModalOpen(false)} />}
                 {isDataHubWidgetOpen && <DataHubWidget isOpen={isDataHubWidgetOpen} onClose={() => setDataHubWidgetOpen(false)} />}
+                
+                <CommandPalette 
+                    isOpen={isCommandPaletteOpen}
+                    onClose={() => setCommandPaletteOpen(false)}
+                    actions={actions}
+                />
                 
                 <ContextMenu
                     isOpen={contextMenu.isOpen}
