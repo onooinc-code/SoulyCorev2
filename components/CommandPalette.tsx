@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -36,13 +35,15 @@ const CommandPalette = ({ isOpen, onClose, actions }: CommandPaletteProps) => {
                 action.keywords?.some(k => k.toLowerCase().includes(lowerQuery))
             );
 
-        // FIX: Explicitly type the accumulator in the reduce function to ensure correct type inference.
+        // FIX: Explicitly typed the accumulator in the reduce function to ensure correct type inference.
         // This resolves the error where `actions.map` was called on an 'unknown' type.
-        return itemsToGroup.reduce((acc: Record<string, Action[]>, action) => {
-            if (!acc[action.group]) acc[action.group] = [];
+        return itemsToGroup.reduce<Record<string, Action[]>>((acc, action) => {
+            if (!acc[action.group]) {
+                acc[action.group] = [];
+            }
             acc[action.group].push(action);
             return acc;
-        }, {} as Record<string, Action[]>);
+        }, {});
     }, [actions, query]);
 
     const flatActionList = useMemo(() => {

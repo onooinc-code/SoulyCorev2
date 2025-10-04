@@ -1,4 +1,3 @@
-
 # HedraCore: The Definitive Developer's Guide
 
 **Version:** 0.3.0
@@ -8,9 +7,7 @@
 
 ## 1. Project Vision: The Total Recall Companion
 
-**HedraCore** is a next-generation, AI-powered assistant built for a single power user. Its foundational principle is a persistent, intelligent, and multi-faceted memory. It functions as a true **Total Recall Companion**, actively learning from every interaction by leveraging a decoupled, modular Core Engine to manage its long-term memory and cognitive functions.
-
-The system is designed to go beyond simple question-and-answer sessions to become an indispensable partner for managing complex information and executing sophisticated workflows through a secure, cloud-native, and highly configurable platform.
+**HedraCore** is a next-generation, AI-powered assistant built for a single power user. Its foundational principle is a persistent, intelligent, and multi-faceted memory. It functions as a true **Total Recall Companion**, actively learning from every interaction to become an indispensable partner for managing complex information and executing sophisticated workflows through a secure, cloud-native, and highly configurable platform.
 
 ---
 
@@ -144,11 +141,11 @@ A simple task and to-do list manager.
 
 ### 5.9. Data Hub (`/components/data_hub`)
 A dashboard for monitoring and managing all connected data sources and storage services.
-- **Service Dashboard**: Displays a grid of "Service Cards," each representing a data source (e.g., Vercel Postgres, Pinecone).
+- **Data Source Dashboard**: Displays a grid of "Service Cards," each representing a data source (e.g., Vercel Postgres, Pinecone). The data is pulled from the `data_sources` table.
 - **Real-time Status**: Shows the status of each service (connected, error, needs config, etc.).
 - **Quick Stats**: Displays key metrics for each service.
-- **Global Logs**: A placeholder for a unified log viewer.
-- **Status Widget**: A small, quick-view widget accessible from the main sidebar.
+- **Global Logs**: A placeholder for a unified log viewer to see logs from all data sources.
+- **Status Widget**: A small, quick-view widget accessible from the main sidebar that provides an at-a-glance overview of all data source statuses.
 
 ### 5.10. SoulyDev Center (`/components/dev_center`)
 An integrated control panel for developers.

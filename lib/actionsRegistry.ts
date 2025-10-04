@@ -1,4 +1,5 @@
 
+
 import {
     PlusIcon, MemoryIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon,
     LogIcon, BrainIcon, DashboardIcon, PromptsIcon, RocketLaunchIcon, ToolsIcon, TasksIcon,
@@ -6,7 +7,7 @@ import {
 } from '@/components/Icons';
 // FIX: IconType was not exported from @/components/Icons. Defined it here locally.
 // Also imported Dispatch and SetStateAction for the ActionFunctions interface.
-import type { SVGProps, Dispatch, SetStateAction } from 'react';
+import React, { type SVGProps, type Dispatch, type SetStateAction } from 'react';
 
 export type IconType = React.FC<SVGProps<SVGSVGElement>>;
 

@@ -62,7 +62,7 @@ const DataHubCenter = () => {
             
             <nav className="flex-shrink-0 px-4 border-b border-gray-700">
                 <div className="flex items-center gap-2">
-                    <TabButton tabName="services" label="Manage Services" />
+                    <TabButton tabName="services" label="Manage Data Sources" />
                     <TabButton tabName="logs" label="Global Logs" />
                 </div>
             </nav>
