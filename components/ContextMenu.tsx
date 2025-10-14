@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -80,7 +81,9 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
                      <button
                         key={item.label}
                         disabled={item.disabled}
-                        onClick={() => item.action && item.action()}
+                        // FIX: Changed from `onClick={() => item.action && item.action()}` to `onClick={item.action}`. 
+                        // The wrapped action correctly handles being called with an event argument (which it ignores) and calls the underlying actions without arguments as expected. This resolves the "Expected 1 arguments, but got 0" error.
+                        onClick={item.action}
                         className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {Icon && <Icon className="w-4 h-4" />}
@@ -147,13 +150,13 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>, item: MenuItem) => {
         window.clearTimeout(subMenuTimer.current);
         if (item.children) {
-            // FIX: Capture event target synchronously to avoid issues with React's synthetic event reuse
-            // in asynchronous callbacks like setTimeout. This is a defensive fix against a potential race condition
-            // that could lead to unpredictable errors, which may be the root cause of the reported error.
-            const currentTarget = e.currentTarget;
+            // FIX: To prevent race conditions with React's synthetic event reuse, we get the DOMRect synchronously.
+            // This captures the element's position at the time of the event and passes a plain object to the timer,
+            // which is safer than accessing event properties in an async callback.
+            const rect = e.currentTarget.getBoundingClientRect();
             subMenuTimer.current = window.setTimeout(() => {
                 setActiveSubMenu(item.label);
-                setActiveSubMenuRect(currentTarget.getBoundingClientRect());
+                setActiveSubMenuRect(rect);
             }, 150);
         } else {
              subMenuTimer.current = window.setTimeout(() => {
@@ -162,8 +165,6 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
         }
     };
 
-    // FIX: Add MouseEvent argument to match event handler type signature.
-    // @-fix: Added MouseEvent argument to match event handler type signature for onMouseLeave.
     const handleMouseLeave = (e: React.MouseEvent) => {
         window.clearTimeout(subMenuTimer.current);
         subMenuTimer.current = window.setTimeout(() => {
@@ -171,8 +172,6 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
         }, 300);
     };
 
-    // FIX: Add MouseEvent argument to match event handler type signature.
-    // @-fix: Added MouseEvent argument to match event handler type signature for onMouseEnter.
     const handleSubMenuEnter = (e: React.MouseEvent) => {
         window.clearTimeout(subMenuTimer.current);
     }
