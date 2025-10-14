@@ -34,21 +34,30 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
     useEffect(() => {
         if (parentRect && menuRef.current) {
             const menuRect = menuRef.current.getBoundingClientRect();
-            let styles: any = {};
+            const styles: React.CSSProperties = {};
 
-            // Position right
+            // Horizontal position
             if (parentRect.right + menuRect.width > window.innerWidth) {
-                styles.right = `${window.innerWidth - parentRect.left}px`;
+                // Overflow right, so position to the left of the parent
+                styles.left = parentRect.left - menuRect.width;
             } else {
-                styles.left = `${parentRect.right}px`;
+                // Position to the right of the parent
+                styles.left = parentRect.right;
             }
 
-            // Position top
+            // Vertical position
             if (parentRect.top + menuRect.height > window.innerHeight) {
-                styles.bottom = `${window.innerHeight - parentRect.bottom}px`;
+                // Overflow bottom, so align bottom edges
+                styles.top = parentRect.bottom - menuRect.height;
             } else {
-                styles.top = `${parentRect.top}px`;
+                // Align top edges
+                styles.top = parentRect.top;
             }
+
+            // Ensure it doesn't go off-screen
+            if (styles.left < 0) styles.left = 0;
+            if (styles.top < 0) styles.top = 0;
+            
             setPositionStyle(styles);
         }
     }, [parentRect]);

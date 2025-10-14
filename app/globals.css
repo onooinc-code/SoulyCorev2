@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden; /* Prevent body scrollbars */
+  }
+
   /* Fix word wrapping issues in narrow containers, especially with long words or RTL text */
   p, h1, h2, h3, h4, h5, h6, pre, code, li {
     overflow-wrap: break-word;
