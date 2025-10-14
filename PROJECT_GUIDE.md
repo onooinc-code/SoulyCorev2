@@ -141,11 +141,8 @@ A simple task and to-do list manager.
 
 ### 5.9. Data Hub (`/components/data_hub`)
 A dashboard for monitoring and managing all connected data sources and storage services.
-- **Data Source Dashboard**: Displays a grid of "Service Cards," each representing a data source (e.g., Vercel Postgres, Pinecone). The data is pulled from the `data_sources` table.
-- **Real-time Status**: Shows the status of each service (connected, error, needs config, etc.).
-- **Quick Stats**: Displays key metrics for each service.
-- **Global Logs**: A placeholder for a unified log viewer to see logs from all data sources.
-- **Status Widget**: A small, quick-view widget accessible from the main sidebar that provides an at-a-glance overview of all data source statuses.
+- **Architecture**: Consists of a main center (`DataHubCenter.tsx`) with a tabbed interface for a `ServicesPanel` and `LogsPanel`. The `ServicesPanel` displays multiple `ServiceCard` components, each representing a data source, and is summarized by a `StatsRow`. A `DataHubWidget` provides a quick-view modal.
+- **Status**: **Placeholder Implementation.** The entire feature currently runs on **mock, hardcoded data**. The backend infrastructure (the `data_sources` table and seeding script) exists, but the frontend components are not yet connected to any API. The next step is to build the API endpoints and replace the mock data with live data.
 
 ### 5.10. SoulyDev Center (`/components/dev_center`)
 An integrated control panel for developers.

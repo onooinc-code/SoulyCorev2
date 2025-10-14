@@ -1,15 +1,28 @@
-
 "use client";
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import ServicesPanel from './ServicesPanel';
 import LogsPanel from './LogsPanel';
+import type { DataSource } from '@/lib/types';
+import DataSourceSettingsModal from './DataSourceSettingsModal';
 
 type Tab = 'services' | 'logs';
 
 const DataHubCenter = () => {
     const [activeTab, setActiveTab] = useState<Tab>('services');
+    const [settingsModalState, setSettingsModalState] = useState<{
+        isOpen: boolean;
+        service: DataSource | null;
+    }>({ isOpen: false, service: null });
+
+    const handleOpenSettings = (service: DataSource) => {
+        setSettingsModalState({ isOpen: true, service });
+    };
+
+    const handleCloseSettings = () => {
+        setSettingsModalState({ isOpen: false, service: null });
+    };
 
     const TabButton = ({ tabName, label }: { tabName: Tab; label: string }) => (
         <button
@@ -29,7 +42,7 @@ const DataHubCenter = () => {
     
     const renderContent = () => {
         switch (activeTab) {
-            case 'services': return <ServicesPanel />;
+            case 'services': return <ServicesPanel onOpenSettings={handleOpenSettings} />;
             case 'logs': return <LogsPanel />;
             default: return null;
         }
@@ -70,6 +83,12 @@ const DataHubCenter = () => {
             <main className="flex-1 p-4 overflow-y-auto min-h-0">
                 {renderContent()}
             </main>
+
+            <DataSourceSettingsModal
+                isOpen={settingsModalState.isOpen}
+                onClose={handleCloseSettings}
+                service={settingsModalState.service}
+            />
         </div>
     );
 };

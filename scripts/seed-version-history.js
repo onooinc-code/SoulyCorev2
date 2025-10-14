@@ -13,7 +13,7 @@ const versionData = [
     },
     {
         version: '0.2.0',
-        release_date: new Date().toISOString(), // Today's date
+        release_date: '2024-07-22T10:00:00Z',
         changes: `
 - **New: Versioning System!**
   - Added a version card to the header to display the current version.
@@ -24,6 +24,14 @@ const versionData = [
 - **Backend:**
   - Added the \`version_history\` table to the database.
   - Created new API endpoints at \`/api/version/...\` to serve version data.`
+    },
+    {
+        version: '0.3.0',
+        release_date: new Date().toISOString(),
+        changes: `
+- **Bug Fix & Stability:** Fixed a critical layout 'jumping' bug in the chat window by implementing a more robust scrolling mechanism. This ensures the chat view remains stable when new messages are added.
+- **Code Health:** Resolved multiple TypeScript type errors, most notably in the Context Menu component, improving overall code quality and maintainability.
+- **UX:** The application is now more stable, with layout shifts on load being eliminated for a smoother user experience.`
     }
 ];
 
@@ -34,7 +42,9 @@ async function seedVersionHistory() {
             await sql`
                 INSERT INTO version_history (version, release_date, changes)
                 VALUES (${version.version}, ${version.release_date}, ${version.changes})
-                ON CONFLICT (version) DO NOTHING;
+                ON CONFLICT (version) DO UPDATE SET
+                    release_date = EXCLUDED.release_date,
+                    changes = EXCLUDED.changes;
             `;
         }
         console.log(`Successfully seeded ${versionData.length} version history entries.`);

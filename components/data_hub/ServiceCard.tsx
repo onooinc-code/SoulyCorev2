@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -8,6 +7,7 @@ import { DotsHorizontalIcon, ServerIcon, BrainIcon, CloudIcon, CircleStackIcon, 
 
 interface ServiceCardProps {
     service: DataSource;
+    onSettingsClick: () => void;
 }
 
 const statusInfo: Record<DataSourceStatus, { color: string; pulse: boolean }> = {
@@ -32,13 +32,13 @@ const typeInfo: Record<DataSourceType, { icon: React.FC<any>; label: string }> =
     object_storage: { icon: CloudIcon, label: 'Object' },
 };
 
-const IconButton = ({ icon: Icon, title, active = false }: { icon: React.FC<any>; title: string; active?: boolean }) => (
-    <button title={title} className={`w-full h-8 flex items-center justify-center rounded-md transition-colors ${active ? 'bg-indigo-600 text-white' : 'bg-gray-700/50 text-gray-400 hover:bg-gray-700'}`}>
+const IconButton = ({ icon: Icon, title, onClick, active = false }: { icon: React.FC<any>; title: string; onClick?: () => void; active?: boolean }) => (
+    <button onClick={onClick} title={title} className={`w-full h-8 flex items-center justify-center rounded-md transition-colors ${active ? 'bg-indigo-600 text-white' : 'bg-gray-700/50 text-gray-400 hover:bg-gray-700'}`}>
         <Icon className="w-4 h-4" />
     </button>
 );
 
-const ServiceCard = ({ service }: ServiceCardProps) => {
+const ServiceCard = ({ service, onSettingsClick }: ServiceCardProps) => {
     const TypeIcon = typeInfo[service.type]?.icon || CircleStackIcon;
     const TypeLabel = typeInfo[service.type]?.label || 'Data';
     const sInfo = statusInfo[service.status];
@@ -93,7 +93,7 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
                 <IconButton icon={CommandLineIcon} title="View Logs" />
                 <IconButton icon={CircleStackIcon} title="Manage Data" />
                 <IconButton icon={ServerIcon} title="Backup" />
-                <IconButton icon={WrenchScrewdriverIcon} title="Settings" />
+                <IconButton icon={WrenchScrewdriverIcon} title="Settings" onClick={onSettingsClick} />
             </div>
 
         </motion.div>
