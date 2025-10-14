@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -50,10 +49,22 @@ const Message = ({
     const [editedContent, setEditedContent] = useState(message.content);
     const [summary, setSummary] = useState<string | null>(null);
     const [isSummaryLoading, setIsSummaryLoading] = useState(false);
-    const [settings, setSettings] = useState<MessageSettings>({ collapsed: false, align: 'left' });
-
+    
     const isLongMessage = !isUser && message.content.split(/\s+/).length > WORD_COUNT_THRESHOLD;
     
+    const [settings, setSettings] = useState<MessageSettings>(() => {
+        try {
+            const allSettings = JSON.parse(localStorage.getItem('messageSettings') || '{}');
+            if (allSettings[message.id]) {
+                return allSettings[message.id];
+            }
+        } catch (error) {
+            console.error("Failed to parse message settings from localStorage", error);
+        }
+        // Synchronously calculate initial state to prevent layout shift.
+        return { collapsed: isLongMessage, align: 'left' };
+    });
+
     const showProgressBar = isContextAssemblyRunning || isMemoryExtractionRunning;
     const progressText = isContextAssemblyRunning ? "Assembling Context..." : "Extracting Memories...";
 
@@ -62,18 +73,6 @@ const Message = ({
         return match ? match[1] : null;
     }, [message.content]);
 
-    useEffect(() => {
-        try {
-            const allSettings = JSON.parse(localStorage.getItem('messageSettings') || '{}');
-            if (allSettings[message.id]) {
-                setSettings(allSettings[message.id]);
-            } else if (isLongMessage) {
-                setSettings(prev => ({ ...prev, collapsed: true }));
-            }
-        } catch (error) {
-            console.error("Failed to parse message settings from localStorage", error);
-        }
-    }, [message.id, isLongMessage]);
 
     useEffect(() => {
         if (isLongMessage && settings.collapsed && !summary && currentConversation?.enableAutoSummarization) {
