@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -81,8 +80,8 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
                      <button
                         key={item.label}
                         disabled={item.disabled}
-                        // FIX: The onClick handler was unnecessarily verbose. Assigning item.action directly is cleaner and correct.
-                        onClick={item.action}
+                        // FIX: Reverted incorrect optimization. Wrapping the action in an arrow function ensures it is called correctly by the event handler without arguments.
+                        onClick={() => item.action?.()}
                         className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {Icon && <Icon className="w-4 h-4" />}
