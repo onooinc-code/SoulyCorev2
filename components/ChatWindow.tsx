@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -47,7 +46,7 @@ const ChatWindow = () => {
     } = useConversation();
     const { log } = useLog();
     
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
     const [isAgentConfigModalOpen, setAgentConfigModalOpen] = useState(false);
     const [summaryModalState, setSummaryModalState] = useState<{isOpen: boolean, text: string, isLoading: boolean}>({isOpen: false, text: '', isLoading: false});
@@ -56,12 +55,15 @@ const ChatWindow = () => {
     const [htmlModalState, setHtmlModalState] = useState({ isOpen: false, content: '' });
 
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
     useEffect(() => {
-        scrollToBottom();
+        // Using a more robust scrolling method to prevent jumps.
+        // A timeout ensures this runs after the DOM has fully updated.
+        const timer = setTimeout(() => {
+            if (scrollContainerRef.current) {
+                scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+            }
+        }, 0);
+        return () => clearTimeout(timer);
     }, [messages]);
     
     useEffect(() => {
@@ -142,7 +144,7 @@ const ChatWindow = () => {
     return (
         <div className="flex flex-col flex-1 min-h-0 bg-gray-900">
             <Header />
-            <div className="flex flex-col flex-1 p-6 overflow-y-auto">
+            <div ref={scrollContainerRef} className="flex flex-col flex-1 p-6 overflow-y-auto">
                 {messages.length > 0 ? (
                     <div className="max-w-4xl mx-auto w-full mt-auto">
                         <div className="space-y-4">
@@ -173,7 +175,6 @@ const ChatWindow = () => {
                                     <span>Executing workflow step {activeWorkflow.currentStepIndex + 1} of {activeWorkflow.prompt.chain_definition?.length}...</span>
                                 </motion.div>
                             )}
-                             <div ref={messagesEndRef} />
                         </div>
                     </div>
                 ) : (

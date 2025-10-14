@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -164,6 +163,7 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     };
 
     // FIX: Add MouseEvent argument to match event handler type signature.
+    // @-fix: Added MouseEvent argument to match event handler type signature for onMouseLeave.
     const handleMouseLeave = (e: React.MouseEvent) => {
         window.clearTimeout(subMenuTimer.current);
         subMenuTimer.current = window.setTimeout(() => {
@@ -172,6 +172,7 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     };
 
     // FIX: Add MouseEvent argument to match event handler type signature.
+    // @-fix: Added MouseEvent argument to match event handler type signature for onMouseEnter.
     const handleSubMenuEnter = (e: React.MouseEvent) => {
         window.clearTimeout(subMenuTimer.current);
     }
