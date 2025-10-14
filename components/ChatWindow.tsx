@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -141,9 +142,9 @@ const ChatWindow = () => {
     return (
         <div className="flex flex-col flex-1 min-h-0 bg-gray-900">
             <Header />
-            <div className="flex-1 p-6 overflow-y-auto">
-                <div className="max-w-4xl mx-auto">
-                    {messages.length > 0 ? (
+            <div className="flex flex-col flex-1 p-6 overflow-y-auto">
+                {messages.length > 0 ? (
+                    <div className="max-w-4xl mx-auto w-full mt-auto">
                         <div className="space-y-4">
                             {messages.map((msg) => (
                                 <div key={msg.id}>
@@ -174,18 +175,18 @@ const ChatWindow = () => {
                             )}
                              <div ref={messagesEndRef} />
                         </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
-                             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2, duration: 0.5 }}>
-                                <svg className="w-16 h-16 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V8.25a2.25 2.25 0 00-2.25-2.25H8.25a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25z" />
-                                </svg>
-                            </motion.div>
-                            <h1 className="text-3xl font-bold text-gray-200 mt-4">SoulyCore</h1>
-                            <p className="mt-2 max-w-md">Your AI assistant with a persistent, intelligent memory. Start a new conversation to begin.</p>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 m-auto">
+                         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2, duration: 0.5 }}>
+                            <svg className="w-16 h-16 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V8.25a2.25 2.25 0 00-2.25-2.25H8.25a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25z" />
+                            </svg>
+                        </motion.div>
+                        <h1 className="text-3xl font-bold text-gray-200 mt-4">SoulyCore</h1>
+                        <p className="mt-2 max-w-md">Your AI assistant with a persistent, intelligent memory. Start a new conversation to begin.</p>
+                    </div>
+                )}
             </div>
 
             {status.error && (

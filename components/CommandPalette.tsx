@@ -35,15 +35,16 @@ const CommandPalette = ({ isOpen, onClose, actions }: CommandPaletteProps) => {
                 action.keywords?.some(k => k.toLowerCase().includes(lowerQuery))
             );
 
-        // FIX: Explicitly typed the accumulator in the reduce function to ensure correct type inference.
+        // FIX: Explicitly typed the initial value of the accumulator to ensure correct type inference for the reduce operation.
         // This resolves the error where `actions.map` was called on an 'unknown' type.
-        return itemsToGroup.reduce<Record<string, Action[]>>((acc, action) => {
-            if (!acc[action.group]) {
-                acc[action.group] = [];
+        return itemsToGroup.reduce((acc, action) => {
+            const group = action.group;
+            if (!acc[group]) {
+                acc[group] = [];
             }
-            acc[action.group].push(action);
+            acc[group].push(action);
             return acc;
-        }, {});
+        }, {} as Record<string, Action[]>);
     }, [actions, query]);
 
     const flatActionList = useMemo(() => {
