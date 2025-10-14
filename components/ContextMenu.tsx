@@ -81,9 +81,9 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
                      <button
                         key={item.label}
                         disabled={item.disabled}
-                        // FIX: Changed from `onClick={() => item.action && item.action()}` to `onClick={item.action}`. 
-                        // The wrapped action correctly handles being called with an event argument (which it ignores) and calls the underlying actions without arguments as expected. This resolves the "Expected 1 arguments, but got 0" error.
-                        onClick={item.action}
+                        // FIX: The onClick handler should call the action function, which does not expect any arguments.
+                        // Wrapping it in an arrow function ensures type safety and correct invocation.
+                        onClick={() => item.action && item.action()}
                         className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {Icon && <Icon className="w-4 h-4" />}
