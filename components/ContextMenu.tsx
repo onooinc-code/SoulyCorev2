@@ -148,9 +148,13 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>, item: MenuItem) => {
         window.clearTimeout(subMenuTimer.current);
         if (item.children) {
+            // FIX: Capture event target synchronously to avoid issues with React's synthetic event reuse
+            // in asynchronous callbacks like setTimeout. This is a defensive fix against a potential race condition
+            // that could lead to unpredictable errors, which may be the root cause of the reported error.
+            const currentTarget = e.currentTarget;
             subMenuTimer.current = window.setTimeout(() => {
                 setActiveSubMenu(item.label);
-                setActiveSubMenuRect(e.currentTarget.getBoundingClientRect());
+                setActiveSubMenuRect(currentTarget.getBoundingClientRect());
             }, 150);
         } else {
              subMenuTimer.current = window.setTimeout(() => {
@@ -159,14 +163,16 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
         }
     };
 
-    const handleMouseLeave = () => {
+    // FIX: Add MouseEvent argument to match event handler type signature.
+    const handleMouseLeave = (e: React.MouseEvent) => {
         window.clearTimeout(subMenuTimer.current);
         subMenuTimer.current = window.setTimeout(() => {
             setActiveSubMenu(null);
         }, 300);
     };
 
-    const handleSubMenuEnter = () => {
+    // FIX: Add MouseEvent argument to match event handler type signature.
+    const handleSubMenuEnter = (e: React.MouseEvent) => {
         window.clearTimeout(subMenuTimer.current);
     }
     

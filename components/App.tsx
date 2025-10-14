@@ -221,10 +221,10 @@ export const App = () => {
     };
 
     return (
-        <div onContextMenu={handleContextMenu} className="font-sans">
+        <div onContextMenu={handleContextMenu} className="font-sans h-full">
             <MorningBriefing />
             <UniversalProgressIndicator />
-             <main className={`flex h-screen w-screen overflow-hidden bg-gray-900 text-gray-100 transition-all duration-300 ease-in-out ${isMobileView ? 'max-w-md mx-auto my-4 shadow-2xl rounded-2xl border-2 border-gray-700' : ''}`}>
+             <main className={`flex h-full w-full overflow-hidden bg-gray-900 text-gray-100 transition-all duration-300 ease-in-out ${isMobileView ? 'max-w-md mx-auto my-4 shadow-2xl rounded-2xl border-2 border-gray-700' : ''}`}>
                 <AnimatePresence>
                     {!isZenMode && (
                         <NavigationRail 

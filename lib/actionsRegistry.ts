@@ -1,5 +1,3 @@
-
-
 import {
     PlusIcon, MemoryIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon,
     LogIcon, BrainIcon, DashboardIcon, PromptsIcon, RocketLaunchIcon, ToolsIcon, TasksIcon,
@@ -31,7 +29,7 @@ interface ActionFunctions {
 
 export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
     // Navigation
-    { id: 'new-chat', name: 'New Chat', keywords: ['conversation', 'new'], group: 'Navigation', icon: PlusIcon, action: fns.createNewConversation },
+    { id: 'new-chat', name: 'New Chat', keywords: ['conversation', 'new'], group: 'Navigation', icon: PlusIcon, action: () => fns.createNewConversation() },
     { id: 'go-dashboard', name: 'Go to Dashboard', keywords: ['home', 'main'], group: 'Navigation', icon: DashboardIcon, action: () => fns.setActiveView('dashboard') },
     
     // Hubs
@@ -48,7 +46,7 @@ export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
     { id: 'open-dev', name: 'Open Dev Center', keywords: ['developer', 'api'], group: 'Developer', icon: CodeIcon, action: () => fns.setActiveView('dev_center') },
 
     // Modals & Panels
-    { id: 'open-bookmarks', name: 'Open Bookmarks', keywords: ['saved', 'messages'], group: 'Modals', icon: BookmarkListIcon, action: () => fns.setBookmarksOpen(true) },
-    { id: 'open-settings', name: 'Open Global Settings', keywords: ['configuration', 'options'], group: 'Modals', icon: SettingsIcon, action: () => fns.setGlobalSettingsOpen(true) },
-    { id: 'toggle-log', name: 'Toggle Log Panel', keywords: ['developer', 'output', 'console'], group: 'Panels', icon: LogIcon, action: () => fns.setLogPanelOpen(prev => !prev) },
+    { id: 'open-bookmarks', name: 'Open Bookmarks', keywords: ['saved', 'messages'], group: 'Modals & Panels', icon: BookmarkListIcon, action: () => fns.setBookmarksOpen(true) },
+    { id: 'open-settings', name: 'Open Global Settings', keywords: ['configuration', 'options'], group: 'Modals & Panels', icon: SettingsIcon, action: () => fns.setGlobalSettingsOpen(true) },
+    { id: 'toggle-log', name: 'Toggle Log Panel', keywords: ['developer', 'output', 'console'], group: 'Modals & Panels', icon: LogIcon, action: () => fns.setLogPanelOpen(prev => !prev) },
 ];
