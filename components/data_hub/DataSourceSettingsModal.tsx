@@ -1,8 +1,10 @@
+
 "use client";
 
 import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import type { DataSource } from '@/lib/types';
+// FIX: Correct the import of VercelPostgresModal from the settings_modals barrel file.
 import {
     VercelPostgresModal, PineconeModal, UpstashVectorModal,
     VercelKVModal, VercelBlobModal, SupabaseModal,

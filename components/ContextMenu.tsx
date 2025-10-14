@@ -83,7 +83,7 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
                         disabled={item.disabled}
                         // FIX: The onClick handler should call the action function, which does not expect any arguments.
                         // Wrapping it in an arrow function ensures type safety and correct invocation.
-                        onClick={() => item.action && item.action()}
+                        onClick={(e) => { if (item.action) item.action() }}
                         className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {Icon && <Icon className="w-4 h-4" />}
