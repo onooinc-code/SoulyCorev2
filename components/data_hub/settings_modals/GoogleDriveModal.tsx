@@ -1,5 +1,6 @@
 
 "use client";
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { XIcon } from '../../Icons';
@@ -26,24 +27,16 @@ export const GoogleDriveModal = ({ service, onClose }: ModalProps) => {
                 className="bg-gray-800/80 backdrop-blur-lg rounded-lg shadow-xl w-full max-w-lg border border-white/10"
                 onClick={e => e.stopPropagation()}
             >
-                <header className="flex justify-between items-center p-4 border-b border-white/10 bg-white/5 backdrop-blur-sm">
+                <header className="flex justify-between items-center p-4 border-b border-white/10">
                     <h2 className="font-semibold text-lg">{service.name} Settings</h2>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-700"><XIcon className="w-5 h-5" /></button>
                 </header>
-                <main className="p-6 space-y-4">
-                    <p className="text-sm text-gray-400">Provide Google Cloud credentials to authorize access to your Google Drive files.</p>
-                     <div>
-                        <label className="text-sm font-medium text-gray-300">Client ID</label>
-                        <input type="text" placeholder="Your Google Cloud Client ID" className="w-full p-2 mt-1 bg-gray-700 rounded-lg text-sm" />
-                    </div>
-                     <div>
-                        <label className="text-sm font-medium text-gray-300">Client Secret</label>
-                        <input type="password" placeholder="Your Google Cloud Client Secret" className="w-full p-2 mt-1 bg-gray-700 rounded-lg text-sm" />
-                    </div>
+                <main className="p-6 text-center text-gray-400">
+                    <p>Google Drive integration settings are not yet available.</p>
+                    <p className="text-sm mt-2">Configuration for this data source will be available in a future update.</p>
                 </main>
-                <footer className="flex justify-end gap-2 p-4 border-t border-white/10 bg-white/5 backdrop-blur-sm">
-                    <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded-md text-sm hover:bg-gray-500">Cancel</button>
-                    <button className="px-4 py-2 bg-blue-600 rounded-md text-sm hover:bg-blue-500">Authorize & Save</button>
+                <footer className="flex justify-end p-4 border-t border-white/10">
+                    <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded-md text-sm hover:bg-gray-500">Close</button>
                 </footer>
             </motion.div>
         </motion.div>
