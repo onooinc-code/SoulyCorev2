@@ -1,21 +1,48 @@
-
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import ServicesPanel from './ServicesPanel';
 import LogsPanel from './LogsPanel';
 import type { DataSource } from '@/lib/types';
 import DataSourceSettingsModal from './DataSourceSettingsModal';
+import { useLog } from '../providers/LogProvider';
 
 type Tab = 'services' | 'logs';
 
 const DataHubCenter = () => {
+    const { log } = useLog();
     const [activeTab, setActiveTab] = useState<Tab>('services');
+    const [dataSources, setDataSources] = useState<DataSource[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [settingsModalState, setSettingsModalState] = useState<{
         isOpen: boolean;
         service: DataSource | null;
     }>({ isOpen: false, service: null });
+
+    const fetchDataSources = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+        log('Fetching data sources for Data Hub...');
+        try {
+            const res = await fetch('/api/data-sources');
+            if (!res.ok) throw new Error('Failed to fetch data sources');
+            const data = await res.json();
+            setDataSources(data);
+            log(`Successfully fetched ${data.length} data sources.`);
+        } catch (err) {
+            const errorMessage = (err as Error).message;
+            setError(errorMessage);
+            log('Failed to fetch data sources.', { error: errorMessage }, 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [log]);
+
+    useEffect(() => {
+        fetchDataSources();
+    }, [fetchDataSources]);
 
     const handleOpenSettings = (service: DataSource) => {
         setSettingsModalState({ isOpen: true, service });
@@ -23,6 +50,11 @@ const DataHubCenter = () => {
 
     const handleCloseSettings = () => {
         setSettingsModalState({ isOpen: false, service: null });
+    };
+
+    const handleSaveSuccess = () => {
+        handleCloseSettings();
+        fetchDataSources(); // Refresh the data after a successful save
     };
 
     const TabButton = ({ tabName, label }: { tabName: Tab; label: string }) => (
@@ -42,8 +74,15 @@ const DataHubCenter = () => {
     );
     
     const renderContent = () => {
+        if (isLoading) {
+            return <div className="text-center text-gray-400 p-8">Loading data sources...</div>;
+        }
+        if (error) {
+            return <div className="text-center text-red-400 p-8">Error: {error}</div>;
+        }
+
         switch (activeTab) {
-            case 'services': return <ServicesPanel onOpenSettings={handleOpenSettings} />;
+            case 'services': return <ServicesPanel services={dataSources} onOpenSettings={handleOpenSettings} />;
             case 'logs': return <LogsPanel />;
             default: return null;
         }
@@ -89,6 +128,7 @@ const DataHubCenter = () => {
                 isOpen={settingsModalState.isOpen}
                 onClose={handleCloseSettings}
                 service={settingsModalState.service}
+                onSaveSuccess={handleSaveSuccess}
             />
         </div>
     );

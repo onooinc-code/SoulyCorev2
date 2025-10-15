@@ -1,10 +1,10 @@
-
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XIcon, CircleStackIcon, ServerIcon, CloudIcon, BrainIcon } from '../Icons';
 import type { DataSource, DataSourceStatus, DataSourceType } from '@/lib/types';
+import { useLog } from '../providers/LogProvider';
 
 interface DataHubWidgetProps {
     isOpen: boolean;
@@ -33,23 +33,31 @@ const typeIcons: Record<DataSourceType, React.FC<any>> = {
     object_storage: CloudIcon,
 };
 
-// Mock data, same as in ServicesPanel. In a real app, this would be fetched.
-const mockDataSources: DataSource[] = [
-    { id: '1', name: 'Vercel Postgres', provider: 'Vercel', type: 'relational_db', status: 'connected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '2', name: 'Pinecone KB', provider: 'Pinecone', type: 'vector', status: 'connected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '3', name: 'Upstash Vector', provider: 'Upstash', type: 'vector', status: 'disconnected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '4', name: 'Vercel KV', provider: 'Vercel', type: 'key_value', status: 'connected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '5', name: 'Vercel Blob', provider: 'Vercel', type: 'blob', status: 'unstable', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '6', name: 'Supabase', provider: 'Supabase', type: 'relational_db', status: 'needs_config', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '7', name: 'Self-Hosted MySQL', provider: 'Self-Hosted', type: 'relational_db', status: 'error', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '8', name: 'Google Drive', provider: 'Google', type: 'file_system', status: 'disconnected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '9', name: 'Vercel Redis', provider: 'Vercel', type: 'cache', status: 'connected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '10', name: 'Vercel GraphDB', provider: 'Vercel', type: 'graph', status: 'needs_config', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '11', name: 'Vercel MongoDB', provider: 'Vercel', type: 'document_db', status: 'disconnected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-];
-
-
 const DataHubWidget = ({ isOpen, onClose }: DataHubWidgetProps) => {
+    const { log } = useLog();
+    const [dataSources, setDataSources] = useState<DataSource[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchData = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/data-sources');
+            if (!res.ok) throw new Error("Failed to fetch data sources for widget");
+            const data = await res.json();
+            setDataSources(data);
+        } catch (error) {
+            log("DataHubWidget Error", { error }, 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [log]);
+    
+    useEffect(() => {
+        if(isOpen) {
+            fetchData();
+        }
+    }, [isOpen, fetchData]);
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -73,23 +81,27 @@ const DataHubWidget = ({ isOpen, onClose }: DataHubWidgetProps) => {
                             <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-700"><XIcon className="w-5 h-5" /></button>
                         </header>
                         <main className="p-4 max-h-96 overflow-y-auto">
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                {mockDataSources.map(service => {
-                                    const Icon = typeIcons[service.type] || CircleStackIcon;
-                                    return (
-                                        <div key={service.id} className="bg-gray-900/50 p-3 rounded-lg flex items-center gap-3">
-                                            <div className="relative">
-                                                <Icon className="w-6 h-6 text-gray-300" />
-                                                <span className={`absolute -bottom-1 -right-1 block h-3 w-3 rounded-full border-2 border-gray-900/50 ${statusColors[service.status]}`} title={service.status}></span>
+                            {isLoading ? (
+                                <div className="text-center text-gray-400">Loading...</div>
+                            ) : (
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    {dataSources.map(service => {
+                                        const Icon = typeIcons[service.type] || CircleStackIcon;
+                                        return (
+                                            <div key={service.id} className="bg-gray-900/50 p-3 rounded-lg flex items-center gap-3">
+                                                <div className="relative">
+                                                    <Icon className="w-6 h-6 text-gray-300" />
+                                                    <span className={`absolute -bottom-1 -right-1 block h-3 w-3 rounded-full border-2 border-gray-900/50 ${statusColors[service.status]}`} title={service.status}></span>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-semibold truncate">{service.name}</p>
+                                                    <p className="text-xs text-gray-400">{service.provider}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-semibold truncate">{service.name}</p>
-                                                <p className="text-xs text-gray-400">{service.provider}</p>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </main>
                     </motion.div>
                 </motion.div>

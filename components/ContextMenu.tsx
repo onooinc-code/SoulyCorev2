@@ -236,10 +236,10 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                                     }
                                     return {
                                         label: child.label,
-// FIX: The action wrapper was being called with a MouseEvent, but the underlying child.action functions (e.g., from App.tsx) do not expect arguments. This change harmonizes the call by not passing the event, which resolves the logical inconsistency and potential type errors.
-                                        action: () => {
+                                        // FIX: The action wrapper was not passing the event object to the child action, causing an "Expected 1 arguments, but got 0" error.
+                                        action: (e) => {
                                             if (child.action) {
-                                                child.action();
+                                                child.action(e);
                                             }
                                             onClose();
                                         },

@@ -22,9 +22,10 @@ interface DataSourceSettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
     service: DataSource | null;
+    onSaveSuccess: () => void;
 }
 
-const DataSourceSettingsModal = ({ isOpen, onClose, service }: DataSourceSettingsModalProps) => {
+const DataSourceSettingsModal = ({ isOpen, onClose, service, onSaveSuccess }: DataSourceSettingsModalProps) => {
     if (!isOpen || !service) {
         return null;
     }
@@ -62,7 +63,7 @@ const DataSourceSettingsModal = ({ isOpen, onClose, service }: DataSourceSetting
         );
     }
 
-    return <ModalComponent service={service} onClose={onClose} />;
+    return <ModalComponent service={service} onClose={onClose} onSaveSuccess={onSaveSuccess} />;
 };
 
 export default DataSourceSettingsModal;
