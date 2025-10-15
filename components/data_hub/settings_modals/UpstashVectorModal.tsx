@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useState, useCallback } from 'react';
 // FIX: Imported AnimatePresence from framer-motion to resolve 'Cannot find name' error.
@@ -74,10 +75,10 @@ export const UpstashVectorModal = ({ service, onClose }: ModalProps) => {
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
-                className="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg border border-indigo-500/30"
+                className="bg-gray-800/80 backdrop-blur-lg rounded-lg shadow-xl w-full max-w-lg border border-white/10"
                 onClick={e => e.stopPropagation()}
             >
-                <header className="flex justify-between items-center p-4 border-b border-gray-700">
+                <header className="flex justify-between items-center p-4 border-b border-white/10 bg-white/5 backdrop-blur-sm">
                     <h2 className="font-semibold text-lg">{service.name} Settings</h2>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-700"><XIcon className="w-5 h-5" /></button>
                 </header>
@@ -137,7 +138,7 @@ export const UpstashVectorModal = ({ service, onClose }: ModalProps) => {
                      </div>
 
                 </main>
-                <footer className="flex justify-between items-center gap-2 p-4 border-t border-gray-700">
+                <footer className="flex justify-between items-center gap-2 p-4 border-t border-white/10 bg-white/5 backdrop-blur-sm">
                     <div className="flex items-center gap-2">
                          <div className={`w-4 h-4 rounded-full transition-colors ${statusIndicatorClasses[connectionStatus]}`} title={`Status: ${connectionStatus}`}></div>
                         <button onClick={handleTestConnection} disabled={connectionStatus === 'testing'} className="px-4 py-2 bg-blue-600 rounded-md text-sm hover:bg-blue-500 disabled:opacity-50">

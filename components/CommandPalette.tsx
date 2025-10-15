@@ -38,6 +38,7 @@ const CommandPalette = ({ isOpen, onClose, actions }: CommandPaletteProps) => {
         // FIX: Explicitly typed the accumulator for the `reduce` method.
         // This provides TypeScript with the necessary type information to correctly infer
         // the shape of `filteredAndGroupedActions`, resolving the 'unknown' type error when `map` is called on its values.
+        // FIX: Explicitly typed the accumulator for the `reduce` method to resolve 'unknown' type error on `map`.
         return itemsToGroup.reduce<Record<string, Action[]>>((acc, action) => {
             const group = action.group;
             if (!acc[group]) {

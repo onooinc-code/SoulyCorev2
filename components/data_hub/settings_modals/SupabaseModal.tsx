@@ -1,3 +1,4 @@
+
 "use client";
 import React from 'react';
 import { motion } from 'framer-motion';
@@ -22,10 +23,10 @@ export const SupabaseModal = ({ service, onClose }: ModalProps) => {
                 initial={{ scale: 0.9 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0.9 }}
-                className="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg"
+                className="bg-gray-800/80 backdrop-blur-lg rounded-lg shadow-xl w-full max-w-lg border border-white/10"
                 onClick={e => e.stopPropagation()}
             >
-                <header className="flex justify-between items-center p-4 border-b border-gray-700">
+                <header className="flex justify-between items-center p-4 border-b border-white/10 bg-white/5 backdrop-blur-sm">
                     <h2 className="font-semibold">{service.name} Settings</h2>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-700"><XIcon className="w-5 h-5" /></button>
                 </header>
@@ -40,7 +41,7 @@ export const SupabaseModal = ({ service, onClose }: ModalProps) => {
                         <input type="password" placeholder="Your Supabase anon key" className="w-full p-2 mt-1 bg-gray-700 rounded-lg text-sm" />
                     </div>
                 </main>
-                <footer className="flex justify-end gap-2 p-4 border-t border-gray-700">
+                <footer className="flex justify-end gap-2 p-4 border-t border-white/10 bg-white/5 backdrop-blur-sm">
                     <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded-md text-sm hover:bg-gray-500">Cancel</button>
                     <button className="px-4 py-2 bg-blue-600 rounded-md text-sm hover:bg-blue-500">Save</button>
                 </footer>
