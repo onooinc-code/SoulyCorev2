@@ -38,6 +38,7 @@ const DataSourceSettingsModal = ({ isOpen, onClose, service }: DataSourceSetting
             case 'Google':
                 return <GoogleDriveModal service={service} onClose={onClose} />;
             default:
+                // A fallback modal could be rendered here for unhandled providers
                 return null;
         }
     };
