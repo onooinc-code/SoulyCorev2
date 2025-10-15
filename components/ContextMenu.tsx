@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -237,8 +238,9 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                                     return {
                                         label: child.label,
                                         // FIX: The wrapper function was swallowing the event object. It now accepts the event and passes it to the child action, and also calls onClose. This resolves the "Expected 1 arguments, but got 0" error.
-                                        action: (e?: React.MouseEvent) => {
+                                        action: (e) => {
                                             if (child.action) {
+// FIX: The wrapper function for submenu item actions was not passing the event object to the child action, causing an "Expected 1 arguments, but got 0" error. This has been corrected to pass the event.
                                                 child.action(e);
                                             }
                                             onClose();

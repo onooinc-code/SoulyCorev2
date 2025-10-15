@@ -1,4 +1,4 @@
-
+// components/data_hub/settings_modals/VercelPostgresModal.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -185,8 +185,7 @@ export const VercelPostgresModal = ({ service, onClose }: ModalProps) => {
                         {testResult === 'error' && <span className="text-sm text-red-400">Connection failed.</span>}
                     </div>
                      <div className="flex items-center gap-2">
-                        {/* FIX: Moved title attribute from icon to parent button to resolve type error. */}
-                        <button onClick={handleClear} className="px-4 py-2 bg-gray-600 rounded-md text-sm hover:bg-gray-500" title="Clear Fields">
+                        <button onClick={handleClear} className="p-2 bg-gray-600 rounded-md text-sm hover:bg-gray-500" title="Clear Fields">
                             <ClearIcon className="w-5 h-5"/>
                         </button>
                         <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded-md text-sm hover:bg-gray-500">Cancel</button>
