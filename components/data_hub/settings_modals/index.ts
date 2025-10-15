@@ -1,5 +1,4 @@
 
-// FIX: Add export for VercelPostgresModal to resolve "not a module" error.
 export * from './VercelPostgresModal';
 export * from './PineconeModal';
 export * from './UpstashVectorModal';
