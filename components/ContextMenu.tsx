@@ -13,7 +13,8 @@ export type MenuItem = {
     label?: never; action?: never; icon?: never; disabled?: never; children?: never;
 } | {
     label: string;
-    action?: () => void;
+    // FIX: Updated action type to optionally accept a React MouseEvent.
+    action?: (e?: React.MouseEvent) => void;
     icon?: IconType;
     disabled?: boolean;
     isSeparator?: false | undefined;
@@ -82,7 +83,7 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
                         key={item.label}
                         disabled={item.disabled}
                         // FIX: The previous implementation incorrectly prevented the event object from being passed to the action, causing an "Expected 1 arguments, but got 0" error in some cases. Directly assigning the action handler is safer and more conventional.
-                        onClick={(e) => item.action && (item.action as any)(e)}
+                        onClick={item.action}
                         className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {Icon && <Icon className="w-4 h-4" />}
@@ -207,7 +208,8 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                                         setActiveSubMenuRect(e.currentTarget.getBoundingClientRect());
                                     } else if (item.action) {
                                         // If it's a direct action, execute it and close the menu.
-                                        item.action();
+                                        // FIX: Pass the event object to the action handler for consistency and to fix "Expected 1 arguments, but got 0" errors.
+                                        item.action(e);
                                         onClose();
                                     }
                                 }}
@@ -229,15 +231,14 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                         {activeSubMenu && items.find(i => i.label === activeSubMenu)?.children && (
                             <SubMenu 
                                 items={items.find(i => i.label === activeSubMenu)!.children!.map((child): MenuItem => {
-// FIX: Replaced spread operator with explicit property assignment to avoid TypeScript errors when mapping over a discriminated union type.
-// This ensures that an 'action' property is not incorrectly merged with a separator-type menu item.
+                                    // FIX: The wrapper for submenu item actions was swallowing the event object, causing "Expected 1 arguments, but got 0" errors. The wrapper now accepts and passes the event.
                                     if (child.isSeparator) {
                                         return child;
                                     }
                                     return {
                                         label: child.label,
-                                        action: () => {
-                                            if (child.action) child.action();
+                                        action: (e) => {
+                                            if (child.action) child.action(e);
                                             onClose();
                                         },
                                         icon: child.icon,
