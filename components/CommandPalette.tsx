@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -35,15 +36,17 @@ const CommandPalette = ({ isOpen, onClose, actions }: CommandPaletteProps) => {
                 action.keywords?.some(k => k.toLowerCase().includes(lowerQuery))
             );
 
-        // FIX: Explicitly typed the accumulator parameter `acc` to fix a TypeScript error where `actionsInGroup` was inferred as `unknown`, preventing the use of `.map` on it.
-        return itemsToGroup.reduce((acc: Record<string, Action[]>, action) => {
+        // FIX: Explicitly typed the initial value for the reduce method's accumulator.
+        // This ensures TypeScript correctly infers the type of `filteredAndGroupedActions` as `Record<string, Action[]>`,
+        // resolving an issue where `actionsInGroup` was being typed as 'unknown' in the mapping function.
+        return itemsToGroup.reduce((acc, action) => {
             const group = action.group;
             if (!acc[group]) {
                 acc[group] = [];
             }
             acc[group].push(action);
             return acc;
-        }, {});
+        }, {} as Record<string, Action[]>);
     }, [actions, query]);
 
     const flatActionList = useMemo(() => {
