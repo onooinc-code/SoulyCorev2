@@ -136,3 +136,5 @@ const DataHubCenter = () => {
         </div>
     );
 };
+
+export default DataHubCenter;
