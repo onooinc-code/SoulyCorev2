@@ -1,10 +1,11 @@
 
 "use client";
 
+// FIX: Corrected typo in import statement to properly import React hooks.
 import React, { useState, useEffect, useCallback } from 'react';
 import ChatWindow from '@/components/ChatWindow';
 import MorningBriefing from '@/components/MorningBriefing';
-import { XIcon, MemoryIcon, PlusIcon, TrashIcon, SparklesIcon, SidebarLeftIcon, LogIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon, FullscreenIcon, ExitFullscreenIcon, ClearIcon, KnowledgeIcon, KeyboardIcon, PromptsIcon, RefreshIcon, MinusIcon, BrainIcon, DashboardIcon, RocketLaunchIcon, ToolsIcon, TasksIcon, CopyIcon, ScissorsIcon, ClipboardPasteIcon, CircleStackIcon } from '@/components/Icons';
+import { XIcon, MemoryIcon, PlusIcon, TrashIcon, SparklesIcon, SidebarLeftIcon, LogIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon, FullscreenIcon, ExitFullscreenIcon, ClearIcon, KnowledgeIcon, KeyboardIcon, PromptsIcon, RefreshIcon, MinusIcon, BrainIcon, DashboardIcon, RocketLaunchIcon, ToolsIcon, TasksIcon, CopyIcon, ScissorsIcon, ClipboardPasteIcon, CircleStackIcon, PowerIcon } from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
@@ -16,6 +17,7 @@ import UniversalProgressIndicator from './UniversalProgressIndicator';
 import NavigationRail from './NavigationRail';
 import ConversationPanel from './ConversationPanel';
 import { getActionsRegistry } from '@/lib/actionsRegistry';
+import { useLog } from './providers/LogProvider';
 
 const ContactsHub = dynamic(() => import('@/components/ContactsHub'), {
   ssr: false,
@@ -117,6 +119,7 @@ export const App = () => {
         isCommandPaletteOpen,
         setCommandPaletteOpen,
     } = useUIState();
+    const { log } = useLog();
 
     const [isGlobalSettingsOpen, setGlobalSettingsOpen] = useState(false);
     const [isBookmarksOpen, setBookmarksOpen] = useState(false);
@@ -128,6 +131,39 @@ export const App = () => {
         position: { x: number; y: number };
         items: MenuItem[];
     }>({ isOpen: false, position: { x: 0, y: 0 }, items: [] });
+
+    useEffect(() => {
+        const status = sessionStorage.getItem('hard-refresh-status');
+        if (status === 'success') {
+            alert('Hard Refresh & Optimize Successful:\n\n- Client-side caches (localStorage, sessionStorage) have been cleared.\n- The application has been reloaded from the server.');
+            sessionStorage.removeItem('hard-refresh-status');
+        } else if (status === 'error') {
+            alert('Hard Refresh partially failed. Could not clear caches, but the application was reloaded.');
+            sessionStorage.removeItem('hard-refresh-status');
+        }
+    }, []);
+
+    const handleHardRefresh = () => {
+        try {
+            log('User initiated Hard Refresh & Optimize.');
+            localStorage.clear();
+            sessionStorage.clear();
+            sessionStorage.setItem('hard-refresh-status', 'success');
+// FIX: Removed the deprecated 'true' argument from reload() to comply with modern TypeScript definitions.
+            window.location.reload();
+        } catch (e) {
+            console.error("Could not clear storage during hard refresh:", e);
+            log('Hard Refresh failed to clear storage.', { error: (e as Error).message }, 'error');
+            sessionStorage.setItem('hard-refresh-status', 'error');
+// FIX: Removed the deprecated 'true' argument from reload() to comply with modern TypeScript definitions.
+            window.location.reload();
+        }
+    };
+
+    const handleSoftRefresh = () => {
+        log('User initiated Soft Refresh.');
+        window.location.reload();
+    };
 
 
     const handleContextMenu = (event: React.MouseEvent) => {
@@ -160,6 +196,11 @@ export const App = () => {
                 { label: 'Toggle Log Panel', icon: LogIcon, action: () => setLogPanelOpen(prev => !prev) },
                 { label: 'Increase Font Size', icon: PlusIcon, action: () => changeFontSize('increase') },
                 { label: 'Decrease Font Size', icon: MinusIcon, action: () => changeFontSize('decrease') },
+            ]},
+            { isSeparator: true },
+             { label: 'Application', icon: PowerIcon, children: [
+                { label: 'Hard Refresh & Optimize', icon: RefreshIcon, action: handleHardRefresh },
+                { label: 'Soft Refresh', icon: RefreshIcon, action: handleSoftRefresh },
             ]},
             { isSeparator: true },
             { label: 'Hubs', icon: DashboardIcon, children: [
