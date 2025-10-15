@@ -36,17 +36,17 @@ const CommandPalette = ({ isOpen, onClose, actions }: CommandPaletteProps) => {
                 action.keywords?.some(k => k.toLowerCase().includes(lowerQuery))
             );
 
-        // FIX: Explicitly typed the initial value of the `reduce` method.
-        // This provides TypeScript with the necessary type information to correctly infer
-        // the shape of `filteredAndGroupedActions`, resolving the 'unknown' type error.
-        return itemsToGroup.reduce((acc, action) => {
+        // FIX: Used the generic parameter on `reduce` to improve type inference.
+        // This ensures TypeScript correctly understands that `filteredAndGroupedActions` is a record of string to `Action[]`,
+        // resolving subsequent errors where properties like `.map` were not found on type 'unknown'.
+        return itemsToGroup.reduce<Record<string, Action[]>>((acc, action) => {
             const group = action.group;
             if (!acc[group]) {
                 acc[group] = [];
             }
             acc[group].push(action);
             return acc;
-        }, {} as Record<string, Action[]>);
+        }, {});
     }, [actions, query]);
 
     const flatActionList = useMemo(() => {

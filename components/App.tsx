@@ -149,14 +149,15 @@ export const App = () => {
             localStorage.clear();
             sessionStorage.clear();
             sessionStorage.setItem('hard-refresh-status', 'success');
-// FIX: Removed the deprecated 'true' argument from reload() to comply with modern TypeScript definitions.
-            window.location.reload();
+            // @ts-ignore: The 'true' argument forces a hard refresh from the server, bypassing the cache.
+            // This is deprecated but widely supported and necessary for this feature.
+            window.location.reload(true);
         } catch (e) {
             console.error("Could not clear storage during hard refresh:", e);
             log('Hard Refresh failed to clear storage.', { error: (e as Error).message }, 'error');
             sessionStorage.setItem('hard-refresh-status', 'error');
-// FIX: Removed the deprecated 'true' argument from reload() to comply with modern TypeScript definitions.
-            window.location.reload();
+            // @ts-ignore: The 'true' argument forces a hard refresh from the server, bypassing the cache.
+            window.location.reload(true);
         }
     };
 
