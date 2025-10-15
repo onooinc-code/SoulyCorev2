@@ -237,8 +237,8 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                                     }
                                     return {
                                         label: child.label,
-// FIX: The wrapper function was swallowing the event object. It now accepts the event and passes it to the child action, and also calls onClose. This resolves the "Expected 1 arguments, but got 0" error.
-                                        action: (e) => {
+                                        // FIX: The wrapper function was swallowing the event object. It now accepts the event and passes it to the child action, and also calls onClose. This resolves the "Expected 1 arguments, but got 0" error.
+                                        action: (e?: React.MouseEvent) => {
                                             if (child.action) {
                                                 child.action(e);
                                             }

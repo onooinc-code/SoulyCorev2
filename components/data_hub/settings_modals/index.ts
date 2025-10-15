@@ -1,4 +1,3 @@
-
 export * from './VercelPostgresModal';
 export * from './PineconeModal';
 export * from './UpstashVectorModal';
@@ -7,3 +6,5 @@ export * from './VercelBlobModal';
 export * from './SupabaseModal';
 export * from './MySQLModal';
 export * from './GoogleDriveModal';
+export * from './VercelRedisModal';
+export * from './GraphDBModal';

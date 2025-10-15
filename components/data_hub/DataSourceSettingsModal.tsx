@@ -1,4 +1,4 @@
-
+// components/data_hub/DataSourceSettingsModal.tsx
 "use client";
 
 import React from 'react';
@@ -12,6 +12,8 @@ import {
     SupabaseModal,
     MySQLModal,
     GoogleDriveModal,
+    VercelRedisModal,
+    GraphDBModal,
 } from './settings_modals';
 import { XIcon } from '../Icons';
 
@@ -36,6 +38,8 @@ const DataSourceSettingsModal = ({ isOpen, onClose, service }: DataSourceSetting
         'Supabase': SupabaseModal,
         'Self-Hosted MySQL': MySQLModal,
         'Google Drive': GoogleDriveModal,
+        'Vercel Redis': VercelRedisModal,
+        'Vercel GraphDB': GraphDBModal,
     };
 
     const ModalComponent = componentMap[service.name];
