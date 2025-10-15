@@ -82,8 +82,8 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
                      <button
                         key={item.label}
                         disabled={item.disabled}
-                        // FIX: The previous implementation incorrectly prevented the event object from being passed to the action, causing an "Expected 1 arguments, but got 0" error in some cases. Directly assigning the action handler is safer and more conventional.
-                        onClick={item.action}
+                        // FIX: Changed to an explicit arrow function to ensure the event object is always passed, resolving "Expected 1 arguments, but got 0" errors.
+                        onClick={(e) => item.action?.(e)}
                         className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {Icon && <Icon className="w-4 h-4" />}
@@ -237,10 +237,8 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                                     }
                                     return {
                                         label: child.label,
-                                        // FIX: The wrapper function was swallowing the event object. It now accepts the event and passes it to the child action, and also calls onClose. This resolves the "Expected 1 arguments, but got 0" error.
-                                        action: (e) => {
+                                        action: (e: React.MouseEvent) => {
                                             if (child.action) {
-// FIX: The wrapper function for submenu item actions was not passing the event object to the child action, causing an "Expected 1 arguments, but got 0" error. This has been corrected to pass the event.
                                                 child.action(e);
                                             }
                                             onClose();

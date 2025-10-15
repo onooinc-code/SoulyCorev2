@@ -41,37 +41,41 @@ const IconButton = ({ icon: Icon, title, onClick, active = false }: { icon: Reac
 
 const ServiceCard = ({ service, onSettingsClick }: ServiceCardProps) => {
     const TypeIcon = typeInfo[service.type]?.icon || CircleStackIcon;
-    const TypeLabel = typeInfo[service.type]?.label || 'Data';
     const sInfo = statusInfo[service.status];
+
+    const displayStats = service.stats || [];
+    const paddedStats = [...displayStats, ...Array(Math.max(0, 4 - displayStats.length)).fill({ label: '-', value: '-' })].slice(0, 4);
 
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ y: -5, boxShadow: '0 10px 20px rgba(0,0,0,0.3)' }}
-            className="bg-gray-800 rounded-lg border border-gray-700/80 p-3 flex flex-col gap-3"
+            className="bg-gray-800 rounded-lg border border-gray-700/80 p-3 flex flex-col justify-between h-52"
         >
-            {/* Header */}
-            <div className="flex items-stretch gap-1">
-                <button className="flex-shrink-0 w-1/5 bg-gray-700/50 rounded-md flex items-center justify-center text-gray-300 hover:bg-gray-700 transition-colors" title={`Type: ${service.type}`}>
-                    <TypeIcon className="w-5 h-5"/>
-                </button>
-                <div className="flex-grow w-3/5 bg-gray-900/50 rounded-md flex items-center justify-center text-center p-1">
-                    <span className="font-bold text-sm truncate text-white">{service.name}</span>
-                </div>
-                <button className="flex-shrink-0 w-1/5 bg-gray-700/50 rounded-md flex items-center justify-center text-gray-300 hover:bg-gray-700 transition-colors" title="Actions">
-                    <DotsHorizontalIcon className="w-5 h-5"/>
-                </button>
-            </div>
-            
-            {/* Stats */}
-            <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                {service.stats?.map(stat => (
-                    <div key={stat.label} className="bg-gray-900/50 p-1.5 rounded-md">
-                        <p className="font-bold text-white text-base">{stat.value}</p>
-                        <p className="text-gray-400 truncate">{stat.label}</p>
+            <div className="flex flex-col gap-3">
+                {/* Header */}
+                <div className="flex items-stretch gap-1">
+                    <button className="flex-shrink-0 w-1/5 bg-gray-700/50 rounded-md flex items-center justify-center text-gray-300 hover:bg-gray-700 transition-colors" title={`Type: ${service.type}`}>
+                        <TypeIcon className="w-5 h-5"/>
+                    </button>
+                    <div className="flex-grow w-3/5 bg-gray-900/50 rounded-md flex items-center justify-center text-center p-1">
+                        <span className="font-bold text-sm truncate text-white">{service.name}</span>
                     </div>
-                ))}
+                    <button className="flex-shrink-0 w-1/5 bg-gray-700/50 rounded-md flex items-center justify-center text-gray-300 hover:bg-gray-700 transition-colors" title="Actions">
+                        <DotsHorizontalIcon className="w-5 h-5"/>
+                    </button>
+                </div>
+                
+                {/* Stats */}
+                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                    {paddedStats.map((stat, index) => (
+                        <div key={`${stat.label}-${index}`} className="bg-gray-900/50 p-1.5 rounded-md flex flex-col justify-center">
+                            <p className={`font-bold text-base truncate ${stat.value === '-' ? 'text-gray-600' : 'text-white'}`}>{stat.value}</p>
+                            <p className="text-gray-400 truncate">{stat.label}</p>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Controls & Actions */}
