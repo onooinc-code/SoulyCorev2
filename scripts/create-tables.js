@@ -393,11 +393,15 @@ async function createTables() {
         const dataSourcesTable = await sql`
             CREATE TABLE IF NOT EXISTS data_sources (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                name VARCHAR(255) NOT NULL,
+                name VARCHAR(255) NOT NULL UNIQUE,
                 provider VARCHAR(255) NOT NULL,
-                type VARCHAR(50) NOT NULL, -- 'vector', 'relational_db', 'document_db', 'blob', 'cache', 'other'
-                status VARCHAR(50) NOT NULL DEFAULT 'disconnected', -- 'connected', 'disconnected', 'error', 'needs_config'
+                type VARCHAR(50) NOT NULL,
+                status VARCHAR(50) NOT NULL DEFAULT 'disconnected',
                 config_json JSONB,
+                stats_json JSONB,
+                last_successful_connection TIMESTAMP WITH TIME ZONE,
+                last_error TEXT,
+                is_enabled BOOLEAN DEFAULT true,
                 "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 "lastUpdatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );

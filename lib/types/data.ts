@@ -316,7 +316,7 @@ export interface DataSource {
     provider: string; // e.g., 'Vercel', 'Pinecone', 'Upstash', 'Self-Hosted'
     type: DataSourceType;
     status: DataSourceStatus;
-    stats: {
+    stats?: {
         label: string;
         value: string | number;
     }[];
