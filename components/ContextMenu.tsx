@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -237,9 +236,10 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                                     }
                                     return {
                                         label: child.label,
-                                        action: (e: React.MouseEvent) => {
+// FIX: The action wrapper was being called with a MouseEvent, but the underlying child.action functions (e.g., from App.tsx) do not expect arguments. This change harmonizes the call by not passing the event, which resolves the logical inconsistency and potential type errors.
+                                        action: () => {
                                             if (child.action) {
-                                                child.action(e);
+                                                child.action();
                                             }
                                             onClose();
                                         },
