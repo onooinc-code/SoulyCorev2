@@ -14,6 +14,7 @@ import {
     GoogleDriveModal,
     VercelRedisModal,
     GraphDBModal,
+    MongoDBModal,
 } from './settings_modals';
 import { XIcon } from '../Icons';
 
@@ -40,6 +41,7 @@ const DataSourceSettingsModal = ({ isOpen, onClose, service }: DataSourceSetting
         'Google Drive': GoogleDriveModal,
         'Vercel Redis': VercelRedisModal,
         'Vercel GraphDB': GraphDBModal,
+        'Vercel MongoDB': MongoDBModal,
     };
 
     const ModalComponent = componentMap[service.name];

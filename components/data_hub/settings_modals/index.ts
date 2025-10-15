@@ -8,3 +8,4 @@ export * from './MySQLModal';
 export * from './GoogleDriveModal';
 export * from './VercelRedisModal';
 export * from './GraphDBModal';
+export * from './MongoDBModal';
