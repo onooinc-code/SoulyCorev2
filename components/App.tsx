@@ -18,6 +18,7 @@ import NavigationRail from './NavigationRail';
 import ConversationPanel from './ConversationPanel';
 import { getActionsRegistry } from '@/lib/actionsRegistry';
 import { useLog } from './providers/LogProvider';
+import Notifications from './Notifications';
 
 const ContactsHub = dynamic(() => import('@/components/ContactsHub'), {
   ssr: false,
@@ -264,6 +265,7 @@ export const App = () => {
 
     return (
         <div onContextMenu={handleContextMenu} className="font-sans h-full">
+            <Notifications />
             <MorningBriefing />
             <UniversalProgressIndicator />
              <main className={`flex h-full w-full overflow-hidden bg-gray-900 text-gray-100 transition-all duration-300 ease-in-out ${isMobileView ? 'max-w-md mx-auto my-4 shadow-2xl rounded-2xl border-2 border-gray-700' : ''}`}>

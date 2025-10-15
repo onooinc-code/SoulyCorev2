@@ -4,6 +4,7 @@ import { ConversationProvider } from '@/components/providers/ConversationProvide
 import { LogProvider } from '@/components/providers/LogProvider';
 import { SettingsProvider } from '@/components/providers/SettingsProvider';
 import { UIStateProvider } from '@/components/providers/UIStateProvider';
+import { NotificationProvider } from '@/components/providers/NotificationProvider';
 
 export default function HomePage() {
   return (
@@ -11,7 +12,9 @@ export default function HomePage() {
       <SettingsProvider>
         <UIStateProvider>
           <ConversationProvider>
-            <App />
+            <NotificationProvider>
+              <App />
+            </NotificationProvider>
           </ConversationProvider>
         </UIStateProvider>
       </SettingsProvider>

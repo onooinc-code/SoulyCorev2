@@ -1,11 +1,11 @@
-// components/data_hub/settings_modals/VercelPostgresModal.tsx
+
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { XIcon, CopyIcon, ClearIcon, CheckIcon } from '../../Icons';
+import { XIcon, CopyIcon, CheckIcon } from '../../Icons';
 import type { DataSource } from '@/lib/types';
-import { useLog } from '../../providers/LogProvider';
+import { useDataSourceSettings } from '@/lib/hooks/use-data-source-settings';
 
 interface ModalProps {
     service: DataSource;
@@ -14,57 +14,35 @@ interface ModalProps {
 }
 
 export const VercelPostgresModal = ({ service, onClose, onSaveSuccess }: ModalProps) => {
-    const { log } = useLog();
+    const {
+        config,
+        handleConfigChange,
+        isSaving,
+        isModified,
+        handleSave,
+        connectionStatus,
+        handleTestConnection,
+        connectionLog,
+        isLoading,
+    } = useDataSourceSettings(service, onSaveSuccess);
 
-    const [config, setConfig] = useState(service.config_json || {});
-    const [connectionString, setConnectionString] = useState(config.connectionString || '');
+    const [copied, setCopied] = React.useState(false);
+
+    const connectionString = config.connectionString || '';
     
-    const [isTesting, setIsTesting] = useState(false);
-    const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
-    const [copied, setCopied] = useState(false);
-
-    const handleConfigChange = (key: string, value: any) => {
-        setConfig(prev => ({...prev, [key]: value}));
-    };
-
-    useEffect(() => {
-        handleConfigChange('connectionString', connectionString);
-    }, [connectionString]);
-
-    const handleTest = useCallback(async () => {
-        setIsTesting(true);
-        setTestResult(null);
-        log('Testing Vercel Postgres connection...');
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        const success = Math.random() < 0.9;
-        setTestResult(success ? 'success' : 'error');
-        setIsTesting(false);
-    }, [log]);
-
-    const handleSave = useCallback(async () => {
-        setIsSaving(true);
-        log('Saving Vercel Postgres settings...', { serviceId: service.id });
-        try {
-            const res = await fetch(`/api/data-sources/${service.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ config_json: config }),
-            });
-            if (!res.ok) throw new Error('Failed to save settings');
-            onSaveSuccess();
-        } catch (error) {
-            log('Failed to save Vercel Postgres settings', { error }, 'error');
-        } finally {
-            setIsSaving(false);
-        }
-    }, [log, service.id, config, onSaveSuccess]);
-
     const handleCopy = () => {
         navigator.clipboard.writeText(connectionString);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
+    
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[101]">
+                <p>Loading settings...</p>
+            </div>
+        );
+    }
     
     return (
         <motion.div
@@ -93,7 +71,7 @@ export const VercelPostgresModal = ({ service, onClose, onSaveSuccess }: ModalPr
                             <input
                                 type="text"
                                 value={connectionString}
-                                onChange={(e) => setConnectionString(e.target.value)}
+                                onChange={(e) => handleConfigChange('connectionString', e.target.value)}
                                 placeholder="postgres://user:password@host:port/dbname"
                                 className="w-full p-2 pr-10 bg-gray-700 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                             />
@@ -105,15 +83,15 @@ export const VercelPostgresModal = ({ service, onClose, onSaveSuccess }: ModalPr
                 </main>
                 <footer className="flex justify-between items-center gap-2 p-4 border-t border-white/10 bg-white/5 backdrop-blur-sm">
                      <div className="flex items-center gap-2">
-                        <button onClick={handleTest} disabled={isTesting} className="px-4 py-2 bg-blue-600 rounded-md text-sm hover:bg-blue-500 disabled:opacity-50">
-                            {isTesting ? 'Testing...' : 'Test Connection'}
+                        <button onClick={() => handleTestConnection(config)} disabled={connectionStatus === 'testing'} className="px-4 py-2 bg-blue-600 rounded-md text-sm hover:bg-blue-500 disabled:opacity-50">
+                            {connectionStatus === 'testing' ? 'Testing...' : 'Test Connection'}
                         </button>
-                        {testResult === 'success' && <span className="text-sm text-green-400">Connection successful!</span>}
-                        {testResult === 'error' && <span className="text-sm text-red-400">Connection failed.</span>}
+                        {connectionStatus === 'success' && <span className="text-sm text-green-400">Connection successful!</span>}
+                        {connectionStatus === 'error' && <span className="text-sm text-red-400">Connection failed.</span>}
                     </div>
                      <div className="flex items-center gap-2">
                         <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded-md text-sm hover:bg-gray-500">Cancel</button>
-                        <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 bg-green-600 rounded-md text-sm hover:bg-green-500 disabled:opacity-50">
+                        <button onClick={handleSave} disabled={isSaving || !isModified} className="px-4 py-2 bg-green-600 rounded-md text-sm hover:bg-green-500 disabled:opacity-50">
                             {isSaving ? 'Saving...' : 'Save Changes'}
                         </button>
                     </div>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -45,10 +46,12 @@ const DataHubCenter = () => {
     }, [fetchDataSources]);
 
     const handleOpenSettings = (service: DataSource) => {
+        log(`Opening settings for ${service.name}`);
         setSettingsModalState({ isOpen: true, service });
     };
 
     const handleCloseSettings = () => {
+        log('Closing settings modal.');
         setSettingsModalState({ isOpen: false, service: null });
     };
 
@@ -133,5 +136,3 @@ const DataHubCenter = () => {
         </div>
     );
 };
-
-export default DataHubCenter;

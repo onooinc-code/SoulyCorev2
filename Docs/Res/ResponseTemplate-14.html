@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HedraCore | تقرير تحليل جدول مصادر البيانات</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --bg-color: #12101c; --surface-color: #1c182c; --primary-color: #a450e8; --secondary-color: #00bcd4; --text-color: #e0e0e0; --header-color: #ffffff; --border-color: #3a3252; --shadow-color: rgba(164, 80, 232, 0.2); --success-color: #4caf50; --error-color: #f44336; --warning-color: #ff9800; --font-size-base: 1rem;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+        body { font-family: 'Cairo', sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); line-height: 1.8; direction: rtl; font-size: var(--font-size-base); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 80px 20px; background: linear-gradient(135deg, rgba(28, 24, 44, 0.9), rgba(18, 16, 28, 0.95)); border-bottom: 3px solid var(--primary-color); margin-bottom: 50px; position: relative; overflow: hidden; }
+        header h1 { font-size: 3.8em; color: var(--header-color); margin: 0; font-weight: 700; text-shadow: 0 0 20px var(--shadow-color); animation: fadeIn 1s ease-out; }
+        header p { font-size: 1.4em; color: #b0a8d8; margin-top: 15px; animation: fadeIn 1.2s ease-out; }
+        .section { animation: fadeIn 1s ease-out; animation-fill-mode: both; }
+        h2 { font-size: 2.8em; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-top: 60px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+        h3 { font-size: 1.9em; color: var(--secondary-color); margin-top: 40px; margin-bottom: 20px; }
+        .card { background-color: var(--surface-color); border-radius: 12px; padding: 25px 30px; margin-bottom: 25px; border: 1px solid var(--border-color); box-shadow: 0 8px 30px rgba(0,0,0,0.3); animation: slideInRight 0.8s ease-out; }
+        .header-icon { width: 48px; height: 48px; color: var(--primary-color); flex-shrink: 0; }
+        pre.mermaid { background-color: #0d1117; padding: 20px; border-radius: 8px; margin: 25px auto; text-align: center; border: 1px solid var(--border-color); box-shadow: 0 0 15px rgba(0, 189, 212, 0.1); }
+        .card ul { padding-right: 20px; }
+        .card code { font-family: monospace; background: #2a243e; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; color: #c792ea; direction: ltr; display: inline-block; }
+        footer { text-align: center; margin-top: 80px; padding: 30px; border-top: 1px solid var(--border-color); color: #888; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; direction: ltr; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: #2a243e; font-weight: 600; text-align: left;}
+        tr { text-align: left; }
+        td:first-child { font-weight: bold; color: var(--secondary-color); }
+    </style>
+     <script type="module">
+        try {
+            const mermaid = (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
+            mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose', fontFamily: '"Cairo", sans-serif' });
+        } catch(e) { console.error("Could not load Mermaid.js", e); }
+    </script>
+</head>
+<body class="arabic">
+    <header>
+        <h1 id="main-title">تحليل جدول مصادر البيانات (`data_sources`)</h1>
+        <p id="main-subtitle">تقرير رقم 14: مراجعة البنية، شرح الوظائف، واقتراحات استراتيجية</p>
+    </header>
+
+    <div class="container">
+        <div class="section" style="animation-delay: 0.2s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                ملخص تنفيذي
+            </h2>
+            <div class="card">
+                <p>لقد قمت بمراجعة شاملة لجدول <code>data_sources</code> الذي تم تنفيذه في قاعدة بيانات PostgreSQL. أؤكد أن الجدول مصمم بشكل ممتاز ويلبي جميع المتطلبات التي حددتها، ويوفر بنية تحتية قوية وقابلة للتطوير لميزة "مركز البيانات" (Data Hub).</p>
+                <p>هذا التقرير يوثق بالتفصيل بنية الجدول، ويشرح كيف يخدم كل حقل (column) الغرض المطلوب منه، ويربط هذه البنية الخلفية بواجهة المستخدم الأمامية، ويقدم في النهاية مجموعة من الاقتراحات الاستراتيجية لتطوير هذه الميزة في المستقبل.</p>
+            </div>
+        </div>
+        
+        <div class="section" style="animation-delay: 0.4s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                تحليل بنية جدول `data_sources`
+            </h2>
+            <div class="card">
+                <p>الجدول مصمم لتخزين جميع المعلومات اللازمة لإدارة ومراقبة مصادر البيانات المختلفة. إليك شرح تفصيلي لكل حقل وكيف يلبي متطلباتك:</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column Name</th>
+                            <th>Type</th>
+                            <th>Purpose (Arabic)</th>
+                            <th>Requirement Met</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>id</code></td><td>UUID</td><td>معرّف فريد لكل مصدر بيانات.</td><td>-</td></tr>
+                        <tr><td><code>name</code></td><td>VARCHAR</td><td>الاسم الفريد الذي يظهر في واجهة المستخدم (مثل "Vercel Postgres").</td><td>-</td></tr>
+                        <tr><td><code>provider</code></td><td>VARCHAR</td><td>مزود الخدمة (مثل "Vercel", "Pinecone", "Self-Hosted").</td><td>-</td></tr>
+                        <tr><td><code>type</code></td><td>VARCHAR</td><td>نوع مصدر البيانات (مثل "relational_db", "vector").</td><td>-</td></tr>
+                        <tr><td><code>status</code></td><td>VARCHAR</td><td>يخزن حالة الاتصال الحالية (مثل "connected", "disconnected", "error").</td><td>حالة الاتصال الحالية</td></tr>
+                        <tr><td><code>config_json</code></td><td>JSONB</td><td><strong>الحقل الأهم.</strong> يخزن جميع بيانات الاتصال (connection string, API keys, etc.) بصيغة JSON مشفرة.</td><td>بيانات الاتصال</td></tr>
+                        <tr><td><code>stats_json</code></td><td>JSONB</td><td>يخزن إحصائيات حول محتوى المصدر (مثل عدد الجداول، حجم البيانات).</td><td>تفاصيل عن المحتوى</td></tr>
+                        <tr><td><code>last_successful_connection</code></td><td>TIMESTAMPTZ</td><td>يسجل تاريخ ووقت آخر اتصال ناجح.</td><td>تاريخ الاتصال</td></tr>
+                        <tr><td><code>last_error</code></td><td>TEXT</td><td>يخزن رسالة آخر خطأ حدث أثناء محاولة الاتصال، للمساعدة في تصحيح الأخطاء.</td><td>-</td></tr>
+                        <tr><td><code>is_enabled</code></td><td>BOOLEAN</td><td>يسمح بتفعيل أو تعطيل مصدر البيانات دون حذفه.</td><td>-</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section" style="animation-delay: 0.6s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                ربط الواجهة الخلفية بالواجهة الأمامية
+            </h2>
+             <div class="card">
+                <p>يعمل هذا الجدول كأساس للواجهة الأمامية. المخطط التالي يوضح تدفق البيانات من قاعدة البيانات إلى واجهة المستخدم في "مركز البيانات":</p>
+                <pre class="mermaid" dir="ltr">
+                    graph TD
+                        A["`data_sources` Table (Postgres)"] -- Fetched by --> B["`/api/data-sources` API Route"];
+                        B -- Provides data to --> C["`DataHubCenter.tsx` Component"];
+                        C -- Displays data using --> D["`ServiceCard.tsx` Component"];
+                        D -- Shows --> E["Status, Stats, and Name"];
+                </pre>
+                <p>هذه البنية تضمن أن أي تغيير في قاعدة البيانات يمكن أن ينعكس بسهولة في واجهة المستخدم، مما يجعل "مركز البيانات" أداة مراقبة حية وفعالة.</p>
+            </div>
+        </div>
+
+        <div class="section" style="animation-delay: 0.8s;">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="header-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                اقتراحات استراتيجية (بناءً على بحثي)
+            </h2>
+            <div class="card">
+                <h3>1. سجل كامل لتاريخ الاتصالات</h3>
+                <p>حاليًا، نخزن فقط تاريخ <strong>آخر</strong> اتصال ناجح. أقترح إنشاء جدول جديد <code>data_source_connection_logs</code> لتسجيل كل محاولة اتصال (ناجحة أو فاشلة). هذا سيمكننا من بناء تصورات بيانية لتاريخ استقرار كل خدمة وتحديد المشاكل المتكررة.</p>
+            </div>
+             <div class="card">
+                <h3>2. الفحص الصحي التلقائي (Automated Health Checks)</h3>
+                <p>أقترح إنشاء "cron job" (مهمة مجدولة) في الخلفية تعمل كل 5 دقائق. تقوم هذه المهمة بتشغيل وظيفة "Test Connection" على جميع مصادر البيانات المفعلة وتحديث حقل <code>status</code> في قاعدة البيانات بشكل تلقائي. هذا سيحول "مركز البيانات" من أداة عرض ثابتة إلى نظام مراقبة استباقي ينبهنا بالمشاكل فور حدوثها.</p>
+            </div>
+             <div class="card">
+                <h3>3. توحيد بنية الإحصائيات (Standardized `stats_json`)</h3>
+                <p>لتسهيل عرض الإحصائيات في واجهة المستخدم، أقترح توحيد بنية حقل <code>stats_json</code>. على سبيل المثال، يمكن أن يحتوي دائمًا على حقول مثل <code>itemCount</code>, <code>sizeInMb</code>, <code>lastModified</code>. هذا سيسمح لنا ببناء مكونات واجهة مستخدم متسقة تعرض هذه الإحصائيات بشكل موحد لجميع أنواع المصادر.</p>
+            </div>
+             <div class="card">
+                <h3>4. أساس لخطوط أنابيب استيعاب البيانات (Data Ingestion Pipelines)</h3>
+                <p>يمكن استخدام هذا الجدول كأساس لنظام استيعاب بيانات آلي في المستقبل. يمكن لخدمة خلفية أن تقرأ قائمة المصادر المفعلة، وتتصل بها، وتسحب المحتوى منها بشكل دوري لتحديث الذاكرة الدلالية للذكاء الاصطناعي. حقل <code>is_enabled</code> سيكون مفتاح التحكم في هذه العملية.</p>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <p>HedraCore Cognitive Architecture v3.0 - © 2025</p>
+    </footer>
+</body>
+</html>

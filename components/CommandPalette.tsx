@@ -35,10 +35,8 @@ const CommandPalette = ({ isOpen, onClose, actions }: CommandPaletteProps) => {
                 action.keywords?.some(k => k.toLowerCase().includes(lowerQuery))
             );
 
-        // FIX: I've specified the generic type for the `reduce` method's accumulator.
-        // This ensures TypeScript correctly infers `filteredAndGroupedActions` as a record of string to `Action[]`,
-        // resolving the error where `actionsInGroup.map` failed because `actionsInGroup` was of type 'unknown'.
-        return itemsToGroup.reduce<Record<string, Action[]>>((acc, action) => {
+        // FIX: Explicitly typed the accumulator parameter `acc` to fix a TypeScript error where `actionsInGroup` was inferred as `unknown`, preventing the use of `.map` on it.
+        return itemsToGroup.reduce((acc: Record<string, Action[]>, action) => {
             const group = action.group;
             if (!acc[group]) {
                 acc[group] = [];
