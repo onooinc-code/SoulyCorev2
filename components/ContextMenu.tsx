@@ -82,7 +82,7 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
                         key={item.label}
                         disabled={item.disabled}
                         // FIX: The previous implementation incorrectly prevented the event object from being passed to the action, causing an "Expected 1 arguments, but got 0" error in some cases. Directly assigning the action handler is safer and more conventional.
-                        onClick={(e) => item.action && item.action(e)}
+                        onClick={item.action}
                         className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {Icon && <Icon className="w-4 h-4" />}

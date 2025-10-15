@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -65,7 +66,7 @@ const ServiceCard = ({ service, onSettingsClick }: ServiceCardProps) => {
             
             {/* Stats */}
             <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                {service.stats.map(stat => (
+                {service.stats?.map(stat => (
                     <div key={stat.label} className="bg-gray-900/50 p-1.5 rounded-md">
                         <p className="font-bold text-white text-base">{stat.value}</p>
                         <p className="text-gray-400 truncate">{stat.label}</p>
