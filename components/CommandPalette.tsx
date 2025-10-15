@@ -36,17 +36,17 @@ const CommandPalette = ({ isOpen, onClose, actions }: CommandPaletteProps) => {
                 action.keywords?.some(k => k.toLowerCase().includes(lowerQuery))
             );
 
-        // FIX: Explicitly typed the initial value for the reduce method's accumulator.
-        // This ensures TypeScript correctly infers the type of `filteredAndGroupedActions` as `Record<string, Action[]>`,
-        // resolving an issue where `actionsInGroup` was being typed as 'unknown' in the mapping function.
-        return itemsToGroup.reduce((acc, action) => {
+        // FIX: Applied a more robust typing strategy to the .reduce() method using a generic type parameter.
+        // This resolves a subtle type inference issue where the accumulator's type was not correctly inferred
+        // by the build toolchain, causing build failures with misleading error messages.
+        return itemsToGroup.reduce<Record<string, Action[]>>((acc, action) => {
             const group = action.group;
             if (!acc[group]) {
                 acc[group] = [];
             }
             acc[group].push(action);
             return acc;
-        }, {} as Record<string, Action[]>);
+        }, {});
     }, [actions, query]);
 
     const flatActionList = useMemo(() => {
@@ -113,30 +113,34 @@ const CommandPalette = ({ isOpen, onClose, actions }: CommandPaletteProps) => {
                         </div>
                         <div ref={resultsRef} className="max-h-[50vh] overflow-y-auto p-2">
                              {flatActionList.length > 0 ? (
-                                Object.entries(filteredAndGroupedActions).map(([group, actionsInGroup]) => (
-                                    <div key={group}>
-                                        <h3 className="text-xs font-semibold text-gray-500 px-3 pt-3 pb-1">{group}</h3>
-                                        <ul>
-                                            {actionsInGroup.map(action => {
-                                                const currentIndex = flatActionList.findIndex(a => a.id === action.id);
-                                                const isSelected = currentIndex === selectedIndex;
-                                                const Icon = action.icon;
-                                                
-                                                return (
-                                                    <li
-                                                        key={action.id}
-                                                        ref={isSelected ? activeItemRef : null}
-                                                        onClick={() => { action.action(); onClose(); }}
-                                                        className={`flex items-center gap-3 p-3 rounded-md cursor-pointer text-sm ${isSelected ? 'bg-indigo-600 text-white' : 'text-gray-300'}`}
-                                                    >
-                                                        <Icon className="w-5 h-5" />
-                                                        <span>{action.name}</span>
-                                                    </li>
-                                                );
-                                            })}
-                                        </ul>
-                                    </div>
-                                ))
+                                // FIX: Refactored to use Object.keys().map() to avoid a subtle type inference issue with Object.entries() in some toolchains.
+                                Object.keys(filteredAndGroupedActions).map(group => {
+                                    const actionsInGroup = filteredAndGroupedActions[group];
+                                    return (
+                                        <div key={group}>
+                                            <h3 className="text-xs font-semibold text-gray-500 px-3 pt-3 pb-1">{group}</h3>
+                                            <ul>
+                                                {actionsInGroup.map(action => {
+                                                    const currentIndex = flatActionList.findIndex(a => a.id === action.id);
+                                                    const isSelected = currentIndex === selectedIndex;
+                                                    const Icon = action.icon;
+                                                    
+                                                    return (
+                                                        <li
+                                                            key={action.id}
+                                                            ref={isSelected ? activeItemRef : null}
+                                                            onClick={() => { action.action(); onClose(); }}
+                                                            className={`flex items-center gap-3 p-3 rounded-md cursor-pointer text-sm ${isSelected ? 'bg-indigo-600 text-white' : 'text-gray-300'}`}
+                                                        >
+                                                            <Icon className="w-5 h-5" />
+                                                            <span>{action.name}</span>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        </div>
+                                    )
+                                })
                             ) : (
                                 <p className="text-center text-gray-500 p-8">No actions found.</p>
                             )}
