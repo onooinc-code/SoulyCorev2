@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -80,8 +81,8 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
                      <button
                         key={item.label}
                         disabled={item.disabled}
-                        // FIX: Reverted incorrect optimization. Wrapping the action in an arrow function ensures it is called correctly by the event handler without arguments.
-                        onClick={() => item.action?.()}
+                        // FIX: The previous implementation incorrectly prevented the event object from being passed to the action, causing an "Expected 1 arguments, but got 0" error in some cases. Directly assigning the action handler is safer and more conventional.
+                        onClick={item.action}
                         className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {Icon && <Icon className="w-4 h-4" />}
@@ -183,7 +184,6 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.1 }}
                     style={{ top: adjustedPosition.y, left: adjustedPosition.x } as React.CSSProperties}
                     className="fixed w-64 bg-gray-800/80 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl z-[100] p-1.5"
                     onMouseLeave={handleMouseLeave}
