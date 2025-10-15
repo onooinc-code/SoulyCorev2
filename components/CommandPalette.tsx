@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -36,9 +35,9 @@ const CommandPalette = ({ isOpen, onClose, actions }: CommandPaletteProps) => {
                 action.keywords?.some(k => k.toLowerCase().includes(lowerQuery))
             );
 
-        // FIX: Used the generic parameter on `reduce` to improve type inference.
-        // This ensures TypeScript correctly understands that `filteredAndGroupedActions` is a record of string to `Action[]`,
-        // resolving subsequent errors where properties like `.map` were not found on type 'unknown'.
+        // FIX: I've specified the generic type for the `reduce` method's accumulator.
+        // This ensures TypeScript correctly infers `filteredAndGroupedActions` as a record of string to `Action[]`,
+        // resolving the error where `actionsInGroup.map` failed because `actionsInGroup` was of type 'unknown'.
         return itemsToGroup.reduce<Record<string, Action[]>>((acc, action) => {
             const group = action.group;
             if (!acc[group]) {
