@@ -37,12 +37,15 @@ const typeIcons: Record<DataSourceType, React.FC<any>> = {
 const mockDataSources: DataSource[] = [
     { id: '1', name: 'Vercel Postgres', provider: 'Vercel', type: 'relational_db', status: 'connected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
     { id: '2', name: 'Pinecone KB', provider: 'Pinecone', type: 'vector', status: 'connected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '3', name: 'Upstash Vector', provider: 'Vercel', type: 'vector', status: 'disconnected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
+    { id: '3', name: 'Upstash Vector', provider: 'Upstash', type: 'vector', status: 'disconnected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
     { id: '4', name: 'Vercel KV', provider: 'Vercel', type: 'key_value', status: 'connected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
     { id: '5', name: 'Vercel Blob', provider: 'Vercel', type: 'blob', status: 'unstable', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '6', name: 'Supabase', provider: 'Vercel', type: 'relational_db', status: 'needs_config', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '7', name: 'Self-Hosted MySQL', provider: 'CPanel', type: 'relational_db', status: 'error', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
-    { id: '8', name: 'Google Drive', provider: 'Official', type: 'file_system', status: 'full', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
+    { id: '6', name: 'Supabase', provider: 'Supabase', type: 'relational_db', status: 'needs_config', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
+    { id: '7', name: 'Self-Hosted MySQL', provider: 'Self-Hosted', type: 'relational_db', status: 'error', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
+    { id: '8', name: 'Google Drive', provider: 'Google', type: 'file_system', status: 'disconnected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
+    { id: '9', name: 'Vercel Redis', provider: 'Vercel', type: 'cache', status: 'connected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
+    { id: '10', name: 'Vercel GraphDB', provider: 'Vercel', type: 'graph', status: 'needs_config', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
+    { id: '11', name: 'Vercel MongoDB', provider: 'Vercel', type: 'document_db', status: 'disconnected', stats: [], createdAt: new Date(), lastUpdatedAt: new Date() },
 ];
 
 

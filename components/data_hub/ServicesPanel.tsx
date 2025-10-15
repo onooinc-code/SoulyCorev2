@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -19,6 +20,9 @@ const mockDataSources: DataSource[] = [
     { id: '6', name: 'Supabase', provider: 'Supabase', type: 'relational_db', status: 'needs_config', stats: [{ label: 'Tables', value: 0 }, { label: 'Latency', value: 'N/A' }, {label: 'Auth Users', value: 0}, {label: 'Storage', value: '0GB'}], createdAt: new Date(), lastUpdatedAt: new Date() },
     { id: '7', name: 'Self-Hosted MySQL', provider: 'Self-Hosted', type: 'relational_db', status: 'error', stats: [{ label: 'DBs', value: 5 }, { label: 'Latency', value: '999ms' }, {label: 'Connections', value: 0}, {label: 'Status', value: 'Auth Error'}], createdAt: new Date(), lastUpdatedAt: new Date() },
     { id: '8', name: 'Google Drive', provider: 'Google', type: 'file_system', status: 'disconnected', stats: [{ label: 'Files', value: '10k' }, { label: 'Size', value: '14.8GB' }, {label: 'Capacity', value: '15GB'}, {label: 'API Calls', value: 23}], createdAt: new Date(), lastUpdatedAt: new Date() },
+    { id: '9', name: 'Vercel Redis', provider: 'Vercel', type: 'cache', status: 'connected', stats: [{ label: 'Keys', value: '5.4k' }, { label: 'Latency', value: '2ms' }, {label: 'Hits', value: '99%'}, {label: 'Memory', value: '58MB'}], createdAt: new Date(), lastUpdatedAt: new Date() },
+    { id: '10', name: 'Vercel GraphDB', provider: 'Vercel', type: 'graph', status: 'needs_config', stats: [{ label: 'Nodes', value: 0 }, { label: 'Edges', value: 0 }, {label: 'Latency', value: 'N/A'}, {label: 'Size', value: '0MB'}], createdAt: new Date(), lastUpdatedAt: new Date() },
+    { id: '11', name: 'Vercel MongoDB', provider: 'Vercel', type: 'document_db', status: 'disconnected', stats: [{ label: 'Collections', value: 0 }, { label: 'Docs', value: 0 }, {label: 'Latency', value: 'N/A'}, {label: 'Size', value: '0MB'}], createdAt: new Date(), lastUpdatedAt: new Date() },
 ];
 
 const ServicesPanel = ({ onOpenSettings }: ServicesPanelProps) => {
