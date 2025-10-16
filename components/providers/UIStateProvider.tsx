@@ -27,6 +27,8 @@ interface UIStateContextType {
     setCommandPaletteOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isFullscreen: boolean;
     toggleFullscreen: () => void;
+    isNavigating: boolean;
+    setNavigating: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -43,6 +45,7 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [isDataHubWidgetOpen, setDataHubWidgetOpen] = useState(false);
     const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isNavigating, setNavigating] = useState(false);
 
     useEffect(() => {
         const savedFontSize = localStorage.getItem('app-font-size');
@@ -130,6 +133,7 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, []);
 
     const handleSetActiveView = useCallback((view: string) => {
+        setNavigating(true);
         // If a chat is selected, automatically switch to the chat view
         if (view === 'chat') {
             setActiveView('chat');
@@ -137,6 +141,7 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
             // Otherwise, allow switching to any other view
             setActiveView(view);
         }
+        setTimeout(() => setNavigating(false), 700); // Match progress bar duration
     }, []);
 
     const contextValue = {
@@ -161,6 +166,8 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         setCommandPaletteOpen,
         isFullscreen,
         toggleFullscreen,
+        isNavigating,
+        setNavigating,
     };
 
     return (
