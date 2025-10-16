@@ -5,7 +5,7 @@ import { GoogleGenAI } from "@google/genai";
 import { ILLMProvider, HistoryContent, IModelConfig } from '../types';
 
 // @google/genai-api-guideline-fix: Use 'gemini-2.5-flash' for general text tasks.
-const modelName = 'gemini-2.5-flash';
+const defaultModelName = 'gemini-2.5-flash';
 
 export class GeminiProvider implements ILLMProvider {
     private ai: GoogleGenAI | null = null;
@@ -32,11 +32,11 @@ export class GeminiProvider implements ILLMProvider {
     /**
      * @inheritdoc
      */
-    async generateContent(history: HistoryContent[], systemInstruction: string, config?: IModelConfig): Promise<string> {
+    async generateContent(history: HistoryContent[], systemInstruction: string, config?: IModelConfig, model?: string): Promise<string> {
         try {
             const client = this.getClient();
             const result = await client.models.generateContent({
-                model: modelName,
+                model: model || defaultModelName,
                 contents: history,
                 config: {
                     systemInstruction: systemInstruction || "You are a helpful AI assistant.",

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -29,7 +28,6 @@ interface UIStateContextType {
     isFullscreen: boolean;
     toggleFullscreen: () => void;
     isNavigating: boolean;
-    setNavigating: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -189,7 +187,6 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         isFullscreen,
         toggleFullscreen,
         isNavigating,
-        setNavigating,
     };
 
     return (

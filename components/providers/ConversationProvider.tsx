@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
@@ -200,7 +199,7 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
                 if (currentConversation.enableMemoryExtraction) {
                     startBackgroundTask();
-                    fetch('/api/memory/pipeline', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ textToAnalyze: `${message.content}\n${aiResponse}`, aiMessageId: aiMessage?.id }) })
+                    fetch('/api/memory/pipeline', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ textToAnalyze: `${message.content}\n${aiResponse}`, aiMessageId: aiMessage?.id, conversationId: currentConversation.id }) })
                         .catch(err => console.error("Memory pipeline trigger failed.", err))
                         .finally(endBackgroundTask);
                 }

@@ -1,9 +1,7 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Content } from "@google/genai";
-import { Message } from '@/lib/types';
+import { Message, Conversation } from '@/lib/types';
 import { generateProactiveSuggestion } from '@/lib/gemini-server';
 import { ContextAssemblyPipeline } from '@/core/pipelines/context_assembly';
 import { EpisodicMemoryModule } from '@/core/memory/modules/episodic';
@@ -27,7 +25,7 @@ export async function POST(req: NextRequest) {
     let userMessageId: string | null = null;
     
     try {
-        const { messages, conversation, mentionedContacts, userMessageId: receivedUserMessageId } = await req.json();
+        const { messages, conversation, mentionedContacts, userMessageId: receivedUserMessageId }: { messages: Message[], conversation: Conversation, mentionedContacts: any[], userMessageId: string } = await req.json();
         userMessageId = receivedUserMessageId;
 
         if (!messages || !conversation || !userMessageId) {
@@ -72,11 +70,14 @@ export async function POST(req: NextRequest) {
             topP: conversation.topP
         };
 
+        const modelOverride = conversation.ui_settings?.model_for_response || conversation.model;
+
         // 4. Generate AI response
         const responseText = await llmProvider.generateContent(
             history, 
-            conversation.systemPrompt,
-            modelConfig
+            conversation.systemPrompt || 'You are a helpful AI assistant.',
+            modelConfig,
+            modelOverride
         );
         
         if (!responseText) {

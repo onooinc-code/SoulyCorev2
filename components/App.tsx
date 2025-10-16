@@ -1,4 +1,3 @@
-
 "use client";
 
 // FIX: Corrected typo in import statement to properly import React hooks.
@@ -19,6 +18,8 @@ import ConversationPanel from './ConversationPanel';
 import { getActionsRegistry } from '@/lib/actionsRegistry';
 import { useLog } from './providers/LogProvider';
 import Notifications from './Notifications';
+import AppStatusBar from './AppStatusBar';
+import TopProgressBar from './TopProgressBar';
 
 const ContactsHub = dynamic(() => import('@/components/ContactsHub'), {
   ssr: false,
@@ -280,6 +281,7 @@ export const App = () => {
 
     return (
         <div ref={mainContainerRef} onContextMenu={handleContextMenu} className="font-sans h-full focus:outline-none" tabIndex={-1}>
+            <TopProgressBar />
             <Notifications />
             <MorningBriefing />
             <UniversalProgressIndicator />
@@ -332,6 +334,7 @@ export const App = () => {
                     onClose={() => setContextMenu(prev => ({ ...prev, isOpen: false }))}
                 />
             </main>
+            <AppStatusBar />
         </div>
     );
 };

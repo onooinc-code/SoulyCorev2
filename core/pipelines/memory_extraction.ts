@@ -12,6 +12,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 interface IExtractAndStoreParams {
     textToAnalyze: string;
     runId: string; // For logging
+    modelOverride?: string;
 }
 
 interface IExtractedData {
@@ -80,11 +81,11 @@ export class MemoryExtractionPipeline {
      * @returns A promise that resolves when the extraction and storage are complete.
      */
     async extractAndStore(params: IExtractAndStoreParams): Promise<void> {
-        const { textToAnalyze, runId } = params;
+        const { textToAnalyze, runId, modelOverride } = params;
         const startTime = Date.now();
 
         try {
-            const extractedData = await this.extractDataWithLLM(textToAnalyze, runId);
+            const extractedData = await this.extractDataWithLLM(textToAnalyze, runId, modelOverride);
 
             if (!extractedData) {
                 throw new Error("Failed to extract data from text.");
@@ -134,9 +135,10 @@ export class MemoryExtractionPipeline {
      * This is a private helper method for the pipeline.
      * @param text - The text to analyze.
      * @param runId - The ID of the current pipeline run for logging.
+     * @param modelOverride - Optional model name to use for this extraction.
      * @returns A promise that resolves with the extracted data object.
      */
-    private async extractDataWithLLM(text: string, runId: string): Promise<IExtractedData | null> {
+    private async extractDataWithLLM(text: string, runId: string, modelOverride?: string): Promise<IExtractedData | null> {
         const prompt = `
             From the following text, perform two tasks:
             1. Extract key entities (people, places, organizations, projects, concepts).
@@ -179,7 +181,7 @@ export class MemoryExtractionPipeline {
         };
         
         // @google/genai-api-guideline-fix: Use 'gemini-2.5-flash' for general text tasks.
-        const modelName = 'gemini-2.5-flash';
+        const modelName = modelOverride || 'gemini-2.5-flash';
 
         const fn = async () => {
             try {

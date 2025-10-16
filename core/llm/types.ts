@@ -28,9 +28,10 @@ export interface ILLMProvider {
      * @param history - The sequence of messages in the conversation.
      * @param systemInstruction - The system prompt or instructions for the model.
      * @param config - Optional configuration for the model, like temperature and topP.
+     * @param model - Optional model name override for this specific call.
      * @returns A promise that resolves to the generated text content as a string.
      */
-    generateContent(history: HistoryContent[], systemInstruction: string, config?: IModelConfig): Promise<string>;
+    generateContent(history: HistoryContent[], systemInstruction: string, config?: IModelConfig, model?: string): Promise<string>;
 
     /**
      * Generates a vector embedding for a given piece of text.
