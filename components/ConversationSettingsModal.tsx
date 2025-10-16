@@ -7,27 +7,34 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from './providers/AppProvider';
 import { useLog } from './providers/LogProvider';
 
-// Per Gemini SDK guidelines, only this model should be used for this task.
-const geminiModels = [
-    'gemini-2.5-flash',
-];
-
-// FIX: Added interface for component props to resolve TypeScript error.
-interface ConversationSettingsModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-}
-
-const ConversationSettingsModal = ({ isOpen, onClose }: ConversationSettingsModalProps) => {
+const ConversationSettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void; }) => {
     const { currentConversation, updateCurrentConversation, setStatus, clearError } = useAppContext();
     const { log } = useLog();
-    const [model, setModel] = useState(geminiModels[0]);
+    
+    const [model, setModel] = useState('');
     const [temperature, setTemperature] = useState(0.7);
     const [topP, setTopP] = useState(0.95);
+    const [availableModels, setAvailableModels] = useState<string[]>([]);
+
+    useEffect(() => {
+        const fetchModels = async () => {
+            try {
+                const res = await fetch('/api/models');
+                if (!res.ok) throw new Error("Failed to fetch models");
+                const data = await res.json();
+                setAvailableModels(data);
+            } catch (error) {
+                log('Failed to fetch available models', { error }, 'error');
+                // Fallback to a default model if fetch fails
+                setAvailableModels(['gemini-2.5-flash']);
+            }
+        };
+        fetchModels();
+    }, [log]);
 
     useEffect(() => {
         if (isOpen && currentConversation) {
-            setModel(currentConversation.model || geminiModels[0]);
+            setModel(currentConversation.model || 'gemini-2.5-flash');
             setTemperature(currentConversation.temperature ?? 0.7);
             setTopP(currentConversation.topP ?? 0.95);
         }
@@ -39,6 +46,10 @@ const ConversationSettingsModal = ({ isOpen, onClose }: ConversationSettingsModa
 
         const updatedData = { model, temperature, topP };
         log('User clicked "Save" in Conversation Settings Modal', { conversationId: currentConversation.id, updatedData });
+        
+        // Optimistic update
+        updateCurrentConversation(updatedData);
+        onClose();
 
         try {
             const res = await fetch(`/api/conversations/${currentConversation.id}`, {
@@ -48,14 +59,10 @@ const ConversationSettingsModal = ({ isOpen, onClose }: ConversationSettingsModa
             });
             if (!res.ok) throw new Error('Failed to update model settings');
             
-            updateCurrentConversation(updatedData);
-            onClose();
-
         } catch(error) {
             const errorMessage = (error as Error).message;
             setStatus({ error: errorMessage });
-            log('Failed to save conversation model settings', { error: { message: errorMessage, stack: (error as Error).stack } }, 'error');
-            console.error(error);
+            log('Failed to save conversation model settings', { error: { message: errorMessage } }, 'error');
         }
     };
 
@@ -74,7 +81,7 @@ const ConversationSettingsModal = ({ isOpen, onClose }: ConversationSettingsModa
                         animate={{ scale: 1, y: 0 }}
                         exit={{ scale: 0.9, y: 20 }}
                         transition={{ duration: 0.2 }}
-                        className="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 space-y-4"
+                        className="glass-panel rounded-lg shadow-xl w-full max-w-md p-6 space-y-4"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="flex justify-between items-center">
@@ -96,9 +103,9 @@ const ConversationSettingsModal = ({ isOpen, onClose }: ConversationSettingsModa
                                 onChange={e => setModel(e.target.value)} 
                                 className="w-full p-2 bg-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                             >
-                                {geminiModels.map(m => (
+                                {availableModels.length > 0 ? availableModels.map(m => (
                                     <option key={m} value={m}>{m}</option>
-                                ))}
+                                )) : <option value={model}>{model}</option>}
                             </select>
                         </div>
                         <div className="space-y-2">

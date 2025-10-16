@@ -35,10 +35,30 @@ const versionData = [
     },
     {
         version: '0.3.1',
-        release_date: new Date().toISOString(),
+        release_date: '2024-07-24T10:00:00Z',
         changes: `
 - **Bug Fix: Keyboard Shortcuts:** Resolved a critical bug where keyboard shortcuts would not work until the user interacted with the app. The app now automatically focuses itself when entering fullscreen mode, ensuring shortcuts are always responsive.
 - **Improvement: Fullscreen Mode:** Enhanced the fullscreen experience by removing mobile view constraints, allowing the application to utilize the entire screen space as intended.`
+    },
+    {
+        version: '0.4.0',
+        release_date: new Date().toISOString(),
+        changes: `
+- **Major UI Overhaul:** Implemented a new 'glassmorphism' and 'metal' visual theme across the application for a more modern and professional look.
+- **New: Progress & Status System:**
+  - Added a top-loading progress bar for view navigation.
+  - Added a global App Status Bar for background tasks.
+  - Enhanced contextual loading indicators.
+- **New: Settings Architecture:**
+  - All UI settings (font size, alignment) are now saved to the database, ensuring persistence across sessions.
+  - Model selection is now a dynamic dropdown populated from the backend.
+  - Added UI for a multi-model strategy, allowing different models for different tasks.
+- **Bug Fixes:**
+  - Fixed all non-functional actions in the Header and Right-Click Context Menu.
+  - Fixed non-functional message bubble alignment buttons.
+- **UX Improvements:**
+  - Message bubbles are now full-width for better space utilization.
+  - The Version History modal is now functional and redesigned.`
     }
 ];
 

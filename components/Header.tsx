@@ -62,7 +62,10 @@ const VersionCard = () => {
                 onMouseLeave={() => setIsHovered(false)}
                 className="relative"
             >
-                <div className={`relative px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors duration-300 ${isToday ? 'bg-indigo-600/80 text-indigo-100' : 'bg-gray-700/80 text-gray-300'}`}>
+                <div 
+                    onClick={() => setIsLogOpen(true)}
+                    className={`relative px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors duration-300 ${isToday ? 'bg-indigo-600/80 text-indigo-100' : 'bg-gray-700/80 text-gray-300'}`}
+                >
                     v{currentVersion.version}
                     {isNew && (
                         <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -148,7 +151,7 @@ const Header = () => {
             initial={{ y: -60, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, ease: 'easeInOut' }}
-            className="relative w-full bg-gray-800/80 backdrop-blur-sm z-10 p-2 border-b border-gray-700/50 flex-shrink-0"
+            className="relative w-full glass-panel z-10 p-2 border-b border-gray-700/50 flex-shrink-0"
         >
             <div 
                 className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-500 to-transparent"

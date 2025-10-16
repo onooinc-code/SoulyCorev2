@@ -40,23 +40,24 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
     const client = await db.connect();
     try {
-        const settingsToUpdate = await req.json() as AppSettings;
+        const settingsToUpdate = await req.json();
 
-        await client.sql`BEGIN`;
+        await client.query('BEGIN');
         
         const settingsArray = Object.entries(settingsToUpdate);
         for (const [key, value] of settingsArray) {
-            await client.sql`
-                INSERT INTO settings (key, value)
-                VALUES (${key}, ${value as any})
-                ON CONFLICT (key) 
-                DO UPDATE SET value = EXCLUDED.value;
-            `;
+            await client.query(
+                `INSERT INTO settings (key, value)
+                 VALUES ($1, $2)
+                 ON CONFLICT (key) 
+                 DO UPDATE SET value = EXCLUDED.value;`,
+                [key, JSON.stringify(value)]
+            );
         }
         
-        await client.sql`COMMIT`;
+        await client.query('COMMIT');
         
-        const { rows } = await client.sql`SELECT key, value FROM settings;`;
+        const { rows } = await client.query('SELECT key, value FROM settings;');
         const updatedSettings = rows.reduce((acc, row) => {
             acc[row.key] = row.value;
             return acc;
@@ -65,7 +66,7 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json(updatedSettings);
 
     } catch (error) {
-        await client.sql`ROLLBACK`;
+        await client.query('ROLLBACK');
         console.error('Failed to update settings:', error);
         const errorMessage = (error as Error).message;
         const errorDetails = {

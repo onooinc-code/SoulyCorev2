@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -12,7 +13,6 @@ export type MenuItem = {
     label?: never; action?: never; icon?: never; disabled?: never; children?: never;
 } | {
     label: string;
-    // FIX: Updated action type to optionally accept a React MouseEvent.
     action?: (e?: React.MouseEvent) => void;
     icon?: IconType;
     disabled?: boolean;
@@ -38,23 +38,18 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
 
             // Horizontal position
             if (parentRect.right + menuRect.width > window.innerWidth) {
-                // Overflow right, so position to the left of the parent
                 styles.left = parentRect.left - menuRect.width;
             } else {
-                // Position to the right of the parent
                 styles.left = parentRect.right;
             }
 
             // Vertical position
             if (parentRect.top + menuRect.height > window.innerHeight) {
-                // Overflow bottom, so align bottom edges
                 styles.top = parentRect.bottom - menuRect.height;
             } else {
-                // Align top edges
                 styles.top = parentRect.top;
             }
 
-            // Ensure it doesn't go off-screen
             if (styles.left < 0) styles.left = 0;
             if (styles.top < 0) styles.top = 0;
             
@@ -81,7 +76,6 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
                      <button
                         key={item.label}
                         disabled={item.disabled}
-                        // FIX: Changed to an explicit arrow function to ensure the event object is always passed, resolving "Expected 1 arguments, but got 0" errors.
                         onClick={(e) => item.action?.(e)}
                         className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -116,7 +110,6 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
         };
         
         if (isOpen) {
-            // Defer adjustment until menu is rendered to get correct dimensions
             requestAnimationFrame(() => {
                 if (!menuRef.current) return;
                 const menuRect = menuRef.current.getBoundingClientRect();
@@ -149,9 +142,6 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>, item: MenuItem) => {
         window.clearTimeout(subMenuTimer.current);
         if (item.children) {
-            // FIX: To prevent race conditions with React's synthetic event reuse, we get the DOMRect synchronously.
-            // This captures the element's position at the time of the event and passes a plain object to the timer,
-            // which is safer than accessing event properties in an async callback.
             const rect = e.currentTarget.getBoundingClientRect();
             subMenuTimer.current = window.setTimeout(() => {
                 setActiveSubMenu(item.label);
@@ -185,7 +175,7 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     style={{ top: adjustedPosition.y, left: adjustedPosition.x } as React.CSSProperties}
-                    className="fixed w-64 bg-gray-800/80 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl z-[100] p-1.5"
+                    className="fixed w-64 glass-panel rounded-lg shadow-2xl z-[100] p-1.5"
                     onMouseLeave={handleMouseLeave}
                     onMouseEnter={handleSubMenuEnter}
                 >
@@ -201,13 +191,10 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                                 onMouseEnter={(e) => handleMouseEnter(e, item)}
                                 onClick={(e) => {
                                     if (item.children) {
-                                        // On click/tap, toggle the submenu. This is for mobile/touch support.
                                         e.stopPropagation();
                                         setActiveSubMenu(prev => prev === item.label ? null : item.label);
                                         setActiveSubMenuRect(e.currentTarget.getBoundingClientRect());
                                     } else if (item.action) {
-                                        // If it's a direct action, execute it and close the menu.
-                                        // FIX: Pass the event object to the action handler for consistency and to fix "Expected 1 arguments, but got 0" errors.
                                         item.action(e);
                                         onClose();
                                     }
@@ -229,23 +216,20 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                     <AnimatePresence>
                         {activeSubMenu && items.find(i => i.label === activeSubMenu)?.children && (
                             <SubMenu 
-                                items={items.find(i => i.label === activeSubMenu)!.children!.map((child): MenuItem => {
-                                    // FIX: The wrapper for submenu item actions was swallowing the event object, causing "Expected 1 arguments, but got 0" errors. The wrapper now accepts and passes the event.
+                                items={(items.find(i => i.label === activeSubMenu)!.children! as MenuItem[]).map((child): MenuItem => {
                                     if (child.isSeparator) {
                                         return child;
                                     }
+                                    // FIX: The original implementation using spread syntax (`...child`) within a discriminated union caused a TypeScript type inference error. The build toolchain incorrectly inferred that an `action` property could be added to a separator-type menu item. Refactored to use destructuring to explicitly separate the `action` from the `...rest` of the properties, then reconstruct the object. This ensures TypeScript correctly understands the object's shape and resolves the build error.
+                                    const { action, ...rest } = child;
                                     return {
-                                        label: child.label,
-                                        // FIX: The action wrapper was not passing the event object to the child action, causing an "Expected 1 arguments, but got 0" error.
+                                        ...rest,
                                         action: (e) => {
-                                            if (child.action) {
-                                                child.action(e);
+                                            if (action) {
+                                                action(e);
                                             }
                                             onClose();
                                         },
-                                        icon: child.icon,
-                                        disabled: child.disabled,
-                                        children: child.children,
                                     };
                                 })} 
                                 parentRect={activeSubMenuRect} 

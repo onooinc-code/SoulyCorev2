@@ -21,7 +21,8 @@ async function createTables() {
                 "topP" REAL,
                 "enableMemoryExtraction" BOOLEAN DEFAULT true,
                 "enableProactiveSuggestions" BOOLEAN DEFAULT true,
-                "enableAutoSummarization" BOOLEAN DEFAULT true
+                "enableAutoSummarization" BOOLEAN DEFAULT true,
+                ui_settings JSONB
             );
         `;
         console.log("Table 'conversations' created or already exists.", conversationsTable.command);
@@ -59,6 +60,11 @@ async function createTables() {
             await sql`ALTER TABLE conversations ADD COLUMN IF NOT EXISTS "enableAutoSummarization" BOOLEAN DEFAULT true;`;
         } catch (e) {
             if (!e.message.includes('column "enableAutoSummarization" already exists')) throw e;
+        }
+         try {
+            await sql`ALTER TABLE conversations ADD COLUMN IF NOT EXISTS ui_settings JSONB;`;
+        } catch (e) {
+            if (!e.message.includes('column "ui_settings" already exists')) throw e;
         }
         console.log("Conversation model and feature columns checked.");
 
@@ -416,7 +422,8 @@ async function createTables() {
                 ('defaultModelConfig', '{"model": "gemini-2.5-flash", "temperature": 0.7, "topP": 0.95}'),
                 ('defaultAgentConfig', '{"systemPrompt": "You are a helpful AI assistant.", "useSemanticMemory": true, "useStructuredMemory": true}'),
                 ('enableDebugLog', '{"enabled": false}'),
-                ('featureFlags', '{"enableMemoryExtraction": true, "enableProactiveSuggestions": true, "enableAutoSummarization": true}')
+                ('featureFlags', '{"enableMemoryExtraction": true, "enableProactiveSuggestions": true, "enableAutoSummarization": true}'),
+                ('global_ui_settings', '{"fontSize": "base"}')
             ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
         `;
         console.log("Default settings inserted or already exist.");

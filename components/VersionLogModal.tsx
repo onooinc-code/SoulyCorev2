@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -44,7 +45,7 @@ const VersionLogModal = ({ isOpen, onClose }: VersionLogModalProps) => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100] p-4"
+                    className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[150] p-4"
                     onClick={onClose}
                 >
                     <motion.div
@@ -52,10 +53,10 @@ const VersionLogModal = ({ isOpen, onClose }: VersionLogModalProps) => {
                         animate={{ scale: 1, y: 0 }}
                         exit={{ scale: 0.9, y: 20 }}
                         transition={{ duration: 0.2 }}
-                        className="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl h-full max-h-[80vh] flex flex-col"
+                        className="glass-panel rounded-lg shadow-2xl w-full max-w-2xl h-full max-h-[80vh] flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
+                        <div className="flex justify-between items-center p-4 border-b border-gray-700/50 flex-shrink-0">
                             <h2 className="text-xl font-bold">Version History</h2>
                             <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-700">
                                 <XIcon className="w-6 h-6" />

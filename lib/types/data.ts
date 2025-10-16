@@ -16,6 +16,10 @@ export interface Conversation {
     enableMemoryExtraction?: boolean;
     enableProactiveSuggestions?: boolean;
     enableAutoSummarization?: boolean;
+    ui_settings?: {
+        textAlign?: 'left' | 'right' | 'center';
+        [key: string]: any;
+    } | null;
 }
 
 export interface Message {

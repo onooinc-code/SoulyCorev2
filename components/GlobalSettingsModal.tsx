@@ -10,30 +10,33 @@ import { useConversation } from './providers/ConversationProvider';
 import type { AppSettings } from '@/lib/types';
 import { useLog } from './providers/LogProvider';
 
-interface GlobalSettingsModalProps {
-    setIsOpen: (isOpen: boolean) => void;
-}
-
-const GlobalSettingsModal = ({ setIsOpen }: GlobalSettingsModalProps) => {
-    const { settings, loadSettings, saveSettings } = useSettings();
+const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void; }) => {
+    const { settings, saveSettings } = useSettings();
     const { setStatus, clearError } = useConversation();
     const { log } = useLog();
     const [localSettings, setLocalSettings] = useState<AppSettings | null>(null);
+    const [availableModels, setAvailableModels] = useState<string[]>([]);
 
-    // This effect runs once when the modal opens to ensure we have the latest settings.
-    useEffect(() => {
-        if (!settings) {
-            loadSettings();
-        }
-    }, [settings, loadSettings]);
-
-    // This effect synchronizes the local form state with the global context state.
-    // It runs whenever the global settings object is updated (e.g., after the fetch).
     useEffect(() => {
         if (settings) {
-            setLocalSettings(JSON.parse(JSON.stringify(settings))); // Deep copy
+            setLocalSettings(JSON.parse(JSON.stringify(settings)));
         }
     }, [settings]);
+    
+    useEffect(() => {
+        const fetchModels = async () => {
+            try {
+                const res = await fetch('/api/models');
+                if (!res.ok) throw new Error("Failed to fetch models");
+                const data = await res.json();
+                setAvailableModels(data);
+            } catch (error) {
+                log('Failed to fetch available models for global settings', { error }, 'error');
+            }
+        };
+        fetchModels();
+    }, [log]);
+
 
     const handleSave = async () => {
         if (!localSettings) return;
@@ -47,11 +50,24 @@ const GlobalSettingsModal = ({ setIsOpen }: GlobalSettingsModalProps) => {
         } catch (error) {
             const errorMessage = (error as Error).message;
             setStatus({ error: errorMessage });
-            log('Failed to save settings.', { error: { message: errorMessage, stack: (error as Error).stack } }, 'error');
-            console.error(error);
+            log('Failed to save settings.', { error: { message: errorMessage } }, 'error');
         } finally {
             setStatus({ currentAction: "" });
         }
+    };
+
+    const handleSettingChange = (path: string, value: any) => {
+        setLocalSettings(prev => {
+            if (!prev) return null;
+            const keys = path.split('.');
+            const newSettings = JSON.parse(JSON.stringify(prev)); // Deep copy
+            let current = newSettings;
+            for (let i = 0; i < keys.length - 1; i++) {
+                current = current[keys[i]];
+            }
+            current[keys[keys.length - 1]] = value;
+            return newSettings;
+        });
     };
 
     const renderContent = () => {
@@ -71,15 +87,26 @@ const GlobalSettingsModal = ({ setIsOpen }: GlobalSettingsModalProps) => {
                         <h3 className="font-semibold text-lg mb-2">Default Model Config</h3>
                         <p className="text-sm text-gray-400 mb-4">Settings applied to all new conversations.</p>
                         <div className="space-y-4">
-                            <label htmlFor="defaultModel" className="sr-only">Model Name</label>
-                            <input id="defaultModel" name="defaultModel" type="text" value={localSettings.defaultModelConfig.model} onChange={e => setLocalSettings(s => s ? ({...s, defaultModelConfig: {...s.defaultModelConfig, model: e.target.value}}) : null)} placeholder="Model Name" className="w-full p-2 bg-gray-700 rounded-lg text-sm"/>
+                           <div>
+                                <label htmlFor="defaultModel" className="block text-sm text-gray-400 mb-1">Model Name</label>
+                                <select 
+                                    id="defaultModel" 
+                                    value={localSettings.defaultModelConfig.model} 
+                                    onChange={e => handleSettingChange('defaultModelConfig.model', e.target.value)}
+                                    className="w-full p-2 bg-gray-700 rounded-lg text-sm"
+                                >
+                                    {availableModels.length > 0 ? availableModels.map(m => (
+                                        <option key={m} value={m}>{m}</option>
+                                    )) : <option value={localSettings.defaultModelConfig.model}>{localSettings.defaultModelConfig.model}</option>}
+                                </select>
+                           </div>
                             <div>
                                 <label htmlFor="defaultTemperature" className="block text-sm text-gray-400">Temperature: {localSettings.defaultModelConfig.temperature.toFixed(2)}</label>
-                                <input id="defaultTemperature" name="defaultTemperature" type="range" min="0" max="1" step="0.01" value={localSettings.defaultModelConfig.temperature} onChange={e => setLocalSettings(s => s ? ({...s, defaultModelConfig: {...s.defaultModelConfig, temperature: parseFloat(e.target.value)}}) : null)} className="w-full" />
+                                <input id="defaultTemperature" type="range" min="0" max="1" step="0.01" value={localSettings.defaultModelConfig.temperature} onChange={e => handleSettingChange('defaultModelConfig.temperature', parseFloat(e.target.value))} className="w-full" />
                             </div>
                              <div>
                                 <label htmlFor="defaultTopP" className="block text-sm text-gray-400">Top P: {localSettings.defaultModelConfig.topP.toFixed(2)}</label>
-                                <input id="defaultTopP" name="defaultTopP" type="range" min="0" max="1" step="0.01" value={localSettings.defaultModelConfig.topP} onChange={e => setLocalSettings(s => s ? ({...s, defaultModelConfig: {...s.defaultModelConfig, topP: parseFloat(e.target.value)}}) : null)} className="w-full" />
+                                <input id="defaultTopP" type="range" min="0" max="1" step="0.01" value={localSettings.defaultModelConfig.topP} onChange={e => handleSettingChange('defaultModelConfig.topP', parseFloat(e.target.value))} className="w-full" />
                             </div>
                         </div>
                     </div>
@@ -88,7 +115,7 @@ const GlobalSettingsModal = ({ setIsOpen }: GlobalSettingsModalProps) => {
                     <div className="p-4 bg-gray-900/50 rounded-lg">
                          <h3 className="font-semibold text-lg mb-2">Default Agent Config</h3>
                         <label htmlFor="defaultSystemPrompt" className="sr-only">System Prompt</label>
-                        <textarea id="defaultSystemPrompt" name="defaultSystemPrompt" value={localSettings.defaultAgentConfig.systemPrompt} onChange={e => setLocalSettings(s => s ? ({...s, defaultAgentConfig: {...s.defaultAgentConfig, systemPrompt: e.target.value}}) : null)} placeholder="System Prompt" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={3}></textarea>
+                        <textarea id="defaultSystemPrompt" value={localSettings.defaultAgentConfig.systemPrompt} onChange={e => handleSettingChange('defaultAgentConfig.systemPrompt', e.target.value)} placeholder="System Prompt" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={3}></textarea>
                     </div>
 
                     {/* Feature Flags */}
@@ -97,16 +124,16 @@ const GlobalSettingsModal = ({ setIsOpen }: GlobalSettingsModalProps) => {
                             <h3 className="font-semibold text-lg mb-2">Feature Flags</h3>
                              <p className="text-sm text-gray-400 mb-4">Default settings for resource-intensive features in new conversations.</p>
                              <div className="space-y-3">
-                                <label htmlFor="enableMemoryExtraction" className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
-                                    <input id="enableMemoryExtraction" name="enableMemoryExtraction" type="checkbox" checked={localSettings.featureFlags.enableMemoryExtraction} onChange={e => setLocalSettings(s => s ? ({...s, featureFlags: {...s.featureFlags, enableMemoryExtraction: e.target.checked }}) : null)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                                <label className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
+                                    <input type="checkbox" checked={localSettings.featureFlags.enableMemoryExtraction} onChange={e => handleSettingChange('featureFlags.enableMemoryExtraction', e.target.checked)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
                                     <span>Enable Memory Extraction</span>
                                 </label>
-                                 <label htmlFor="enableProactiveSuggestions" className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
-                                    <input id="enableProactiveSuggestions" name="enableProactiveSuggestions" type="checkbox" checked={localSettings.featureFlags.enableProactiveSuggestions} onChange={e => setLocalSettings(s => s ? ({...s, featureFlags: {...s.featureFlags, enableProactiveSuggestions: e.target.checked }}) : null)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                                 <label className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
+                                    <input type="checkbox" checked={localSettings.featureFlags.enableProactiveSuggestions} onChange={e => handleSettingChange('featureFlags.enableProactiveSuggestions', e.target.checked)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
                                     <span>Enable Proactive Suggestions</span>
                                 </label>
-                                 <label htmlFor="enableAutoSummarization" className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
-                                    <input id="enableAutoSummarization" name="enableAutoSummarization" type="checkbox" checked={localSettings.featureFlags.enableAutoSummarization} onChange={e => setLocalSettings(s => s ? ({...s, featureFlags: {...s.featureFlags, enableAutoSummarization: e.target.checked }}) : null)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                                 <label className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
+                                    <input type="checkbox" checked={localSettings.featureFlags.enableAutoSummarization} onChange={e => handleSettingChange('featureFlags.enableAutoSummarization', e.target.checked)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
                                     <span>Enable Auto-Collapse Summaries</span>
                                 </label>
                             </div>
@@ -117,8 +144,8 @@ const GlobalSettingsModal = ({ setIsOpen }: GlobalSettingsModalProps) => {
                      {/* Developer Settings */}
                     <div className="p-4 bg-gray-900/50 rounded-lg">
                         <h3 className="font-semibold text-lg mb-2">Developer Settings</h3>
-                        <label htmlFor="enableDebugLog" className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
-                            <input id="enableDebugLog" name="enableDebugLog" type="checkbox" checked={localSettings.enableDebugLog.enabled} onChange={e => setLocalSettings(s => s ? ({...s, enableDebugLog: { enabled: e.target.checked }}) : null)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                        <label className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
+                            <input type="checkbox" checked={localSettings.enableDebugLog.enabled} onChange={e => handleSettingChange('enableDebugLog.enabled', e.target.checked)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
                             <span>Enable Developer Logging</span>
                         </label>
                         <p className="text-xs text-gray-400 mt-2 pl-8">
@@ -137,7 +164,7 @@ const GlobalSettingsModal = ({ setIsOpen }: GlobalSettingsModalProps) => {
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-            <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl p-6">
+            <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="glass-panel rounded-lg shadow-xl w-full max-w-2xl p-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold">Global Settings</h2>
                     <button onClick={() => setIsOpen(false)} className="p-1 rounded-full hover:bg-gray-700"><XIcon className="w-6 h-6" /></button>

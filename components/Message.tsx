@@ -21,12 +21,7 @@ interface MessageProps {
     isContextAssemblyRunning?: boolean;
     isMemoryExtractionRunning?: boolean;
     currentConversation: Conversation | null;
-}
-
-type TextAlign = 'left' | 'right';
-interface MessageSettings {
-    collapsed: boolean;
-    align: TextAlign;
+    onSetConversationAlign: (align: 'left' | 'right') => void;
 }
 
 const WORD_COUNT_THRESHOLD = 250;
@@ -42,7 +37,8 @@ const Message = ({
     onViewHtml,
     isContextAssemblyRunning,
     isMemoryExtractionRunning,
-    currentConversation
+    currentConversation,
+    onSetConversationAlign
 }: MessageProps) => {
     const isUser = message.role === 'user';
     const [isEditing, setIsEditing] = useState(false);
@@ -52,18 +48,8 @@ const Message = ({
     
     const isLongMessage = !isUser && message.content.split(/\s+/).length > WORD_COUNT_THRESHOLD;
     
-    const [settings, setSettings] = useState<MessageSettings>(() => {
-        try {
-            const allSettings = JSON.parse(localStorage.getItem('messageSettings') || '{}');
-            if (allSettings[message.id]) {
-                return allSettings[message.id];
-            }
-        } catch (error) {
-            console.error("Failed to parse message settings from localStorage", error);
-        }
-        // Synchronously calculate initial state to prevent layout shift.
-        return { collapsed: isLongMessage, align: 'left' };
-    });
+    // Per-message collapse state is local and ephemeral, stored in component state.
+    const [isCollapsed, setIsCollapsed] = useState(isLongMessage);
 
     const showProgressBar = isContextAssemblyRunning || isMemoryExtractionRunning;
     const progressText = isContextAssemblyRunning ? "Assembling Context..." : "Extracting Memories...";
@@ -75,7 +61,7 @@ const Message = ({
 
 
     useEffect(() => {
-        if (isLongMessage && settings.collapsed && !summary && currentConversation?.enableAutoSummarization) {
+        if (isLongMessage && isCollapsed && !summary && currentConversation?.enableAutoSummarization) {
             const fetchSummary = async () => {
                 try {
                     const cachedSummaries = JSON.parse(localStorage.getItem('messageSummaries') || '{}');
@@ -114,20 +100,7 @@ const Message = ({
             };
             fetchSummary();
         }
-    }, [isLongMessage, settings.collapsed, message.id, message.content, summary, currentConversation]);
-
-    
-    const updateSetting = <K extends keyof MessageSettings>(key: K, value: MessageSettings[K]) => {
-        const newSettings = { ...settings, [key]: value };
-        setSettings(newSettings);
-        try {
-            const allSettings = JSON.parse(localStorage.getItem('messageSettings') || '{}');
-            allSettings[message.id] = newSettings;
-            localStorage.setItem('messageSettings', JSON.stringify(allSettings));
-        } catch (error) {
-             console.error("Failed to save message settings to localStorage", error);
-        }
-    };
+    }, [isLongMessage, isCollapsed, message.id, message.content, summary, currentConversation]);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(message.content);
@@ -164,7 +137,7 @@ const Message = ({
             );
         }
 
-        if (isLongMessage && settings.collapsed) {
+        if (isLongMessage && isCollapsed) {
             if (!currentConversation?.enableAutoSummarization) {
                  return <p className="italic text-gray-400">Message content collapsed. Auto-summary is disabled for this conversation.</p>;
             }
@@ -183,12 +156,12 @@ const Message = ({
     const renderToggleCollapseButton = () => {
         if (!isLongMessage || isEditing) return null;
 
-        const buttonText = settings.collapsed ? 'Show More' : 'Show Less';
+        const buttonText = isCollapsed ? 'Show More' : 'Show Less';
         
         return (
             <div className={`mt-2 ${isUser ? 'text-right' : 'text-left'}`}>
                 <button 
-                    onClick={() => updateSetting('collapsed', !settings.collapsed)}
+                    onClick={() => setIsCollapsed(!isCollapsed)}
                     className="px-3 py-1 text-xs bg-gray-600/50 text-gray-300 rounded-full hover:bg-gray-600"
                 >
                     {buttonText}
@@ -196,6 +169,8 @@ const Message = ({
             </div>
         );
     };
+
+    const textAlignClass = currentConversation?.ui_settings?.textAlign === 'right' ? 'text-right' : 'text-left';
 
     return (
         <motion.div
@@ -209,17 +184,17 @@ const Message = ({
                     AI
                 </div>
             )}
-            <div className={`w-full max-w-2xl`}>
+            <div className={`w-full`}>
                  <div className={`flex items-center text-xs text-gray-400 mb-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
                     <MessageToolbar 
                         isBookmarked={message.isBookmarked || false}
-                        isCollapsed={settings.collapsed}
+                        isCollapsed={isCollapsed}
                         isUser={isUser}
                         onCopy={handleCopy}
                         onBookmark={() => onToggleBookmark(message.id)}
                         onSummarize={() => onSummarize(message.content)}
-                        onToggleCollapse={() => updateSetting('collapsed', !settings.collapsed)}
-                        onSetAlign={(align) => updateSetting('align', align)}
+                        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+                        onSetAlign={onSetConversationAlign}
                         onDelete={() => onDelete(message.id)}
                         onEdit={() => setIsEditing(true)}
                         onRegenerate={() => onRegenerate(message.id)}
@@ -227,7 +202,7 @@ const Message = ({
                         onViewHtml={extractedHtml ? () => onViewHtml(extractedHtml) : undefined}
                     />
                 </div>
-                <div className={`prose-custom w-full p-4 rounded-lg ${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-700 text-gray-200 rounded-bl-none'}`}>
+                <div className={`prose-custom w-full p-4 rounded-lg ${textAlignClass} ${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-700 text-gray-200 rounded-bl-none'}`}>
                     {renderMessageContent()}
                 </div>
                  {renderToggleCollapseButton()}

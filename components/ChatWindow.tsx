@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -42,7 +43,8 @@ const ChatWindow = () => {
         regenerateAiResponse,
         regenerateUserPromptAndGetResponse,
         backgroundTaskCount,
-        activeWorkflow
+        activeWorkflow,
+        updateCurrentConversation,
     } = useConversation();
     const { log } = useLog();
     
@@ -56,8 +58,6 @@ const ChatWindow = () => {
 
 
     useEffect(() => {
-        // Using a more robust scrolling method to prevent jumps.
-        // A timeout ensures this runs after the DOM has fully updated.
         const timer = setTimeout(() => {
             if (scrollContainerRef.current) {
                 scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
@@ -67,7 +67,6 @@ const ChatWindow = () => {
     }, [messages]);
     
     useEffect(() => {
-        // Clear suggestion when conversation changes
         setProactiveSuggestion(null);
     }, [currentConversation]);
 
@@ -106,6 +105,17 @@ const ChatWindow = () => {
             setProactiveSuggestion(suggestion);
         }
     };
+    
+    const handleSetConversationAlign = (align: 'left' | 'right') => {
+        if (!currentConversation) return;
+
+        const newUiSettings = {
+            ...currentConversation.ui_settings,
+            textAlign: align,
+        };
+        updateCurrentConversation({ ui_settings: newUiSettings });
+        // The save to DB is handled debounced in the provider
+    };
 
     const handleRegenerate = (messageId: string) => {
         const message = messages.find(m => m.id === messageId);
@@ -121,7 +131,6 @@ const ChatWindow = () => {
     const handleSuggestionClick = () => {
         if (!proactiveSuggestion) return;
         log('User clicked proactive suggestion.', { suggestion: proactiveSuggestion });
-        // This is a placeholder; a real implementation might pre-fill the input
         alert(`Action triggered: ${proactiveSuggestion}`);
         setProactiveSuggestion(null);
     };
@@ -146,7 +155,7 @@ const ChatWindow = () => {
             <Header />
             <div ref={scrollContainerRef} className="flex flex-col flex-1 p-6 overflow-y-auto">
                 {messages.length > 0 ? (
-                    <div className="max-w-4xl mx-auto w-full mt-auto">
+                    <div className="w-full mt-auto">
                         <div className="space-y-4">
                             {messages.map((msg) => (
                                 <div key={msg.id}>
@@ -162,6 +171,7 @@ const ChatWindow = () => {
                                         isMemoryExtractionRunning={backgroundTaskCount > 0 && msg.role === 'model' && msg.id === lastMessageIds.model}
                                         onViewHtml={handleViewHtml}
                                         currentConversation={currentConversation}
+                                        onSetConversationAlign={handleSetConversationAlign}
                                     />
                                 </div>
                             ))}
@@ -236,14 +246,8 @@ const ChatWindow = () => {
 
             <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
             <StatusBar 
-                onSettingsClick={() => {
-                    log('User opened Conversation Settings Modal.');
-                    setSettingsModalOpen(true);
-                }}
-                onAgentConfigClick={() => {
-                    log('User opened Agent Config Modal.');
-                    setAgentConfigModalOpen(true);
-                }}
+                onSettingsClick={() => setSettingsModalOpen(true)}
+                onAgentConfigClick={() => setAgentConfigModalOpen(true)}
             />
             <ConversationSettingsModal isOpen={isSettingsModalOpen} onClose={() => setSettingsModalOpen(false)} />
             <AgentConfigModal 
