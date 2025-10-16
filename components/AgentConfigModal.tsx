@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -21,9 +19,9 @@ const AgentConfigModal = ({ isOpen, onClose, conversation }: { isOpen: boolean; 
     
     const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [modelOverrides, setModelOverrides] = useState({
-        responseGeneration: '',
-        contextAssembly: '',
-        memoryExtraction: ''
+        model_for_response: '',
+        model_for_context: '',
+        model_for_memory: ''
     });
 
     useEffect(() => {
@@ -51,9 +49,9 @@ const AgentConfigModal = ({ isOpen, onClose, conversation }: { isOpen: boolean; 
             setEnableProactiveSuggestions(conversation.enableProactiveSuggestions ?? true);
             setEnableAutoSummarization(conversation.enableAutoSummarization ?? true);
             setModelOverrides({
-                responseGeneration: conversation.ui_settings?.model_for_response || '',
-                contextAssembly: conversation.ui_settings?.model_for_context || '',
-                memoryExtraction: conversation.ui_settings?.model_for_memory || '',
+                model_for_response: conversation.ui_settings?.model_for_response || '',
+                model_for_context: conversation.ui_settings?.model_for_context || '',
+                model_for_memory: conversation.ui_settings?.model_for_memory || '',
             });
         }
     }, [conversation, isOpen]);
@@ -71,9 +69,7 @@ const AgentConfigModal = ({ isOpen, onClose, conversation }: { isOpen: boolean; 
             enableAutoSummarization,
             ui_settings: {
                 ...conversation.ui_settings,
-                model_for_response: modelOverrides.responseGeneration,
-                model_for_context: modelOverrides.contextAssembly,
-                model_for_memory: modelOverrides.memoryExtraction,
+                ...modelOverrides,
             }
         };
         
@@ -140,9 +136,9 @@ const AgentConfigModal = ({ isOpen, onClose, conversation }: { isOpen: boolean; 
                             <h3 className="text-lg font-semibold text-gray-300 mb-3">Multi-Model Strategy</h3>
                             <p className="text-xs text-gray-400 mb-4">Optionally override the model for specific cognitive tasks. If blank, the conversation's default model will be used.</p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                               <ModelOverrideSelect label="Response Generation" value={modelOverrides.responseGeneration} onChange={e => setModelOverrides(s => ({...s, responseGeneration: e.target.value}))}/>
-                               <ModelOverrideSelect label="Context Assembly" value={modelOverrides.contextAssembly} onChange={e => setModelOverrides(s => ({...s, contextAssembly: e.target.value}))}/>
-                               <ModelOverrideSelect label="Memory Extraction" value={modelOverrides.memoryExtraction} onChange={e => setModelOverrides(s => ({...s, memoryExtraction: e.target.value}))}/>
+                               <ModelOverrideSelect label="Response Generation" value={modelOverrides.model_for_response} onChange={e => setModelOverrides(s => ({...s, model_for_response: e.target.value}))}/>
+                               <ModelOverrideSelect label="Context Assembly" value={modelOverrides.model_for_context} onChange={e => setModelOverrides(s => ({...s, model_for_context: e.target.value}))}/>
+                               <ModelOverrideSelect label="Memory Extraction" value={modelOverrides.model_for_memory} onChange={e => setModelOverrides(s => ({...s, model_for_memory: e.target.value}))}/>
                             </div>
                         </div>
 

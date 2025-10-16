@@ -18,6 +18,9 @@ export interface Conversation {
     enableAutoSummarization?: boolean;
     ui_settings?: {
         textAlign?: 'left' | 'right' | 'center';
+        model_for_response?: string;
+        model_for_context?: string;
+        model_for_memory?: string;
         [key: string]: any;
     } | null;
 }

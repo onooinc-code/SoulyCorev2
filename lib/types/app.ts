@@ -20,6 +20,9 @@ export interface AppSettings {
         enableProactiveSuggestions: boolean;
         enableAutoSummarization: boolean;
     };
+    global_ui_settings?: {
+        fontSize?: string;
+    };
 }
 
 export interface Log {

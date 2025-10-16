@@ -202,7 +202,7 @@ const Message = ({
                         onViewHtml={extractedHtml ? () => onViewHtml(extractedHtml) : undefined}
                     />
                 </div>
-                <div className={`prose-custom w-full p-4 rounded-lg ${textAlignClass} ${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-700 text-gray-200 rounded-bl-none'}`}>
+                <div className={`prose-custom max-w-none p-4 rounded-lg ${textAlignClass} ${isUser ? 'bg-blue-600/30 backdrop-blur-md border border-blue-400/30 text-white rounded-br-none' : 'bg-gray-700/30 backdrop-blur-md border border-gray-500/30 text-gray-200 rounded-bl-none'}`}>
                     {renderMessageContent()}
                 </div>
                  {renderToggleCollapseButton()}

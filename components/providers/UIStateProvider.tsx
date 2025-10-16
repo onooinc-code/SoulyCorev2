@@ -2,6 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { useSettings } from './SettingsProvider';
 
 const fontSizeSteps = ['sm', 'base', 'lg', 'xl'];
 
@@ -46,14 +47,21 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isNavigating, setNavigating] = useState(false);
+    const { settings, saveSettings } = useSettings();
 
+    // Load initial font size from settings first, then fallback to localStorage
     useEffect(() => {
-        const savedFontSize = localStorage.getItem('app-font-size');
-        if (savedFontSize && fontSizeSteps.includes(savedFontSize)) {
-            setFontSize(savedFontSize);
+        if (settings?.global_ui_settings?.fontSize && fontSizeSteps.includes(settings.global_ui_settings.fontSize)) {
+            setFontSize(settings.global_ui_settings.fontSize);
+        } else {
+            const savedFontSize = localStorage.getItem('app-font-size');
+            if (savedFontSize && fontSizeSteps.includes(savedFontSize)) {
+                setFontSize(savedFontSize);
+            }
         }
-    }, []);
+    }, [settings]);
 
+    // Apply class and save to localStorage (for immediate offline persistence)
     useEffect(() => {
         fontSizeSteps.forEach(step => {
             document.documentElement.classList.remove(`font-size-${step}`);
@@ -84,17 +92,31 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, []);
 
     const changeFontSize = useCallback((direction: 'increase' | 'decrease') => {
-        setFontSize(currentSize => {
-            const currentIndex = fontSizeSteps.indexOf(currentSize);
-            if (direction === 'increase' && currentIndex < fontSizeSteps.length - 1) {
-                return fontSizeSteps[currentIndex + 1];
+        const currentIndex = fontSizeSteps.indexOf(fontSize);
+        let newSize = fontSize;
+
+        if (direction === 'increase' && currentIndex < fontSizeSteps.length - 1) {
+            newSize = fontSizeSteps[currentIndex + 1];
+        } else if (direction === 'decrease' && currentIndex > 0) {
+            newSize = fontSizeSteps[currentIndex - 1];
+        }
+
+        if (newSize !== fontSize) {
+            setFontSize(newSize);
+            // Save to database
+            if (settings && saveSettings) {
+                const newSettings = {
+                    ...settings,
+                    global_ui_settings: {
+                        ...settings.global_ui_settings,
+                        fontSize: newSize,
+                    },
+                };
+                // Fire and forget, UI has already updated
+                saveSettings(newSettings);
             }
-            if (direction === 'decrease' && currentIndex > 0) {
-                return fontSizeSteps[currentIndex - 1];
-            }
-            return currentSize;
-        });
-    }, []);
+        }
+    }, [fontSize, settings, saveSettings]);
 
     const toggleContextMenu = useCallback(() => {
         setContextMenuEnabled(prev => !prev);

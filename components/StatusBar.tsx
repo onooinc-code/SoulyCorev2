@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useMemo } from 'react';
@@ -14,7 +12,11 @@ interface StatusBarProps {
 
 const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
     const { status, currentConversation, messages } = useConversation();
-    const model = currentConversation?.model || 'gemini-2.5-flash';
+    
+    const model = useMemo(() => {
+        if (!currentConversation) return 'gemini-2.5-flash';
+        return currentConversation.ui_settings?.model_for_response || currentConversation.model || 'gemini-2.5-flash';
+    }, [currentConversation]);
 
     const conversationStats = useMemo(() => {
         if (!currentConversation || messages.length === 0) return null;
