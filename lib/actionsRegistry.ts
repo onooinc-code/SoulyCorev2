@@ -1,10 +1,8 @@
 import {
     PlusIcon, MemoryIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon,
     LogIcon, BrainIcon, DashboardIcon, PromptsIcon, RocketLaunchIcon, ToolsIcon, TasksIcon,
-    CircleStackIcon, FullscreenIcon, ExitFullscreenIcon
+    CircleStackIcon, FullscreenIcon, ExitFullscreenIcon, EyeSlashIcon
 } from '@/components/Icons';
-// FIX: IconType was not exported from @/components/Icons. Defined it here locally.
-// Also imported Dispatch and SetStateAction for the ActionFunctions interface.
 import React, { type SVGProps, type Dispatch, type SetStateAction } from 'react';
 
 export type IconType = React.FC<SVGProps<SVGSVGElement>>;
@@ -21,12 +19,13 @@ export interface Action {
 interface ActionFunctions {
     createNewConversation: () => void;
     setActiveView: (view: string) => void;
-    // FIX: Changed types to support functional updates (e.g., prev => !prev)
     setBookmarksOpen: Dispatch<SetStateAction<boolean>>;
     setGlobalSettingsOpen: Dispatch<SetStateAction<boolean>>;
     setLogPanelOpen: Dispatch<SetStateAction<boolean>>;
     toggleFullscreen: () => void;
     isFullscreen: boolean;
+    toggleZenMode: () => void;
+    setDataHubWidgetOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
@@ -57,8 +56,10 @@ export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
       icon: fns.isFullscreen ? ExitFullscreenIcon : FullscreenIcon,
       action: fns.toggleFullscreen,
     },
+    { id: 'toggle-zen-mode', name: 'Toggle Zen Mode', keywords: ['focus', 'distraction free'], group: 'View', icon: EyeSlashIcon, action: () => fns.toggleZenMode() },
 
     // Modals & Panels
     { id: 'open-bookmarks', name: 'Open Bookmarks', keywords: ['saved', 'messages'], group: 'Modals & Panels', icon: BookmarkListIcon, action: () => fns.setBookmarksOpen(true) },
     { id: 'open-settings', name: 'Open Global Settings', keywords: ['configuration', 'options'], group: 'Modals & Panels', icon: SettingsIcon, action: () => fns.setGlobalSettingsOpen(true) },
+    { id: 'open-data-widget', name: 'Open Data Hub Widget', keywords: ['status', 'services'], group: 'Modals & Panels', icon: CircleStackIcon, action: () => fns.setDataHubWidgetOpen(true) },
 ];

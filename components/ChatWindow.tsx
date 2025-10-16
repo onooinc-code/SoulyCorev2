@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -16,6 +14,7 @@ import { useLog } from './providers/LogProvider';
 import Header from './Header'; // Import the new Header component
 import dynamic from 'next/dynamic';
 import LoadingIndicator from './LoadingIndicator';
+import { useUIState } from './providers/UIStateProvider';
 
 const CognitiveInspectorModal = dynamic(() => import('./CognitiveInspectorModal'), {
     ssr: false,
@@ -46,6 +45,7 @@ const ChatWindow = () => {
         activeWorkflow,
         updateCurrentConversation,
     } = useConversation();
+    const { isZenMode } = useUIState();
     const { log } = useLog();
     
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -152,7 +152,7 @@ const ChatWindow = () => {
 
     return (
         <div className="flex flex-col flex-1 min-h-0 bg-gray-900">
-            <Header />
+            {!isZenMode && <Header />}
             <div ref={scrollContainerRef} className="flex flex-col flex-1 p-6 overflow-y-auto">
                 {messages.length > 0 ? (
                     <div className="w-full mt-auto">

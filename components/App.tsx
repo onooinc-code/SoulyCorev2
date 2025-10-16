@@ -116,6 +116,7 @@ export const App = () => {
         isContextMenuEnabled,
         isMobileView,
         isZenMode,
+        toggleZenMode,
         isDataHubWidgetOpen,
         setDataHubWidgetOpen,
         isCommandPaletteOpen,
@@ -259,6 +260,8 @@ export const App = () => {
         setLogPanelOpen,
         toggleFullscreen,
         isFullscreen,
+        toggleZenMode,
+        setDataHubWidgetOpen,
     });
     
     const renderActiveView = () => {
@@ -280,12 +283,12 @@ export const App = () => {
     };
 
     return (
-        <div ref={mainContainerRef} onContextMenu={handleContextMenu} className="font-sans h-full focus:outline-none" tabIndex={-1}>
+        <div ref={mainContainerRef} onContextMenu={handleContextMenu} className="h-screen w-screen flex flex-col font-sans focus:outline-none" tabIndex={-1}>
             <TopProgressBar />
             <Notifications />
             <MorningBriefing />
             <UniversalProgressIndicator />
-             <main className={`flex h-full w-full overflow-hidden bg-gray-900 text-gray-100 transition-all duration-300 ease-in-out ${isMobileView && !isFullscreen ? 'max-w-md mx-auto my-4 shadow-2xl rounded-2xl border-2 border-gray-700' : ''}`}>
+             <main className={`flex-1 flex w-full overflow-hidden bg-gray-900 text-gray-100 transition-all duration-300 ease-in-out ${isMobileView && !isFullscreen ? 'max-w-md mx-auto my-4 shadow-2xl rounded-2xl border-2 border-gray-700' : ''}`}>
                 <AnimatePresence>
                     {!isZenMode && (
                         <NavigationRail 
@@ -309,7 +312,9 @@ export const App = () => {
                 </AnimatePresence>
 
                 <div className="flex-1 flex flex-col min-w-0 bg-gray-900">
-                    {renderActiveView()}
+                    <div className="flex-1 flex flex-col min-h-0">
+                        {renderActiveView()}
+                    </div>
                      <AnimatePresence>
                         {!isZenMode && isLogPanelOpen && <LogOutputPanel isOpen={isLogPanelOpen} />}
                     </AnimatePresence>
