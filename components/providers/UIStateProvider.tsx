@@ -106,7 +106,7 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
                 const newSettings = {
                     ...settings,
                     global_ui_settings: {
-                        ...settings.global_ui_settings,
+                        ...(settings.global_ui_settings || {}),
                         fontSize: newSize,
                     },
                 };

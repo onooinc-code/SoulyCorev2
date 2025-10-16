@@ -68,7 +68,7 @@ const AgentConfigModal = ({ isOpen, onClose, conversation }: { isOpen: boolean; 
             enableProactiveSuggestions,
             enableAutoSummarization,
             ui_settings: {
-                ...conversation.ui_settings,
+                ...(conversation.ui_settings || {}),
                 ...modelOverrides,
             }
         };

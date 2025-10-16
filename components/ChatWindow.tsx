@@ -110,7 +110,7 @@ const ChatWindow = () => {
         if (!currentConversation) return;
 
         const newUiSettings = {
-            ...currentConversation.ui_settings,
+            ...(currentConversation.ui_settings || {}),
             textAlign: align,
         };
         updateCurrentConversation({ ui_settings: newUiSettings });

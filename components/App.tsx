@@ -18,7 +18,6 @@ import ConversationPanel from './ConversationPanel';
 import { getActionsRegistry } from '@/lib/actionsRegistry';
 import { useLog } from './providers/LogProvider';
 import Notifications from './Notifications';
-import AppStatusBar from './AppStatusBar';
 import TopProgressBar from './TopProgressBar';
 
 const ContactsHub = dynamic(() => import('@/components/ContactsHub'), {
@@ -339,7 +338,6 @@ export const App = () => {
                     onClose={() => setContextMenu(prev => ({ ...prev, isOpen: false }))}
                 />
             </main>
-            <AppStatusBar />
         </div>
     );
 };
