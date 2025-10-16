@@ -14,6 +14,7 @@ const shortcuts = [
     { key: 'Cmd/Ctrl + K', description: 'Open Command Palette' },
     { key: 'Cmd/Ctrl + N', description: 'Create a new chat' },
     { key: 'Cmd/Ctrl + M', description: 'Open Memory Center' },
+    { key: 'F11', description: 'Toggle Fullscreen Mode' },
     { key: 'Enter', description: 'Send message (in chat input)' },
     { key: 'Shift + Enter', description: 'Add a new line (in chat input)' },
     { key: 'Escape', description: 'Close modals or context menu' },

@@ -2,7 +2,7 @@
 "use client";
 
 // FIX: Corrected typo in import statement to properly import React hooks.
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ChatWindow from '@/components/ChatWindow';
 import MorningBriefing from '@/components/MorningBriefing';
 import { XIcon, MemoryIcon, PlusIcon, TrashIcon, SparklesIcon, SidebarLeftIcon, LogIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon, FullscreenIcon, ExitFullscreenIcon, ClearIcon, KnowledgeIcon, KeyboardIcon, PromptsIcon, RefreshIcon, MinusIcon, BrainIcon, DashboardIcon, RocketLaunchIcon, ToolsIcon, TasksIcon, CopyIcon, ScissorsIcon, ClipboardPasteIcon, CircleStackIcon, PowerIcon } from '@/components/Icons';
@@ -119,6 +119,8 @@ export const App = () => {
         setDataHubWidgetOpen,
         isCommandPaletteOpen,
         setCommandPaletteOpen,
+        isFullscreen,
+        toggleFullscreen,
     } = useUIState();
     const { log } = useLog();
 
@@ -126,6 +128,7 @@ export const App = () => {
     const [isBookmarksOpen, setBookmarksOpen] = useState(false);
     const [isShortcutsModalOpen, setShortcutsModalOpen] = useState(false);
     const [isAddKnowledgeModalOpen, setAddKnowledgeModalOpen] = useState(false);
+    const mainContainerRef = useRef<HTMLDivElement>(null);
     
     const [contextMenu, setContextMenu] = useState<{
         isOpen: boolean;
@@ -143,6 +146,13 @@ export const App = () => {
             sessionStorage.removeItem('hard-refresh-status');
         }
     }, []);
+
+    // Effect to auto-focus the main container when entering fullscreen, fixing shortcut issues.
+    useEffect(() => {
+      if (isFullscreen && mainContainerRef.current) {
+        mainContainerRef.current.focus();
+      }
+    }, [isFullscreen]);
 
     const handleHardRefresh = () => {
         try {
@@ -196,6 +206,8 @@ export const App = () => {
                 { label: 'Toggle Conversations', icon: SidebarLeftIcon, action: () => setConversationPanelOpen(prev => !prev) },
                 { label: 'Minimize Conversations', icon: MinusIcon, action: () => setIsConversationPanelMinimized(prev => !prev) },
                 { label: 'Toggle Log Panel', icon: LogIcon, action: () => setLogPanelOpen(prev => !prev) },
+                { label: isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen', icon: isFullscreen ? ExitFullscreenIcon : FullscreenIcon, action: toggleFullscreen },
+                { isSeparator: true },
                 { label: 'Increase Font Size', icon: PlusIcon, action: () => changeFontSize('increase') },
                 { label: 'Decrease Font Size', icon: MinusIcon, action: () => changeFontSize('decrease') },
             ]},
@@ -235,6 +247,7 @@ export const App = () => {
         'mod+n': createNewConversation,
         'mod+k': () => setCommandPaletteOpen(true),
         'mod+m': () => setActiveView('memory_center'),
+        'f11': toggleFullscreen,
     });
 
     const actions = getActionsRegistry({
@@ -243,6 +256,8 @@ export const App = () => {
         setBookmarksOpen,
         setGlobalSettingsOpen,
         setLogPanelOpen,
+        toggleFullscreen,
+        isFullscreen,
     });
     
     const renderActiveView = () => {
@@ -264,11 +279,11 @@ export const App = () => {
     };
 
     return (
-        <div onContextMenu={handleContextMenu} className="font-sans h-full">
+        <div ref={mainContainerRef} onContextMenu={handleContextMenu} className="font-sans h-full focus:outline-none" tabIndex={-1}>
             <Notifications />
             <MorningBriefing />
             <UniversalProgressIndicator />
-             <main className={`flex h-full w-full overflow-hidden bg-gray-900 text-gray-100 transition-all duration-300 ease-in-out ${isMobileView ? 'max-w-md mx-auto my-4 shadow-2xl rounded-2xl border-2 border-gray-700' : ''}`}>
+             <main className={`flex h-full w-full overflow-hidden bg-gray-900 text-gray-100 transition-all duration-300 ease-in-out ${isMobileView && !isFullscreen ? 'max-w-md mx-auto my-4 shadow-2xl rounded-2xl border-2 border-gray-700' : ''}`}>
                 <AnimatePresence>
                     {!isZenMode && (
                         <NavigationRail 

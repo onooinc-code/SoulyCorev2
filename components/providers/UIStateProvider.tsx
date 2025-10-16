@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -24,6 +25,8 @@ interface UIStateContextType {
     setDataHubWidgetOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isCommandPaletteOpen: boolean;
     setCommandPaletteOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isFullscreen: boolean;
+    toggleFullscreen: () => void;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -39,6 +42,7 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [isZenMode, setZenMode] = useState(false);
     const [isDataHubWidgetOpen, setDataHubWidgetOpen] = useState(false);
     const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     useEffect(() => {
         const savedFontSize = localStorage.getItem('app-font-size');
@@ -54,6 +58,27 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         document.documentElement.classList.add(`font-size-${fontSize}`);
         localStorage.setItem('app-font-size', fontSize);
     }, [fontSize]);
+
+    const handleFullscreenChange = useCallback(() => {
+        setIsFullscreen(!!document.fullscreenElement);
+    }, []);
+
+    useEffect(() => {
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, [handleFullscreenChange]);
+
+    const toggleFullscreen = useCallback(() => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }, []);
 
     const changeFontSize = useCallback((direction: 'increase' | 'decrease') => {
         setFontSize(currentSize => {
@@ -134,6 +159,8 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         setDataHubWidgetOpen,
         isCommandPaletteOpen,
         setCommandPaletteOpen,
+        isFullscreen,
+        toggleFullscreen,
     };
 
     return (

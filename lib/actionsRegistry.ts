@@ -1,7 +1,7 @@
 import {
     PlusIcon, MemoryIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon,
     LogIcon, BrainIcon, DashboardIcon, PromptsIcon, RocketLaunchIcon, ToolsIcon, TasksIcon,
-    CircleStackIcon
+    CircleStackIcon, FullscreenIcon, ExitFullscreenIcon
 } from '@/components/Icons';
 // FIX: IconType was not exported from @/components/Icons. Defined it here locally.
 // Also imported Dispatch and SetStateAction for the ActionFunctions interface.
@@ -25,6 +25,8 @@ interface ActionFunctions {
     setBookmarksOpen: Dispatch<SetStateAction<boolean>>;
     setGlobalSettingsOpen: Dispatch<SetStateAction<boolean>>;
     setLogPanelOpen: Dispatch<SetStateAction<boolean>>;
+    toggleFullscreen: () => void;
+    isFullscreen: boolean;
 }
 
 export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
@@ -45,8 +47,18 @@ export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
     { id: 'open-brain', name: 'Open Brain Center', keywords: ['cognitive', 'architecture'], group: 'Developer', icon: BrainIcon, action: () => fns.setActiveView('brain_center') },
     { id: 'open-dev', name: 'Open Dev Center', keywords: ['developer', 'api'], group: 'Developer', icon: CodeIcon, action: () => fns.setActiveView('dev_center') },
 
+    // View
+    { id: 'toggle-log', name: 'Toggle Log Panel', keywords: ['developer', 'output', 'console'], group: 'View', icon: LogIcon, action: () => fns.setLogPanelOpen(prev => !prev) },
+    {
+      id: 'toggle-fullscreen',
+      name: fns.isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen',
+      keywords: ['window', 'full screen', 'maximize'],
+      group: 'View',
+      icon: fns.isFullscreen ? ExitFullscreenIcon : FullscreenIcon,
+      action: fns.toggleFullscreen,
+    },
+
     // Modals & Panels
     { id: 'open-bookmarks', name: 'Open Bookmarks', keywords: ['saved', 'messages'], group: 'Modals & Panels', icon: BookmarkListIcon, action: () => fns.setBookmarksOpen(true) },
     { id: 'open-settings', name: 'Open Global Settings', keywords: ['configuration', 'options'], group: 'Modals & Panels', icon: SettingsIcon, action: () => fns.setGlobalSettingsOpen(true) },
-    { id: 'toggle-log', name: 'Toggle Log Panel', keywords: ['developer', 'output', 'console'], group: 'Modals & Panels', icon: LogIcon, action: () => fns.setLogPanelOpen(prev => !prev) },
 ];

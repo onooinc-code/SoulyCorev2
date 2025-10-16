@@ -27,11 +27,18 @@ const versionData = [
     },
     {
         version: '0.3.0',
-        release_date: new Date().toISOString(),
+        release_date: '2024-07-23T10:00:00Z',
         changes: `
 - **Bug Fix & Stability:** Fixed a critical layout 'jumping' bug in the chat window by implementing a more robust scrolling mechanism. This ensures the chat view remains stable when new messages are added.
 - **Code Health:** Resolved multiple TypeScript type errors, most notably in the Context Menu component, improving overall code quality and maintainability.
 - **UX:** The application is now more stable, with layout shifts on load being eliminated for a smoother user experience.`
+    },
+    {
+        version: '0.3.1',
+        release_date: new Date().toISOString(),
+        changes: `
+- **Bug Fix: Keyboard Shortcuts:** Resolved a critical bug where keyboard shortcuts would not work until the user interacted with the app. The app now automatically focuses itself when entering fullscreen mode, ensuring shortcuts are always responsive.
+- **Improvement: Fullscreen Mode:** Enhanced the fullscreen experience by removing mobile view constraints, allowing the application to utilize the entire screen space as intended.`
     }
 ];
 
