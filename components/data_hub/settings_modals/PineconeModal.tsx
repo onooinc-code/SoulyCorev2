@@ -45,7 +45,7 @@ export const PineconeModal = ({ service, onClose, onSaveSuccess }: ModalProps) =
         );
     }
     
-    const statusIndicatorClasses = {
+    const statusIndicatorClasses: Record<string, string> = {
         idle: 'bg-gray-500', testing: 'bg-yellow-400 animate-pulse', success: 'bg-green-500', error: 'bg-red-500', index_not_found: 'bg-orange-500'
     };
 
@@ -94,7 +94,7 @@ export const PineconeModal = ({ service, onClose, onSaveSuccess }: ModalProps) =
                 
                 <footer className="flex justify-between items-center gap-2 p-4 border-t border-white/10 flex-shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className={`w-4 h-4 rounded-full transition-colors ${statusIndicatorClasses[connectionStatus as keyof typeof statusIndicatorClasses]}`} title={`Status: ${connectionStatus}`}></div>
+                        <div className={`w-4 h-4 rounded-full transition-colors ${statusIndicatorClasses[connectionStatus]}`} title={`Status: ${connectionStatus}`}></div>
                         <button onClick={() => handleTestConnection(config)} disabled={connectionStatus === 'testing'} className="px-4 py-2 bg-blue-600 rounded-md text-sm hover:bg-blue-500 disabled:opacity-50">{connectionStatus === 'testing' ? 'Testing...' : 'Test Connection'}</button>
                     </div>
                     <div className="flex items-center gap-2">

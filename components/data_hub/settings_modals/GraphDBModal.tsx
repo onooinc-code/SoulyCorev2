@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { XIcon, EyeIcon, EyeSlashIcon, CheckIcon, CopyIcon } from '../../Icons';
+import { XIcon, EyeIcon, EyeSlashIcon, CheckIcon, CopyIcon, ArrowDownOnSquareIcon } from '../../Icons';
 import type { DataSource } from '@/lib/types';
 import { useDataSourceSettings } from '@/lib/hooks/use-data-source-settings';
 
@@ -45,7 +45,7 @@ export const GraphDBModal = ({ service, onClose, onSaveSuccess }: ModalProps) =>
         return <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[101]"><p>Loading...</p></div>;
     }
     
-    const statusIndicatorClasses = {
+    const statusIndicatorClasses: Record<string, string> = {
         idle: 'bg-gray-500', testing: 'bg-yellow-400 animate-pulse', success: 'bg-green-500', error: 'bg-red-500',
     };
 
