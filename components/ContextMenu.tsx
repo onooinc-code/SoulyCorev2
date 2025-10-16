@@ -220,13 +220,17 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                                     if (child.isSeparator) {
                                         return child;
                                     }
-                                    // FIX: The original implementation using spread syntax (`...child`) within a discriminated union caused a TypeScript type inference error. The build toolchain incorrectly inferred that an `action` property could be added to a separator-type menu item. Refactored to use destructuring to explicitly separate the `action` from the `...rest` of the properties, then reconstruct the object. This ensures TypeScript correctly understands the object's shape and resolves the build error.
-                                    const { action, ...rest } = child;
+                                    // FIX: Replaced problematic destructuring/spread with explicit property assignment.
+                                    // This resolves a TypeScript error where the compiler incorrectly inferred the type of a
+                                    // discriminated union member, leading to a type conflict.
                                     return {
-                                        ...rest,
+                                        label: child.label,
+                                        icon: child.icon,
+                                        disabled: child.disabled,
+                                        children: child.children,
                                         action: (e) => {
-                                            if (action) {
-                                                action(e);
+                                            if (child.action) {
+                                                child.action(e);
                                             }
                                             onClose();
                                         },
