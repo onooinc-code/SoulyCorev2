@@ -122,6 +122,8 @@ export const App = () => {
         setCommandPaletteOpen,
         isFullscreen,
         toggleFullscreen,
+        restartApp,
+        exitApp,
     } = useUIState();
     const { log } = useLog();
 
@@ -173,12 +175,6 @@ export const App = () => {
         }
     };
 
-    const handleSoftRefresh = () => {
-        log('User initiated Soft Refresh.');
-        window.location.reload();
-    };
-
-
     const handleContextMenu = (event: React.MouseEvent) => {
         event.preventDefault();
         if (!isContextMenuEnabled) return;
@@ -214,8 +210,9 @@ export const App = () => {
             ]},
             { isSeparator: true },
              { label: 'Application', icon: PowerIcon, children: [
-                { label: 'Hard Refresh & Optimize', icon: RefreshIcon, action: handleHardRefresh },
-                { label: 'Soft Refresh', icon: RefreshIcon, action: handleSoftRefresh },
+                { label: 'Restart App', icon: RefreshIcon, action: restartApp },
+                { label: 'Restart & Clear Cache', icon: RefreshIcon, action: handleHardRefresh },
+                { label: 'Exit App', icon: PowerIcon, action: exitApp },
             ]},
             { isSeparator: true },
             { label: 'Hubs', icon: DashboardIcon, children: [
@@ -261,6 +258,8 @@ export const App = () => {
         isFullscreen,
         toggleZenMode,
         setDataHubWidgetOpen,
+        restartApp,
+        exitApp,
     });
     
     const renderActiveView = () => {

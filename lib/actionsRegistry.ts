@@ -1,7 +1,7 @@
 import {
     PlusIcon, MemoryIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon,
     LogIcon, BrainIcon, DashboardIcon, PromptsIcon, RocketLaunchIcon, ToolsIcon, TasksIcon,
-    CircleStackIcon, FullscreenIcon, ExitFullscreenIcon, EyeSlashIcon
+    CircleStackIcon, FullscreenIcon, ExitFullscreenIcon, EyeSlashIcon, RefreshIcon, PowerIcon
 } from '@/components/Icons';
 import React, { type SVGProps, type Dispatch, type SetStateAction } from 'react';
 
@@ -26,6 +26,8 @@ interface ActionFunctions {
     isFullscreen: boolean;
     toggleZenMode: () => void;
     setDataHubWidgetOpen: Dispatch<SetStateAction<boolean>>;
+    restartApp: () => void;
+    exitApp: () => void;
 }
 
 export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
@@ -62,4 +64,8 @@ export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
     { id: 'open-bookmarks', name: 'Open Bookmarks', keywords: ['saved', 'messages'], group: 'Modals & Panels', icon: BookmarkListIcon, action: () => fns.setBookmarksOpen(true) },
     { id: 'open-settings', name: 'Open Global Settings', keywords: ['configuration', 'options'], group: 'Modals & Panels', icon: SettingsIcon, action: () => fns.setGlobalSettingsOpen(true) },
     { id: 'open-data-widget', name: 'Open Data Hub Widget', keywords: ['status', 'services'], group: 'Modals & Panels', icon: CircleStackIcon, action: () => fns.setDataHubWidgetOpen(true) },
+
+    // Application
+    { id: 'restart-app', name: 'Restart App', keywords: ['reload', 'refresh'], group: 'Application', icon: RefreshIcon, action: fns.restartApp },
+    { id: 'exit-app', name: 'Exit App', keywords: ['close', 'quit', 'shutdown'], group: 'Application', icon: PowerIcon, action: fns.exitApp },
 ];

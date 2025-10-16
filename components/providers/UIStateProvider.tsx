@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useSettings } from './SettingsProvider';
+import { useLog } from './LogProvider';
 
 const fontSizeSteps = ['sm', 'base', 'lg', 'xl'];
 
@@ -28,6 +29,8 @@ interface UIStateContextType {
     isFullscreen: boolean;
     toggleFullscreen: () => void;
     isNavigating: boolean;
+    restartApp: () => void;
+    exitApp: () => void;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -46,6 +49,7 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isNavigating, setNavigating] = useState(false);
     const { settings, saveSettings } = useSettings();
+    const { log } = useLog();
 
     // Load initial font size from settings first, then fallback to localStorage
     useEffect(() => {
@@ -164,6 +168,17 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         setTimeout(() => setNavigating(false), 700); // Match progress bar duration
     }, []);
 
+    const restartApp = useCallback(() => {
+        log('User initiated Restart App.');
+        window.location.reload();
+    }, [log]);
+
+    const exitApp = useCallback(() => {
+        log('User initiated Exit App.');
+        window.close();
+    }, [log]);
+
+
     const contextValue = {
         activeView,
         setActiveView: handleSetActiveView,
@@ -187,6 +202,8 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         isFullscreen,
         toggleFullscreen,
         isNavigating,
+        restartApp,
+        exitApp,
     };
 
     return (

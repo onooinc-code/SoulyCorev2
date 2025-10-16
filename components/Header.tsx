@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useConversation } from './providers/ConversationProvider';
 import { useUIState } from './providers/UIStateProvider';
-import { SparklesIcon, EditIcon, TrashIcon, SidebarLeftIcon, LogIcon, MinusIcon, PlusIcon } from './Icons';
+import { SparklesIcon, EditIcon, TrashIcon, SidebarLeftIcon, LogIcon, MinusIcon, PlusIcon, PowerIcon, RefreshIcon } from './Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import ToolbarButton from './ToolbarButton';
 import type { VersionHistory } from '@/lib/types';
@@ -111,6 +110,8 @@ const Header = () => {
         isConversationPanelOpen,
         setConversationPanelOpen,
         setLogPanelOpen,
+        restartApp,
+        exitApp,
     } = useUIState();
 
     const [isEditing, setIsEditing] = useState(false);
@@ -222,6 +223,13 @@ const Header = () => {
                     </ToolbarButton>
                     <ToolbarButton onClick={() => setLogPanelOpen(prev => !prev)} title="Toggle Log Panel" color="cyan">
                         <LogIcon className="w-5 h-5" />
+                    </ToolbarButton>
+                    <div className="w-px h-6 bg-gray-600 mx-1"></div>
+                    <ToolbarButton onClick={restartApp} title="Restart App" color="yellow">
+                        <RefreshIcon className="w-5 h-5" />
+                    </ToolbarButton>
+                    <ToolbarButton onClick={exitApp} title="Exit App" color="red">
+                        <PowerIcon className="w-5 h-5" />
                     </ToolbarButton>
                 </div>
             </div>
