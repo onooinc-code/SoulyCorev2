@@ -1,4 +1,3 @@
-
 # HedraCore: The Definitive Developer's Guide
 
 **Version:** 0.3.0

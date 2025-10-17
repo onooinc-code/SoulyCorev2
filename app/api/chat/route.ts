@@ -106,12 +106,12 @@ export async function POST(req: NextRequest) {
             try {
                 const userTags = await generateTagsForMessage(userMessageContent);
                 if (userTags && userTags.length > 0) {
-                    await sql`UPDATE messages SET tags = ${userTags} WHERE id = ${userMessageId}`;
+                    await sql`UPDATE messages SET tags = ${userTags as any} WHERE id = ${userMessageId}`;
                 }
 
                 const aiTags = await generateTagsForMessage(responseText);
                 if (aiTags && aiTags.length > 0) {
-                    await sql`UPDATE messages SET tags = ${aiTags} WHERE id = ${savedAiMessage.id}`;
+                    await sql`UPDATE messages SET tags = ${aiTags as any} WHERE id = ${savedAiMessage.id}`;
                 }
             } catch (tagError) {
                 await serverLog('Background tag generation failed', { error: (tagError as Error).message }, 'warn');
