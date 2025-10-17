@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
@@ -96,7 +95,7 @@ const MessageToolbar = (props: MessageToolbarProps) => {
     return (
         <div className="flex items-center">
             {/* Large screen view */}
-            <div className="hidden md:flex items-center gap-1 text-gray-400 bg-black/20 backdrop-blur-md border border-white/10 rounded-full px-2 py-0.5">
+            <div className="hidden md:flex items-center gap-1 text-gray-400 bg-gray-900/50 backdrop-blur-md border border-white/10 rounded-full px-2 py-0.5">
                 {allActions.map((action, index) => {
                     if (action === 'separator') {
                         return <div key={`sep-${index}`} className="w-px h-4 bg-white/10 mx-1"></div>;
@@ -111,7 +110,7 @@ const MessageToolbar = (props: MessageToolbarProps) => {
             </div>
 
             {/* Small screen view */}
-            <div className="flex md:hidden items-center gap-1 text-gray-400 bg-black/20 backdrop-blur-md border border-white/10 rounded-full px-2 py-0.5">
+            <div className="flex md:hidden items-center gap-1 text-gray-400 bg-gray-900/50 backdrop-blur-md border border-white/10 rounded-full px-2 py-0.5">
                 {primaryMobileActions.map(action => {
                      const { id, icon: Icon, action: onClick, title, className } = action as MenuItem;
                      return (

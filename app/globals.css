@@ -20,6 +20,11 @@
   .prose-custom {
     color: #d1d5db; /* text-gray-300 */
   }
+  .prose-custom.arabic {
+    font-family: 'Cairo', sans-serif;
+    font-weight: 600;
+    direction: rtl;
+  }
   .prose-custom code {
       color: #e5e7eb; /* text-gray-200 */
       background-color: #374151; /* bg-gray-700 */
@@ -48,6 +53,10 @@
     margin-top: 1em;
     margin-bottom: 1em;
   }
+  .prose-custom.arabic ol, .prose-custom.arabic ul {
+    padding-left: 0;
+    padding-right: 2em;
+  }
   .prose-custom li {
       margin-top: 0.25em;
       margin-bottom: 0.25em;
@@ -67,6 +76,14 @@
     color: #9ca3af; /* text-gray-400 */
     padding-left: 1em;
     margin-left: 0;
+  }
+  .prose-custom.arabic blockquote {
+    border-left-color: transparent;
+    border-right-color: #4b5563; /* border-gray-600 */
+    padding-left: 0;
+    padding-right: 1em;
+    margin-left: 0;
+    margin-right: 0;
   }
 }
 
