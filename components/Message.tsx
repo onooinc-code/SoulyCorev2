@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -50,7 +49,7 @@ interface MessageProps {
     onSummarize: (content: string) => void;
     onToggleBookmark: (messageId: string) => void;
     onDelete: () => void;
-    onUpdate: (messageId: string, newContent: string) => void;
+    onUpdateMessage: (messageId: string, newContent: string) => void;
     onRegenerate: () => void;
     onInspect: () => void;
     isContextAssemblyRunning: boolean;
@@ -65,7 +64,7 @@ const Message = ({
     onSummarize,
     onToggleBookmark,
     onDelete,
-    onUpdate,
+    onUpdateMessage,
     onRegenerate,
     onInspect,
     isContextAssemblyRunning,
@@ -84,7 +83,7 @@ const Message = ({
 
     const handleSave = () => {
         if (editedContent.trim() !== message.content) {
-            onUpdate(message.id, editedContent.trim());
+            onUpdateMessage(message.id, editedContent.trim());
         }
         setIsEditing(false);
     };
@@ -171,8 +170,8 @@ const Message = ({
                             onSetAlign={onSetConversationAlign}
                             onEdit={() => setIsEditing(true)}
                             onDelete={onDelete}
-                            onRegenerate={() => onRegenerate(message.id)}
-                            onInspect={() => onInspect(message.id)}
+                            onRegenerate={onRegenerate}
+                            onInspect={onInspect}
                             onViewHtml={html ? () => onViewHtml(html) : undefined}
                         />
                     </div>
