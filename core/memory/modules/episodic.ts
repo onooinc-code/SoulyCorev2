@@ -37,8 +37,26 @@ export class EpisodicMemoryModule implements ISingleMemoryModule {
         await sql`UPDATE conversations SET "lastUpdatedAt" = CURRENT_TIMESTAMP WHERE id = ${conversationId};`;
 
         const { rows } = await sql<Message>`
-            INSERT INTO messages ("conversationId", role, content, "tokenCount", "responseTime", "isBookmarked")
-            VALUES (${conversationId}, ${message.role}, ${message.content}, ${message.tokenCount}, ${message.responseTime}, ${message.isBookmarked})
+            INSERT INTO messages (
+                "conversationId", 
+                role, 
+                content, 
+                "tokenCount", 
+                "responseTime", 
+                "isBookmarked", 
+                parent_message_id,
+                tags
+            )
+            VALUES (
+                ${conversationId}, 
+                ${message.role}, 
+                ${message.content}, 
+                ${message.tokenCount || null}, 
+                ${message.responseTime || null}, 
+                ${message.isBookmarked || false}, 
+                ${message.parentMessageId || null},
+                ${message.tags ? (message.tags as any) : null}
+            )
             RETURNING *;
         `;
         return rows[0];

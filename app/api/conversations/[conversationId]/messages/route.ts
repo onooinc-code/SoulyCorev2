@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Message } from '@/lib/types';
+import { EpisodicMemoryModule } from '@/core/memory/modules/episodic';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,18 +28,27 @@ export async function POST(req: NextRequest, { params }: { params: { conversatio
         const { conversationId } = params;
         const { message } = await req.json();
 
-        // Also update the conversation's lastUpdatedAt timestamp
-        await sql`UPDATE conversations SET "lastUpdatedAt" = CURRENT_TIMESTAMP WHERE id = ${conversationId};`;
+        // Use the V2 Core module for storing the message
+        const episodicMemory = new EpisodicMemoryModule();
+
+        const messageData: Omit<Message, 'id' | 'createdAt' | 'conversationId'> = {
+            role: message.role,
+            content: message.content,
+            tokenCount: message.tokenCount,
+            responseTime: message.responseTime,
+            isBookmarked: message.isBookmarked,
+            parentMessageId: message.parentMessageId,
+            tags: message.tags,
+        };
         
-        const { rows } = await sql<Message>`
-            INSERT INTO messages ("conversationId", role, content, "tokenCount", "responseTime", "isBookmarked", parent_message_id)
-            VALUES (${conversationId}, ${message.role}, ${message.content}, ${message.tokenCount || null}, ${message.responseTime || null}, ${message.isBookmarked || false}, ${message.parentMessageId || null})
-            RETURNING *;
-        `;
+        const savedMessage = await episodicMemory.store({
+            conversationId: conversationId,
+            message: messageData
+        });
         
-        return NextResponse.json(rows[0] as Message, { status: 201 });
+        return NextResponse.json(savedMessage, { status: 201 });
     } catch (error) {
         console.error('Failed to create message:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: 'Internal Server Error', details: { message: (error as Error).message } }, { status: 500 });
     }
 }
