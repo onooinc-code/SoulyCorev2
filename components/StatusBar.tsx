@@ -1,9 +1,9 @@
+
 "use client";
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
-import { CogIcon, UserCircleIcon, BookmarkIcon, CpuChipIcon, ClockIcon, DocumentTextIcon } from './Icons';
-import { ChatBubbleLeftRightIcon } from './Icons';
+import { CogIcon, BrainIcon } from './Icons';
 
 interface StatusBarProps {
     onSettingsClick: () => void;
@@ -11,78 +11,32 @@ interface StatusBarProps {
 }
 
 const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
-    const { status, currentConversation, messages } = useConversation();
-    
-    const model = useMemo(() => {
-        if (!currentConversation) return 'gemini-2.5-flash';
-        return currentConversation.ui_settings?.model_for_response || currentConversation.model || 'gemini-2.5-flash';
-    }, [currentConversation]);
+    const { currentConversation } = useConversation();
 
-    const conversationStats = useMemo(() => {
-        if (!currentConversation || messages.length === 0) return null;
-        
-        const messageCount = messages.length;
-        const totalTokens = messages.reduce((acc, msg) => acc + (msg.tokenCount || 0), 0);
-        const bookmarkedCount = messages.filter(msg => msg.isBookmarked).length;
-        const wordCount = messages.reduce((acc, msg) => acc + (msg.content.split(/\s+/).filter(Boolean).length || 0), 0);
+    if (!currentConversation) {
+        return null;
+    }
 
-        const modelMessages = messages.filter(m => m.role === 'model' && m.responseTime);
-        const totalResponseTime = modelMessages.reduce((acc, msg) => acc + (msg.responseTime || 0), 0);
-        const avgResponseTime = modelMessages.length > 0 ? Math.round(totalResponseTime / modelMessages.length) : 0;
-        
-        return { messageCount, totalTokens, bookmarkedCount, wordCount, avgResponseTime };
-    }, [currentConversation, messages]);
+    const { model, temperature, topP } = currentConversation;
 
     return (
-        <div className="bg-gray-800/60 backdrop-blur-xl text-gray-400 text-xs p-2 border-t border-white/10 flex justify-between items-center gap-4">
-            <div className="flex-1 italic truncate min-w-0">
-                <span>{status.currentAction || 'Ready'}</span>
-            </div>
-
-            {currentConversation && conversationStats && (
-                <div className="flex items-center gap-4 flex-shrink-0 text-gray-400">
-                    <div className="flex items-center gap-1.5" title="Messages in this conversation">
-                        <ChatBubbleLeftRightIcon className="w-4 h-4" />
-                        <span>{conversationStats.messageCount}</span>
-                    </div>
-                     <div className="flex items-center gap-1.5" title="Total words in this conversation">
-                        <DocumentTextIcon className="w-4 h-4" />
-                        <span>{conversationStats.wordCount}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5" title="Total tokens used in this conversation">
-                        <CpuChipIcon className="w-4 h-4" />
-                        <span>{conversationStats.totalTokens}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5" title="Bookmarked messages in this conversation">
-                        <BookmarkIcon className="w-4 h-4" />
-                        <span>{conversationStats.bookmarkedCount}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5" title="Average AI response time">
-                        <ClockIcon className="w-4 h-4" />
-                        <span>{conversationStats.avgResponseTime} ms</span>
-                    </div>
+        <div className="flex-shrink-0 bg-gray-800/80 backdrop-blur-sm border-t border-gray-700/50 p-2 text-xs text-gray-400">
+            <div className="flex items-center justify-between max-w-4xl mx-auto">
+                <div className="flex items-center gap-4">
+                    <span>Model: <span className="font-semibold text-gray-300">{model || 'default'}</span></span>
+                    <span>Temp: <span className="font-semibold text-gray-300">{temperature?.toFixed(2) || '0.70'}</span></span>
+                    <span>Top-P: <span className="font-semibold text-gray-300">{topP?.toFixed(2) || '0.95'}</span></span>
                 </div>
-            )}
-
-            <div className="flex items-center gap-3 flex-shrink-0">
-                 <button 
-                    onClick={onAgentConfigClick} 
-                    disabled={!currentConversation} 
-                    className="flex items-center gap-1 hover:text-white disabled:text-gray-600 disabled:cursor-not-allowed" 
-                    title="Configure Agent: Set system instructions and memory preferences for this conversation."
-                >
-                    <UserCircleIcon className="w-4 h-4" />
-                    <span>Agent</span>
-                </button>
-                <button 
-                    onClick={onSettingsClick} 
-                    disabled={!currentConversation} 
-                    className="flex items-center gap-1 hover:text-white disabled:text-gray-600 disabled:cursor-not-allowed" 
-                    title="Configure Model: Adjust model parameters like temperature for this conversation."
-                >
-                     <CogIcon className="w-4 h-4" />
-                    <span className="truncate max-w-28">{model}</span>
-                </button>
+                <div className="flex items-center gap-2">
+                    <button onClick={onSettingsClick} className="flex items-center gap-1.5 hover:bg-gray-700/50 px-2 py-1 rounded-md transition-colors">
+                        <CogIcon className="w-4 h-4" />
+                        <span>Model Settings</span>
+                    </button>
+                    <button onClick={onAgentConfigClick} className="flex items-center gap-1.5 hover:bg-gray-700/50 px-2 py-1 rounded-md transition-colors">
+                        <BrainIcon className="w-4 h-4" />
+                        <span>Agent Config</span>
+                    </button>
+                </div>
             </div>
         </div>
     );
