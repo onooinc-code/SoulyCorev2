@@ -117,7 +117,7 @@ const ChatWindow = () => {
         setHtmlModalState({ isOpen: true, content: htmlContent });
     };
 
-    const isDbError = status.error && /database|vercel|table|relation.+does not exist/i.test(status.error);
+    const isDbError = !!(status.error && /database|vercel|table|relation.+does not exist/i.test(status.error));
 
     return (
         <div className="flex flex-col flex-1 min-h-0 bg-gray-900">
