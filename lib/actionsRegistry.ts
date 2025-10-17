@@ -1,7 +1,7 @@
 import {
     PlusIcon, MemoryIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon,
     LogIcon, BrainIcon, DashboardIcon, PromptsIcon, RocketLaunchIcon, ToolsIcon, TasksIcon,
-    CircleStackIcon, FullscreenIcon, ExitFullscreenIcon, EyeSlashIcon, RefreshIcon, PowerIcon
+    CircleStackIcon, FullscreenIcon, ExitFullscreenIcon, EyeSlashIcon, RefreshIcon, PowerIcon, MagnifyingGlassIcon 
 } from '@/components/Icons';
 import React, { type SVGProps, type Dispatch, type SetStateAction } from 'react';
 
@@ -60,7 +60,7 @@ export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
       icon: fns.isFullscreen ? ExitFullscreenIcon : FullscreenIcon,
       action: fns.toggleFullscreen,
     },
-    { id: 'toggle-zen-mode', name: 'Toggle Zen Mode', keywords: ['focus', 'distraction free'], group: 'View', icon: EyeSlashIcon, action: () => fns.toggleZenMode() },
+    { id: 'toggle-zen-mode', name: 'Toggle Zen Mode', keywords: ['focus', 'distraction free'], group: 'View', icon: EyeSlashIcon, action: fns.toggleZenMode() },
 
     // Modals & Panels
     { id: 'open-bookmarks', name: 'Open Bookmarks', keywords: ['saved', 'messages'], group: 'Modals & Panels', icon: BookmarkListIcon, action: () => fns.setBookmarksOpen(true) },

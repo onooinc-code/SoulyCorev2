@@ -1,3 +1,5 @@
+// lib/types/data.ts
+
 import { Role } from './app';
 
 export interface Conversation {
@@ -231,7 +233,7 @@ export interface FeatureStatusChartData {
 }
 
 export interface PipelinePerformanceChartData {
-    pipeline: 'Context Assembly' | 'Memory Extraction';
+    pipeline: 'Context Assembly' | 'MemoryExtraction';
     Completed: number;
     Failed: number;
     'Avg Duration (ms)': number;

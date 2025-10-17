@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -178,7 +179,7 @@ const FeatureHealthDashboard = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [clearError, setStatus, log]);
+    }, [clearError, setStatus]);
 
     useEffect(() => {
         fetchData();
