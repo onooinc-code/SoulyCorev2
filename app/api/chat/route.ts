@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Content } from "@google/genai";
 import { Message, Conversation } from '@/lib/types';
-import { generateProactiveSuggestion } from '@/lib/gemini-server';
+import { generateProactiveSuggestion, generateTagsForMessage } from '@/lib/gemini-server';
 import { ContextAssemblyPipeline } from '@/core/pipelines/context_assembly';
 import { EpisodicMemoryModule } from '@/core/memory/modules/episodic';
 import llmProvider from '@/core/llm';
@@ -99,8 +99,25 @@ export async function POST(req: NextRequest) {
             role: 'model',
             content: responseText,
         };
-        await episodicMemory.store({ conversationId: conversation.id, message: aiMessageData });
+        const savedAiMessage = await episodicMemory.store({ conversationId: conversation.id, message: aiMessageData });
         
+        // Fire-and-forget tag generation for both user and AI messages
+        (async () => {
+            try {
+                const userTags = await generateTagsForMessage(userMessageContent);
+                if (userTags && userTags.length > 0) {
+                    await sql`UPDATE messages SET tags = ${userTags} WHERE id = ${userMessageId}`;
+                }
+
+                const aiTags = await generateTagsForMessage(responseText);
+                if (aiTags && aiTags.length > 0) {
+                    await sql`UPDATE messages SET tags = ${aiTags} WHERE id = ${savedAiMessage.id}`;
+                }
+            } catch (tagError) {
+                await serverLog('Background tag generation failed', { error: (tagError as Error).message }, 'warn');
+            }
+        })();
+
         // 6. Generate proactive suggestion (conditionally)
         let suggestion = null;
         if (conversation.enableProactiveSuggestions) {

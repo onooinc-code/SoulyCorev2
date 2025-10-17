@@ -1,6 +1,3 @@
-
-
-
 import { GoogleGenAI, Type, GenerateContentResponse, Content, Tool, FunctionDeclaration } from "@google/genai";
 import { Message } from '@/lib/types';
 
@@ -266,6 +263,54 @@ export const regenerateUserPrompt = async (
 
     } catch (e) {
         console.error("User prompt regeneration failed:", e);
+        return null;
+    }
+};
+
+export const generateTagsForMessage = async (text: string): Promise<string[] | null> => {
+    try {
+        const client = getAiClient();
+        const prompt = `
+            Analyze the following text and generate a list of relevant tags.
+            Tags should be single words, lowercase, and classify the message's intent or key topics (e.g., question, decision, task, idea, summary, code, analysis).
+            Return the result as a single JSON object with one key: "tags", which should be an array of strings.
+            If no specific tags apply, return an empty array.
+
+            Text:
+            ---
+            ${text}
+            ---
+        `;
+
+        const result = await client.models.generateContent({
+            model: modelName,
+            contents: prompt,
+            config: {
+                temperature: 0.1,
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        tags: {
+                            type: Type.ARRAY,
+                            items: { type: Type.STRING }
+                        }
+                    },
+                    required: ['tags']
+                }
+            }
+        });
+        
+        if (!result || !result.text) {
+            console.error("Tag generation failed: No text in response.");
+            return null;
+        }
+        const jsonStr = result.text.trim();
+        const parsed = JSON.parse(jsonStr);
+        return parsed.tags || null;
+
+    } catch (e) {
+        console.error("Tag generation failed:", e);
         return null;
     }
 };

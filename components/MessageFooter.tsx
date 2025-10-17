@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React from 'react';
@@ -16,10 +15,19 @@ const MessageFooter = ({ message }: MessageFooterProps) => {
     });
 
     return (
-        <div className="text-xs text-gray-500 mt-1 flex items-center gap-3">
+        <div className="text-xs text-gray-500 mt-2 flex items-center gap-x-3 gap-y-1 flex-wrap">
             <span>{formattedDate}</span>
             {message.tokenCount && message.tokenCount > 0 && <span>{message.tokenCount} tokens</span>}
             {message.responseTime && <span>{message.responseTime} ms</span>}
+            {message.tags && message.tags.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                    {message.tags.map(tag => (
+                        <span key={tag} className="bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">
+                            #{tag}
+                        </span>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

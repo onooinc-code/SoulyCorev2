@@ -25,10 +25,9 @@ export class EpisodicMemoryModule implements ISingleMemoryModule {
      * @inheritdoc
      * Stores a new message in the database for a given conversation.
      * @param params - An object containing the conversationId and the message data.
-     * @returns A promise that resolves when the operation is complete.
+     * @returns A promise that resolves with the newly created message object.
      */
-    // FIX: Changed return type from `Promise<Message>` to `Promise<void>` to match ISingleMemoryModule interface.
-    async store(params: IEpisodicMemoryStoreParams): Promise<void> {
+    async store(params: IEpisodicMemoryStoreParams): Promise<Message> {
         const { conversationId, message } = params;
         if (!conversationId || !message) {
             throw new Error('EpisodicMemoryModule.store requires conversationId and message data.');
@@ -37,10 +36,12 @@ export class EpisodicMemoryModule implements ISingleMemoryModule {
         // Also update the conversation's lastUpdatedAt timestamp
         await sql`UPDATE conversations SET "lastUpdatedAt" = CURRENT_TIMESTAMP WHERE id = ${conversationId};`;
 
-        await sql`
+        const { rows } = await sql<Message>`
             INSERT INTO messages ("conversationId", role, content, "tokenCount", "responseTime", "isBookmarked")
-            VALUES (${conversationId}, ${message.role}, ${message.content}, ${message.tokenCount}, ${message.responseTime}, ${message.isBookmarked});
+            VALUES (${conversationId}, ${message.role}, ${message.content}, ${message.tokenCount}, ${message.responseTime}, ${message.isBookmarked})
+            RETURNING *;
         `;
+        return rows[0];
     }
 
     /**

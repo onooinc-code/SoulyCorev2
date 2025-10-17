@@ -1,4 +1,3 @@
-
 import { Role } from './app';
 
 export interface Conversation {
@@ -37,6 +36,7 @@ export interface Message {
     isBookmarked?: boolean;
     parentMessageId?: string | null;
     threadMessages?: Message[]; // For nesting replies
+    tags?: string[] | null;
 }
 
 export interface Contact {
