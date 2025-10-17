@@ -1,0 +1,54 @@
+.prose-custom {
+  color: #d1d5db;
+  font-size: 1rem; /* Inherit root font size for scaling */
+  line-height: 1.6;
+}
+.prose-custom code {
+    color: #e5e7eb;
+    background-color: #374151;
+    padding: 0.2em 0.4em;
+    margin: 0;
+    font-size: 85%;
+    border-radius: 6px;
+}
+.prose-custom pre {
+    background-color: #1f2937;
+    color: #d1d5db;
+    padding: 1em;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+.prose-custom pre code {
+    background-color: transparent;
+    padding: 0;
+}
+.prose-custom a {
+  color: #60a5fa;
+  text-decoration-line: underline;
+}
+.prose-custom ol, .prose-custom ul {
+  padding-left: 2em;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+.prose-custom li {
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+}
+.prose-custom p {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    font-size: inherit; /* Ensure paragraphs scale too */
+}
+.prose-custom li > p {
+  margin: 0;
+}
+.prose-custom strong {
+  color: #f9fafb;
+}
+.prose-custom blockquote {
+  border-left-color: #4b5563;
+  color: #9ca3af;
+  padding-left: 1em;
+  margin-left: 0;
+}

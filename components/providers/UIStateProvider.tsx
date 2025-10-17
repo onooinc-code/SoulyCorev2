@@ -1,34 +1,45 @@
+
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { useSettings } from './SettingsProvider';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { usePanelManager } from '@/lib/hooks/usePanelManager';
+import { useDisplayModeManager } from '@/lib/hooks/useDisplayModeManager';
+import { useFontSizeManager } from '@/lib/hooks/useFontSizeManager';
+import { useAppControls } from '@/lib/hooks/useAppControls';
 import { useLog } from './LogProvider';
-
-const fontSizeSteps = ['sm', 'base', 'lg', 'xl'];
 
 interface UIStateContextType {
     activeView: string;
     setActiveView: (view: string) => void;
+    isNavigating: boolean;
+
+    isContextMenuEnabled: boolean;
+    toggleContextMenu: () => void;
+    
+    // from usePanelManager
     isConversationPanelOpen: boolean;
     setConversationPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isConversationPanelMinimized: boolean;
     setIsConversationPanelMinimized: React.Dispatch<React.SetStateAction<boolean>>;
     isLogPanelOpen: boolean;
     setLogPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    changeFontSize: (direction: 'increase' | 'decrease') => void;
-    isContextMenuEnabled: boolean;
-    toggleContextMenu: () => void;
+    isCommandPaletteOpen: boolean;
+    setCommandPaletteOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isDataHubWidgetOpen: boolean;
+    setDataHubWidgetOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    
+    // from useDisplayModeManager
     isMobileView: boolean;
     toggleMobileView: () => void;
     isZenMode: boolean;
     toggleZenMode: () => void;
-    isDataHubWidgetOpen: boolean;
-    setDataHubWidgetOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    isCommandPaletteOpen: boolean;
-    setCommandPaletteOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isFullscreen: boolean;
     toggleFullscreen: () => void;
-    isNavigating: boolean;
+
+    // from useFontSizeManager
+    changeFontSize: (direction: 'increase' | 'decrease') => void;
+
+    // from useAppControls
     restartApp: () => void;
     exitApp: () => void;
 }
@@ -36,176 +47,42 @@ interface UIStateContextType {
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
 
 export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [activeView, setActiveView] = useState('dashboard');
-    const [isConversationPanelOpen, setConversationPanelOpen] = useState(true);
-    const [isConversationPanelMinimized, setIsConversationPanelMinimized] = useState(false);
-    const [isLogPanelOpen, setLogPanelOpen] = useState(false);
-    const [fontSize, setFontSize] = useState('base');
-    const [isContextMenuEnabled, setContextMenuEnabled] = useState(true);
-    const [isMobileView, setIsMobileView] = useState(false);
-    const [isZenMode, setZenMode] = useState(false);
-    const [isDataHubWidgetOpen, setDataHubWidgetOpen] = useState(false);
-    const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
-    const [isFullscreen, setIsFullscreen] = useState(false);
-    const [isNavigating, setNavigating] = useState(false);
-    const { settings, saveSettings } = useSettings();
     const { log } = useLog();
 
-    // Load initial font size from settings first, then fallback to localStorage
-    useEffect(() => {
-        if (settings?.global_ui_settings?.fontSize && fontSizeSteps.includes(settings.global_ui_settings.fontSize)) {
-            setFontSize(settings.global_ui_settings.fontSize);
-        } else {
-            const savedFontSize = localStorage.getItem('app-font-size');
-            if (savedFontSize && fontSizeSteps.includes(savedFontSize)) {
-                setFontSize(savedFontSize);
-            }
-        }
-    }, [settings]);
+    const [activeView, _setActiveView] = useState('dashboard');
+    const [isNavigating, setIsNavigating] = useState(false);
+    const [isContextMenuEnabled, setIsContextMenuEnabled] = useState(true);
 
-    // Apply class and save to localStorage (for immediate offline persistence)
-    useEffect(() => {
-        fontSizeSteps.forEach(step => {
-            document.documentElement.classList.remove(`font-size-${step}`);
-        });
-        document.documentElement.classList.add(`font-size-${fontSize}`);
-        localStorage.setItem('app-font-size', fontSize);
-    }, [fontSize]);
+    const panelState = usePanelManager();
+    const displayModeState = useDisplayModeManager();
+    const fontSizeState = useFontSizeManager();
+    const appControlsState = useAppControls();
 
-    const handleFullscreenChange = useCallback(() => {
-        setIsFullscreen(!!document.fullscreenElement);
-    }, []);
-
-    useEffect(() => {
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    }, [handleFullscreenChange]);
-
-    const toggleFullscreen = useCallback(() => {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(err => {
-                alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-            });
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
-        }
-    }, []);
-
-    const changeFontSize = useCallback((direction: 'increase' | 'decrease') => {
-        const currentIndex = fontSizeSteps.indexOf(fontSize);
-        let newSize = fontSize;
-
-        if (direction === 'increase' && currentIndex < fontSizeSteps.length - 1) {
-            newSize = fontSizeSteps[currentIndex + 1];
-        } else if (direction === 'decrease' && currentIndex > 0) {
-            newSize = fontSizeSteps[currentIndex - 1];
-        }
-
-        if (newSize !== fontSize) {
-            setFontSize(newSize);
-            // Save to database
-            if (settings && saveSettings) {
-                const newSettings = {
-                    ...settings,
-                    global_ui_settings: {
-                        ...(settings.global_ui_settings || {}),
-                        fontSize: newSize,
-                    },
-                };
-                // Fire and forget, UI has already updated
-                saveSettings(newSettings);
-            }
-        }
-    }, [fontSize, settings, saveSettings]);
-
+    const setActiveView = useCallback((view: string) => {
+        log(`Navigating to view: ${view}`);
+        setIsNavigating(true);
+        _setActiveView(view);
+        // Simulate navigation time for progress bar
+        setTimeout(() => setIsNavigating(false), 500);
+    }, [log]);
+    
     const toggleContextMenu = useCallback(() => {
-        setContextMenuEnabled(prev => !prev);
-    }, []);
-
-    const toggleMobileView = useCallback(() => {
-        setIsMobileView(prev => !prev);
-    }, []);
-
-    const handleSetConversationPanelOpen = useCallback((value: React.SetStateAction<boolean>) => {
-        const newValue = typeof value === 'function' ? value(isConversationPanelOpen) : value;
-        if (newValue) {
-            setZenMode(false); // Deactivate Zen Mode if a panel is opened
-        }
-        setConversationPanelOpen(newValue);
-    }, [isConversationPanelOpen]);
-
-    const handleSetLogPanelOpen = useCallback((value: React.SetStateAction<boolean>) => {
-        const newValue = typeof value === 'function' ? value(isLogPanelOpen) : value;
-        if (newValue) {
-            setZenMode(false); // Deactivate Zen Mode if a panel is opened
-        }
-        setLogPanelOpen(newValue);
-    }, [isLogPanelOpen]);
-
-    const toggleZenMode = useCallback(() => {
-        setZenMode(prev => {
-            const newZenMode = !prev;
-            if (newZenMode) {
-                // When activating Zen Mode, hide all panels
-                setConversationPanelOpen(false);
-                setLogPanelOpen(false);
-            }
-            return newZenMode;
-        });
-    }, []);
-
-    const handleSetActiveView = useCallback((view: string) => {
-        setNavigating(true);
-        // If a chat is selected, automatically switch to the chat view
-        if (view === 'chat') {
-            setActiveView('chat');
-        } else {
-            // Otherwise, allow switching to any other view
-            setActiveView(view);
-        }
-        setTimeout(() => setNavigating(false), 700); // Match progress bar duration
-    }, []);
-
-    const restartApp = useCallback(() => {
-        log('User initiated Restart App.');
-        window.location.reload();
+        log('Toggling context menu enabled state.');
+        setIsContextMenuEnabled(prev => !prev);
     }, [log]);
-
-    const exitApp = useCallback(() => {
-        log('User initiated Exit App.');
-        window.close();
-    }, [log]);
-
 
     const contextValue = {
         activeView,
-        setActiveView: handleSetActiveView,
-        isConversationPanelOpen,
-        setConversationPanelOpen: handleSetConversationPanelOpen,
-        isConversationPanelMinimized,
-        setIsConversationPanelMinimized,
-        isLogPanelOpen,
-        setLogPanelOpen: handleSetLogPanelOpen,
-        changeFontSize,
+        setActiveView,
+        isNavigating,
         isContextMenuEnabled,
         toggleContextMenu,
-        isMobileView,
-        toggleMobileView,
-        isZenMode,
-        toggleZenMode,
-        isDataHubWidgetOpen,
-        setDataHubWidgetOpen,
-        isCommandPaletteOpen,
-        setCommandPaletteOpen,
-        isFullscreen,
-        toggleFullscreen,
-        isNavigating,
-        restartApp,
-        exitApp,
+        ...panelState,
+        ...displayModeState,
+        ...fontSizeState,
+        ...appControlsState,
     };
-
+    
     return (
         <UIStateContext.Provider value={contextValue}>
             {children}

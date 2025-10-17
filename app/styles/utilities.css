@@ -1,0 +1,4 @@
+/* Glassmorphism utility */
+.glass-panel {
+  @apply bg-gray-800/60 backdrop-blur-xl border border-white/10;
+}

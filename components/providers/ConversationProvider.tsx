@@ -1,16 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
-import type { Conversation, Message, Contact, Prompt, Role } from '@/lib/types';
+// FIX: Moved ActiveWorkflowState to lib/types and imported it here to make it globally available.
+import type { Conversation, Message, Contact, Prompt, Role, ActiveWorkflowState } from '@/lib/types';
 import { useLog } from './LogProvider';
 import { IStatus } from '@/lib/types';
-
-interface ActiveWorkflowState {
-  prompt: Prompt;
-  userInputs: Record<string, string>;
-  currentStepIndex: number;
-  stepOutputs: Record<number, string>;
-}
 
 interface ConversationContextType {
     conversations: Conversation[];

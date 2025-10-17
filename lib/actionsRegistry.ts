@@ -28,6 +28,8 @@ interface ActionFunctions {
     setDataHubWidgetOpen: Dispatch<SetStateAction<boolean>>;
     restartApp: () => void;
     exitApp: () => void;
+    // FIX: Added setCommandPaletteOpen to the interface to match its usage.
+    setCommandPaletteOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export const getActionsRegistry = (fns: ActionFunctions): Action[] => [

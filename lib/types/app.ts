@@ -1,3 +1,6 @@
+// FIX: Added import for Prompt to be used in ActiveWorkflowState.
+import type { Prompt } from './data';
+
 export type Role = 'user' | 'model';
 
 export interface AppSettings {
@@ -35,4 +38,12 @@ export interface Log {
 export interface IStatus {
   currentAction: string;
   error: string | null;
+}
+
+// FIX: Moved ActiveWorkflowState here from ConversationProvider to resolve export error.
+export interface ActiveWorkflowState {
+  prompt: Prompt;
+  userInputs: Record<string, string>;
+  currentStepIndex: number;
+  stepOutputs: Record<number, string>;
 }
