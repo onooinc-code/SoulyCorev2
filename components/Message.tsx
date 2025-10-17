@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -105,6 +106,11 @@ const Message = ({
     }, [currentConversation?.enableAutoSummarization, message.id]);
 
     const isUser = message.role === 'user';
+    
+    const bubbleStyles = isUser
+        ? "bg-gradient-to-br from-blue-600/70 to-blue-800/60 border-blue-400/30 rounded-t-2xl rounded-bl-2xl rounded-br-sm"
+        : "bg-gradient-to-br from-gray-700/70 to-gray-800/60 border-gray-500/30 rounded-t-2xl rounded-br-2xl rounded-bl-sm";
+    
     const textAlignClass = currentConversation?.ui_settings?.textAlign === 'right' ? 'text-right' : 'text-left';
     
     const messageFontSizeClasses: { [key: string]: string } = {
@@ -129,7 +135,7 @@ const Message = ({
                 {isUser ? <UserCircleIcon className="w-6 h-6 text-gray-400" /> : <CpuChipIcon className="w-6 h-6 text-indigo-400" />}
             </div>
             <div className={`flex flex-col flex-1 min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
-                <div className="relative p-4 rounded-lg w-full max-w-4xl" style={{backgroundColor: isUser ? '#374151' : '#1f2937' }}>
+                <div className={`relative p-4 w-full max-w-4xl shadow-lg backdrop-blur-lg border ${bubbleStyles}`}>
                     <AnimatePresence>
                         {isEditing ? (
                             <motion.div key="editing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>

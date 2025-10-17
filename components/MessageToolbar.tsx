@@ -50,22 +50,26 @@ const MessageToolbar = ({
     const mainActions = [
         { id: 'copy', icon: copied ? CheckIcon : CopyIcon, action: handleCopy, title: 'Copy message content', className: copied ? 'text-green-400' : 'hover:text-white' },
         { id: 'bookmark', icon: isBookmarked ? BookmarkFilledIcon : BookmarkIcon, action: onBookmark, title: 'Bookmark this message', className: isBookmarked ? 'text-yellow-400' : 'hover:text-yellow-400' },
+        { id: 'summarize', icon: SummarizeIcon, action: onSummarize, title: 'Summarize message', className: 'hover:text-white' },
         { id: 'regenerate', icon: RefreshIcon, action: onRegenerate, title: isUser ? 'Rewrite prompt and get new response' : 'Get a new response', className: 'hover:text-white' },
     ];
     
-    if (onViewHtml) {
-        mainActions.push({ id: 'viewHtml', icon: EyeIcon, action: onViewHtml, title: 'Render HTML content', className: 'hover:text-white' });
+    if (isUser) {
+        mainActions.push({ id: 'edit', icon: EditIcon, action: onEdit, title: 'Edit your message', className: 'hover:text-blue-400' });
     }
+    mainActions.push({ id: 'delete', icon: TrashIcon, action: onDelete, title: 'Delete message', className: 'hover:text-red-400' });
+
 
     const menuActions = [
-        { id: 'summarize', icon: SummarizeIcon, action: onSummarize, title: 'Summarize message' },
         { id: 'inspect', icon: BeakerIcon, action: onInspect, title: 'Inspect cognitive process' },
         { id: 'collapse', icon: isCollapsed ? ExpandIcon : CollapseIcon, action: onToggleCollapse, title: isCollapsed ? 'Expand message' : 'Collapse message' },
         { id: 'align-left', icon: TextAlignLeftIcon, action: () => onSetAlign('left'), title: 'Align text left' },
         { id: 'align-right', icon: TextAlignRightIcon, action: () => onSetAlign('right'), title: 'Align text right' },
-        ...(isUser ? [{ id: 'edit', icon: EditIcon, action: onEdit, title: 'Edit your message' }] : []),
-        { id: 'delete', icon: TrashIcon, action: onDelete, title: 'Delete message', className: 'hover:text-red-400' },
     ];
+    
+    if (onViewHtml) {
+        menuActions.unshift({ id: 'viewHtml', icon: EyeIcon, action: onViewHtml, title: 'Render HTML content' });
+    }
 
     return (
         <div className="relative flex items-center gap-1 text-gray-400 bg-black/20 backdrop-blur-md border border-white/10 rounded-full px-2 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -95,7 +99,7 @@ const MessageToolbar = ({
                                 <button
                                     key={action.id}
                                     onClick={() => { action.action(); setIsMenuOpen(false); }}
-                                    className={`w-full flex items-center gap-3 text-left px-3 py-1.5 text-sm text-gray-200 rounded-md hover:bg-indigo-600 disabled:opacity-50 ${action.className || ''}`}
+                                    className={`w-full flex items-center gap-3 text-left px-3 py-1.5 text-sm text-gray-200 rounded-md hover:bg-indigo-600 disabled:opacity-50 ${'className' in action ? action.className : ''}`}
                                 >
                                     <action.icon className="w-4 h-4" />
                                     <span>{action.title}</span>
