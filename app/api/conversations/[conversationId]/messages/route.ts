@@ -1,5 +1,4 @@
 
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Message } from '@/lib/types';
@@ -33,7 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: { conversatio
         
         const { rows } = await sql<Message>`
             INSERT INTO messages ("conversationId", role, content, "tokenCount", "responseTime", "isBookmarked", parent_message_id)
-            VALUES (${conversationId}, ${message.role}, ${message.content}, ${message.tokenCount}, ${message.responseTime}, ${message.isBookmarked}, ${message.parentMessageId || null})
+            VALUES (${conversationId}, ${message.role}, ${message.content}, ${message.tokenCount || null}, ${message.responseTime || null}, ${message.isBookmarked || false}, ${message.parentMessageId || null})
             RETURNING *;
         `;
         
