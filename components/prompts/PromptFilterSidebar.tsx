@@ -1,14 +1,16 @@
-
 "use client";
 
 import React, { useMemo } from 'react';
 import type { Prompt } from '@/lib/types';
 import { PlusIcon } from '../Icons';
 
+// Define the specific filter state type for consistency
+type ActiveFilterState = { type: 'all' | 'folder' | 'tag'; value: string | null };
+
 interface PromptFilterSidebarProps {
     prompts: Prompt[];
-    activeFilter: { type: string; value: string | null };
-    setActiveFilter: (filter: { type: string; value: string | null }) => void;
+    activeFilter: ActiveFilterState;
+    setActiveFilter: React.Dispatch<React.SetStateAction<ActiveFilterState>>;
     searchTerm: string;
     setSearchTerm: (term: string) => void;
     onAddPrompt: () => void;
