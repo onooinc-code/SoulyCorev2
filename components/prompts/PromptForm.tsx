@@ -1,9 +1,8 @@
-
 "use client";
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { Prompt, PromptChainStep } from '@/lib/types';
+import type { Prompt, PromptChainStep, Tool } from '@/lib/types';
 import { WorkflowBuilder } from './WorkflowBuilder';
 import { useConversation } from '@/components/providers/ConversationProvider';
 
@@ -12,9 +11,10 @@ interface PromptFormProps {
     setCurrentPrompt: (prompt: Partial<Prompt> | null) => void;
     onSave: (prompt: Partial<Prompt>) => void;
     singlePrompts: Prompt[];
+    tools: Tool[];
 }
 
-export const PromptForm = ({ currentPrompt, setCurrentPrompt, onSave, singlePrompts }: PromptFormProps) => {
+export const PromptForm = ({ currentPrompt, setCurrentPrompt, onSave, singlePrompts, tools }: PromptFormProps) => {
     const { setStatus } = useConversation();
 
     const handleChainDefinitionChange = (newChain: PromptChainStep[]) => {
@@ -59,6 +59,7 @@ export const PromptForm = ({ currentPrompt, setCurrentPrompt, onSave, singleProm
                         chainDefinition={currentPrompt.chain_definition || []}
                         onChainChange={handleChainDefinitionChange}
                         singlePrompts={singlePrompts}
+                        tools={tools}
                     />
                 )}
                 

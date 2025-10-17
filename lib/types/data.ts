@@ -83,14 +83,16 @@ export interface Tool {
     id:string;
     name: string;
     description: string;
-    schema_json: string;
+    schema_json: string; // This is a stringified JSON object.
     createdAt: Date;
     lastUpdatedAt: Date;
 }
 
 export interface PromptChainStep {
     step: number;
-    promptId: string;
+    type: 'prompt' | 'tool';
+    promptId?: string | null;
+    toolId?: string | null;
     inputMapping: Record<string, { source: 'userInput' | 'stepOutput'; step?: number }>;
 }
 

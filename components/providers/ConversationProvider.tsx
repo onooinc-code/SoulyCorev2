@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
@@ -91,6 +90,7 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
         currentConversation,
         setStatus,
         addMessage,
+        setMessages,
     });
     
     // --- ORCHESTRATION LOGIC ---

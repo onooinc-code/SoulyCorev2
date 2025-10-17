@@ -8,12 +8,14 @@ interface UseWorkflowManagerProps {
     currentConversation: Conversation | null;
     setStatus: (status: Partial<IStatus>) => void;
     addMessage: (message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, mentionedContacts?: Contact[], history?: Message[]) => Promise<{aiResponse: string | null, suggestion: string | null}>;
+    // FIX: Added 'setMessages' to the props interface to match its usage in ConversationProvider.
+    setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
 /**
  * A custom hook to manage the state and execution of multi-step prompt chains (workflows).
  */
-export const useWorkflowManager = ({ currentConversation, setStatus, addMessage }: UseWorkflowManagerProps) => {
+export const useWorkflowManager = ({ currentConversation, setStatus, addMessage, setMessages }: UseWorkflowManagerProps) => {
     const [activeWorkflow, setActiveWorkflow] = useState<ActiveWorkflowState | null>(null);
 
     /**
