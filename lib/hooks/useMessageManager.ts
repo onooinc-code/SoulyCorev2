@@ -68,14 +68,20 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
             const messageHistory = historyOverride ? [...historyOverride, optimisticUserMessage] : [...messages, optimisticUserMessage];
             
             const userMsgRes = await fetch(`/api/conversations/${currentConversation.id}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: optimisticUserMessage }) });
-            if (!userMsgRes.ok) throw new Error("Failed to save your message.");
+            if (!userMsgRes.ok) {
+                const errorData = await userMsgRes.json().catch(() => ({ error: "Failed to save your message and could not parse error response." }));
+                throw new Error(errorData.details?.message || errorData.error || "Failed to save your message.");
+            }
             const savedUserMessage: Message = await userMsgRes.json();
             
             // Replace optimistic message with the real one from the DB
             setMessages(prev => prev.map(m => m.id === optimisticUserMessage.id ? savedUserMessage : m));
 
             const chatRes = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: messageHistory, conversation: currentConversation, mentionedContacts, userMessageId: savedUserMessage.id }) });
-            if (!chatRes.ok) throw new Error((await chatRes.json()).error || 'Failed to get AI response');
+            if (!chatRes.ok) {
+                const errorData = await chatRes.json().catch(() => ({ error: "Failed to get AI response and could not parse error response." }));
+                throw new Error(errorData.details?.message || errorData.error || 'Failed to get AI response');
+            }
             const { response: aiResponse, suggestion } = await chatRes.json();
             
             if (aiResponse) {
@@ -95,7 +101,9 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
             }
             return { aiResponse, suggestion };
         } catch (error) {
-            setStatus({ error: (error as Error).message, currentAction: "Error" });
+            const errorMessage = (error as Error).message;
+            setStatus({ error: errorMessage, currentAction: "Error" });
+            log('Failed to add message.', { error: errorMessage, stack: (error as Error).stack }, 'error');
             setMessages(prev => prev.filter(m => m.id !== optimisticUserMessage.id)); // Revert optimistic update
             return { aiResponse: null, suggestion: null };
         } finally {
