@@ -20,6 +20,7 @@ export * from './icons/CloudIcon';
 export * from './icons/MagnifyingGlassIcon';
 export * from './icons/PinIcon';
 export * from './icons/PinFilledIcon';
+export * from './icons/ArrowPathIcon';
 
 
 // Existing icons

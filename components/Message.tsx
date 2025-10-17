@@ -113,8 +113,8 @@ const Message = ({
     const parentMessage = message.parentMessageId ? findMessageById(message.parentMessageId) : null;
     
     const bubbleStyles = isUser
-        ? "bg-gradient-to-br from-blue-600/70 to-blue-800/60 border-blue-400/30 rounded-t-2xl rounded-bl-2xl rounded-br-sm"
-        : "bg-gradient-to-br from-gray-700/70 to-gray-800/60 border-gray-500/30 rounded-t-2xl rounded-br-2xl rounded-bl-sm";
+      ? "bg-gradient-to-br from-blue-500/30 to-blue-800/20 border-blue-400/30 group-hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+      : "bg-gradient-to-br from-gray-600/30 to-gray-800/20 border-gray-500/30 group-hover:shadow-[0_0_15px_rgba(167,139,250,0.2)]";
     
     const textAlignClass = currentConversation?.ui_settings?.textAlign === 'right' ? 'text-right' : 'text-left';
     
@@ -141,7 +141,27 @@ const Message = ({
                 {isUser ? <UserCircleIcon className="w-6 h-6 text-gray-400" /> : <CpuChipIcon className="w-6 h-6 text-indigo-400" />}
             </div>
             <div className={`flex flex-col flex-1 min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
-                <div className={`relative p-4 w-full max-w-4xl shadow-lg backdrop-blur-lg border ${bubbleStyles}`}>
+                <div className={`relative p-4 w-full max-w-4xl shadow-lg backdrop-blur-lg border rounded-xl transition-shadow duration-300 ${bubbleStyles}`}>
+                    
+                    <div className={`absolute top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity ${isUser ? 'left-2' : 'right-2'}`}>
+                       <MessageToolbar
+                            isUser={isUser}
+                            isBookmarked={message.isBookmarked || false}
+                            isCollapsed={isCollapsed}
+                            onCopy={() => navigator.clipboard.writeText(message.content)}
+                            onBookmark={() => onToggleBookmark(message.id)}
+                            onSummarize={() => onSummarize(message.content)}
+                            onToggleCollapse={() => setIsCollapsed(prev => !prev)}
+                            onSetAlign={onSetConversationAlign}
+                            onEdit={() => setIsEditing(true)}
+                            onDelete={onDelete}
+                            onRegenerate={onRegenerate}
+                            onInspect={onInspect}
+                            onViewHtml={html ? () => onViewHtml(html) : undefined}
+                            onReply={() => onReply(message)}
+                        />
+                    </div>
+                    
                     {parentMessage && (
                         <div className="text-xs text-gray-400 mb-2 border-l-2 border-gray-500 pl-2">
                             Replying to <strong>{parentMessage.role === 'user' ? 'you' : 'the model'}</strong>: <em>"{parentMessage.content.substring(0, 50)}..."</em>
@@ -174,25 +194,6 @@ const Message = ({
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </div>
-                
-                 <div className={`mt-1 flex h-8 items-center opacity-0 transition-opacity group-hover:opacity-100 ${isEditing ? '!opacity-0' : ''}`}>
-                    <MessageToolbar
-                        isUser={isUser}
-                        isBookmarked={message.isBookmarked || false}
-                        isCollapsed={isCollapsed}
-                        onCopy={() => navigator.clipboard.writeText(message.content)}
-                        onBookmark={() => onToggleBookmark(message.id)}
-                        onSummarize={() => onSummarize(message.content)}
-                        onToggleCollapse={() => setIsCollapsed(prev => !prev)}
-                        onSetAlign={onSetConversationAlign}
-                        onEdit={() => setIsEditing(true)}
-                        onDelete={onDelete}
-                        onRegenerate={onRegenerate}
-                        onInspect={onInspect}
-                        onViewHtml={html ? () => onViewHtml(html) : undefined}
-                        onReply={() => onReply(message)}
-                    />
                 </div>
 
                  <AnimatePresence>

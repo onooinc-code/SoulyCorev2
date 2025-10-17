@@ -38,7 +38,8 @@ interface UIStateContextType {
     toggleFullscreen: () => void;
 
     // from useAppControls
-    restartApp: () => void;
+    softRefreshApp: () => void;
+    hardRefreshApp: () => void;
     exitApp: () => void;
 }
 

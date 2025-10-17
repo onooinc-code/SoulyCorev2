@@ -1,7 +1,10 @@
+
+"use client";
+
 import {
     PlusIcon, MemoryIcon, UsersIcon, CodeIcon, BookmarkListIcon, SettingsIcon,
     LogIcon, BrainIcon, DashboardIcon, PromptsIcon, RocketLaunchIcon, ToolsIcon, TasksIcon,
-    CircleStackIcon, FullscreenIcon, ExitFullscreenIcon, EyeSlashIcon, RefreshIcon, PowerIcon, MagnifyingGlassIcon 
+    CircleStackIcon, FullscreenIcon, ExitFullscreenIcon, EyeSlashIcon, RefreshIcon, PowerIcon, MagnifyingGlassIcon, ArrowPathIcon 
 } from '@/components/Icons';
 import React, { type SVGProps, type Dispatch, type SetStateAction } from 'react';
 
@@ -26,7 +29,8 @@ interface ActionFunctions {
     isFullscreen: boolean;
     toggleZenMode: () => void;
     setDataHubWidgetOpen: Dispatch<SetStateAction<boolean>>;
-    restartApp: () => void;
+    softRefreshApp: () => void;
+    hardRefreshApp: () => void;
     exitApp: () => void;
     // FIX: Added setCommandPaletteOpen to the interface to match its usage.
     setCommandPaletteOpen: Dispatch<SetStateAction<boolean>>;
@@ -60,7 +64,8 @@ export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
       icon: fns.isFullscreen ? ExitFullscreenIcon : FullscreenIcon,
       action: fns.toggleFullscreen,
     },
-    { id: 'toggle-zen-mode', name: 'Toggle Zen Mode', keywords: ['focus', 'distraction free'], group: 'View', icon: EyeSlashIcon, action: fns.toggleZenMode() },
+    // FIX: Pass the function reference `fns.toggleZenMode` instead of calling it. This resolves the error where `void` was assigned to a property expecting `() => void`.
+    { id: 'toggle-zen-mode', name: 'Toggle Zen Mode', keywords: ['focus', 'distraction free'], group: 'View', icon: EyeSlashIcon, action: fns.toggleZenMode },
 
     // Modals & Panels
     { id: 'open-bookmarks', name: 'Open Bookmarks', keywords: ['saved', 'messages'], group: 'Modals & Panels', icon: BookmarkListIcon, action: () => fns.setBookmarksOpen(true) },
@@ -68,6 +73,7 @@ export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
     { id: 'open-data-widget', name: 'Open Data Hub Widget', keywords: ['status', 'services'], group: 'Modals & Panels', icon: CircleStackIcon, action: () => fns.setDataHubWidgetOpen(true) },
 
     // Application
-    { id: 'restart-app', name: 'Restart App', keywords: ['reload', 'refresh'], group: 'Application', icon: RefreshIcon, action: fns.restartApp },
+    { id: 'soft-refresh-app', name: 'Soft Refresh App', keywords: ['reload'], group: 'Application', icon: RefreshIcon, action: fns.softRefreshApp },
+    { id: 'hard-refresh-app', name: 'Hard Refresh App', keywords: ['reload', 'cache'], group: 'Application', icon: ArrowPathIcon, action: fns.hardRefreshApp },
     { id: 'exit-app', name: 'Exit App', keywords: ['close', 'quit', 'shutdown'], group: 'Application', icon: PowerIcon, action: fns.exitApp },
 ];

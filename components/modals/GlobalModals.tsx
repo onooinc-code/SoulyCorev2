@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useMemo } from 'react';
@@ -38,11 +37,12 @@ const GlobalModals = (props: GlobalModalsProps) => {
         isFullscreen,
         toggleZenMode,
         setLogPanelOpen,
-        restartApp,
+        softRefreshApp,
+        hardRefreshApp,
         exitApp,
     } = useUIState();
 
-    const { createNewConversation } = useConversation();
+    const { createNewConversation, setCurrentConversation, setScrollToMessageId } = useConversation();
     
     const commandPaletteActions = useMemo(() => getActionsRegistry({
         createNewConversation,
@@ -55,12 +55,13 @@ const GlobalModals = (props: GlobalModalsProps) => {
         isFullscreen,
         toggleZenMode,
         setDataHubWidgetOpen,
-        restartApp,
+        softRefreshApp,
+        hardRefreshApp,
         exitApp,
     }), [
         createNewConversation, setActiveView, props.setBookmarksOpen, props.setGlobalSettingsOpen,
         setLogPanelOpen, setCommandPaletteOpen, toggleFullscreen, isFullscreen, toggleZenMode,
-        setDataHubWidgetOpen, restartApp, exitApp
+        setDataHubWidgetOpen, softRefreshApp, hardRefreshApp, exitApp
     ]);
 
     return (
@@ -75,6 +76,8 @@ const GlobalModals = (props: GlobalModalsProps) => {
                 isOpen={isCommandPaletteOpen}
                 onClose={() => setCommandPaletteOpen(false)}
                 actions={commandPaletteActions}
+                setCurrentConversation={setCurrentConversation}
+                setScrollToMessageId={setScrollToMessageId}
             />
 
             <DataHubWidget 

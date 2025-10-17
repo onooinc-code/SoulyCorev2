@@ -35,7 +35,7 @@ export const useAppContextMenu = (props: UseAppContextMenuProps): MenuItem[] => 
         toggleZenMode,
         setLogPanelOpen,
         setDataHubWidgetOpen,
-        restartApp,
+        softRefreshApp,
         exitApp,
         setCommandPaletteOpen,
     } = useUIState();
@@ -104,7 +104,7 @@ export const useAppContextMenu = (props: UseAppContextMenuProps): MenuItem[] => 
                 ]
             },
             { isSeparator: true },
-            { label: 'Restart App', icon: RefreshIcon, action: restartApp },
+            { label: 'Restart App', icon: RefreshIcon, action: softRefreshApp },
             { label: 'Exit App', icon: PowerIcon, action: exitApp },
         ];
 
@@ -113,6 +113,6 @@ export const useAppContextMenu = (props: UseAppContextMenuProps): MenuItem[] => 
     }, [
         createNewConversation, currentConversation, clearMessages, changeMessageFontSize,
         setActiveView, toggleFullscreen, isFullscreen, toggleZenMode, setLogPanelOpen,
-        restartApp, exitApp, props, setCommandPaletteOpen
+        softRefreshApp, exitApp, props, setCommandPaletteOpen
     ]);
 };
