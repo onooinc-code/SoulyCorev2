@@ -222,13 +222,15 @@ const Message = (props: MessageProps) => {
             {message.threadMessages && message.threadMessages.length > 0 && (
                 <div className={`pl-12 space-y-4 ${isUser ? 'items-end' : 'items-start'} flex flex-col`}>
                     {message.threadMessages.map(reply => (
-                        <Message
-                            key={reply.id}
-                            message={reply}
-                            {...props}
-                            isContextAssemblyRunning={false}
-                            isMemoryExtractionRunning={false}
-                        />
+                        // FIX: Wrapped the iterated Message component in a div with a key. The 'key' prop is a React-specific attribute for list reconciliation and should not be passed as a prop to the component itself. This resolves the TypeScript error.
+                        <div key={reply.id}>
+                            <Message
+                                message={reply}
+                                {...props}
+                                isContextAssemblyRunning={false}
+                                isMemoryExtractionRunning={false}
+                            />
+                        </div>
                     ))}
                 </div>
             )}
