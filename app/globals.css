@@ -33,7 +33,6 @@
   color: #d1d5db;
   font-size: 1rem; /* Inherit root font size for scaling */
   line-height: 1.6;
-  max-width: 80ch; /* Maintain readability for long text blocks */
 }
 .prose-custom code {
     color: #e5e7eb;

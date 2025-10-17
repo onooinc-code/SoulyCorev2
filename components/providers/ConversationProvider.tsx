@@ -56,6 +56,7 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
     const isVisibleRef = useRef(true);
     const [backgroundTaskCount, setBackgroundTaskCount] = useState(0);
     const [activeWorkflow, setActiveWorkflow] = useState<ActiveWorkflowState | null>(null);
+    const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const startBackgroundTask = useCallback(() => setBackgroundTaskCount(prev => prev + 1), []);
     const endBackgroundTask = useCallback(() => setBackgroundTaskCount(prev => (prev > 0 ? prev - 1 : 0)), []);
@@ -72,7 +73,14 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
             }
         };
         document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+        
+        // Cleanup timeout on component unmount
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            if (debounceTimeout.current) {
+                clearTimeout(debounceTimeout.current);
+            }
+        };
     }, [currentConversation]);
 
     const setStatus = useCallback((newStatus: Partial<IStatus>) => {
@@ -141,11 +149,34 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     const updateCurrentConversation = useCallback((updatedData: Partial<Conversation>) => {
         if (currentConversation) {
+            // Optimistic UI update
             const newConversation = { ...currentConversation, ...updatedData };
             setCurrentConversation(newConversation);
             setConversations(convos => convos.map(c => c.id === newConversation.id ? newConversation : c));
+
+            // Debounced save to database
+            if (debounceTimeout.current) {
+                clearTimeout(debounceTimeout.current);
+            }
+
+            debounceTimeout.current = setTimeout(async () => {
+                log('Debounced save triggered for conversation.', { id: newConversation.id, changes: updatedData });
+                try {
+                    const res = await fetch(`/api/conversations/${newConversation.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatedData) // Only send the changed data
+                    });
+                    if (!res.ok) throw new Error('Failed to save conversation changes to the database.');
+                } catch (error) {
+                    log('Failed to save conversation changes.', { error: (error as Error).message }, 'error');
+                    setStatus({ error: 'Could not save conversation changes.' });
+                    // Revert optimistic update on failure by reloading all conversations
+                    loadConversations(); 
+                }
+            }, 1500); // 1.5 second debounce delay
         }
-    }, [currentConversation]);
+    }, [currentConversation, log, setStatus, loadConversations]);
     
     const createNewConversation = useCallback(async () => {
         setIsLoading(true);

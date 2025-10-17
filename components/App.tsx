@@ -19,6 +19,7 @@ import { getActionsRegistry } from '@/lib/actionsRegistry';
 import { useLog } from './providers/LogProvider';
 import Notifications from './Notifications';
 import TopProgressBar from './TopProgressBar';
+import AppStatusBar from './AppStatusBar';
 
 const ContactsHub = dynamic(() => import('@/components/ContactsHub'), {
   ssr: false,
@@ -286,7 +287,7 @@ export const App = () => {
             <Notifications />
             <MorningBriefing />
             <UniversalProgressIndicator />
-             <main className={`flex-1 flex w-full overflow-hidden bg-gray-900 text-gray-100 transition-all duration-300 ease-in-out ${isMobileView && !isFullscreen ? 'max-w-md mx-auto my-4 shadow-2xl rounded-2xl border-2 border-gray-700' : ''}`}>
+             <main className={`flex-1 flex w-full overflow-hidden bg-gray-900 text-gray-100 transition-all duration-300 ease-in-out pb-6 ${isMobileView && !isFullscreen ? 'max-w-md mx-auto my-4 shadow-2xl rounded-2xl border-2 border-gray-700' : ''}`}>
                 <AnimatePresence>
                     {!isZenMode && (
                         <NavigationRail 
@@ -337,6 +338,7 @@ export const App = () => {
                     onClose={() => setContextMenu(prev => ({ ...prev, isOpen: false }))}
                 />
             </main>
+            <AppStatusBar />
         </div>
     );
 };

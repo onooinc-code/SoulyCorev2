@@ -5,7 +5,6 @@ import { useConversation } from '@/components/providers/ConversationProvider';
 import Message from './Message';
 import ChatInput from './ChatInput';
 import type { Message as MessageType, Contact } from '@/lib/types';
-import StatusBar from './StatusBar';
 import ConversationSettingsModal from './ConversationSettingsModal';
 import AgentConfigModal from './AgentConfigModal';
 import SummaryModal from './SummaryModal';
@@ -245,10 +244,6 @@ const ChatWindow = () => {
             )}
 
             <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
-            <StatusBar 
-                onSettingsClick={() => setSettingsModalOpen(true)}
-                onAgentConfigClick={() => setAgentConfigModalOpen(true)}
-            />
             <ConversationSettingsModal isOpen={isSettingsModalOpen} onClose={() => setSettingsModalOpen(false)} />
             <AgentConfigModal 
                 isOpen={isAgentConfigModalOpen} 
