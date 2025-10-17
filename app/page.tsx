@@ -9,15 +9,15 @@ import { NotificationProvider } from '@/components/providers/NotificationProvide
 export default function HomePage() {
   return (
     <LogProvider>
-      <SettingsProvider>
-        <UIStateProvider>
-          <ConversationProvider>
-            <NotificationProvider>
+      <NotificationProvider>
+        <SettingsProvider>
+          <UIStateProvider>
+            <ConversationProvider>
               <App />
-            </NotificationProvider>
-          </ConversationProvider>
-        </UIStateProvider>
-      </SettingsProvider>
+            </ConversationProvider>
+          </UIStateProvider>
+        </SettingsProvider>
+      </NotificationProvider>
     </LogProvider>
   );
 }
