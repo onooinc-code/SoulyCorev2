@@ -97,21 +97,23 @@ export const useWorkflowManager = ({ currentConversation, setStatus, addMessage,
                 throw new Error(`Invalid step configuration at step ${stepDisplayNumber}`);
             }
 
-            // FIX: Ensure stepResult is not null before assigning to a string-only record.
-            if (stepResult === null) {
-                throw new Error(`Step ${stepDisplayNumber} did not produce a valid string result.`);
+            // FIX: Added a strict null check for the 'stepResult' variable. This moves the state update
+            // inside the check, guaranteeing to the TypeScript compiler that the value is a string and
+            // resolving the build error.
+            if (stepResult !== null) {
+                // Prepare for the next step
+                const nextState: ActiveWorkflowState = { 
+                    ...workflowState, 
+                    currentStepIndex: currentStepIndex + 1, 
+                    stepOutputs: { ...stepOutputs, [stepDisplayNumber]: stepResult } 
+                };
+                setActiveWorkflow(nextState);
+
+                // Recursively call for the next step
+                executeNextWorkflowStep(nextState);
+            } else {
+                 throw new Error(`Step ${stepDisplayNumber} did not produce a valid string result.`);
             }
-
-            // Prepare for the next step
-            const nextState: ActiveWorkflowState = { 
-                ...workflowState, 
-                currentStepIndex: currentStepIndex + 1, 
-                stepOutputs: { ...stepOutputs, [stepDisplayNumber]: stepResult } 
-            };
-            setActiveWorkflow(nextState);
-
-            // Recursively call for the next step
-            executeNextWorkflowStep(nextState);
 
         } catch (error) {
             const errorMessage = `Workflow failed at step ${stepDisplayNumber}: ${(error as Error).message}`;
