@@ -111,4 +111,19 @@ html.message-font-xl .prose-custom { font-size: 17px; }
   border-width: 1px;
   border-color: rgb(255 255 255 / 0.1);
 }
-    
+
+/* Custom scrollbar for Navigation Rail */
+.rail-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.rail-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.rail-scrollbar::-webkit-scrollbar-thumb {
+  background: #4f46e5; /* indigo-600 */
+  border-radius: 2px;
+}
+.rail-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #4f46e5 transparent;
+}

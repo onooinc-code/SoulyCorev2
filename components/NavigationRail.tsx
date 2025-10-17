@@ -79,31 +79,33 @@ const NavigationRail = ({ setBookmarksOpen, setGlobalSettingsOpen }: {
     );
 
     return (
-        <div className="flex flex-col h-full bg-gray-900/50 p-2 justify-between items-center border-r border-gray-700/50">
-            <div>
-                <div className="space-y-2">
-                    <button
-                        onClick={createNewConversation}
-                        title="New Chat (Cmd+N)"
-                        className="w-12 h-12 flex items-center justify-center rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
-                    >
-                        <PlusIcon className="w-6 h-6" />
-                    </button>
-                    <button
-                        onClick={() => setConversationPanelOpen(prev => !prev)}
-                        title={isConversationPanelOpen ? "Hide Conversations" : "Show Conversations"}
-                        className={`w-12 h-12 flex items-center justify-center rounded-lg transition-colors ${
-                            isConversationPanelOpen ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
-                        }`}
-                    >
-                        <ChatBubbleLeftRightIcon className="w-6 h-6" />
-                    </button>
-                    <hr className="border-gray-700 my-2" />
-                    {mainViews.map(item => <div key={item.viewName}><NavButton item={item} /></div>)}
-                </div>
+        <div className="flex flex-col h-full bg-gray-900/50 p-2 items-center border-r border-gray-700/50">
+            <div className="flex-shrink-0 space-y-2">
+                <button
+                    onClick={createNewConversation}
+                    title="New Chat (Cmd+N)"
+                    className="w-12 h-12 flex items-center justify-center rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
+                >
+                    <PlusIcon className="w-6 h-6" />
+                </button>
+                <button
+                    onClick={() => setConversationPanelOpen(prev => !prev)}
+                    title={isConversationPanelOpen ? "Hide Conversations" : "Show Conversations"}
+                    className={`w-12 h-12 flex items-center justify-center rounded-lg transition-colors ${
+                        isConversationPanelOpen ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                    }`}
+                >
+                    <ChatBubbleLeftRightIcon className="w-6 h-6" />
+                </button>
             </div>
             
-            <div className="space-y-2">
+            <hr className="border-gray-700 my-2 w-full" />
+            
+            <div className="flex-1 overflow-y-auto space-y-2 w-full rail-scrollbar">
+                {mainViews.map(item => <div key={item.viewName}><NavButton item={item} /></div>)}
+            </div>
+            
+            <div className="flex-shrink-0 space-y-2 mt-auto pt-2 border-t border-gray-700/50">
                 {utilityViews.map(item => (
                     <button
                         key={item.label}
