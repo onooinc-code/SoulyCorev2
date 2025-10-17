@@ -1,232 +1,196 @@
+
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import type { Message as MessageType, Conversation } from '@/lib/types';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { motion } from 'framer-motion';
+
+import type { Message as MessageType, Conversation } from '@/lib/types';
+import { UserCircleIcon, CpuChipIcon } from './Icons';
 import MessageToolbar from './MessageToolbar';
 import MessageFooter from './MessageFooter';
+import { useSettings } from './providers/SettingsProvider';
+
+// A custom renderer for code blocks
+const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
+    const match = /language-(\w+)/.exec(className || '');
+    return !inline ? (
+        <div className="bg-gray-900 rounded-md my-2">
+            <div className="flex items-center justify-between px-4 py-1 bg-gray-700 rounded-t-md text-xs text-gray-300">
+                <span>{match ? match[1] : ''}</span>
+            </div>
+            <pre className="p-4 overflow-x-auto">
+                <code className={className} {...props}>
+                    {children}
+                </code>
+            </pre>
+        </div>
+    ) : (
+        <code className={className} {...props}>
+            {children}
+        </code>
+    );
+};
+
+const extractHtmlContent = (markdown: string): { html: string | null; markdown: string } => {
+    const htmlRegex = /```html\n([\s\S]*?)\n```/;
+    const match = markdown.match(htmlRegex);
+    if (match) {
+        return {
+            html: match[1],
+            markdown: markdown.replace(htmlRegex, '').trim(),
+        };
+    }
+    return { html: null, markdown };
+};
 
 interface MessageProps {
     message: MessageType;
     onSummarize: (content: string) => void;
     onToggleBookmark: (messageId: string) => void;
-    onDelete: (messageId: string) => void;
+    onDelete: () => void;
     onUpdate: (messageId: string, newContent: string) => void;
-    onRegenerate: (messageId: string) => void;
-    onInspect: (messageId: string) => void;
+    onRegenerate: () => void;
+    onInspect: () => void;
+    isContextAssemblyRunning: boolean;
+    isMemoryExtractionRunning: boolean;
     onViewHtml: (htmlContent: string) => void;
-    isContextAssemblyRunning?: boolean;
-    isMemoryExtractionRunning?: boolean;
     currentConversation: Conversation | null;
     onSetConversationAlign: (align: 'left' | 'right') => void;
 }
 
-const WORD_COUNT_THRESHOLD = 250;
-
-const Message = ({ 
-    message, 
-    onSummarize, 
-    onToggleBookmark, 
-    onDelete, 
-    onUpdate, 
-    onRegenerate, 
+const Message = ({
+    message,
+    onSummarize,
+    onToggleBookmark,
+    onDelete,
+    onUpdate,
+    onRegenerate,
     onInspect,
-    onViewHtml,
     isContextAssemblyRunning,
     isMemoryExtractionRunning,
+    onViewHtml,
     currentConversation,
-    onSetConversationAlign
+    onSetConversationAlign,
 }: MessageProps) => {
-    const isUser = message.role === 'user';
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(message.content);
-    const [summary, setSummary] = useState<string | null>(null);
-    const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const { settings } = useSettings();
     
-    const isLongMessage = !isUser && message.content.split(/\s+/).length > WORD_COUNT_THRESHOLD;
-    
-    // Per-message collapse state is local and ephemeral, stored in component state.
-    const [isCollapsed, setIsCollapsed] = useState(isLongMessage);
+    const { html, markdown } = extractHtmlContent(message.content);
 
-    const showProgressBar = isContextAssemblyRunning || isMemoryExtractionRunning;
-    const progressText = isContextAssemblyRunning ? "Assembling Context..." : "Extracting Memories...";
-
-    const extractedHtml = useMemo(() => {
-        const match = message.content.match(/```html\n([\s\S]*?)\n```/);
-        return match ? match[1] : null;
-    }, [message.content]);
-
-
-    useEffect(() => {
-        if (isLongMessage && isCollapsed && !summary && currentConversation?.enableAutoSummarization) {
-            const fetchSummary = async () => {
-                try {
-                    const cachedSummaries = JSON.parse(localStorage.getItem('messageSummaries') || '{}');
-                    if (cachedSummaries[message.id]) {
-                        setSummary(cachedSummaries[message.id]);
-                        return;
-                    }
-                } catch (e) { console.error("Failed to parse summary cache", e); }
-
-                setIsSummaryLoading(true);
-                try {
-                    const res = await fetch('/api/summarize', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: message.content }),
-                    });
-                    if (!res.ok) throw new Error('Failed to fetch summary.');
-                    const data = await res.json();
-                    
-                    if (data.summary) {
-                        setSummary(data.summary);
-                        try {
-                             const cachedSummaries = JSON.parse(localStorage.getItem('messageSummaries') || '{}');
-                             cachedSummaries[message.id] = data.summary;
-                             localStorage.setItem('messageSummaries', JSON.stringify(cachedSummaries));
-                        } catch(e) { console.error("Failed to cache summary", e); }
-                    } else {
-                        throw new Error("API returned an empty summary.");
-                    }
-                } catch (error) {
-                    console.error("Summary fetch error:", error);
-                    setSummary("Failed to generate summary.");
-                } finally {
-                    setIsSummaryLoading(false);
-                }
-            };
-            fetchSummary();
-        }
-    }, [isLongMessage, isCollapsed, message.id, message.content, summary, currentConversation]);
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(message.content);
-    };
-
-    const handleSaveEdit = () => {
+    const handleSave = () => {
         if (editedContent.trim() !== message.content) {
             onUpdate(message.id, editedContent.trim());
         }
         setIsEditing(false);
     };
 
-    const handleCancelEdit = () => {
-        setEditedContent(message.content);
-        setIsEditing(false);
-    };
-
-    const renderMessageContent = () => {
-        if (isEditing) {
-            return (
-                <div className="not-prose">
-                    <textarea
-                        value={editedContent}
-                        onChange={(e) => setEditedContent(e.target.value)}
-                        className="w-full p-2 bg-gray-800/50 rounded-md text-white resize-y border border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        rows={Math.max(3, editedContent.split('\n').length)}
-                        autoFocus
-                    />
-                    <div className="flex gap-2 mt-2">
-                        <button onClick={handleSaveEdit} className="px-3 py-1 text-xs bg-green-600 rounded hover:bg-green-500">Save</button>
-                        <button onClick={handleCancelEdit} className="px-3 py-1 text-xs bg-gray-600 rounded hover:bg-gray-500">Cancel</button>
-                    </div>
-                </div>
-            );
+    useEffect(() => {
+        if (isEditing && textareaRef.current) {
+            textareaRef.current.focus();
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
-
-        if (isLongMessage && isCollapsed) {
-            if (!currentConversation?.enableAutoSummarization) {
-                 return <p className="italic text-gray-400">Message content collapsed. Auto-summary is disabled for this conversation.</p>;
-            }
-            if (isSummaryLoading) {
-                return <p className="italic text-gray-400">Generating summary...</p>;
-            }
-            if (summary) {
-                return <ReactMarkdown remarkPlugins={[remarkGfm]}>{summary}</ReactMarkdown>;
-            }
-            return <p className="italic text-gray-400">Message content collapsed...</p>;
+    }, [isEditing]);
+    
+    // Auto-collapse long messages if enabled
+    useEffect(() => {
+        if (currentConversation?.enableAutoSummarization && message.content.length > 1000 && !isCollapsed) {
+            setIsCollapsed(true);
         }
-        
-        return <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>;
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentConversation?.enableAutoSummarization, message.id]);
 
-    const renderToggleCollapseButton = () => {
-        if (!isLongMessage || isEditing) return null;
-
-        const buttonText = isCollapsed ? 'Show More' : 'Show Less';
-        
-        return (
-            <div className={`mt-2 ${isUser ? 'text-right' : 'text-left'}`}>
-                <button 
-                    onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="px-3 py-1 text-xs bg-gray-600/50 text-gray-300 rounded-full hover:bg-gray-600"
-                >
-                    {buttonText}
-                </button>
-            </div>
-        );
-    };
-
+    const isUser = message.role === 'user';
     const textAlignClass = currentConversation?.ui_settings?.textAlign === 'right' ? 'text-right' : 'text-left';
+    
+    const messageFontSizeClasses: { [key: string]: string } = {
+        sm: 'text-sm',
+        base: 'text-base',
+        lg: 'text-lg',
+        xl: 'text-xl',
+    };
+    
+    const messageFontSizeKey = settings?.global_ui_settings?.messageFontSize || 'sm';
+    const messageFontSize = messageFontSizeClasses[messageFontSizeKey] || 'text-sm';
 
     return (
         <motion.div
+            layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className={`group flex items-start gap-4 ${isUser ? 'justify-end' : ''}`}
+            exit={{ opacity: 0 }}
+            className={`group flex items-start gap-4 w-full ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
         >
-            {!isUser && (
-                <div className="w-8 h-8 rounded-full bg-indigo-500 flex-shrink-0 flex items-center justify-center font-bold text-sm">
-                    AI
-                </div>
-            )}
-            <div className={`w-full`}>
-                 <div className={`flex items-center text-xs text-gray-400 mb-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
-                    <MessageToolbar 
-                        isBookmarked={message.isBookmarked || false}
-                        isCollapsed={isCollapsed}
-                        isUser={isUser}
-                        onCopy={handleCopy}
-                        onBookmark={() => onToggleBookmark(message.id)}
-                        onSummarize={() => onSummarize(message.content)}
-                        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-                        onSetAlign={onSetConversationAlign}
-                        onDelete={() => onDelete(message.id)}
-                        onEdit={() => setIsEditing(true)}
-                        onRegenerate={() => onRegenerate(message.id)}
-                        onInspect={() => onInspect(message.id)}
-                        onViewHtml={extractedHtml ? () => onViewHtml(extractedHtml) : undefined}
-                    />
-                </div>
-                <div className={`prose-custom p-4 rounded-lg ${textAlignClass} ${isUser ? 'bg-blue-600/20 backdrop-blur-lg border border-blue-500/30 text-white rounded-br-none' : 'bg-gray-700/20 backdrop-blur-lg border border-gray-600/30 text-gray-200 rounded-bl-none'}`}>
-                    {renderMessageContent()}
-                </div>
-                 {renderToggleCollapseButton()}
-                 <div className={`flex items-center mt-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
-                    <MessageFooter message={message} />
-                 </div>
-                 {showProgressBar && (
-                    <div className={`mt-2 flex items-center gap-2 text-xs text-gray-400 ${isUser ? 'justify-end' : 'justify-start'}`}>
-                         <div className="w-20 h-1 bg-gray-700 rounded-full overflow-hidden">
-                            <motion.div 
-                                className="h-full bg-indigo-500"
-                                initial={{ x: "-100%" }}
-                                animate={{ x: "100%" }}
-                                transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                            />
-                        </div>
-                        <span>{progressText}</span>
-                    </div>
-                )}
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center mt-1">
+                {isUser ? <UserCircleIcon className="w-6 h-6 text-gray-400" /> : <CpuChipIcon className="w-6 h-6 text-indigo-400" />}
             </div>
-             {isUser && (
-                <div className="w-8 h-8 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center font-bold text-sm">
-                    You
+            <div className={`flex flex-col flex-1 min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
+                <div className="relative p-4 rounded-lg w-full max-w-4xl" style={{backgroundColor: isUser ? '#374151' : '#1f2937' }}>
+                    <AnimatePresence>
+                        {isEditing ? (
+                            <motion.div key="editing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                                <textarea
+                                    ref={textareaRef}
+                                    value={editedContent}
+                                    onChange={(e) => setEditedContent(e.target.value)}
+                                    onBlur={handleSave}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSave(); } }}
+                                    className="w-full bg-gray-600 text-white rounded-md p-2 text-sm resize-none overflow-hidden"
+                                />
+                            </motion.div>
+                        ) : (
+                             <motion.div key="displaying" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`prose-custom w-full max-w-none ${textAlignClass} ${messageFontSize}`}>
+                                {isCollapsed ? (
+                                    <p className="italic text-gray-400">[Message content is long and has been collapsed. Click expand in the toolbar to view.]</p>
+                                ) : (
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        components={{ code: CodeBlock }}
+                                    >
+                                        {markdown}
+                                    </ReactMarkdown>
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                    
+                     <div className={`absolute top-2 ${isUser ? 'left-2' : 'right-2'} transition-opacity ${isEditing ? 'opacity-0' : ''}`}>
+                        <MessageToolbar
+                            isUser={isUser}
+                            isBookmarked={message.isBookmarked || false}
+                            isCollapsed={isCollapsed}
+                            onCopy={() => navigator.clipboard.writeText(message.content)}
+                            onBookmark={() => onToggleBookmark(message.id)}
+                            onSummarize={() => onSummarize(message.content)}
+                            onToggleCollapse={() => setIsCollapsed(prev => !prev)}
+                            onSetAlign={onSetConversationAlign}
+                            onEdit={() => setIsEditing(true)}
+                            onDelete={onDelete}
+                            onRegenerate={() => onRegenerate(message.id)}
+                            onInspect={() => onInspect(message.id)}
+                            onViewHtml={html ? () => onViewHtml(html) : undefined}
+                        />
+                    </div>
                 </div>
-            )}
+                 <AnimatePresence>
+                    {isContextAssemblyRunning && (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xs text-yellow-400 mt-1 flex items-center gap-1.5 animate-pulse">
+                            <CpuChipIcon className="w-3 h-3"/> Assembling Context...
+                        </motion.div>
+                    )}
+                     {isMemoryExtractionRunning && (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xs text-purple-400 mt-1 flex items-center gap-1.5 animate-pulse">
+                            <CpuChipIcon className="w-3 h-3"/> Learning from conversation...
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                <MessageFooter message={message} />
+            </div>
         </motion.div>
     );
 };

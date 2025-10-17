@@ -13,6 +13,7 @@ import MessageList from './chat/MessageList';
 import ErrorDisplay from './chat/ErrorDisplay';
 import ChatFooter from './chat/ChatFooter';
 import ChatModals from './chat/ChatModals';
+import StatusBar from './StatusBar';
 
 const ChatWindow = () => {
     // --- HOOKS ---
@@ -138,6 +139,13 @@ const ChatWindow = () => {
                 onViewHtml={handleViewHtml}
                 onSetConversationAlign={handleSetConversationAlign}
             />
+
+            {!isZenMode && currentConversation && (
+                <StatusBar 
+                    onSettingsClick={() => setSettingsModalOpen(true)}
+                    onAgentConfigClick={() => setAgentConfigModalOpen(true)}
+                />
+            )}
             
             <ErrorDisplay 
                 status={status}

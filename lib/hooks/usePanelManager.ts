@@ -8,7 +8,8 @@ export const usePanelManager = () => {
     const { log } = useLog();
 
     const [isConversationPanelOpen, setConversationPanelOpen] = useState(true);
-    const [isConversationPanelMinimized, setIsConversationPanelMinimized] = useState(false);
+    const [isConversationPanelMinimized, setIsConversationPanelMinimized] = useState(true);
+    const [isConversationPanelPinned, setIsConversationPanelPinned] = useState(false);
     const [isLogPanelOpen, setLogPanelOpen] = useState(false);
     const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const [isDataHubWidgetOpen, setDataHubWidgetOpen] = useState(false);
@@ -18,6 +19,8 @@ export const usePanelManager = () => {
         setConversationPanelOpen,
         isConversationPanelMinimized,
         setIsConversationPanelMinimized,
+        isConversationPanelPinned,
+        setIsConversationPanelPinned,
         isLogPanelOpen,
         setLogPanelOpen,
         isCommandPaletteOpen,

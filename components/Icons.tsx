@@ -1,3 +1,4 @@
+
 "use client";
 import React from 'react';
 
@@ -17,6 +18,8 @@ export * from './icons/WrenchScrewdriverIcon';
 export * from './icons/CommandLineIcon';
 export * from './icons/CloudIcon';
 export * from './icons/MagnifyingGlassIcon';
+export * from './icons/PinIcon';
+export * from './icons/PinFilledIcon';
 
 
 // Existing icons

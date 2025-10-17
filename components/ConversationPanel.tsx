@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from './providers/UIStateProvider';
-import { PlusIcon, SparklesIcon, EditIcon, TrashIcon, SearchIcon, XIcon, SidebarLeftIcon } from '@/components/Icons';
+import { PlusIcon, SparklesIcon, EditIcon, TrashIcon, SearchIcon, XIcon, SidebarLeftIcon, PinIcon, PinFilledIcon } from '@/components/Icons';
 import { useLog } from './providers/LogProvider';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { Conversation } from '@/lib/types';
@@ -61,33 +62,37 @@ const ConversationPanel = ({ isMinimized }: ConversationPanelProps) => {
         isLoading,
         unreadConversations,
     } = useConversation();
-    const { setConversationPanelOpen, setIsConversationPanelMinimized } = useUIState();
+    const { setConversationPanelOpen, setIsConversationPanelMinimized, isConversationPanelPinned, setIsConversationPanelPinned } = useUIState();
     const { log } = useLog();
     const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
     const [editingTitle, setEditingTitle] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-
-    const handleNewChat = () => {
-        log('User clicked "New Chat" button.');
-        createNewConversation();
-    };
     
     const handleSetConversation = (id: string) => {
         if (editingConversationId === id) return;
         log('User selected a conversation.', { conversationId: id });
         setCurrentConversation(id);
+        if (!isConversationPanelPinned) {
+            setConversationPanelOpen(false);
+        }
     };
 
     const handleDelete = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         if (window.confirm('Are you sure you want to delete this conversation and all its messages?')) {
             deleteConversation(id);
+            if (!isConversationPanelPinned) {
+                setConversationPanelOpen(false);
+            }
         }
     };
 
     const handleGenerateTitle = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         generateConversationTitle(id);
+        if (!isConversationPanelPinned) {
+            setConversationPanelOpen(false);
+        }
     };
     
     const handleEditTitle = (e: React.MouseEvent, id: string, currentTitle: string) => {
@@ -127,6 +132,13 @@ const ConversationPanel = ({ isMinimized }: ConversationPanelProps) => {
                 <div className="flex justify-between items-center mb-4">
                     {!isMinimized && <h2 className="text-lg font-semibold">Conversations</h2>}
                      <div className="flex items-center gap-1">
+                        <button 
+                            onClick={() => setIsConversationPanelPinned(prev => !prev)} 
+                            className={`p-2 rounded-full transition-colors ${isConversationPanelPinned ? 'text-indigo-400' : 'text-gray-400 hover:text-white'}`} 
+                            title={isConversationPanelPinned ? "Unpin Panel" : "Pin Panel"}
+                        >
+                            {isConversationPanelPinned ? <PinFilledIcon className="w-5 h-5" /> : <PinIcon className="w-5 h-5" />}
+                        </button>
                         <button onClick={() => setIsConversationPanelMinimized(!isMinimized)} className="p-2 text-gray-400 hover:text-white" title={isMinimized ? "Expand Panel" : "Minimize Panel"}>
                             <SidebarLeftIcon className={`w-5 h-5 transition-transform duration-300 ${isMinimized ? 'rotate-180' : ''}`} />
                         </button>

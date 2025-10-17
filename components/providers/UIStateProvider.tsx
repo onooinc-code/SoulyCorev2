@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
@@ -19,6 +20,8 @@ interface UIStateContextType {
     setConversationPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isConversationPanelMinimized: boolean;
     setIsConversationPanelMinimized: React.Dispatch<React.SetStateAction<boolean>>;
+    isConversationPanelPinned: boolean;
+    setIsConversationPanelPinned: React.Dispatch<React.SetStateAction<boolean>>;
     isLogPanelOpen: boolean;
     setLogPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isCommandPaletteOpen: boolean;

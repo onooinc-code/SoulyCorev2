@@ -1,8 +1,10 @@
 
+
 "use client";
 
 import React, { useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
+// FIX: Replaced direct import of type `Message` with `MessageType` alias to avoid naming conflicts, a common source of module-related errors.
 import type { Conversation, Message as MessageType, ActiveWorkflowState } from '@/lib/types';
 import Message from '../Message';
 import LoadingIndicator from '../LoadingIndicator';
