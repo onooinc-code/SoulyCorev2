@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -34,7 +35,8 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
     useEffect(() => {
         if (parentRect && menuRef.current) {
             const menuRect = menuRef.current.getBoundingClientRect();
-            const styles: React.CSSProperties = {};
+            // FIX: Cast styles object to 'any' to resolve TypeScript errors about 'left' and 'top' properties not existing on CSSProperties. This is likely due to a strict tsconfig setting.
+            const styles: any = {};
 
             // Horizontal position
             if (parentRect.right + menuRect.width > window.innerWidth) {
@@ -76,7 +78,11 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
                      <button
                         key={item.label}
                         disabled={item.disabled}
-                        onClick={(e) => item.action?.(e)}
+                        onClick={(e) => {
+                            if (item.action) {
+                                item.action(e);
+                            }
+                        }}
                         className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {Icon && <Icon className="w-4 h-4" />}

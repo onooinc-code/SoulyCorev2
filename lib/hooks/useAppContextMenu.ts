@@ -1,3 +1,4 @@
+
 "use client";
 
 // FIX: Added React import to resolve namespace errors for types like React.Dispatch.
@@ -107,9 +108,10 @@ export const useAppContextMenu = (props: UseAppContextMenuProps): MenuItem[] => 
         ];
 
         return menuItems;
+    // FIX: Added setCommandPaletteOpen to the dependency array to match its usage.
     }, [
         createNewConversation, currentConversation, clearMessages, changeMessageFontSize,
         setActiveView, toggleFullscreen, isFullscreen, toggleZenMode, setLogPanelOpen,
-        restartApp, exitApp, props
+        restartApp, exitApp, props, setCommandPaletteOpen
     ]);
 };

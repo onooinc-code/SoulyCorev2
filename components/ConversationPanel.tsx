@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -9,6 +8,7 @@ import { useLog } from './providers/LogProvider';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { Conversation } from '@/lib/types';
 import SidebarToolbar from './SidebarToolbar';
+import ConversationSearch from './ConversationSearch';
 
 // Helper function to format relative dates
 const getRelativeTime = (date: Date): string => {
@@ -61,12 +61,14 @@ const ConversationPanel = ({ isMinimized }: ConversationPanelProps) => {
         generateConversationTitle,
         isLoading,
         unreadConversations,
+        setScrollToMessageId,
     } = useConversation();
     const { setConversationPanelOpen, setIsConversationPanelMinimized, isConversationPanelPinned, setIsConversationPanelPinned } = useUIState();
     const { log } = useLog();
     const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
     const [editingTitle, setEditingTitle] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [isSearchMode, setIsSearchMode] = useState(false);
     
     const handleSetConversation = (id: string) => {
         if (editingConversationId === id) return;
@@ -108,6 +110,15 @@ const ConversationPanel = ({ isMinimized }: ConversationPanelProps) => {
         setEditingConversationId(null);
         setEditingTitle('');
     };
+
+    const handleJumpToMessage = (messageId: string) => {
+        log('Jumping to message from search results.', { messageId });
+        setScrollToMessageId(messageId);
+        setIsSearchMode(false); // Exit search mode
+        if (!isConversationPanelPinned) {
+            setConversationPanelOpen(false);
+        }
+    };
     
     const groupedAndFilteredConversations = useMemo(() => {
         const filtered = searchTerm
@@ -130,8 +141,16 @@ const ConversationPanel = ({ isMinimized }: ConversationPanelProps) => {
         <div className="flex flex-col h-full bg-gray-800 p-3 overflow-hidden border-r border-gray-700/50">
             <div className="flex-shrink-0">
                 <div className="flex justify-between items-center mb-4">
-                    {!isMinimized && <h2 className="text-lg font-semibold">Conversations</h2>}
+                    {!isMinimized && <h2 className="text-lg font-semibold">{isSearchMode ? 'Search Chat' : 'Conversations'}</h2>}
                      <div className="flex items-center gap-1">
+                        <button 
+                            onClick={() => setIsSearchMode(!isSearchMode)}
+                            disabled={!currentConversation}
+                            className="p-2 text-gray-400 hover:text-white disabled:text-gray-600 disabled:cursor-not-allowed"
+                            title="Search current conversation"
+                        >
+                           {isSearchMode ? <XIcon className="w-5 h-5"/> : <SearchIcon className="w-5 h-5"/>}
+                        </button>
                         <button 
                             onClick={() => setIsConversationPanelPinned(prev => !prev)} 
                             className={`p-2 rounded-full transition-colors ${isConversationPanelPinned ? 'text-indigo-400' : 'text-gray-400 hover:text-white'}`} 
@@ -147,7 +166,7 @@ const ConversationPanel = ({ isMinimized }: ConversationPanelProps) => {
                         </button>
                     </div>
                 </div>
-                {!isMinimized && (
+                {!isMinimized && !isSearchMode && (
                     <div className="relative mb-4">
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
@@ -161,66 +180,72 @@ const ConversationPanel = ({ isMinimized }: ConversationPanelProps) => {
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-1 min-h-0">
-                <AnimatePresence>
-                {groupOrder.map(group => (
-                    groupedAndFilteredConversations[group] && (
-                        <motion.div key={group} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            {!isMinimized && <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider my-2 px-2">{group}</h2>}
-                            <ul className="space-y-1">
-                                {groupedAndFilteredConversations[group].map(convo => {
-                                    const isUnread = unreadConversations.has(convo.id);
-                                    const isProcessing = isLoading && currentConversation?.id === convo.id;
+            <AnimatePresence mode="wait">
+            {isSearchMode && !isMinimized ? (
+                <motion.div key="search" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="flex-1 overflow-y-auto pr-1 min-h-0">
+                   {currentConversation && <ConversationSearch conversationId={currentConversation.id} onJumpToMessage={handleJumpToMessage} />}
+                </motion.div>
+            ) : (
+                <motion.div key="list" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="flex-1 overflow-y-auto pr-1 min-h-0">
+                    {groupOrder.map(group => (
+                        groupedAndFilteredConversations[group] && (
+                            <motion.div key={group} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                                {!isMinimized && <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider my-2 px-2">{group}</h2>}
+                                <ul className="space-y-1">
+                                    {groupedAndFilteredConversations[group].map(convo => {
+                                        const isUnread = unreadConversations.has(convo.id);
+                                        const isProcessing = isLoading && currentConversation?.id === convo.id;
 
-                                    return (
-                                        <li key={convo.id} className="relative group">
-                                            {editingConversationId === convo.id && !isMinimized ? (
-                                                <div className="flex items-center">
-                                                    <input
-                                                        type="text"
-                                                        value={editingTitle}
-                                                        onChange={(e) => setEditingTitle(e.target.value)}
-                                                        onBlur={() => handleSaveTitle(convo.id)}
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle(convo.id)}
-                                                        className="w-full p-2 rounded-md text-sm bg-gray-600 text-white outline-none ring-2 ring-indigo-500"
-                                                        autoFocus
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <button
-                                                    onClick={() => handleSetConversation(convo.id)}
-                                                    className={`w-full text-left p-2 rounded-md text-sm flex items-center justify-between ${currentConversation?.id === convo.id ? 'bg-gray-700' : 'hover:bg-gray-700/50'}`}
-                                                >
-                                                    <div className="flex items-center gap-3 min-w-0">
-                                                        <span className="w-2 h-2 flex-shrink-0 self-center rounded-full" style={{
-                                                            backgroundColor: isProcessing ? '#818cf8' : isUnread ? '#818cf8' : 'transparent',
-                                                            animation: isProcessing ? 'pulse 1.5s infinite' : 'none'
-                                                        }}></span>
-                                                        {!isMinimized && <span className="truncate flex-1 font-medium text-gray-200">{convo.title}</span>}
+                                        return (
+                                            <li key={convo.id} className="relative group">
+                                                {editingConversationId === convo.id && !isMinimized ? (
+                                                    <div className="flex items-center">
+                                                        <input
+                                                            type="text"
+                                                            value={editingTitle}
+                                                            onChange={(e) => setEditingTitle(e.target.value)}
+                                                            onBlur={() => handleSaveTitle(convo.id)}
+                                                            onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle(convo.id)}
+                                                            className="w-full p-2 rounded-md text-sm bg-gray-600 text-white outline-none ring-2 ring-indigo-500"
+                                                            autoFocus
+                                                        />
                                                     </div>
-                                                    {!isMinimized && (
-                                                        <>
-                                                            <span className="text-xs text-gray-500 flex-shrink-0 ml-2 group-hover:hidden">
-                                                                {getRelativeTime(new Date(convo.lastUpdatedAt))}
-                                                            </span>
-                                                            <div className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center bg-gray-800/50 backdrop-blur-sm border border-white/10 rounded-full">
-                                                                <button onClick={(e) => handleGenerateTitle(e, convo.id)} className="p-1.5 text-gray-300 hover:text-indigo-400" title="Generate new title"><SparklesIcon className="w-4 h-4" /></button>
-                                                                <button onClick={(e) => handleEditTitle(e, convo.id, convo.title)} className="p-1.5 text-gray-300 hover:text-blue-400" title="Rename"><EditIcon className="w-4 h-4" /></button>
-                                                                <button onClick={(e) => handleDelete(e, convo.id)} className="p-1.5 text-gray-300 hover:text-red-400" title="Delete"><TrashIcon className="w-4 h-4" /></button>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </button>
-                                            )}
-                                        </li>
-                                    )
-                                })}
-                            </ul>
-                        </motion.div>
-                    )
-                ))}
-                </AnimatePresence>
-            </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleSetConversation(convo.id)}
+                                                        className={`w-full text-left p-2 rounded-md text-sm flex items-center justify-between ${currentConversation?.id === convo.id ? 'bg-gray-700' : 'hover:bg-gray-700/50'}`}
+                                                    >
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <span className="w-2 h-2 flex-shrink-0 self-center rounded-full" style={{
+                                                                backgroundColor: isProcessing ? '#818cf8' : isUnread ? '#818cf8' : 'transparent',
+                                                                animation: isProcessing ? 'pulse 1.5s infinite' : 'none'
+                                                            }}></span>
+                                                            {!isMinimized && <span className="truncate flex-1 font-medium text-gray-200">{convo.title}</span>}
+                                                        </div>
+                                                        {!isMinimized && (
+                                                            <>
+                                                                <span className="text-xs text-gray-500 flex-shrink-0 ml-2 group-hover:hidden">
+                                                                    {getRelativeTime(new Date(convo.lastUpdatedAt))}
+                                                                </span>
+                                                                <div className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center bg-gray-800/50 backdrop-blur-sm border border-white/10 rounded-full">
+                                                                    <button onClick={(e) => handleGenerateTitle(e, convo.id)} className="p-1.5 text-gray-300 hover:text-indigo-400" title="Generate new title"><SparklesIcon className="w-4 h-4" /></button>
+                                                                    <button onClick={(e) => handleEditTitle(e, convo.id, convo.title)} className="p-1.5 text-gray-300 hover:text-blue-400" title="Rename"><EditIcon className="w-4 h-4" /></button>
+                                                                    <button onClick={(e) => handleDelete(e, convo.id)} className="p-1.5 text-gray-300 hover:text-red-400" title="Delete"><TrashIcon className="w-4 h-4" /></button>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </li>
+                                        )
+                                    })}
+                                </ul>
+                            </motion.div>
+                        )
+                    ))}
+                </motion.div>
+            )}
+            </AnimatePresence>
             <SidebarToolbar isMinimized={isMinimized} />
         </div>
     );

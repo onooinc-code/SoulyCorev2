@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -135,6 +134,7 @@ const Message = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className={`group flex items-start gap-4 w-full ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+            data-message-id={message.id}
         >
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center mt-1">
                 {isUser ? <UserCircleIcon className="w-6 h-6 text-gray-400" /> : <CpuChipIcon className="w-6 h-6 text-indigo-400" />}

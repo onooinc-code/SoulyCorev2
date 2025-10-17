@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef, useEffect, useMemo } from 'react';
@@ -6,6 +5,7 @@ import { motion } from 'framer-motion';
 import type { Conversation, Message as MessageType, ActiveWorkflowState } from '@/lib/types';
 import Message from '../Message';
 import LoadingIndicator from '../LoadingIndicator';
+import { useConversation } from '../providers/ConversationProvider';
 
 interface MessageListProps {
     messages: MessageType[];
@@ -40,16 +40,30 @@ const MessageList = ({
     onSetConversationAlign,
     onReply
 }: MessageListProps) => {
+    const { scrollToMessageId, setScrollToMessageId } = useConversation();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            if (scrollContainerRef.current) {
-                scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+        if (scrollToMessageId) {
+            const element = document.querySelector(`[data-message-id="${scrollToMessageId}"]`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.classList.add('animate-pulse', 'bg-indigo-900/50', 'rounded-lg');
+                setTimeout(() => {
+                    element.classList.remove('animate-pulse', 'bg-indigo-900/50', 'rounded-lg');
+                }, 2500); // Highlight for 2.5 seconds
             }
-        }, 0);
-        return () => clearTimeout(timer);
-    }, [messages]);
+            setScrollToMessageId(null); // Reset after scrolling
+        } else {
+            // Default scroll to bottom behavior
+            const timer = setTimeout(() => {
+                if (scrollContainerRef.current) {
+                    scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+                }
+            }, 0);
+            return () => clearTimeout(timer);
+        }
+    }, [messages, scrollToMessageId, setScrollToMessageId]);
 
     const lastMessageIds = useMemo(() => {
         const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
@@ -84,7 +98,7 @@ const MessageList = ({
                 <div className="w-full mt-auto">
                     <div className="space-y-4">
                         {threadedMessages.map((msg) => (
-                            <div key={msg.id}>
+                            <div key={msg.id} data-message-id={msg.id}>
                                 <Message 
                                     message={msg}
                                     onSummarize={onSummarize}

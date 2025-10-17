@@ -37,6 +37,8 @@ interface ConversationContextType {
     endBackgroundTask: () => void;
     startWorkflow: ReturnType<typeof useWorkflowManager>['startWorkflow'];
     activeWorkflow: ActiveWorkflowState | null;
+    scrollToMessageId: string | null;
+    setScrollToMessageId: (messageId: string | null) => void;
 }
 
 const ConversationContext = createContext<ConversationContextType | undefined>(undefined);
@@ -47,6 +49,7 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
     const [unreadConversations, setUnreadConversations] = useState(new Set<string>());
+    const [scrollToMessageId, setScrollToMessageId] = useState<string | null>(null);
 
     // --- HOOKS COMPOSITION ---
     const { 
@@ -177,6 +180,7 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
         deleteConversation, updateConversationTitle, generateConversationTitle, deleteMessage, updateMessage,
         regenerateAiResponse, regenerateUserPromptAndGetResponse, unreadConversations, clearMessages,
         backgroundTaskCount, startBackgroundTask, endBackgroundTask, startWorkflow, activeWorkflow,
+        scrollToMessageId, setScrollToMessageId,
     };
 
     return <ConversationContext.Provider value={contextValue}>{children}</ConversationContext.Provider>;
