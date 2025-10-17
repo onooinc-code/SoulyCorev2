@@ -1,132 +1,160 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { AppSettings } from '@/lib/types';
 import { useLog } from './LogProvider';
-
-type FontSize = 'sm' | 'base' | 'lg' | 'xl';
-const fontSizes: FontSize[] = ['sm', 'base', 'lg', 'xl'];
+import { useNotification } from '@/lib/hooks/use-notifications';
 
 interface SettingsContextType {
     settings: AppSettings | null;
-    loadSettings: () => Promise<void>;
     saveSettings: (newSettings: AppSettings) => Promise<void>;
-    changeMessageFontSize: (direction: 'increase' | 'decrease') => void;
     changeGlobalFontSize: (direction: 'increase' | 'decrease') => void;
+    changeMessageFontSize: (direction: 'increase' | 'decrease') => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
+const defaultSettings: AppSettings = {
+    defaultModelConfig: {
+        model: 'gemini-2.5-flash',
+        temperature: 0.7,
+        topP: 0.95,
+    },
+    defaultAgentConfig: {
+        systemPrompt: 'You are a helpful AI assistant.',
+        useSemanticMemory: true,
+        useStructuredMemory: true,
+    },
+    enableDebugLog: {
+        enabled: false,
+    },
+    featureFlags: {
+        enableMemoryExtraction: true,
+        enableProactiveSuggestions: true,
+        enableAutoSummarization: true,
+    },
+    global_ui_settings: {
+        fontSize: '16px',
+        messageFontSize: 'sm',
+    }
+};
+
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [settings, setSettings] = useState<AppSettings | null>(null);
-    const { log, setLoggingEnabled } = useLog();
+    const [isLoading, setIsLoading] = useState(true);
+    const { log } = useLog();
+    const { addNotification } = useNotification();
 
-    useEffect(() => {
-        if (settings) {
-            setLoggingEnabled(settings.enableDebugLog.enabled);
-            
-            // Apply message font size class to HTML element
-            const messageSize = settings.global_ui_settings?.messageFontSize || 'base';
-            document.documentElement.classList.remove(...fontSizes.map(s => `message-font-${s}`));
-            document.documentElement.classList.add(`message-font-${messageSize}`);
-
-            // Apply global font size class to HTML element
-            const globalSize = settings.global_ui_settings?.fontSize || 'base';
-            document.documentElement.classList.remove(...fontSizes.map(s => `font-size-${s}`));
-            document.documentElement.classList.add(`font-size-${globalSize}`);
-        }
-    }, [settings, setLoggingEnabled]);
-    
-    const loadSettings = useCallback(async () => {
-        log('Attempting to load global settings...');
+    const fetchSettings = useCallback(async () => {
+        log('Fetching global settings...');
+        setIsLoading(true);
         try {
             const res = await fetch('/api/settings');
-            if (!res.ok) throw new Error("Failed to fetch settings.");
-            const appSettings: AppSettings = await res.json();
-            setSettings(appSettings);
-            log('Global settings loaded successfully.', appSettings);
+            if (!res.ok) throw new Error('Failed to fetch settings');
+            const data = await res.json();
+            const mergedSettings = { ...defaultSettings };
+
+            // Deep merge fetched settings over defaults
+            for (const key in defaultSettings) {
+                if (Object.prototype.hasOwnProperty.call(data, key)) {
+                    if (typeof (mergedSettings as any)[key] === 'object' && (mergedSettings as any)[key] !== null && !Array.isArray((mergedSettings as any)[key])) {
+                        (mergedSettings as any)[key] = { ...(defaultSettings as any)[key], ...data[key] };
+                    } else {
+                        (mergedSettings as any)[key] = data[key];
+                    }
+                }
+            }
+
+            setSettings(mergedSettings);
+            log('Global settings loaded successfully.');
         } catch (error) {
-             log('Failed to load global settings.', { error: (error as Error).message }, 'error');
+            log('Failed to load settings, using defaults.', { error: (error as Error).message }, 'warn');
+            setSettings(defaultSettings);
+            addNotification({ type: 'error', title: 'Could not load settings', message: 'Using default configuration.' });
+        } finally {
+            setIsLoading(false);
         }
-    }, [log]);
+    }, [log, addNotification]);
+
+    useEffect(() => {
+        fetchSettings();
+    }, [fetchSettings]);
 
     const saveSettings = useCallback(async (newSettings: AppSettings) => {
-        log('Saving global settings...', newSettings);
+        log('Saving global settings...');
+        setSettings(newSettings); // Optimistic update
         try {
             const res = await fetch('/api/settings', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newSettings),
             });
-            if (!res.ok) throw new Error('Failed to save settings');
-            const updatedSettings: AppSettings = await res.json();
-            setSettings(updatedSettings);
+            if (!res.ok) throw new Error('Failed to save settings to server');
             log('Global settings saved successfully.');
+            addNotification({ type: 'success', title: 'Settings Saved' });
         } catch (error) {
-            log('Failed to save global settings.', { error: (error as Error).message }, 'error');
-            throw error; // Re-throw to be handled by the UI
+            log('Failed to save settings.', { error: (error as Error).message }, 'error');
+            addNotification({ type: 'error', title: 'Save Failed', message: 'Could not save settings.' });
+            fetchSettings(); // Revert to server state on failure
         }
-    }, [log]);
-
-    const changeMessageFontSize = useCallback((direction: 'increase' | 'decrease') => {
-        if (!settings) return;
-
-        const currentSize = settings.global_ui_settings?.messageFontSize || 'base';
-        const currentIndex = fontSizes.indexOf(currentSize);
-        let newIndex = currentIndex;
-
-        if (direction === 'increase') {
-            newIndex = Math.min(currentIndex + 1, fontSizes.length - 1);
-        } else {
-            newIndex = Math.max(currentIndex - 1, 0);
-        }
-
-        const newSize = fontSizes[newIndex];
-        const newSettings: AppSettings = {
-            ...settings,
-            global_ui_settings: {
-                ...settings.global_ui_settings,
-                messageFontSize: newSize,
+    }, [log, fetchSettings, addNotification]);
+    
+    useEffect(() => {
+        if (settings?.global_ui_settings?.fontSize) {
+            const size = settings.global_ui_settings.fontSize;
+            if (typeof size === 'string' && (size.endsWith('px') || size.endsWith('rem') || size.endsWith('em'))) {
+                document.documentElement.style.fontSize = size;
             }
-        };
-        saveSettings(newSettings); 
-    }, [settings, saveSettings]);
+        }
+    }, [settings]);
 
     const changeGlobalFontSize = useCallback((direction: 'increase' | 'decrease') => {
         if (!settings) return;
+        log(`Changing global font size: ${direction}`);
 
-        const currentSize = settings.global_ui_settings?.fontSize || 'base';
-        const currentIndex = fontSizes.indexOf(currentSize as FontSize);
-        let newIndex = currentIndex;
-
+        const currentSizeStr = getComputedStyle(document.documentElement).fontSize || '16px';
+        const currentSize = parseFloat(currentSizeStr);
+        let newSize;
         if (direction === 'increase') {
-            newIndex = Math.min(currentIndex + 1, fontSizes.length - 1);
+            newSize = Math.min(currentSize * 1.1, 24); // Cap at 24px
+        } else {
+            newSize = Math.max(currentSize * 0.9, 12); // Floor at 12px
+        }
+        
+        const newSettings = JSON.parse(JSON.stringify(settings));
+        if (!newSettings.global_ui_settings) newSettings.global_ui_settings = {};
+        newSettings.global_ui_settings.fontSize = `${newSize.toFixed(2)}px`;
+        saveSettings(newSettings);
+
+    }, [log, settings, saveSettings]);
+
+    const changeMessageFontSize = useCallback((direction: 'increase' | 'decrease') => {
+        if (!settings) return;
+        log(`Changing message font size: ${direction}`);
+        const sizes: ('sm' | 'base' | 'lg' | 'xl')[] = ['sm', 'base', 'lg', 'xl'];
+        const currentSize = settings.global_ui_settings?.messageFontSize || 'sm';
+        const currentIndex = sizes.indexOf(currentSize);
+        let newIndex = currentIndex;
+        
+        if (direction === 'increase') {
+            newIndex = Math.min(currentIndex + 1, sizes.length - 1);
         } else {
             newIndex = Math.max(currentIndex - 1, 0);
         }
+        
+        const newSettings = JSON.parse(JSON.stringify(settings));
+        if (!newSettings.global_ui_settings) newSettings.global_ui_settings = {};
+        newSettings.global_ui_settings.messageFontSize = sizes[newIndex];
+        saveSettings(newSettings);
 
-        const newSize = fontSizes[newIndex];
-        const newSettings: AppSettings = {
-            ...settings,
-            global_ui_settings: {
-                ...settings.global_ui_settings,
-                fontSize: newSize,
-            }
-        };
-        saveSettings(newSettings); 
-    }, [settings, saveSettings]);
-
-
-    useEffect(() => {
-        loadSettings();
-    }, [loadSettings]);
+    }, [log, settings, saveSettings]);
 
     const contextValue = {
         settings,
-        loadSettings,
         saveSettings,
-        changeMessageFontSize,
         changeGlobalFontSize,
+        changeMessageFontSize,
     };
 
     return (
