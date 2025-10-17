@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ChatInput from '../ChatInput';
 import type { Contact, Message } from '@/lib/types';
 import { XIcon } from '../Icons';
+import { useConversation } from '../providers/ConversationProvider';
+import CognitiveStatusBar from './CognitiveStatusBar';
 
 interface ChatFooterProps {
     proactiveSuggestion: string | null;
@@ -15,6 +17,7 @@ interface ChatFooterProps {
     isLoading: boolean;
     replyToMessage: Message | null;
     onCancelReply: () => void;
+    onInspectClick: (messageId: string) => void;
 }
 
 const ChatFooter = ({
@@ -24,8 +27,18 @@ const ChatFooter = ({
     onSendMessage,
     isLoading,
     replyToMessage,
-    onCancelReply
+    onCancelReply,
+    onInspectClick
 }: ChatFooterProps) => {
+    const { status, messages } = useConversation();
+
+    const handleInspect = () => {
+        const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+        if (lastUserMessage) {
+            onInspectClick(lastUserMessage.id);
+        }
+    };
+
     return (
         <div className="flex-shrink-0">
             <AnimatePresence>
@@ -60,6 +73,21 @@ const ChatFooter = ({
                  </motion.div>
             )}
             <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} />
+
+            <AnimatePresence>
+                {isLoading && typeof status.currentAction === 'object' && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                    >
+                        <CognitiveStatusBar
+                            status={status.currentAction}
+                            onInspect={handleInspect}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

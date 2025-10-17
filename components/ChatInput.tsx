@@ -4,7 +4,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SendIcon, PaperclipIcon, XIcon, PromptsIcon } from './Icons';
-import LoadingIndicator from './LoadingIndicator';
 import type { Contact, Prompt } from '@/lib/types';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useLog } from './providers/LogProvider';
@@ -308,7 +307,6 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
                 </button>
             </form>
         </div>
-        {isLoading && <LoadingIndicator />}
         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
         
         <FillPromptVariablesModal

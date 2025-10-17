@@ -3,6 +3,8 @@ import type { Prompt } from './data';
 
 export type Role = 'user' | 'model';
 
+export type CognitivePhase = 'idle' | 'retrieving' | 'assembling' | 'prompting' | 'generating';
+
 export interface AppSettings {
     defaultModelConfig: {
         model: string;
@@ -37,7 +39,7 @@ export interface Log {
 }
 
 export interface IStatus {
-  currentAction: string;
+  currentAction: string | { phase: CognitivePhase; details: string };
   error: string | null;
 }
 

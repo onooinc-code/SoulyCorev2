@@ -175,6 +175,7 @@ const ChatWindow = () => {
                 isLoading={isLoading}
                 replyToMessage={replyToMessage}
                 onCancelReply={() => setReplyToMessage(null)}
+                onInspectClick={(messageId) => setInspectorModalState({ isOpen: true, messageId })}
             />
 
             <LogOutputPanel isOpen={isLogPanelOpen} />

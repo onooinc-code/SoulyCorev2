@@ -3,21 +3,40 @@
 
 import React from 'react';
 import { useConversation } from './providers/ConversationProvider';
+import CognitiveStatusBar from './chat/CognitiveStatusBar';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// FIX: Removed React.FC to allow for proper type inference with framer-motion props.
-const LoadingIndicator = () => {
-    const { status } = useConversation();
+// This component is now a wrapper that decides which status to show.
+// For this request, we'll focus on the new CognitiveStatusBar.
+const ChatStatus = () => {
+    const { status, messages } = useConversation();
+    
+    // The "isLoading" state is now implicitly handled by checking the status object
+    const isLoading = typeof status.currentAction === 'object';
+    
+    const handleInspect = () => {
+        // This is a placeholder as the inspect click is now handled in ChatFooter
+        // to have access to the modal state setter.
+        console.log("Inspect requested from status bar");
+    };
 
     return (
-        <div className="flex items-center justify-center space-x-2 p-2 bg-gray-800 border-t border-gray-700">
-            <div className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse [animation-delay:-0.3s]"></div>
-                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse [animation-delay:-0.15s]"></div>
-                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"></div>
-            </div>
-            <span className="text-sm text-gray-400">{status.currentAction || 'Thinking...'}</span>
-        </div>
+        <AnimatePresence>
+            {isLoading && typeof status.currentAction === 'object' && (
+                <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <CognitiveStatusBar 
+                        status={status.currentAction}
+                        onInspect={handleInspect} // Note: This is now handled in ChatFooter
+                    />
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 };
 
-export default LoadingIndicator;
+export default ChatStatus;

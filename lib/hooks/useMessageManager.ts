@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { Message, Conversation, Contact, IStatus } from '@/lib/types';
+import type { Message, Conversation, Contact, IStatus, CognitivePhase } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 
 interface UseMessageManagerProps {
@@ -21,6 +21,7 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
     const [messages, setMessages] = useState<Message[]>([]);
     const { log } = useLog();
     const isVisibleRef = useRef(true);
+    const phaseTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
     // Track browser tab visibility to manage unread notifications
     useEffect(() => {
@@ -55,7 +56,16 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
         }
 
         setIsLoading(true);
-        setStatus({ currentAction: "Processing...", error: null });
+        setStatus({ error: null });
+
+        // Start phase simulation
+        phaseTimers.current.forEach(clearTimeout);
+        phaseTimers.current = [];
+        setStatus({ currentAction: { phase: 'retrieving', details: 'Querying semantic & structured memory...' }});
+        phaseTimers.current.push(setTimeout(() => setStatus({ currentAction: { phase: 'assembling', details: 'Assembling context from retrieved data...' }}), 700));
+        phaseTimers.current.push(setTimeout(() => setStatus({ currentAction: { phase: 'prompting', details: 'Sending final prompt to the model...' }}), 1500));
+        phaseTimers.current.push(setTimeout(() => setStatus({ currentAction: { phase: 'generating', details: 'Generating response from the model...' }}), 2200));
+
 
         const optimisticUserMessage: Message = { ...message, id: crypto.randomUUID(), createdAt: new Date(), conversationId: currentConversation.id, parentMessageId: parentMessageId };
         
@@ -109,6 +119,8 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
         } finally {
             setIsLoading(false);
             setStatus({ currentAction: "" });
+            phaseTimers.current.forEach(clearTimeout);
+            phaseTimers.current = [];
         }
     }, [currentConversation, messages, setStatus, setIsLoading, startBackgroundTask, endBackgroundTask, fetchMessages, onNewMessageWhileHidden, log]);
     
