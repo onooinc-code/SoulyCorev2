@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { db, sql } from '@/lib/db';
 import { Conversation } from '@/lib/types';
@@ -66,7 +64,7 @@ export async function PUT(req: NextRequest, { params }: { params: { conversation
         }
          if (ui_settings !== undefined) {
             updates.push(`ui_settings = $${queryIndex++}`);
-            values.push(JSON.stringify(ui_settings));
+            values.push(ui_settings);
         }
         
         updates.push(`"lastUpdatedAt" = CURRENT_TIMESTAMP`);

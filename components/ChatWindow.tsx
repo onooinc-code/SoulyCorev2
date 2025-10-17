@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -14,6 +13,7 @@ import ErrorDisplay from './chat/ErrorDisplay';
 import ChatFooter from './chat/ChatFooter';
 import ChatModals from './chat/ChatModals';
 import StatusBar from './StatusBar';
+import LogOutputPanel from './LogOutputPanel';
 
 const ChatWindow = () => {
     // --- HOOKS ---
@@ -34,7 +34,7 @@ const ChatWindow = () => {
         activeWorkflow,
         updateCurrentConversation,
     } = useConversation();
-    const { isZenMode } = useUIState();
+    const { isZenMode, isLogPanelOpen } = useUIState();
     const { log } = useLog();
     
     // --- STATE ---
@@ -163,6 +163,8 @@ const ChatWindow = () => {
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}
             />
+
+            <LogOutputPanel isOpen={isLogPanelOpen} />
 
             <ChatModals 
                 isSettingsModalOpen={isSettingsModalOpen}
