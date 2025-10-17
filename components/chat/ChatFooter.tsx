@@ -2,9 +2,10 @@
 "use client";
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import ChatInput from '../ChatInput';
-import type { Contact } from '@/lib/types';
+import type { Contact, Message } from '@/lib/types';
+import { XIcon } from '../Icons';
 
 interface ChatFooterProps {
     proactiveSuggestion: string | null;
@@ -12,6 +13,8 @@ interface ChatFooterProps {
     onDismissSuggestion: () => void;
     onSendMessage: (content: string, mentionedContacts: Contact[]) => void;
     isLoading: boolean;
+    replyToMessage: Message | null;
+    onCancelReply: () => void;
 }
 
 const ChatFooter = ({
@@ -19,10 +22,32 @@ const ChatFooter = ({
     onSuggestionClick,
     onDismissSuggestion,
     onSendMessage,
-    isLoading
+    isLoading,
+    replyToMessage,
+    onCancelReply
 }: ChatFooterProps) => {
     return (
         <div className="flex-shrink-0">
+            <AnimatePresence>
+                {replyToMessage && (
+                     <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="bg-gray-800 border-t border-gray-700 p-2 text-sm overflow-hidden"
+                     >
+                        <div className="flex justify-between items-center max-w-4xl mx-auto">
+                            <div className="text-gray-400">
+                                Replying to <strong className="text-gray-300">{replyToMessage.role === 'user' ? 'your message' : 'the model'}</strong>:
+                                <em className="ml-2 truncate">"{replyToMessage.content.substring(0, 50)}..."</em>
+                            </div>
+                            <button onClick={onCancelReply} className="p-1 rounded-full hover:bg-gray-700">
+                                <XIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             {proactiveSuggestion && (
                  <motion.div 
                     initial={{ y: 50, opacity: 0 }} 

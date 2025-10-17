@@ -1,3 +1,4 @@
+
 // scripts/create-tables.js
 require('dotenv').config({ path: '.env.local' });
 const { sql } = require('@vercel/postgres');
@@ -78,10 +79,19 @@ async function createTables() {
                 "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 "tokenCount" INTEGER,
                 "responseTime" INTEGER,
-                "isBookmarked" BOOLEAN DEFAULT false
+                "isBookmarked" BOOLEAN DEFAULT false,
+                parent_message_id UUID REFERENCES messages(id) ON DELETE SET NULL
             );
         `;
         console.log("Table 'messages' created or already exists.", messagesTable.command);
+        
+        // Add parent_message_id for threading
+        try {
+             await sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS parent_message_id UUID REFERENCES messages(id) ON DELETE SET NULL;`;
+        } catch (e) {
+            if (!e.message.includes('column "parent_message_id" already exists')) throw e;
+        }
+        console.log("Messages table columns checked for threading support.");
 
         const contactsTable = await sql`
             CREATE TABLE IF NOT EXISTS contacts (

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -39,6 +40,7 @@ const ChatWindow = () => {
     
     // --- STATE ---
     const [proactiveSuggestion, setProactiveSuggestion] = useState<string | null>(null);
+    const [replyToMessage, setReplyToMessage] = useState<MessageType | null>(null);
     
     // Modal States
     const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
@@ -51,6 +53,7 @@ const ChatWindow = () => {
     useEffect(() => {
         // Clear suggestion when conversation changes
         setProactiveSuggestion(null);
+        setReplyToMessage(null);
     }, [currentConversation]);
 
     // --- HANDLERS ---
@@ -83,7 +86,9 @@ const ChatWindow = () => {
             tokenCount: Math.ceil(content.length / 4),
         };
 
-        const { aiResponse, suggestion } = await addMessage(userMessage, mentionedContacts);
+        const { aiResponse, suggestion } = await addMessage(userMessage, mentionedContacts, undefined, replyToMessage?.id);
+
+        setReplyToMessage(null); // Clear reply state after sending
 
         if (aiResponse) {
             setProactiveSuggestion(suggestion);
@@ -118,6 +123,11 @@ const ChatWindow = () => {
         setHtmlModalState({ isOpen: true, content: htmlContent });
     };
 
+    const handleReply = (message: MessageType) => {
+        log('User is replying to a message', { messageId: message.id });
+        setReplyToMessage(message);
+    }
+
     const isDbError = !!(status.error && /database|vercel|table|relation.+does not exist/i.test(status.error));
 
     return (
@@ -138,6 +148,7 @@ const ChatWindow = () => {
                 onInspect={(messageId) => setInspectorModalState({ isOpen: true, messageId })}
                 onViewHtml={handleViewHtml}
                 onSetConversationAlign={handleSetConversationAlign}
+                onReply={handleReply}
             />
 
             {!isZenMode && currentConversation && (
@@ -162,6 +173,8 @@ const ChatWindow = () => {
                 }}
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}
+                replyToMessage={replyToMessage}
+                onCancelReply={() => setReplyToMessage(null)}
             />
 
             <LogOutputPanel isOpen={isLogPanelOpen} />

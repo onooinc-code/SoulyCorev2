@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { CopyIcon, BookmarkIcon, BookmarkFilledIcon, SummarizeIcon, CollapseIcon, ExpandIcon, CheckIcon, EditIcon, TrashIcon, RefreshIcon, TextAlignLeftIcon, TextAlignRightIcon, DotsHorizontalIcon, BeakerIcon, EyeIcon } from './Icons';
+import { CopyIcon, BookmarkIcon, BookmarkFilledIcon, SummarizeIcon, CollapseIcon, ExpandIcon, CheckIcon, EditIcon, TrashIcon, RefreshIcon, TextAlignLeftIcon, TextAlignRightIcon, DotsHorizontalIcon, BeakerIcon, EyeIcon, ChatBubbleLeftRightIcon } from './Icons';
 import { useLog } from './providers/LogProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,10 +20,11 @@ interface MessageToolbarProps {
     onRegenerate: () => void;
     onInspect: () => void;
     onViewHtml?: () => void;
+    onReply: () => void;
 }
 
 const MessageToolbar = ({
-    isBookmarked, isCollapsed, isUser, onCopy, onBookmark, onSummarize, onToggleCollapse, onSetAlign, onEdit, onDelete, onRegenerate, onInspect, onViewHtml
+    isBookmarked, isCollapsed, isUser, onCopy, onBookmark, onSummarize, onToggleCollapse, onSetAlign, onEdit, onDelete, onRegenerate, onInspect, onViewHtml, onReply
 }: MessageToolbarProps) => {
     const [copied, setCopied] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -48,6 +49,7 @@ const MessageToolbar = ({
     };
 
     const mainActions = [
+        { id: 'reply', icon: ChatBubbleLeftRightIcon, action: onReply, title: 'Reply to this message', className: 'hover:text-white' },
         { id: 'copy', icon: copied ? CheckIcon : CopyIcon, action: handleCopy, title: 'Copy message content', className: copied ? 'text-green-400' : 'hover:text-white' },
         { id: 'bookmark', icon: isBookmarked ? BookmarkFilledIcon : BookmarkIcon, action: onBookmark, title: 'Bookmark this message', className: isBookmarked ? 'text-yellow-400' : 'hover:text-yellow-400' },
         { id: 'summarize', icon: SummarizeIcon, action: onSummarize, title: 'Summarize message', className: 'hover:text-white' },

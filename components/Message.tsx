@@ -58,6 +58,8 @@ interface MessageProps {
     onViewHtml: (htmlContent: string) => void;
     currentConversation: Conversation | null;
     onSetConversationAlign: (align: 'left' | 'right') => void;
+    onReply: (message: MessageType) => void;
+    findMessageById: (id: string) => MessageType | undefined;
 }
 
 const Message = ({
@@ -73,6 +75,8 @@ const Message = ({
     onViewHtml,
     currentConversation,
     onSetConversationAlign,
+    onReply,
+    findMessageById,
 }: MessageProps) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(message.content);
@@ -106,6 +110,7 @@ const Message = ({
     }, [currentConversation?.enableAutoSummarization, message.id]);
 
     const isUser = message.role === 'user';
+    const parentMessage = message.parentMessageId ? findMessageById(message.parentMessageId) : null;
     
     const bubbleStyles = isUser
         ? "bg-gradient-to-br from-blue-600/70 to-blue-800/60 border-blue-400/30 rounded-t-2xl rounded-bl-2xl rounded-br-sm"
@@ -136,6 +141,11 @@ const Message = ({
             </div>
             <div className={`flex flex-col flex-1 min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
                 <div className={`relative p-4 w-full max-w-4xl shadow-lg backdrop-blur-lg border ${bubbleStyles}`}>
+                    {parentMessage && (
+                        <div className="text-xs text-gray-400 mb-2 border-l-2 border-gray-500 pl-2">
+                            Replying to <strong>{parentMessage.role === 'user' ? 'you' : 'the model'}</strong>: <em>"{parentMessage.content.substring(0, 50)}..."</em>
+                        </div>
+                    )}
                     <AnimatePresence>
                         {isEditing ? (
                             <motion.div key="editing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -179,6 +189,7 @@ const Message = ({
                             onRegenerate={onRegenerate}
                             onInspect={onInspect}
                             onViewHtml={html ? () => onViewHtml(html) : undefined}
+                            onReply={() => onReply(message)}
                         />
                     </div>
                 </div>
@@ -195,6 +206,31 @@ const Message = ({
                     )}
                 </AnimatePresence>
                 <MessageFooter message={message} />
+                
+                {message.threadMessages && message.threadMessages.length > 0 && (
+                     <div className="mt-4 pl-8 border-l-2 border-gray-700 space-y-4">
+                        {message.threadMessages.map(reply => (
+                            <div key={reply.id}>
+                               <Message 
+                                    message={reply}
+                                    onSummarize={onSummarize}
+                                    onToggleBookmark={onToggleBookmark}
+                                    onDelete={() => onDelete()}
+                                    onUpdateMessage={onUpdateMessage}
+                                    onRegenerate={() => onRegenerate()}
+                                    onInspect={() => onInspect()}
+                                    isContextAssemblyRunning={false}
+                                    isMemoryExtractionRunning={false}
+                                    onViewHtml={onViewHtml}
+                                    currentConversation={currentConversation}
+                                    onSetConversationAlign={onSetConversationAlign}
+                                    onReply={onReply}
+                                    findMessageById={findMessageById}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </motion.div>
     );

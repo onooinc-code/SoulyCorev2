@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef, useEffect, useMemo } from 'react';
@@ -20,6 +21,7 @@ interface MessageListProps {
     onInspect: (messageId: string) => void;
     onViewHtml: (htmlContent: string) => void;
     onSetConversationAlign: (align: 'left' | 'right') => void;
+    onReply: (message: MessageType) => void;
 }
 
 const MessageList = ({
@@ -35,7 +37,8 @@ const MessageList = ({
     onRegenerate,
     onInspect,
     onViewHtml,
-    onSetConversationAlign
+    onSetConversationAlign,
+    onReply
 }: MessageListProps) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -57,12 +60,30 @@ const MessageList = ({
         };
     }, [messages]);
 
+    const threadedMessages = useMemo(() => {
+        const messageMap = new Map(messages.map(m => [m.id, { ...m, threadMessages: [] as MessageType[] }]));
+        const topLevelMessages: MessageType[] = [];
+
+        for (const message of messages) {
+            if (message.parentMessageId && messageMap.has(message.parentMessageId)) {
+                messageMap.get(message.parentMessageId)?.threadMessages?.push(messageMap.get(message.id)!);
+            } else {
+                topLevelMessages.push(messageMap.get(message.id)!);
+            }
+        }
+        return topLevelMessages;
+    }, [messages]);
+    
+    const findMessageById = (id: string): MessageType | undefined => {
+        return messages.find(m => m.id === id);
+    }
+
     return (
         <div ref={scrollContainerRef} className="flex flex-col flex-1 p-6 overflow-y-auto">
-            {messages.length > 0 ? (
+            {threadedMessages.length > 0 ? (
                 <div className="w-full mt-auto">
                     <div className="space-y-4">
-                        {messages.map((msg) => (
+                        {threadedMessages.map((msg) => (
                             <div key={msg.id}>
                                 <Message 
                                     message={msg}
@@ -77,6 +98,8 @@ const MessageList = ({
                                     onViewHtml={onViewHtml}
                                     currentConversation={currentConversation}
                                     onSetConversationAlign={onSetConversationAlign}
+                                    onReply={onReply}
+                                    findMessageById={findMessageById}
                                 />
                             </div>
                         ))}

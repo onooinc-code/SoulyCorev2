@@ -48,7 +48,7 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
         }
     }, [setStatus, log]);
 
-    const addMessage = useCallback(async (message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, mentionedContacts?: Contact[], historyOverride?: Message[]) => {
+    const addMessage = useCallback(async (message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, mentionedContacts?: Contact[], historyOverride?: Message[], parentMessageId?: string | null) => {
         if (!currentConversation) {
             setStatus({ error: "Cannot send a message. No active conversation selected." });
             return { aiResponse: null, suggestion: null };
@@ -57,7 +57,7 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
         setIsLoading(true);
         setStatus({ currentAction: "Processing...", error: null });
 
-        const optimisticUserMessage: Message = { ...message, id: crypto.randomUUID(), createdAt: new Date(), conversationId: currentConversation.id };
+        const optimisticUserMessage: Message = { ...message, id: crypto.randomUUID(), createdAt: new Date(), conversationId: currentConversation.id, parentMessageId: parentMessageId };
         
         // Don't show optimistic user message if it's part of a workflow history override
         if (!historyOverride) {
@@ -150,7 +150,7 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
         
         // The last message in the history is the user prompt that led to the AI response.
         const userPrompt = historyToResend[historyToResend.length - 1];
-        await addMessage(userPrompt, [], historyToResend.slice(0, -1));
+        await addMessage({ role: 'user', content: userPrompt.content }, [], historyToResend.slice(0, -1));
     }, [messages, addMessage, deleteMessage]);
 
     const regenerateUserPromptAndGetResponse = useCallback(async (messageId: string) => {

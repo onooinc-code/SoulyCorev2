@@ -32,8 +32,8 @@ export async function POST(req: NextRequest, { params }: { params: { conversatio
         await sql`UPDATE conversations SET "lastUpdatedAt" = CURRENT_TIMESTAMP WHERE id = ${conversationId};`;
         
         const { rows } = await sql<Message>`
-            INSERT INTO messages ("conversationId", role, content, "tokenCount", "responseTime", "isBookmarked")
-            VALUES (${conversationId}, ${message.role}, ${message.content}, ${message.tokenCount}, ${message.responseTime}, ${message.isBookmarked})
+            INSERT INTO messages ("conversationId", role, content, "tokenCount", "responseTime", "isBookmarked", parent_message_id)
+            VALUES (${conversationId}, ${message.role}, ${message.content}, ${message.tokenCount}, ${message.responseTime}, ${message.isBookmarked}, ${message.parentMessageId || null})
             RETURNING *;
         `;
         
