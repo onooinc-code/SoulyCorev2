@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -110,3 +111,4 @@ html.message-font-xl .prose-custom { font-size: 17px; }
   border-width: 1px;
   border-color: rgb(255 255 255 / 0.1);
 }
+    
