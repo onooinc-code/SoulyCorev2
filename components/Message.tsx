@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -173,26 +174,27 @@ const Message = ({
                             </motion.div>
                         )}
                     </AnimatePresence>
-                    
-                     <div className={`absolute top-2 ${isUser ? 'left-2' : 'right-2'} transition-opacity ${isEditing ? 'opacity-0' : ''}`}>
-                        <MessageToolbar
-                            isUser={isUser}
-                            isBookmarked={message.isBookmarked || false}
-                            isCollapsed={isCollapsed}
-                            onCopy={() => navigator.clipboard.writeText(message.content)}
-                            onBookmark={() => onToggleBookmark(message.id)}
-                            onSummarize={() => onSummarize(message.content)}
-                            onToggleCollapse={() => setIsCollapsed(prev => !prev)}
-                            onSetAlign={onSetConversationAlign}
-                            onEdit={() => setIsEditing(true)}
-                            onDelete={onDelete}
-                            onRegenerate={onRegenerate}
-                            onInspect={onInspect}
-                            onViewHtml={html ? () => onViewHtml(html) : undefined}
-                            onReply={() => onReply(message)}
-                        />
-                    </div>
                 </div>
+                
+                 <div className={`mt-1 flex h-8 items-center opacity-0 transition-opacity group-hover:opacity-100 ${isEditing ? '!opacity-0' : ''}`}>
+                    <MessageToolbar
+                        isUser={isUser}
+                        isBookmarked={message.isBookmarked || false}
+                        isCollapsed={isCollapsed}
+                        onCopy={() => navigator.clipboard.writeText(message.content)}
+                        onBookmark={() => onToggleBookmark(message.id)}
+                        onSummarize={() => onSummarize(message.content)}
+                        onToggleCollapse={() => setIsCollapsed(prev => !prev)}
+                        onSetAlign={onSetConversationAlign}
+                        onEdit={() => setIsEditing(true)}
+                        onDelete={onDelete}
+                        onRegenerate={onRegenerate}
+                        onInspect={onInspect}
+                        onViewHtml={html ? () => onViewHtml(html) : undefined}
+                        onReply={() => onReply(message)}
+                    />
+                </div>
+
                  <AnimatePresence>
                     {isContextAssemblyRunning && (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xs text-yellow-400 mt-1 flex items-center gap-1.5 animate-pulse">
