@@ -603,14 +603,14 @@ video {
   line-height: 1.6;
   text-align: right; /* Default to RTL alignment */
   direction: rtl; /* Default to RTL direction */
-  font-weight: 600; /* Bolder font as requested */
+  font-weight: 700; /* Bold font as requested */
 }
 
 /* New font size classes for message bubbles */
-html.message-font-sm .prose-custom { font-size: 12px; }
-html.message-font-base .prose-custom { font-size: 14px; } /* Using 14px as a more readable default than 11px */
-html.message-font-lg .prose-custom { font-size: 16px; }
-html.message-font-xl .prose-custom { font-size: 18px; }
+html.message-font-sm .prose-custom { font-size: 11px; } /* Requested default */
+html.message-font-base .prose-custom { font-size: 13px; }
+html.message-font-lg .prose-custom { font-size: 15px; }
+html.message-font-xl .prose-custom { font-size: 17px; }
 
 
 .prose-custom code {

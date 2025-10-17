@@ -4,14 +4,15 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import type { AppSettings } from '@/lib/types';
 import { useLog } from './LogProvider';
 
-type MessageFontSize = 'sm' | 'base' | 'lg' | 'xl';
-const fontSizes: MessageFontSize[] = ['sm', 'base', 'lg', 'xl'];
+type FontSize = 'sm' | 'base' | 'lg' | 'xl';
+const fontSizes: FontSize[] = ['sm', 'base', 'lg', 'xl'];
 
 interface SettingsContextType {
     settings: AppSettings | null;
     loadSettings: () => Promise<void>;
     saveSettings: (newSettings: AppSettings) => Promise<void>;
     changeMessageFontSize: (direction: 'increase' | 'decrease') => void;
+    changeGlobalFontSize: (direction: 'increase' | 'decrease') => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -28,6 +29,11 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
             const messageSize = settings.global_ui_settings?.messageFontSize || 'base';
             document.documentElement.classList.remove(...fontSizes.map(s => `message-font-${s}`));
             document.documentElement.classList.add(`message-font-${messageSize}`);
+
+            // Apply global font size class to HTML element
+            const globalSize = settings.global_ui_settings?.fontSize || 'base';
+            document.documentElement.classList.remove(...fontSizes.map(s => `font-size-${s}`));
+            document.documentElement.classList.add(`font-size-${globalSize}`);
         }
     }, [settings, setLoggingEnabled]);
     
@@ -83,9 +89,33 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
                 messageFontSize: newSize,
             }
         };
-        // This will trigger the useEffect to apply the class and also save to DB
         saveSettings(newSettings); 
     }, [settings, saveSettings]);
+
+    const changeGlobalFontSize = useCallback((direction: 'increase' | 'decrease') => {
+        if (!settings) return;
+
+        const currentSize = settings.global_ui_settings?.fontSize || 'base';
+        const currentIndex = fontSizes.indexOf(currentSize as FontSize);
+        let newIndex = currentIndex;
+
+        if (direction === 'increase') {
+            newIndex = Math.min(currentIndex + 1, fontSizes.length - 1);
+        } else {
+            newIndex = Math.max(currentIndex - 1, 0);
+        }
+
+        const newSize = fontSizes[newIndex];
+        const newSettings: AppSettings = {
+            ...settings,
+            global_ui_settings: {
+                ...settings.global_ui_settings,
+                fontSize: newSize,
+            }
+        };
+        saveSettings(newSettings); 
+    }, [settings, saveSettings]);
+
 
     useEffect(() => {
         loadSettings();
@@ -96,6 +126,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         loadSettings,
         saveSettings,
         changeMessageFontSize,
+        changeGlobalFontSize,
     };
 
     return (

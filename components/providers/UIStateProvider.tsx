@@ -1,10 +1,8 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { usePanelManager } from '@/lib/hooks/usePanelManager';
 import { useDisplayModeManager } from '@/lib/hooks/useDisplayModeManager';
-import { useFontSizeManager } from '@/lib/hooks/useFontSizeManager';
 import { useAppControls } from '@/lib/hooks/useAppControls';
 import { useLog } from './LogProvider';
 
@@ -36,9 +34,6 @@ interface UIStateContextType {
     isFullscreen: boolean;
     toggleFullscreen: () => void;
 
-    // from useFontSizeManager
-    changeFontSize: (direction: 'increase' | 'decrease') => void;
-
     // from useAppControls
     restartApp: () => void;
     exitApp: () => void;
@@ -55,7 +50,6 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const panelState = usePanelManager();
     const displayModeState = useDisplayModeManager();
-    const fontSizeState = useFontSizeManager();
     const appControlsState = useAppControls();
 
     const setActiveView = useCallback((view: string) => {
@@ -79,7 +73,6 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         toggleContextMenu,
         ...panelState,
         ...displayModeState,
-        ...fontSizeState,
         ...appControlsState,
     };
     

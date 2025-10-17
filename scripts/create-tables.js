@@ -423,7 +423,7 @@ async function createTables() {
                 ('defaultAgentConfig', '{"systemPrompt": "You are a helpful AI assistant.", "useSemanticMemory": true, "useStructuredMemory": true}'),
                 ('enableDebugLog', '{"enabled": false}'),
                 ('featureFlags', '{"enableMemoryExtraction": true, "enableProactiveSuggestions": true, "enableAutoSummarization": true}'),
-                ('global_ui_settings', '{"fontSize": "base"}')
+                ('global_ui_settings', '{"fontSize": "base", "messageFontSize": "sm"}')
             ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
         `;
         console.log("Default settings inserted or already exist.");
