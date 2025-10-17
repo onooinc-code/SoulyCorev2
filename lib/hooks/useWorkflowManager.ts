@@ -1,3 +1,4 @@
+
 "use client";
 
 // FIX: Added React import to resolve namespace errors.
@@ -94,6 +95,11 @@ export const useWorkflowManager = ({ currentConversation, setStatus, addMessage,
                 stepResult = aiResponse;
             } else {
                 throw new Error(`Invalid step configuration at step ${stepDisplayNumber}`);
+            }
+
+            // FIX: Ensure stepResult is not null before assigning to a string-only record.
+            if (stepResult === null) {
+                throw new Error(`Step ${stepDisplayNumber} did not produce a valid string result.`);
             }
 
             // Prepare for the next step
