@@ -2,8 +2,27 @@ import type { Prompt } from './data';
 
 export type Role = 'user' | 'model';
 
+// New types for cognitive status, now centralized
+export interface CognitivePhase {
+    name: string;
+    status: 'pending' | 'running' | 'completed' | 'failed';
+    stats?: {
+        retrieved?: number;
+        used?: number;
+        tokens?: number;
+        timeMs?: number;
+        model?: string;
+    };
+    rawData?: any;
+}
+
+export interface CognitiveStatus {
+    currentPhase: string;
+    phases: CognitivePhase[];
+}
+
 export interface IStatus {
-    currentAction?: string | object | null;
+    currentAction?: string | CognitiveStatus | null;
     error?: string | null;
 }
 
