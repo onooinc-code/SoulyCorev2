@@ -4,13 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { useConversation } from './providers/ConversationProvider';
 import { useUIState } from './providers/UIStateProvider';
 import { useSettings } from './providers/SettingsProvider';
-import { SparklesIcon, EditIcon, TrashIcon, SidebarLeftIcon, LogIcon, MinusIcon, PlusIcon, PowerIcon, RefreshIcon } from './Icons';
+import { 
+    SparklesIcon, EditIcon, TrashIcon, SidebarLeftIcon, LogIcon, 
+    MinusIcon, PlusIcon, PowerIcon, RefreshIcon,
+    FullscreenIcon, ExitFullscreenIcon 
+} from './Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import ToolbarButton from './ToolbarButton';
 import type { VersionHistory } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import dynamic from 'next/dynamic';
+import { useNotification } from '@/lib/hooks/use-notifications';
 
 const VersionLogModal = dynamic(() => import('./VersionLogModal'), {
     ssr: false,
@@ -105,6 +110,7 @@ const Header = () => {
         deleteConversation,
         updateConversationTitle,
         generateConversationTitle,
+        loadConversations,
     } = useConversation();
     const {
         isConversationPanelOpen,
@@ -112,8 +118,11 @@ const Header = () => {
         setLogPanelOpen,
         restartApp,
         exitApp,
+        isFullscreen,
+        toggleFullscreen,
     } = useUIState();
     const { changeGlobalFontSize } = useSettings();
+    const { addNotification } = useNotification();
 
     const [isEditing, setIsEditing] = useState(false);
     const [title, setTitle] = useState('');
@@ -146,6 +155,15 @@ const Header = () => {
         if (currentConversation) {
             generateConversationTitle(currentConversation.id);
         }
+    };
+
+    const handleSoftRefresh = async () => {
+        await loadConversations();
+        addNotification({
+            type: 'success',
+            title: 'Data Synced',
+            message: 'Your conversation list has been refreshed from the server.'
+        });
     };
 
     return (
@@ -226,7 +244,13 @@ const Header = () => {
                         <LogIcon className="w-5 h-5" />
                     </ToolbarButton>
                     <div className="w-px h-6 bg-gray-600 mx-1"></div>
-                    <ToolbarButton onClick={restartApp} title="Restart App" color="yellow">
+                    <ToolbarButton onClick={toggleFullscreen} title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"} color="lime">
+                        {isFullscreen ? <ExitFullscreenIcon className="w-5 h-5" /> : <FullscreenIcon className="w-5 h-5" />}
+                    </ToolbarButton>
+                     <ToolbarButton onClick={handleSoftRefresh} title="Soft Refresh (Sync data)" color="cyan">
+                        <RefreshIcon className="w-5 h-5" />
+                    </ToolbarButton>
+                    <ToolbarButton onClick={restartApp} title="Hard Refresh (Reload app)" color="yellow">
                         <RefreshIcon className="w-5 h-5" />
                     </ToolbarButton>
                     <ToolbarButton onClick={exitApp} title="Exit App" color="red">
