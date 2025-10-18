@@ -37,15 +37,19 @@ const CodeBlock = ({ language, value }: { language: string | undefined, value: s
     );
 };
 
-// Moved the components object outside the main component and typed it explicitly.
-// This resolves a TypeScript type inference issue with the 'inline' property.
+// FIX: Modified the 'code' component implementation to avoid destructuring in the function signature.
+// This is a defensive change to work around a potential type inference issue in the build environment
+// that was causing the 'inline' property to not be found on the props type.
 const markdownComponents: Components = {
-    code({ node, inline, className, children, ...props }) {
+    code(props) {
+        const { inline, className, children, ...rest } = props;
         const match = /language-(\w+)/.exec(className || '');
         return !inline && match ? (
             <CodeBlock language={match[1]} value={String(children).replace(/\n$/, '')} />
         ) : (
-            <code className={className} {...props}>{children}</code>
+            <code className={className} {...rest}>
+                {children}
+            </code>
         );
     }
 };
