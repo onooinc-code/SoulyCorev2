@@ -12,7 +12,7 @@ import {
     ClearIcon, PlusIcon, MinusIcon, MemoryIcon, UsersIcon, CodeIcon, 
     BookmarkListIcon, SettingsIcon, LogIcon, BrainIcon, DashboardIcon, PromptsIcon, 
     RocketLaunchIcon, ToolsIcon, TasksIcon, CircleStackIcon, FullscreenIcon, 
-    ExitFullscreenIcon, EyeSlashIcon, RefreshIcon, PowerIcon, MagnifyingGlassIcon 
+    ExitFullscreenIcon, EyeSlashIcon, RefreshIcon, PowerIcon, MagnifyingGlassIcon, ArrowPathIcon 
 } from '@/components/Icons';
 
 

@@ -39,6 +39,7 @@ interface ConversationContextType {
     activeWorkflow: ActiveWorkflowState | null;
     scrollToMessageId: string | null;
     setScrollToMessageId: (messageId: string | null) => void;
+    fetchMessages: (conversationId: string) => Promise<void>;
 }
 
 const ConversationContext = createContext<ConversationContextType | undefined>(undefined);
@@ -181,6 +182,7 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
         regenerateAiResponse, regenerateUserPromptAndGetResponse, unreadConversations, clearMessages,
         backgroundTaskCount, startBackgroundTask, endBackgroundTask, startWorkflow, activeWorkflow,
         scrollToMessageId, setScrollToMessageId,
+        fetchMessages,
     };
 
     return <ConversationContext.Provider value={contextValue}>{children}</ConversationContext.Provider>;
