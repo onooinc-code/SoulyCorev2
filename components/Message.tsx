@@ -3,7 +3,6 @@
 import React, { useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import 'github-markdown-css/github-markdown-light.css';
 import { useConversation } from './providers/ConversationProvider';
 import { useSettings } from './providers/SettingsProvider';
 import MessageToolbar from './MessageToolbar';
