@@ -62,6 +62,10 @@
       @apply text-cyan-300 hover:text-cyan-200;
   }
 
+  .arabic {
+    @apply font-cairo font-bold;
+  }
+
   .glass-panel {
     @apply bg-gray-800/60 backdrop-blur-xl border border-white/10;
   }

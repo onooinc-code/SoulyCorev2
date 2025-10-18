@@ -92,41 +92,39 @@ const Message = ({ message, ...props }: MessageProps) => {
             {!isUser && align === 'left' && <div className="p-2 bg-gray-700 rounded-full"><CpuChipIcon className="w-5 h-5 text-indigo-400" /></div>}
             
             <div className={`flex-1 min-w-0 ${align === 'right' ? 'text-right' : ''}`}>
-                <div className={`inline-block max-w-full ${align === 'right' ? 'text-right' : ''}`}>
-                    <div className={`relative px-4 py-3 rounded-2xl ${isUser ? 'bg-indigo-600/50' : 'bg-gray-700/60'}`}>
-                        <MessageToolbar 
-                            message={message} 
-                            isHovering={isHovering}
-                            onCopy={handleCopy}
-                            onSummarize={() => props.onSummarize(message.content)}
-                            onToggleBookmark={props.onToggleBookmark}
-                            onDeleteMessage={props.onDeleteMessage}
-                            onUpdateMessage={() => setIsEditing(true)}
-                            onRegenerate={props.onRegenerate}
-                            onInspect={props.onInspect}
-                            onViewHtml={props.onViewHtml}
-                        />
-                        {renderParentMessage()}
-                        {isEditing ? (
-                            <div>
-                                <textarea
-                                    ref={textareaRef}
-                                    value={editedContent}
-                                    onChange={handleTextareaChange}
-                                    onBlur={handleUpdate}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleUpdate(); }
-                                        if (e.key === 'Escape') { setIsEditing(false); setEditedContent(message.content); }
-                                    }}
-                                    className="w-full bg-transparent resize-none focus:outline-none"
-                                />
-                            </div>
-                        ) : (
-                            <div className={`prose-custom ${messageFontSizeClass} ${isUser ? 'prose-invert-user' : ''}`}>
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-                            </div>
-                        )}
-                    </div>
+                <div className={`relative px-4 py-3 rounded-2xl ${isUser ? 'bg-indigo-600/50' : 'bg-gray-700/60'}`}>
+                    <MessageToolbar 
+                        message={message} 
+                        isHovering={isHovering}
+                        onCopy={handleCopy}
+                        onSummarize={() => props.onSummarize(message.content)}
+                        onToggleBookmark={props.onToggleBookmark}
+                        onDeleteMessage={props.onDeleteMessage}
+                        onUpdateMessage={() => setIsEditing(true)}
+                        onRegenerate={props.onRegenerate}
+                        onInspect={props.onInspect}
+                        onViewHtml={props.onViewHtml}
+                    />
+                    {renderParentMessage()}
+                    {isEditing ? (
+                        <div>
+                            <textarea
+                                ref={textareaRef}
+                                value={editedContent}
+                                onChange={handleTextareaChange}
+                                onBlur={handleUpdate}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleUpdate(); }
+                                    if (e.key === 'Escape') { setIsEditing(false); setEditedContent(message.content); }
+                                }}
+                                className="w-full bg-transparent resize-none focus:outline-none"
+                            />
+                        </div>
+                    ) : (
+                        <div className={`prose-custom ${messageFontSizeClass} ${isUser ? 'prose-invert-user' : ''}`}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                        </div>
+                    )}
                 </div>
                  <MessageFooter 
                     message={message} 
