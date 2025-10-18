@@ -36,7 +36,11 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
     return (
         <div className="bg-gray-800/60 backdrop-blur-xl text-gray-400 text-xs p-2 border-t border-white/10 flex justify-between items-center gap-4">
             <div className="flex-1 italic truncate min-w-0">
-                <span>{status.currentAction || 'Ready'}</span>
+                <span>
+                    {typeof status.currentAction === 'object' && status.currentAction !== null
+                        ? status.currentAction.details
+                        : status.currentAction || 'Ready'}
+                </span>
             </div>
 
             {currentConversation && conversationStats && (
