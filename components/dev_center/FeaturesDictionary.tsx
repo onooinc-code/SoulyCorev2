@@ -119,11 +119,11 @@ const FeatureItem = ({ feature, onEdit, onDelete }: FeatureItemProps) => {
                             <div><strong className="text-gray-400 block mb-1">Logic & Data Flow:</strong><p className="whitespace-pre-wrap">{feature.logic_flow}</p></div>
                              <div>
                                 <strong className="text-gray-400 block mb-2">UI/UX Breakdown:</strong>
-                                <SafeJsonRenderer jsonData={feature.ui_ux_breakdown_json} type="ux" />
+                                <SafeJsonRenderer jsonData={feature.ui_ux_breakdown_json || null} type="ux" />
                             </div>
                             <div>
                                 <strong className="text-gray-400 block mb-2">Key Files:</strong>
-                                <SafeJsonRenderer jsonData={feature.key_files_json} type="files" />
+                                <SafeJsonRenderer jsonData={feature.key_files_json || null} type="files" />
                             </div>
                             {feature.notes && <div><strong className="text-gray-400 block mb-1">Notes:</strong><p className="whitespace-pre-wrap">{feature.notes}</p></div>}
                         </div>
