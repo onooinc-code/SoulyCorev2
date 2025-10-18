@@ -235,17 +235,22 @@ const Message = (props: MessageProps) => {
 
             {message.threadMessages && message.threadMessages.length > 0 && (
                 <div className={`pl-12 space-y-4 ${isUser ? 'items-end' : 'items-start'} flex flex-col`}>
-                    {message.threadMessages.map(reply => (
-                        // FIX: Wrapped the iterated Message component in a div with a key. The 'key' prop is a React-specific attribute for list reconciliation and should not be passed as a prop to the component itself. This resolves the TypeScript error.
-                        <div key={reply.id}>
-                            <Message
-                                message={reply}
-                                {...props}
-                                isContextAssemblyRunning={false}
-                                isMemoryExtractionRunning={false}
-                            />
-                        </div>
-                    ))}
+                    {message.threadMessages.map(reply => {
+                        // FIX: Destructure the 'message' prop out of the props object before spreading it.
+                        // This prevents a TypeScript error about duplicate 'message' properties when rendering
+                        // threaded replies, as the parent's props object would otherwise be spread with its own 'message'.
+                        const { message: _parentMessage, ...otherProps } = props;
+                        return (
+                            <div key={reply.id}>
+                                <Message
+                                    message={reply}
+                                    {...otherProps}
+                                    isContextAssemblyRunning={false}
+                                    isMemoryExtractionRunning={false}
+                                />
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </motion.div>
