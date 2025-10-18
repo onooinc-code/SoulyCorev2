@@ -14,7 +14,11 @@
 @layer components {
   /* Custom styles for ReactMarkdown */
   .prose-custom {
-    @apply text-gray-300 prose-p:my-2 prose-headings:text-white prose-strong:text-white;
+    @apply text-gray-300 prose-headings:text-white prose-strong:text-white;
+  }
+
+  .prose-custom p {
+    @apply my-2;
   }
 
   .prose-custom a {
