@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -35,6 +35,19 @@ const CodeBlock = ({ language, value }: { language: string | undefined, value: s
             </SyntaxHighlighter>
         </div>
     );
+};
+
+// Moved the components object outside the main component and typed it explicitly.
+// This resolves a TypeScript type inference issue with the 'inline' property.
+const markdownComponents: Components = {
+    code({ node, inline, className, children, ...props }) {
+        const match = /language-(\w+)/.exec(className || '');
+        return !inline && match ? (
+            <CodeBlock language={match[1]} value={String(children).replace(/\n$/, '')} />
+        ) : (
+            <code className={className} {...props}>{children}</code>
+        );
+    }
 };
 
 interface MessageProps {
@@ -190,16 +203,7 @@ const Message = (props: MessageProps) => {
                                 ) : (
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm]}
-                                        components={{
-                                            code({ node, inline, className, children, ...props }) {
-                                                const match = /language-(\w+)/.exec(className || '');
-                                                return !inline && match ? (
-                                                    <CodeBlock language={match[1]} value={String(children).replace(/\n$/, '')} />
-                                                ) : (
-                                                    <code className={className} {...props}>{children}</code>
-                                                );
-                                            }
-                                        }}
+                                        components={markdownComponents}
                                     >
                                         {message.content}
                                     </ReactMarkdown>
