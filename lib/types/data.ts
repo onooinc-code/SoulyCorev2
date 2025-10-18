@@ -256,6 +256,8 @@ export interface FeatureStatusChartData {
     label: string;
     value: number;
     color: string;
+    // Nivo requires a flexible index signature for its data types.
+    [key: string]: string | number;
 }
 
 export interface PipelinePerformanceChartData {
@@ -263,6 +265,8 @@ export interface PipelinePerformanceChartData {
     Completed: number;
     Failed: number;
     'Avg Duration (ms)': number;
+    // Nivo's BarDatum type requires an index signature.
+    [key: string]: string | number;
 }
 
 
