@@ -14,6 +14,7 @@ import AddKnowledgeModal from '../AddKnowledgeModal';
 import CommandPalette from '../CommandPalette';
 import DataHubWidget from '../data_hub/DataHubWidget';
 import ResponseViewerModal from '../ResponseViewerModal';
+import HardResetModal from '../HardResetModal';
 
 interface GlobalModalsProps {
     bookmarksOpen: boolean;
@@ -26,6 +27,9 @@ interface GlobalModalsProps {
     setAddKnowledgeOpen: React.Dispatch<React.SetStateAction<boolean>>;
     responseViewerOpen: boolean;
     setResponseViewerOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isHardResetModalOpen: boolean;
+    setHardResetModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    onResetComplete: () => void;
 }
 
 const GlobalModals = (props: GlobalModalsProps) => {
@@ -79,6 +83,12 @@ const GlobalModals = (props: GlobalModalsProps) => {
             <DataHubWidget 
                 isOpen={isDataHubWidgetOpen}
                 onClose={() => setDataHubWidgetOpen(false)}
+            />
+
+            <HardResetModal
+                isOpen={props.isHardResetModalOpen}
+                onClose={() => props.setHardResetModalOpen(false)}
+                onComplete={props.onResetComplete}
             />
         </>
     );

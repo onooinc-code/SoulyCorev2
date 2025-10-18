@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Providers & Hooks
@@ -26,14 +26,17 @@ import ChatWindow from './ChatWindow';
 
 export const App = () => {
     // State from providers
-    const { currentConversation } = useConversation();
+    const { currentConversation, setCurrentConversation } = useConversation();
     const { 
         isConversationPanelOpen, 
         isConversationPanelMinimized,
         isMobileView,
         isZenMode,
         isContextMenuEnabled,
-        setCommandPaletteOpen
+        setCommandPaletteOpen,
+        setActiveView,
+        setHardResetModalOpen,
+        isHardResetModalOpen
     } = useUIState();
 
     // Local state for modals and context menu
@@ -74,6 +77,11 @@ export const App = () => {
         e.preventDefault();
         setContextMenu({ isOpen: true, position: { x: e.clientX, y: e.clientY } });
     };
+
+    const handleResetComplete = useCallback(() => {
+        setCurrentConversation(null);
+        setActiveView('dashboard');
+    }, [setCurrentConversation, setActiveView]);
 
     const mainContent = currentConversation ? <ChatWindow /> : <ActiveViewRenderer />;
 
@@ -121,6 +129,9 @@ export const App = () => {
                 setAddKnowledgeOpen={setAddKnowledgeOpen}
                 responseViewerOpen={responseViewerOpen}
                 setResponseViewerOpen={setResponseViewerOpen}
+                isHardResetModalOpen={isHardResetModalOpen}
+                setHardResetModalOpen={setHardResetModalOpen}
+                onResetComplete={handleResetComplete}
             />
 
             <ContextMenu

@@ -4,7 +4,6 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { usePanelManager } from '@/lib/hooks/usePanelManager';
 import { useDisplayModeManager } from '@/lib/hooks/useDisplayModeManager';
-import { useAppControls } from '@/lib/hooks/useAppControls';
 import { useLog } from './LogProvider';
 
 interface UIStateContextType {
@@ -37,9 +36,11 @@ interface UIStateContextType {
     isFullscreen: boolean;
     toggleFullscreen: () => void;
 
-    // from useAppControls
+    // from custom app controls
     restartApp: () => void;
     exitApp: () => void;
+    isHardResetModalOpen: boolean;
+    setHardResetModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -50,10 +51,10 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [activeView, _setActiveView] = useState('dashboard');
     const [isNavigating, setIsNavigating] = useState(false);
     const [isContextMenuEnabled, setIsContextMenuEnabled] = useState(true);
+    const [isHardResetModalOpen, setHardResetModalOpen] = useState(false);
 
     const panelState = usePanelManager();
     const displayModeState = useDisplayModeManager();
-    const appControlsState = useAppControls();
 
     const setActiveView = useCallback((view: string) => {
         log(`Navigating to view: ${view}`);
@@ -68,15 +69,28 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         setIsContextMenuEnabled(prev => !prev);
     }, [log]);
 
+    const restartApp = useCallback(() => {
+        log('User initiated hard reset sequence.');
+        setHardResetModalOpen(true);
+    }, [log]);
+
+    const exitApp = useCallback(() => {
+        log('User initiated app exit.');
+        window.close();
+    }, [log]);
+
     const contextValue = {
         activeView,
         setActiveView,
         isNavigating,
         isContextMenuEnabled,
         toggleContextMenu,
+        restartApp,
+        exitApp,
+        isHardResetModalOpen,
+        setHardResetModalOpen,
         ...panelState,
         ...displayModeState,
-        ...appControlsState,
     };
     
     return (

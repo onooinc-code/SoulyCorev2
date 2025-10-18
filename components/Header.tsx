@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -250,7 +251,7 @@ const Header = () => {
                      <ToolbarButton onClick={handleSoftRefresh} title="Soft Refresh (Sync data)" color="cyan">
                         <RefreshIcon className="w-5 h-5" />
                     </ToolbarButton>
-                    <ToolbarButton onClick={restartApp} title="Hard Refresh (Reload app)" color="yellow">
+                    <ToolbarButton onClick={restartApp} title="Hard Refresh" color="yellow">
                         <RefreshIcon className="w-5 h-5" />
                     </ToolbarButton>
                     <ToolbarButton onClick={exitApp} title="Exit App" color="red">

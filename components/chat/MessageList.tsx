@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef, useEffect, useMemo } from 'react';
@@ -6,6 +7,7 @@ import type { Conversation, Message as MessageType, ActiveWorkflowState } from '
 import Message from '../Message';
 import LoadingIndicator from '../LoadingIndicator';
 import { useConversation } from '../providers/ConversationProvider';
+import { CpuChipIcon } from '../Icons';
 
 interface MessageListProps {
     messages: MessageType[];
@@ -23,6 +25,25 @@ interface MessageListProps {
     onSetConversationAlign: (align: 'left' | 'right') => void;
     onReply: (message: MessageType) => void;
 }
+
+const ConversationTurnSeparator = () => (
+    <motion.div 
+        className="relative my-4"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+    >
+        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-full h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
+        </div>
+        <div className="relative flex justify-center">
+            <span className="bg-gray-800 p-1 rounded-full border border-gray-700 shadow-lg shadow-indigo-500/10">
+                <CpuChipIcon className="w-4 h-4 text-indigo-400" />
+            </span>
+        </div>
+    </motion.div>
+);
+
 
 const MessageList = ({
     messages,
@@ -97,25 +118,28 @@ const MessageList = ({
             {threadedMessages.length > 0 ? (
                 <div className="w-full mt-auto">
                     <div className="space-y-4">
-                        {threadedMessages.map((msg) => (
-                            <div key={msg.id} data-message-id={msg.id}>
-                                <Message 
-                                    message={msg}
-                                    onSummarize={onSummarize}
-                                    onToggleBookmark={onToggleBookmark}
-                                    onDelete={() => onDeleteMessage(msg.id)}
-                                    onUpdateMessage={onUpdateMessage}
-                                    onRegenerate={() => onRegenerate(msg.id)}
-                                    onInspect={() => onInspect(msg.id)}
-                                    isContextAssemblyRunning={isLoading && msg.role === 'user' && msg.id === lastMessageIds.user && !activeWorkflow}
-                                    isMemoryExtractionRunning={backgroundTaskCount > 0 && msg.role === 'model' && msg.id === lastMessageIds.model}
-                                    onViewHtml={onViewHtml}
-                                    currentConversation={currentConversation}
-                                    onSetConversationAlign={onSetConversationAlign}
-                                    onReply={onReply}
-                                    findMessageById={findMessageById}
-                                />
-                            </div>
+                        {threadedMessages.map((msg, index) => (
+                            <React.Fragment key={msg.id}>
+                                <div data-message-id={msg.id}>
+                                    <Message 
+                                        message={msg}
+                                        onSummarize={onSummarize}
+                                        onToggleBookmark={onToggleBookmark}
+                                        onDelete={() => onDeleteMessage(msg.id)}
+                                        onUpdateMessage={onUpdateMessage}
+                                        onRegenerate={() => onRegenerate(msg.id)}
+                                        onInspect={() => onInspect(msg.id)}
+                                        isContextAssemblyRunning={isLoading && msg.role === 'user' && msg.id === lastMessageIds.user && !activeWorkflow}
+                                        isMemoryExtractionRunning={backgroundTaskCount > 0 && msg.role === 'model' && msg.id === lastMessageIds.model}
+                                        onViewHtml={onViewHtml}
+                                        currentConversation={currentConversation}
+                                        onSetConversationAlign={onSetConversationAlign}
+                                        onReply={onReply}
+                                        findMessageById={findMessageById}
+                                    />
+                                </div>
+                                {msg.role === 'model' && index < threadedMessages.length - 1 && <ConversationTurnSeparator />}
+                            </React.Fragment>
                         ))}
                         {isLoading && activeWorkflow && (
                             <motion.div 
