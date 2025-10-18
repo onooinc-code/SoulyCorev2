@@ -1,10 +1,9 @@
 
-
 "use client";
 
 // FIX: Added React import to resolve namespace errors.
 import React, { useState, useCallback } from 'react';
-import type { Prompt, ActiveWorkflowState, Conversation, IStatus, Message, Contact, Tool, PromptChainStep } from '@/lib/types';
+import type { Prompt, ActiveWorkflowState, Conversation, IStatus, Message, Contact, Tool } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 
 interface UseWorkflowManagerProps {
@@ -51,9 +50,7 @@ export const useWorkflowManager = ({ currentConversation, setStatus, addMessage,
 
                 // 2. Resolve arguments
                 const args: Record<string, any> = {};
-                // FIX: Explicitly cast mapping to resolve 'unknown' type errors
-                for (const [argName, mappingUntyped] of Object.entries(currentStep.inputMapping)) {
-                    const mapping = mappingUntyped as { source: 'userInput' | 'stepOutput'; step?: number };
+                for (const [argName, mapping] of Object.entries(currentStep.inputMapping)) {
                     if (mapping.source === 'userInput') {
                         args[argName] = userInputs[argName];
                     } else if (mapping.source === 'stepOutput' && mapping.step) {
@@ -87,9 +84,7 @@ export const useWorkflowManager = ({ currentConversation, setStatus, addMessage,
                 const stepPrompt: Prompt = await promptRes.json();
                 
                 let interpolatedContent = stepPrompt.content;
-                // FIX: Explicitly cast mapping to resolve 'unknown' type errors
-                for (const [variableName, mappingUntyped] of Object.entries(currentStep.inputMapping)) {
-                    const mapping = mappingUntyped as { source: 'userInput' | 'stepOutput'; step?: number };
+                for (const [variableName, mapping] of Object.entries(currentStep.inputMapping)) {
                     let value = mapping.source === 'userInput' ? userInputs[variableName] : stepOutputs[mapping.step!];
                     if (value === undefined) throw new Error(`Missing value for variable '${variableName}' in step ${stepDisplayNumber}`);
                     interpolatedContent = interpolatedContent.replace(new RegExp(`{{\\s*${variableName}\\s*}}`, 'g'), value);

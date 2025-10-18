@@ -1,5 +1,4 @@
 
-
 "use client";
 
 // FIX: Added React import to resolve namespace errors for types like React.Dispatch.
@@ -35,7 +34,7 @@ export const useAppContextMenu = (props: UseAppContextMenuProps): MenuItem[] => 
         toggleZenMode,
         setLogPanelOpen,
         setDataHubWidgetOpen,
-        softRefreshApp,
+        restartApp,
         exitApp,
         setCommandPaletteOpen,
     } = useUIState();
@@ -104,7 +103,7 @@ export const useAppContextMenu = (props: UseAppContextMenuProps): MenuItem[] => 
                 ]
             },
             { isSeparator: true },
-            { label: 'Restart App', icon: RefreshIcon, action: softRefreshApp },
+            { label: 'Restart App', icon: RefreshIcon, action: restartApp },
             { label: 'Exit App', icon: PowerIcon, action: exitApp },
         ];
 
@@ -113,6 +112,6 @@ export const useAppContextMenu = (props: UseAppContextMenuProps): MenuItem[] => 
     }, [
         createNewConversation, currentConversation, clearMessages, changeMessageFontSize,
         setActiveView, toggleFullscreen, isFullscreen, toggleZenMode, setLogPanelOpen,
-        softRefreshApp, exitApp, props, setCommandPaletteOpen
+        restartApp, exitApp, props, setCommandPaletteOpen
     ]);
 };

@@ -1,72 +1,63 @@
+
 "use client";
 
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { CpuChipIcon, BeakerIcon } from '../Icons';
-import CognitivePhasePopover from './CognitivePhasePopover';
-import type { CognitiveStatus, CognitivePhase } from '@/lib/types';
+import type { CognitivePhase, IStatus } from '@/lib/types';
+import { BrainIcon, CpuChipIcon, SendIcon, SparklesIcon, BeakerIcon, CheckIcon } from '../Icons';
 
 interface CognitiveStatusBarProps {
-    status: CognitiveStatus;
+    status: { phase: CognitivePhase; details: string };
     onInspect: () => void;
 }
 
 const CognitiveStatusBar = ({ status, onInspect }: CognitiveStatusBarProps) => {
-    const [popoverPhase, setPopoverPhase] = useState<CognitivePhase | null>(null);
-    const [popoverTarget, setPopoverTarget] = useState<HTMLElement | null>(null);
 
-    const handleMouseEnter = (phase: CognitivePhase, event: React.MouseEvent<HTMLButtonElement>) => {
-        if (phase.status === 'pending') return;
-        setPopoverPhase(phase);
-        setPopoverTarget(event.currentTarget);
-    };
+    const phases: { id: CognitivePhase; label: string; icon: React.FC<any>; tooltip: string }[] = [
+        { id: 'retrieving', label: 'Retrieve', icon: BrainIcon, tooltip: 'Querying long-term memory for relevant facts and context.' },
+        { id: 'assembling', label: 'Assemble', icon: CpuChipIcon, tooltip: 'Constructing the final context from retrieved memories.' },
+        { id: 'prompting', label: 'Prompt', icon: SendIcon, tooltip: 'Sending the optimized prompt and context to the AI model.' },
+        { id: 'generating', label: 'Generate', icon: SparklesIcon, tooltip: 'Receiving and processing the response from the AI model.' },
+    ];
 
-    const handleMouseLeave = () => {
-        setPopoverPhase(null);
-        setPopoverTarget(null);
-    };
+    const currentPhaseIndex = useMemo(() => phases.findIndex(p => p.id === status.phase), [status.phase, phases]);
 
     return (
-        <div className="bg-gray-800/80 backdrop-blur-md border-t border-gray-700 p-2 text-xs text-gray-400">
-            <div className="flex items-center justify-between max-w-4xl mx-auto">
-                <div className="flex items-center gap-2">
-                    <CpuChipIcon className="w-4 h-4 text-yellow-400 animate-pulse" />
-                    <span className="font-semibold capitalize">{status.currentPhase}...</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5" onMouseLeave={handleMouseLeave}>
-                        {status.phases.map((phase, index) => {
-                            const phaseColors = {
-                                pending: 'bg-gray-600',
-                                running: 'bg-yellow-500 animate-pulse',
-                                completed: 'bg-green-500',
-                                failed: 'bg-red-500',
-                            };
-                            return (
-                                <button
-                                    key={index}
-                                    onMouseEnter={(e) => handleMouseEnter(phase, e)}
-                                    disabled={phase.status === 'pending'}
-                                    className={`w-3 h-3 rounded-full transition-all duration-200 hover:scale-125 disabled:cursor-not-allowed ${phaseColors[phase.status]}`}
-                                    title={`${phase.name}: ${phase.status}`}
-                                />
-                            );
-                        })}
-                    </div>
-                    <div className="w-px h-4 bg-gray-600"></div>
-                    <button onClick={onInspect} className="flex items-center gap-1.5 hover:bg-gray-700 p-1 rounded-md transition-colors">
-                        <BeakerIcon className="w-4 h-4" />
-                        <span>Inspect</span>
-                    </button>
+        <div className="bg-gray-800/80 backdrop-blur-sm text-gray-400 text-xs p-2 border-t border-white/10 flex justify-between items-center gap-4">
+            <div className="flex-1 flex items-center gap-4 relative">
+                {phases.map((phase, index) => {
+                    const isCompleted = index < currentPhaseIndex;
+                    const isActive = index === currentPhaseIndex;
+
+                    return (
+                        <div key={phase.id} title={isActive ? `${phase.tooltip}\nDetails: ${status.details}` : phase.tooltip} className="flex items-center gap-1.5 transition-colors duration-300">
+                            {isCompleted ? (
+                                <CheckIcon className="w-4 h-4 text-green-400" />
+                            ) : (
+                                <phase.icon className={`w-4 h-4 ${isActive ? 'text-indigo-400 animate-pulse' : 'text-gray-500'}`} />
+                            )}
+                            <span className={`${isActive ? 'text-white font-semibold' : isCompleted ? 'text-gray-400' : 'text-gray-500'}`}>
+                                {phase.label}
+                            </span>
+                        </div>
+                    );
+                })}
+                 <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-700 -z-10">
+                    <motion.div 
+                        className="h-full bg-indigo-500"
+                        initial={{ width: '0%' }}
+                        animate={{ width: `${(currentPhaseIndex / (phases.length -1)) * 100}%` }}
+                        transition={{ duration: 0.5, ease: 'easeInOut' }}
+                    />
                 </div>
             </div>
-            {popoverPhase && popoverTarget && (
-                <CognitivePhasePopover
-                    phase={popoverPhase}
-                    target={popoverTarget}
-                    onClose={() => setPopoverPhase(null)}
-                />
-            )}
+            
+            <div className="flex-shrink-0">
+                 <button onClick={onInspect} className="flex items-center gap-1.5 px-3 py-1 bg-gray-700/50 hover:bg-gray-700 rounded-full" title="Inspect the cognitive process for the last message.">
+                    <BeakerIcon className="w-4 h-4" />
+                    <span>Inspect</span>
+                </button>
+            </div>
         </div>
     );
 };

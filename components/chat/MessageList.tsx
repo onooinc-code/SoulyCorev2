@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef, useEffect, useMemo } from 'react';
@@ -24,12 +23,6 @@ interface MessageListProps {
     onSetConversationAlign: (align: 'left' | 'right') => void;
     onReply: (message: MessageType) => void;
 }
-
-const ConversationTurnSeparator = () => (
-    <div className="relative my-8">
-        <hr className="border-t border-gray-700/50" />
-    </div>
-);
 
 const MessageList = ({
     messages,
@@ -104,29 +97,25 @@ const MessageList = ({
             {threadedMessages.length > 0 ? (
                 <div className="w-full mt-auto">
                     <div className="space-y-4">
-                        {threadedMessages.map((msg, index) => (
-                            <React.Fragment key={msg.id}>
-                                {msg.role === 'user' && index > 0 && <ConversationTurnSeparator />}
-                                <div data-message-id={msg.id}>
-                                    {/* FIX: Pass ID-based callback functions directly to the Message component to support recursive rendering for threads. */}
-                                    <Message 
-                                        message={msg}
-                                        onSummarize={onSummarize}
-                                        onToggleBookmark={onToggleBookmark}
-                                        onDeleteMessage={onDeleteMessage}
-                                        onUpdateMessage={onUpdateMessage}
-                                        onRegenerate={onRegenerate}
-                                        onInspect={onInspect}
-                                        isContextAssemblyRunning={isLoading && msg.role === 'user' && msg.id === lastMessageIds.user && !activeWorkflow}
-                                        isMemoryExtractionRunning={backgroundTaskCount > 0 && msg.role === 'model' && msg.id === lastMessageIds.model}
-                                        onViewHtml={onViewHtml}
-                                        currentConversation={currentConversation}
-                                        onSetConversationAlign={onSetConversationAlign}
-                                        onReply={onReply}
-                                        findMessageById={findMessageById}
-                                    />
-                                </div>
-                            </React.Fragment>
+                        {threadedMessages.map((msg) => (
+                            <div key={msg.id} data-message-id={msg.id}>
+                                <Message 
+                                    message={msg}
+                                    onSummarize={onSummarize}
+                                    onToggleBookmark={onToggleBookmark}
+                                    onDelete={() => onDeleteMessage(msg.id)}
+                                    onUpdateMessage={onUpdateMessage}
+                                    onRegenerate={() => onRegenerate(msg.id)}
+                                    onInspect={() => onInspect(msg.id)}
+                                    isContextAssemblyRunning={isLoading && msg.role === 'user' && msg.id === lastMessageIds.user && !activeWorkflow}
+                                    isMemoryExtractionRunning={backgroundTaskCount > 0 && msg.role === 'model' && msg.id === lastMessageIds.model}
+                                    onViewHtml={onViewHtml}
+                                    currentConversation={currentConversation}
+                                    onSetConversationAlign={onSetConversationAlign}
+                                    onReply={onReply}
+                                    findMessageById={findMessageById}
+                                />
+                            </div>
                         ))}
                         {isLoading && activeWorkflow && (
                             <motion.div 

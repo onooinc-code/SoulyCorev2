@@ -37,12 +37,11 @@ const GlobalModals = (props: GlobalModalsProps) => {
         isFullscreen,
         toggleZenMode,
         setLogPanelOpen,
-        softRefreshApp,
-        hardRefreshApp,
+        restartApp,
         exitApp,
     } = useUIState();
 
-    const { createNewConversation, setCurrentConversation, setScrollToMessageId } = useConversation();
+    const { createNewConversation } = useConversation();
     
     const commandPaletteActions = useMemo(() => getActionsRegistry({
         createNewConversation,
@@ -55,13 +54,12 @@ const GlobalModals = (props: GlobalModalsProps) => {
         isFullscreen,
         toggleZenMode,
         setDataHubWidgetOpen,
-        softRefreshApp,
-        hardRefreshApp,
+        restartApp,
         exitApp,
     }), [
         createNewConversation, setActiveView, props.setBookmarksOpen, props.setGlobalSettingsOpen,
         setLogPanelOpen, setCommandPaletteOpen, toggleFullscreen, isFullscreen, toggleZenMode,
-        setDataHubWidgetOpen, softRefreshApp, hardRefreshApp, exitApp
+        setDataHubWidgetOpen, restartApp, exitApp
     ]);
 
     return (
@@ -76,8 +74,6 @@ const GlobalModals = (props: GlobalModalsProps) => {
                 isOpen={isCommandPaletteOpen}
                 onClose={() => setCommandPaletteOpen(false)}
                 actions={commandPaletteActions}
-                setCurrentConversation={setCurrentConversation}
-                setScrollToMessageId={setScrollToMessageId}
             />
 
             <DataHubWidget 

@@ -75,7 +75,7 @@ const ChatFooter = ({
             <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} />
 
             <AnimatePresence>
-                {isLoading && typeof status.currentAction === 'object' && status.currentAction !== null && (
+                {isLoading && typeof status.currentAction === 'object' && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}

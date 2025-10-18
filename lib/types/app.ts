@@ -1,30 +1,9 @@
+// FIX: Added import for Prompt to be used in ActiveWorkflowState.
 import type { Prompt } from './data';
 
 export type Role = 'user' | 'model';
 
-// New types for cognitive status, now centralized
-export interface CognitivePhase {
-    name: string;
-    status: 'pending' | 'running' | 'completed' | 'failed';
-    stats?: {
-        retrieved?: number;
-        used?: number;
-        tokens?: number;
-        timeMs?: number;
-        model?: string;
-    };
-    rawData?: any;
-}
-
-export interface CognitiveStatus {
-    currentPhase: string;
-    phases: CognitivePhase[];
-}
-
-export interface IStatus {
-    currentAction?: string | CognitiveStatus | null;
-    error?: string | null;
-}
+export type CognitivePhase = 'idle' | 'retrieving' | 'assembling' | 'prompting' | 'generating';
 
 export interface AppSettings {
     defaultModelConfig: {
@@ -45,23 +24,29 @@ export interface AppSettings {
         enableProactiveSuggestions: boolean;
         enableAutoSummarization: boolean;
     };
-    global_ui_settings: {
-        fontSize: string;
-        messageFontSize: 'sm' | 'base' | 'lg' | 'xl';
-    }
+    global_ui_settings?: {
+        fontSize?: string;
+        messageFontSize?: 'sm' | 'base' | 'lg' | 'xl';
+    };
 }
 
 export interface Log {
     id: string;
     timestamp: Date;
     message: string;
-    payload?: any;
+    payload: Record<string, any> | null;
     level: 'info' | 'warn' | 'error';
 }
 
+export interface IStatus {
+  currentAction: string | { phase: CognitivePhase; details: string };
+  error: string | null;
+}
+
+// FIX: Moved ActiveWorkflowState here from ConversationProvider to resolve export error.
 export interface ActiveWorkflowState {
-    prompt: Prompt;
-    userInputs: Record<string, string>;
-    currentStepIndex: number;
-    stepOutputs: Record<number, string>;
+  prompt: Prompt;
+  userInputs: Record<string, string>;
+  currentStepIndex: number;
+  stepOutputs: Record<number, string>;
 }

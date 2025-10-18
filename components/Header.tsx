@@ -1,11 +1,10 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useConversation } from './providers/ConversationProvider';
 import { useUIState } from './providers/UIStateProvider';
 import { useSettings } from './providers/SettingsProvider';
-import { SparklesIcon, EditIcon, TrashIcon, SidebarLeftIcon, LogIcon, MinusIcon, PlusIcon, PowerIcon, RefreshIcon, ArrowPathIcon, FullscreenIcon, ExitFullscreenIcon } from './Icons';
+import { SparklesIcon, EditIcon, TrashIcon, SidebarLeftIcon, LogIcon, MinusIcon, PlusIcon, PowerIcon, RefreshIcon } from './Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import ToolbarButton from './ToolbarButton';
 import type { VersionHistory } from '@/lib/types';
@@ -111,11 +110,8 @@ const Header = () => {
         isConversationPanelOpen,
         setConversationPanelOpen,
         setLogPanelOpen,
-        softRefreshApp,
-        hardRefreshApp,
+        restartApp,
         exitApp,
-        toggleFullscreen,
-        isFullscreen,
     } = useUIState();
     const { changeGlobalFontSize } = useSettings();
 
@@ -230,14 +226,8 @@ const Header = () => {
                         <LogIcon className="w-5 h-5" />
                     </ToolbarButton>
                     <div className="w-px h-6 bg-gray-600 mx-1"></div>
-                    <ToolbarButton onClick={toggleFullscreen} title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"} color="gray">
-                        {isFullscreen ? <ExitFullscreenIcon className="w-5 h-5" /> : <FullscreenIcon className="w-5 h-5" />}
-                    </ToolbarButton>
-                    <ToolbarButton onClick={softRefreshApp} title="Soft Refresh" color="yellow">
+                    <ToolbarButton onClick={restartApp} title="Restart App" color="yellow">
                         <RefreshIcon className="w-5 h-5" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={hardRefreshApp} title="Hard Refresh" color="orange">
-                        <ArrowPathIcon className="w-5 h-5" />
                     </ToolbarButton>
                     <ToolbarButton onClick={exitApp} title="Exit App" color="red">
                         <PowerIcon className="w-5 h-5" />

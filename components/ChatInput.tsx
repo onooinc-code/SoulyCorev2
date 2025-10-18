@@ -1,9 +1,10 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SendIcon, PaperclipIcon, XIcon, PromptsIcon } from './Icons';
-import type { Contact, Prompt, Message } from '@/lib/types';
+import type { Contact, Prompt } from '@/lib/types';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useLog } from './providers/LogProvider';
 import dynamic from 'next/dynamic';
@@ -24,36 +25,27 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
     const { log } = useLog();
     const [content, setContent] = useState('');
     const [contacts, setContacts] = useState<Contact[]>([]);
-    const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
-    
-    // @mention state
     const [showMentions, setShowMentions] = useState(false);
     const [mentionQuery, setMentionQuery] = useState('');
     const [mentionedContacts, setMentionedContacts] = useState<Contact[]>([]);
-
-    // #tag suggestion state
-    const [showTagSuggestions, setShowTagSuggestions] = useState(false);
-    const [tagQuery, setTagQuery] = useState('');
-    const [tagSuggestions, setTagSuggestions] = useState<Message[]>([]);
-    const tagDebounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
     
-    // Prompts launcher state
     const [isPromptsListOpen, setIsPromptsListOpen] = useState(false);
     const [prompts, setPrompts] = useState<Prompt[]>([]);
     const [promptSearchTerm, setPromptSearchTerm] = useState('');
-    const [pendingPrompt, setPendingPrompt] = useState<Prompt | null>(null);
+
     const [variableModalState, setVariableModalState] = useState<{
         isOpen: boolean;
         prompt: Prompt | null;
         variables: string[];
     }>({ isOpen: false, prompt: null, variables: [] });
     
-    // Refs
+    const [pendingPrompt, setPendingPrompt] = useState<Prompt | null>(null);
+
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const promptsListRef = useRef<HTMLDivElement>(null);
 
-    // Data fetching
     const fetchContacts = useCallback(async () => {
         try {
             log('Fetching contacts for @mentions...');
@@ -90,33 +82,11 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
                 setIsPromptsListOpen(false);
             }
         };
+
         if (isPromptsListOpen) document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isPromptsListOpen]);
 
-    const performTagSearch = useCallback(async (query: string) => {
-        if (!query) {
-            setTagSuggestions([]);
-            return;
-        }
-        try {
-            const res = await fetch(`/api/messages/search-by-tag?q=${encodeURIComponent(query)}`);
-            if (!res.ok) throw new Error('Tag search failed');
-            const data = await res.json();
-            setTagSuggestions(data);
-        } catch (error) {
-            log('Tag autocomplete search failed', { error }, 'error');
-        }
-    }, [log]);
-
-    useEffect(() => {
-        if (tagDebounceTimeout.current) clearTimeout(tagDebounceTimeout.current);
-        if (tagQuery) {
-            tagDebounceTimeout.current = setTimeout(() => performTagSearch(tagQuery), 300);
-        } else {
-            setTagSuggestions([]);
-        }
-    }, [tagQuery, performTagSearch]);
     
     const updateMentionedContacts = (text: string) => {
         const mentionRegex = /@(\w+)/g;
@@ -132,21 +102,13 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
         
         const cursorPosition = e.target.selectionStart;
         const textUpToCursor = value.substring(0, cursorPosition);
-        
         const mentionMatch = textUpToCursor.match(/@(\w*)$/);
-        const tagMatch = textUpToCursor.match(/#(\w*)$/);
 
         if (mentionMatch) {
             setShowMentions(true);
             setMentionQuery(mentionMatch[1].toLowerCase());
-            setShowTagSuggestions(false);
-        } else if (tagMatch) {
-            setShowTagSuggestions(true);
-            setTagQuery(tagMatch[1].toLowerCase());
-            setShowMentions(false);
         } else {
             setShowMentions(false);
-            setShowTagSuggestions(false);
         }
     };
     
@@ -162,13 +124,6 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
         log('User selected @mention', { contactName: name });
     };
 
-    const handleTagSuggestionSelect = (messageContent: string) => {
-        setContent(messageContent);
-        setShowTagSuggestions(false);
-        textareaRef.current?.focus();
-        log('User selected a tag suggestion to reuse a prompt.');
-    };
-
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file && file.type.startsWith('image/')) {
@@ -177,6 +132,10 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
             reader.readAsDataURL(file);
         }
         if (e.target) e.target.value = '';
+    };
+
+    const removeImage = () => {
+        setImageDataUrl(null);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -188,7 +147,6 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
         setImageDataUrl(null);
         setMentionedContacts([]);
         setShowMentions(false);
-        setShowTagSuggestions(false);
     };
 
     const handlePromptSelect = (prompt: Prompt) => {
@@ -268,42 +226,96 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
                     ))}
                 </div>
             )}
-             {showTagSuggestions && tagSuggestions.length > 0 && (
-                <div className="absolute bottom-full left-4 right-4 mb-2 bg-gray-900 border border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
-                    <div className="px-4 py-2 text-xs text-gray-400">Suggesting messages with matching tags...</div>
-                    {tagSuggestions.map(msg => (
-                        <button key={msg.id} onClick={() => handleTagSuggestionSelect(msg.content)} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                            <p className="truncate">{msg.content}</p>
-                            <div className="flex gap-1 mt-1">{msg.tags?.map(t => <span key={t} className="text-xs bg-gray-600 px-1.5 py-0.5 rounded-full">#{t}</span>)}</div>
-                        </button>
-                    ))}
-                </div>
-            )}
              {isPromptsListOpen && (
                 <div ref={promptsListRef} className="absolute bottom-full left-4 right-4 mb-2 bg-gray-900 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto z-20 flex flex-col">
-                    <input type="text" placeholder="Search prompts..." value={promptSearchTerm} onChange={e => setPromptSearchTerm(e.target.value)} className="sticky top-0 p-2 bg-gray-800 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500" autoFocus />
+                    <input 
+                        type="text"
+                        placeholder="Search prompts..."
+                        value={promptSearchTerm}
+                        onChange={e => setPromptSearchTerm(e.target.value)}
+                        className="sticky top-0 p-2 bg-gray-800 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        autoFocus
+                    />
                     <ul className="flex-1 overflow-y-auto">
                         {filteredPrompts.length > 0 ? filteredPrompts.map(prompt => (
-                            <li key={prompt.id}><button onClick={() => handlePromptSelect(prompt)} className={`w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 border-l-4 ${prompt.type === 'chain' ? 'border-indigo-500' : 'border-transparent'}`}><strong className="block font-semibold">{prompt.name}</strong><p className="text-xs text-gray-400 truncate">{prompt.content}</p></button></li>
+                            <li key={prompt.id}>
+                                <button onClick={() => handlePromptSelect(prompt)} className={`w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 border-l-4 ${prompt.type === 'chain' ? 'border-indigo-500' : 'border-transparent'}`}>
+                                    <strong className="block font-semibold">{prompt.name}</strong>
+                                    <p className="text-xs text-gray-400 truncate">{prompt.content}</p>
+                                </button>
+                            </li>
                         )) : <li className="px-4 py-3 text-sm text-gray-500 text-center">No prompts found.</li>}
                     </ul>
                 </div>
             )}
             {imageDataUrl && (
-                <div className="relative w-20 h-20 mb-2"><img src={imageDataUrl} alt="Upload preview" className="w-full h-full object-cover rounded-md" /><button onClick={() => setImageDataUrl(null)} className="absolute -top-2 -right-2 bg-gray-600 rounded-full p-0.5 text-white hover:bg-gray-500 z-10" title="Remove attached image"><XIcon className="w-4 h-4" /></button></div>
+                <div className="relative w-20 h-20 mb-2">
+                    <img src={imageDataUrl} alt="Upload preview" className="w-full h-full object-cover rounded-md" />
+                    <button onClick={removeImage} className="absolute -top-2 -right-2 bg-gray-600 rounded-full p-0.5 text-white hover:bg-gray-500 z-10" title="Remove attached image">
+                        <XIcon className="w-4 h-4" />
+                    </button>
+                </div>
             )}
             <form onSubmit={handleSubmit} className="flex items-start space-x-2">
-                 <button type="button" onClick={() => { log('User toggled Prompts Launcher.'); const willBeOpen = !isPromptsListOpen; setIsPromptsListOpen(willBeOpen); if (willBeOpen) fetchPrompts(); }} className="p-3 rounded-xl text-gray-200 transition-all duration-200 bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0" disabled={isLoading} title="Use a saved prompt"><PromptsIcon className="w-5 h-5" /></button>
-                 <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 rounded-xl text-gray-200 transition-all duration-200 bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0" disabled={isLoading || !!imageDataUrl} title="Attach an image"><PaperclipIcon className="w-5 h-5" /></button>
+                 <button
+                    type="button"
+                    onClick={() => {
+                        log('User toggled Prompts Launcher.');
+                        const willBeOpen = !isPromptsListOpen;
+                        setIsPromptsListOpen(willBeOpen);
+                        if (willBeOpen) fetchPrompts();
+                    }}
+                    className="p-3 rounded-xl text-gray-200 transition-all duration-200 bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                    disabled={isLoading}
+                    title="Use a saved prompt"
+                >
+                    <PromptsIcon className="w-5 h-5" />
+                </button>
+                 <button 
+                    type="button" 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-3 rounded-xl text-gray-200 transition-all duration-200 bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                    disabled={isLoading || !!imageDataUrl}
+                    title="Attach an image"
+                >
+                    <PaperclipIcon className="w-5 h-5" />
+                </button>
                 <div className="flex-1 relative">
-                    <textarea ref={textareaRef} value={content} onChange={handleContentChange} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }} placeholder="Type a message, or use '#' for tag suggestions..." className="w-full p-2 pr-24 bg-gray-700 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none" rows={1} disabled={isLoading}/>
-                    {mentionedContacts.length > 0 && (<div className="absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-500/50 text-indigo-200 text-xs px-2 py-1 rounded-full">Context: {mentionedContacts.map(c => c.name).join(', ')}</div>)}
+                    <textarea
+                        ref={textareaRef}
+                        value={content}
+                        onChange={handleContentChange}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }}
+                        placeholder="Type your message or add an image..."
+                        className="w-full p-2 pr-24 bg-gray-700 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        rows={1}
+                        disabled={isLoading}
+                    />
+                    {mentionedContacts.length > 0 && (
+                         <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-500/50 text-indigo-200 text-xs px-2 py-1 rounded-full">
+                            Context: {mentionedContacts.map(c => c.name).join(', ')}
+                        </div>
+                    )}
                 </div>
-                 <button type="submit" className="p-3 bg-indigo-600/50 hover:bg-indigo-600/80 backdrop-blur-sm border border-indigo-400/30 rounded-xl text-white transition-all duration-200 hover:scale-110 disabled:bg-indigo-400/50 disabled:cursor-not-allowed" disabled={isLoading || (!content.trim() && !imageDataUrl)} title="Send message"><SendIcon className="w-5 h-5" /></button>
+                 <button
+                    type="submit"
+                    className="p-3 bg-indigo-600/50 hover:bg-indigo-600/80 backdrop-blur-sm border border-indigo-400/30 rounded-xl text-white transition-all duration-200 hover:scale-110 disabled:bg-indigo-400/50 disabled:cursor-not-allowed"
+                    disabled={isLoading || (!content.trim() && !imageDataUrl)}
+                    title="Send message"
+                >
+                    <SendIcon className="w-5 h-5" />
+                </button>
             </form>
         </div>
         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-        <FillPromptVariablesModal isOpen={variableModalState.isOpen} onClose={() => setVariableModalState({ isOpen: false, prompt: null, variables: [] })} prompt={variableModalState.prompt} variables={variableModalState.variables} onSubmit={handleVariableModalSubmit}/>
+        
+        <FillPromptVariablesModal
+            isOpen={variableModalState.isOpen}
+            onClose={() => setVariableModalState({ isOpen: false, prompt: null, variables: [] })}
+            prompt={variableModalState.prompt}
+            variables={variableModalState.variables}
+            onSubmit={handleVariableModalSubmit}
+        />
         </>
     );
 };
