@@ -24,14 +24,19 @@
   .prose-custom h5,
   .prose-custom h6 {
     @apply text-white;
+    font-size: inherit;
+    font-weight: inherit;
   }
 
   .prose-custom strong {
     @apply text-white;
+    font-weight: inherit;
   }
 
   .prose-custom p {
     @apply my-2;
+    font-size: inherit;
+    font-weight: inherit;
   }
 
   .prose-custom a {
@@ -50,12 +55,16 @@
     @apply border-l-4 border-gray-500 pl-4 text-gray-400 italic;
   }
   
-  .prose-custom ul {
+  .prose-custom ul,
+  .prose-custom ol {
       @apply list-disc list-inside;
+      font-size: inherit;
+      font-weight: inherit;
   }
   
-  .prose-custom ol {
-      @apply list-decimal list-inside;
+  .prose-custom li {
+    font-size: inherit;
+    font-weight: inherit;
   }
 
   .prose-invert-user a {

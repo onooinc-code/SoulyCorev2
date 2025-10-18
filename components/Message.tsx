@@ -28,6 +28,9 @@ interface MessageProps {
     findMessageById: (id: string) => MessageType | undefined;
 }
 
+// A simple regex to detect Arabic characters
+const arabicRegex = /[\u0600-\u06FF]/;
+
 const Message = ({ message, ...props }: MessageProps) => {
     const { settings } = useSettings();
     const [isHovering, setIsHovering] = useState(false);
@@ -43,6 +46,8 @@ const Message = ({ message, ...props }: MessageProps) => {
         lg: 'text-lg',
         xl: 'text-xl',
     }[settings?.global_ui_settings?.messageFontSize || 'sm'];
+    
+    const containsArabic = arabicRegex.test(message.content);
 
     useEffect(() => {
         if (isEditing && textareaRef.current) {
@@ -92,7 +97,7 @@ const Message = ({ message, ...props }: MessageProps) => {
             {!isUser && align === 'left' && <div className="p-2 bg-gray-700 rounded-full"><CpuChipIcon className="w-5 h-5 text-indigo-400" /></div>}
             
             <div className={`flex-1 min-w-0 ${align === 'right' ? 'text-right' : ''}`}>
-                <div className={`relative px-4 py-3 rounded-2xl ${isUser ? 'bg-indigo-600/50' : 'bg-gray-700/60'}`}>
+                <div className={`relative px-4 py-3 rounded-2xl w-full ${isUser ? 'bg-indigo-600/50' : 'bg-gray-700/60'}`}>
                     <MessageToolbar 
                         message={message} 
                         isHovering={isHovering}
@@ -121,7 +126,7 @@ const Message = ({ message, ...props }: MessageProps) => {
                             />
                         </div>
                     ) : (
-                        <div className={`prose-custom ${messageFontSizeClass} ${isUser ? 'prose-invert-user' : ''}`}>
+                        <div className={`prose-custom ${messageFontSizeClass} ${isUser ? 'prose-invert-user' : ''} ${containsArabic ? 'arabic' : ''}`}>
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                         </div>
                     )}
