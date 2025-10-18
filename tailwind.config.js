@@ -6,10 +6,6 @@ module.exports = {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        cairo: ['Cairo', 'sans-serif'],
-      },
       backdropBlur: {
         'xl': '24px',
       }

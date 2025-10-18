@@ -2,41 +2,30 @@
 "use client";
 
 import React from 'react';
-import { CpuChipIcon, ClockIcon } from '@/components/Icons';
-import type { Message as MessageType } from '@/lib/types';
+import type { Message } from '@/lib/types';
 
 interface MessageFooterProps {
-    message: MessageType;
-    isContextAssemblyRunning: boolean;
-    isMemoryExtractionRunning: boolean;
+    message: Message;
 }
 
-const MessageFooter = ({ message, isContextAssemblyRunning, isMemoryExtractionRunning }: MessageFooterProps) => {
-    const showFooter = message.tokenCount || message.responseTime || isContextAssemblyRunning || isMemoryExtractionRunning;
-
-    if (!showFooter) {
-        return null;
-    }
+const MessageFooter = ({ message }: MessageFooterProps) => {
+    const formattedDate = new Date(message.createdAt).toLocaleString([], {
+        dateStyle: 'short',
+        timeStyle: 'short',
+    });
 
     return (
-        <div className="text-xs text-gray-500 mt-2 flex items-center justify-end gap-3">
-            {isContextAssemblyRunning && (
-                <div className="flex items-center gap-1 text-yellow-400 animate-pulse">
-                    <CpuChipIcon className="w-3 h-3" />
-                    <span>Assembling context...</span>
-                </div>
-            )}
-            {isMemoryExtractionRunning && (
-                <div className="flex items-center gap-1 text-yellow-400 animate-pulse">
-                    <CpuChipIcon className="w-3 h-3" />
-                    <span>Extracting memories...</span>
-                </div>
-            )}
-            {message.tokenCount && <span>{message.tokenCount} tokens</span>}
-            {message.responseTime && (
-                <div className="flex items-center gap-1">
-                    <ClockIcon className="w-3 h-3" />
-                    <span>{message.responseTime} ms</span>
+        <div className="text-xs text-gray-500 mt-2 flex items-center gap-x-3 gap-y-1 flex-wrap">
+            <span>{formattedDate}</span>
+            {message.tokenCount && message.tokenCount > 0 && <span>{message.tokenCount} tokens</span>}
+            {message.responseTime && <span>{message.responseTime} ms</span>}
+            {message.tags && message.tags.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                    {message.tags.map(tag => (
+                        <span key={tag} className="bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">
+                            #{tag}
+                        </span>
+                    ))}
                 </div>
             )}
         </div>
