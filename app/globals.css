@@ -1,1 +1,74 @@
-full contents of app/globals.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-gray-900 text-gray-200 font-sans;
+  }
+}
+
+@layer components {
+  /* Custom styles for ReactMarkdown */
+  .prose-custom {
+    @apply text-gray-300 prose-p:my-2 prose-headings:text-white prose-strong:text-white;
+  }
+
+  .prose-custom a {
+    @apply text-indigo-400 hover:text-indigo-300;
+  }
+
+  .prose-custom code {
+    @apply bg-gray-700 text-indigo-300 px-1.5 py-0.5 rounded-md text-sm;
+  }
+
+  .prose-custom pre {
+    @apply bg-gray-800 p-4 rounded-lg text-sm;
+  }
+
+  .prose-custom blockquote {
+    @apply border-l-4 border-gray-500 pl-4 text-gray-400 italic;
+  }
+  
+  .prose-custom ul {
+      @apply list-disc list-inside;
+  }
+  
+  .prose-custom ol {
+      @apply list-decimal list-inside;
+  }
+
+  .prose-invert-user a {
+      @apply text-cyan-300 hover:text-cyan-200;
+  }
+
+  .glass-panel {
+    @apply bg-gray-800/60 backdrop-blur-xl border border-white/10;
+  }
+
+  .rail-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #4f46e5 #374151;
+  }
+
+  .rail-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .rail-scrollbar::-webkit-scrollbar-track {
+    background: #374151;
+  }
+  .rail-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #4f46e5;
+    border-radius: 6px;
+  }
+}
+
+@layer utilities {
+    @keyframes move-glow {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+}
