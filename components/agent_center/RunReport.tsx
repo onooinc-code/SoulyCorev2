@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -75,7 +74,6 @@ const PhaseReport = ({ phase }: { phase: AgentPlanPhase }) => {
             </div>
             <AnimatePresence>
                 <div className="space-y-4">
-                    {/* FIX: Wrapped iterated component in a div with a key to resolve TypeScript error. */}
                     {phase.steps?.map(step => <div key={step.id}><Step step={step} /></div>)}
                 </div>
             </AnimatePresence>
@@ -90,7 +88,6 @@ const RunReport = ({ runId }: RunReportProps) => {
     const [phasesWithSteps, setPhasesWithSteps] = useState<AgentPlanPhase[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [elapsedTime, setElapsedTime] = useState('0s');
-    // FIX: Replaced NodeJS.Timeout with ReturnType<typeof setInterval> to avoid NodeJS namespace dependency in the browser.
     const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
@@ -155,7 +152,6 @@ const RunReport = ({ runId }: RunReportProps) => {
     }, [runId, log]);
 
      useEffect(() => {
-        // FIX: Replaced NodeJS.Timeout with ReturnType<typeof setInterval> to avoid NodeJS namespace dependency in the browser.
         let timer: ReturnType<typeof setInterval>;
         if (run?.status === 'running') {
             timer = setInterval(() => {
@@ -215,7 +211,6 @@ const RunReport = ({ runId }: RunReportProps) => {
 
             <div className="flex-1 overflow-y-auto pr-2 space-y-4">
                 <AnimatePresence>
-                    {/* FIX: Wrapped iterated component in a div with a key to resolve TypeScript error. */}
                     {phasesWithSteps.map(phase => (
                         <div key={phase.id}><PhaseReport phase={phase} /></div>
                     ))}

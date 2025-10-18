@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -20,7 +19,6 @@ const ConversationSearch = ({ conversationId, onJumpToMessage }: ConversationSea
     const [availableTags, setAvailableTags] = useState<string[]>([]);
     const [results, setResults] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    // FIX: Replaced NodeJS.Timeout with ReturnType<typeof setTimeout> to avoid using a Node.js-specific type in client-side code.
     const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const performSearch = useCallback(async (query: string, tags: string[]) => {

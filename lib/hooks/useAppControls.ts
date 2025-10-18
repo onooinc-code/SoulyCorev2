@@ -15,7 +15,7 @@ export const useAppControls = () => {
     const hardRefreshApp = useCallback(() => {
         log('User initiated app hard refresh.');
         // The 'true' argument forces a reload from the server, bypassing the cache.
-        // FIX: Removed the boolean argument to align with the standard TypeScript DOM type for `location.reload()`, which expects 0 arguments.
+        // This is non-standard and can cause type errors. The standard method is sufficient for a hard refresh in modern browsers.
         window.location.reload();
     }, [log]);
 

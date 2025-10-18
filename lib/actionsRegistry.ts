@@ -32,7 +32,6 @@ interface ActionFunctions {
     softRefreshApp: () => void;
     hardRefreshApp: () => void;
     exitApp: () => void;
-    // FIX: Added setCommandPaletteOpen to the interface to match its usage.
     setCommandPaletteOpen: Dispatch<SetStateAction<boolean>>;
 }
 
@@ -64,7 +63,6 @@ export const getActionsRegistry = (fns: ActionFunctions): Action[] => [
       icon: fns.isFullscreen ? ExitFullscreenIcon : FullscreenIcon,
       action: fns.toggleFullscreen,
     },
-    // FIX: Pass the function reference `fns.toggleZenMode` instead of calling it. This resolves the error where `void` was assigned to a property expecting `() => void`.
     { id: 'toggle-zen-mode', name: 'Toggle Zen Mode', keywords: ['focus', 'distraction free'], group: 'View', icon: EyeSlashIcon, action: fns.toggleZenMode },
 
     // Modals & Panels
