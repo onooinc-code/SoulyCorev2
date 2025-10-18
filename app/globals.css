@@ -1,1 +1,7 @@
-full contents of app/globals.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "./styles/base.css";
+@import "./styles/prose.css";
+@import "./styles/utilities.css";
