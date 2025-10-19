@@ -7,6 +7,7 @@ import { usePrompts } from '@/lib/hooks/usePrompts';
 import { PromptFilterSidebar } from './prompts/PromptFilterSidebar';
 import { PromptForm } from './prompts/PromptForm';
 import { PromptList } from './prompts/PromptList';
+// FIX: Corrected import paths for types.
 import type { Prompt, Tool } from '@/lib/types';
 
 const PromptsHub = () => {

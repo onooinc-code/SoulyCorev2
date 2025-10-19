@@ -20,6 +20,7 @@ const DataHubCenter = dynamic(() => import('../data_hub/DataHubCenter'));
 const DevCenter = dynamic(() => import('../dev_center/DevCenter'));
 const CommunicationHub = dynamic(() => import('../hubs/CommunicationHub'));
 const ExperiencesHub = dynamic(() => import('../hubs/ExperiencesHub'));
+const ProjectsHub = dynamic(() => import('../ProjectsHub'));
 
 const viewMap = {
     dashboard: DashboardCenter,
@@ -35,6 +36,7 @@ const viewMap = {
     dev_center: DevCenter,
     comm_hub: CommunicationHub,
     experiences_hub: ExperiencesHub,
+    projects_hub: ProjectsHub,
 };
 
 const ActiveViewRenderer = () => {

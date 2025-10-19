@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+// FIX: Corrected import paths for types.
 import { Feature, FeatureStatus } from '@/lib/types';
 
 export async function PUT(req: NextRequest, { params }: { params: { featureId: string } }) {

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { SendIcon, PaperclipIcon, PromptsIcon } from './Icons';
+// FIX: Corrected import path for types.
 import type { Contact, Prompt } from '@/lib/types';
 import { useLog } from './providers/LogProvider';
 import { AnimatePresence, motion } from 'framer-motion';

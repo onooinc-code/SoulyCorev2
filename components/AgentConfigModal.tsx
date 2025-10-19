@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { XIcon } from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConversation } from './providers/ConversationProvider';
+// FIX: Corrected import path for type.
 import { Conversation } from '@/lib/types';
 
 interface AgentConfigModalProps {

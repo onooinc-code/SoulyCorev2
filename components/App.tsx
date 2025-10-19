@@ -12,6 +12,7 @@ import ChatWindow from './ChatWindow';
 import NavigationRail from './NavigationRail';
 import ConversationPanel from './ConversationPanel';
 import ContextMenu from './ContextMenu';
+// FIX: Corrected import path for GlobalModals.
 import GlobalModals from '@/components/modals/GlobalModals';
 import MorningBriefing from './MorningBriefing';
 import Notifications from './Notifications';

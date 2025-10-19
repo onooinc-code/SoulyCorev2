@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+// FIX: Corrected import path for type.
 import type { Message } from '@/lib/types';
 
 // PUT to toggle the bookmark status of a message

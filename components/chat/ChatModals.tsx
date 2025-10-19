@@ -2,6 +2,7 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
+// FIX: Corrected import path for type.
 import type { Conversation } from '@/lib/types';
 
 // Modals

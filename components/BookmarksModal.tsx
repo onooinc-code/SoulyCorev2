@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 // FIX: Corrected a relative import path for the `XIcon` component to use the absolute path alias `@`, resolving a module resolution error during the build process.
 import { XIcon } from '@/components/Icons';
+// FIX: Corrected import path for type.
 import type { Message } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';

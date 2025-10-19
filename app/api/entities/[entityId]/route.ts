@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+// FIX: Corrected import path for type.
 import type { EntityDefinition } from '@/lib/types';
 
 export async function PUT(req: NextRequest, { params }: { params: { entityId: string } }) {

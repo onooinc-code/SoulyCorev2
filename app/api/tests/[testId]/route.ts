@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db, sql } from '@/lib/db';
+// FIX: Corrected import paths for types.
 import type { FeatureTest, TestStatus } from '@/lib/types';
 
 /**

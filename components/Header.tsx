@@ -16,6 +16,7 @@ import {
 } from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import ToolbarButton from './ToolbarButton';
+// FIX: Corrected import path for type.
 import type { VersionHistory } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';

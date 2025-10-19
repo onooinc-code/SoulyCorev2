@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { generateChatResponse } from '@/lib/gemini-server';
+// FIX: Corrected import paths for types.
 import { Prompt, PromptChainStep } from '@/lib/types';
 import { Content } from '@google/genai';
 

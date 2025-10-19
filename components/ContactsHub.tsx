@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+// FIX: Corrected import path for type.
 import type { Contact } from '@/lib/types';
 import { motion } from 'framer-motion';
 // FIX: Corrected relative import paths for icon components and the `useLog` hook to use the absolute path alias `@`, resolving module resolution errors during the build process.

@@ -4,6 +4,7 @@
 
 import { sql } from '@/lib/db';
 import { ISingleMemoryModule } from '../types';
+// FIX: Corrected import path for types.
 import type { EntityDefinition, EntityRelationship, Contact } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
 

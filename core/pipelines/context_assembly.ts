@@ -3,6 +3,7 @@ import { SemanticMemoryModule, ISemanticQueryResult } from '../memory/modules/se
 import { StructuredMemoryModule } from '../memory/modules/structured';
 import llmProvider from '@/core/llm';
 import { sql } from '@/lib/db';
+// FIX: Corrected import paths for types.
 import type { Conversation, Contact, PipelineRun, Message } from '@/lib/types';
 import { IContextAssemblyConfig } from '../memory/types';
 
@@ -71,10 +72,13 @@ export class ContextAssemblyPipeline {
 
             // Step 3: Retrieve Structured Memory (Mentioned Contacts)
             // The mentionedContacts are already passed in, so this is about formatting.
+            // FIX: The execution function passed to logStep was returning a 'string | Promise' instead of a 'Promise'. Wrapped the string result in Promise.resolve to ensure a consistent return type and fix the TypeScript error.
             const structuredContext = await this.logStep(runId, 3, 'Format Structured Memory', { mentionedContacts }, () =>
-                 (conversation.useStructuredMemory && mentionedContacts.length > 0)
-                    ? mentionedContacts.map(c => `Contact: ${c.name} - ${c.notes || c.email || 'No details'}`).join('\n')
-                    : Promise.resolve("")
+                Promise.resolve(
+                    (conversation.useStructuredMemory && mentionedContacts.length > 0)
+                        ? mentionedContacts.map(c => `Contact: ${c.name} - ${c.notes || c.email || 'No details'}`).join('\n')
+                        : ""
+                )
             ) as string;
 
             // Step 4: Assemble the final prompt components

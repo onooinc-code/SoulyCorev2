@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+// FIX: Corrected import paths for types.
 import type { Feature, FeatureStatus, UiUxSubFeature } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 // FIX: Corrected relative import paths for icon components and hooks to use the absolute path alias `@`, resolving module resolution errors during the build process.

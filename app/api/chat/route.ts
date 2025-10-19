@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+// FIX: Corrected import path for types.
 import { Conversation, Message, Contact } from '@/lib/types';
 import { ContextAssemblyPipeline } from '@/core/pipelines/context_assembly';
 import { generateProactiveSuggestion } from '@/lib/gemini-server';

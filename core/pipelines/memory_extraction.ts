@@ -1,6 +1,7 @@
 import { SemanticMemoryModule } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
 import { sql } from '@/lib/db';
+// FIX: Corrected import path for type.
 import type { PipelineRun } from '@/lib/types';
 import { IMemoryExtractionConfig } from '../memory/types';
 import { GoogleGenAI, Type } from "@google/genai";

@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+// FIX: Corrected import path for type.
 import { Message } from '@/lib/types';
 
 // PUT to update a message's content

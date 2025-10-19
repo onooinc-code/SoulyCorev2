@@ -72,3 +72,4 @@ export * from './icons/CubeIcon';
 export * from './icons/LinkIcon';
 export * from './icons/ArrowsRightLeftIcon';
 export * from './icons/TagIcon';
+export * from './icons/ClipboardDocumentListIcon';

@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+// FIX: Corrected import path for type.
 import type { Message } from '@/lib/types';
 import { ClockIcon, CpuChipIcon, BookmarkIcon, ArrowsRightLeftIcon } from './Icons';
 

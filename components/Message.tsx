@@ -5,7 +5,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserCircleIcon, CpuChipIcon } from './Icons';
+// FIX: Corrected import paths for types.
 import type { Message as MessageType, Conversation } from '@/lib/types';
+// FIX: Corrected import for MessageToolbar component.
 import MessageToolbar from './MessageToolbar';
 import MessageFooter from './MessageFooter';
 

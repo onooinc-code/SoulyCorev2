@@ -1,8 +1,10 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { generateTitleFromHistory } from '@/lib/gemini-server';
 import { Content } from '@google/genai';
+// FIX: Corrected import paths for types.
 import { Message, Conversation } from '@/lib/types';
 
 export async function POST(req: NextRequest, { params }: { params: { conversationId: string } }) {

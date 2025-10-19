@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+// FIX: Corrected import path for type.
 import { Conversation } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
