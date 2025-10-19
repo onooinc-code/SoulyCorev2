@@ -63,7 +63,7 @@ const DashboardCenter = () => {
                     <div className="col-span-12 md:col-span-6 lg:col-span-3">
                         <AgentsStatusPanel />
                     </div>
-                    <div className="col-span-12 md:col-span-6 lg:col-span-3">
+                     <div className="col-span-12 md:col-span-6 lg:col-span-3">
                        <TasksSummaryPanel />
                     </div>
                      <div className="col-span-12 md:col-span-6 lg:col-span-3">
