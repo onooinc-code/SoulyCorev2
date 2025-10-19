@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -35,9 +36,10 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
         return { messageCount, totalTokens, bookmarkedCount, wordCount, avgResponseTime };
     }, [currentConversation, messages]);
 
-    // FIX: Resolve ReactNode type error by extracting the conditional logic into a variable.
+    // FIX: Resolve ReactNode type error. status.currentAction can be an object, which cannot be rendered directly.
+    // This logic extracts the `details` string if it's an object, or uses the string value.
     const currentActionText =
-        typeof status.currentAction === 'object' && status.currentAction !== null
+        typeof status.currentAction === 'object' && status.currentAction
             ? status.currentAction.details
             : status.currentAction || 'Ready';
 

@@ -1,3 +1,4 @@
+
 // lib/hooks/useAppContextMenu.ts
 "use client";
 
@@ -101,7 +102,7 @@ export const useAppContextMenu = () => {
     ]);
 
     return {
-        menuItems,
+        menuItems: menuItems as MenuItem[],
         contextMenu,
         handleContextMenu,
         closeContextMenu,

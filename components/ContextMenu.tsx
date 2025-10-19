@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -9,16 +8,20 @@ import type { SVGProps } from 'react';
 // Define a generic IconType
 export type IconType = React.FC<SVGProps<SVGSVGElement>>;
 
-export type MenuItem = {
-    isSeparator: true;
-    label?: never; action?: never; icon?: never; disabled?: never; children?: never;
-} | {
+// FIX: Corrected the MenuItem discriminated union type. Removed `isSeparator?: false | undefined`
+// from the main item definition to create a stricter separation between a regular menu item and a separator.
+// This resolves a TypeScript inference error where an object like `{ isSeparator: true }` was being
+// incorrectly matched against both parts of the union, leading to type conflicts.
+type MenuItemAction = {
     label: string;
     action?: (e?: React.MouseEvent) => void;
     icon?: IconType;
     disabled?: boolean;
     children?: MenuItem[];
 };
+
+export type MenuItem = { isSeparator: true } | MenuItemAction;
+
 
 interface ContextMenuProps {
     items: MenuItem[];
@@ -219,20 +222,17 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                 
                 <div onMouseEnter={handleSubMenuEnter} onMouseLeave={handleMouseLeave}>
                     <AnimatePresence>
-                        {activeSubMenu && items.find(i => 'label' in i && i.label === activeSubMenu)?.children && (
+                        {activeSubMenu && items.find(i => !i.isSeparator && i.label === activeSubMenu)?.children && (
                             <SubMenu 
-                                items={(items.find(i => 'label' in i && i.label === activeSubMenu)!.children! as MenuItem[]).map((child): MenuItem => {
+                                items={(items.find(i => !i.isSeparator && i.label === activeSubMenu)!.children! as MenuItem[]).map((child): MenuItem => {
                                     if (child.isSeparator) {
                                         return child;
                                     }
-                                    // FIX: Replaced problematic destructuring/spread with explicit property assignment.
-                                    // This resolves a TypeScript error where the compiler incorrectly inferred the type of a
-                                    // discriminated union member, leading to a type conflict.
                                     return {
                                         label: child.label,
                                         icon: child.icon,
                                         disabled: child.disabled,
-                                        children: 'children' in child ? child.children : undefined,
+                                        children: child.children,
                                         action: (e) => {
                                             if (child.action) {
                                                 child.action(e);
