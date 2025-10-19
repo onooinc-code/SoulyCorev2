@@ -6,7 +6,8 @@
 
 import { IContextAssemblyConfig } from '../memory/types';
 import { EpisodicMemoryModule } from '../memory/modules/episodic';
-import { UpstashVectorMemoryModule, IVectorQueryResult } from '../memory/modules/upstash_vector';
+import { SemanticMemoryModule, ISemanticQueryResult } from '../memory/modules/semantic';
+import { EntityVectorMemoryModule, IVectorQueryResult } from '../memory/modules/entity_vector';
 import { StructuredMemoryModule } from '../memory/modules/structured';
 import llmProvider from '../llm';
 import { Conversation, Contact, Message } from '@/lib/types';
@@ -37,7 +38,6 @@ export class ContextAssemblyPipeline {
     public async run(input: ContextAssemblyInput): Promise<ContextAssemblyOutput> {
         const startTime = Date.now();
         
-        // 1. Create a run record
         const { rows: runRows } = await sql`
             INSERT INTO pipeline_runs (message_id, pipeline_type, status)
             VALUES (${input.userMessageId}, 'ContextAssembly', 'running')
@@ -48,10 +48,11 @@ export class ContextAssemblyPipeline {
         try {
             let stepOrder = 1;
             const episodicMemory = new EpisodicMemoryModule();
-            const vectorMemory = new UpstashVectorMemoryModule();
+            const semanticMemory = new SemanticMemoryModule();
+            const entityMemory = new EntityVectorMemoryModule();
             const structuredMemory = new StructuredMemoryModule();
 
-            // 2. Retrieve Episodic Memory
+            // 1. Retrieve Episodic Memory
             const step1Time = Date.now();
             const recentMessages = await episodicMemory.query({
                 conversationId: input.conversation.id,
@@ -59,28 +60,36 @@ export class ContextAssemblyPipeline {
             });
             await this.logStep(runId, stepOrder++, 'RetrieveEpisodicMemory', { limit: input.config.episodicMemoryDepth }, { messageCount: recentMessages.length }, Date.now() - step1Time);
 
-
-            // 3. Retrieve Semantic Memory
-            let semanticKnowledge: IVectorQueryResult[] = [];
+            // 2. Retrieve Semantic Memory (Knowledge from Pinecone)
+            let semanticKnowledge: ISemanticQueryResult[] = [];
             if (input.conversation.useSemanticMemory) {
                  const step2Time = Date.now();
-                 semanticKnowledge = await vectorMemory.query({
+                 semanticKnowledge = await semanticMemory.query({
                     queryText: input.userQuery,
                     topK: input.config.semanticMemoryTopK,
                 });
-                await this.logStep(runId, stepOrder++, 'RetrieveVectorMemory', { query: input.userQuery, topK: input.config.semanticMemoryTopK }, { results: semanticKnowledge.map(r => r.text) }, Date.now() - step2Time);
+                await this.logStep(runId, stepOrder++, 'RetrieveSemanticMemory(Pinecone)', { query: input.userQuery, topK: input.config.semanticMemoryTopK }, { results: semanticKnowledge.map(r => r.text) }, Date.now() - step2Time);
             }
 
-            // 4. Retrieve Structured Memory
-            // For now, this is just the mentioned contacts. Could be expanded to search entities.
-            const step3Time = Date.now();
-            await this.logStep(runId, stepOrder++, 'RetrieveStructuredMemory', { mentionedContacts: input.mentionedContacts.map(c => c.name) }, { contactCount: input.mentionedContacts.length }, Date.now() - step3Time);
+            // 3. Retrieve Associative Memory (Entities from Upstash)
+            let relatedEntities: IVectorQueryResult[] = [];
+             if (input.conversation.useStructuredMemory) {
+                 const step3Time = Date.now();
+                 relatedEntities = await entityMemory.query({
+                    queryText: input.userQuery,
+                    topK: 2, // Fetch fewer, more focused entities
+                });
+                await this.logStep(runId, stepOrder++, 'RetrieveEntityMemory(Upstash)', { query: input.userQuery, topK: 2 }, { results: relatedEntities.map(r => r.text) }, Date.now() - step3Time);
+            }
 
-            // 5. Assemble the prompt
+            // 4. Assemble the prompt
             const step4Time = Date.now();
             let contextBlock = "--- CONTEXT ---\n";
             if (semanticKnowledge.length > 0) {
                 contextBlock += "Potentially relevant information from knowledge base:\n" + semanticKnowledge.map(r => `- ${r.text}`).join('\n') + '\n';
+            }
+            if (relatedEntities.length > 0) {
+                contextBlock += "Potentially relevant entities:\n" + relatedEntities.map(r => `- ${r.text}`).join('\n') + '\n';
             }
             if (input.mentionedContacts.length > 0) {
                 contextBlock += "Information about mentioned contacts:\n" + input.mentionedContacts.map(c => `- ${c.name}: ${c.notes || ''}`).join('\n') + '\n';
@@ -92,7 +101,6 @@ export class ContextAssemblyPipeline {
                 parts: [{ text: m.content }]
             }));
             
-            // Add the context block before the latest user message
             if (contextBlock !== "--- CONTEXT ---\n") {
                 const lastMessage = historyForLLM.pop();
                 if (lastMessage) {
@@ -101,13 +109,13 @@ export class ContextAssemblyPipeline {
             }
             await this.logStep(runId, stepOrder++, 'AssemblePrompt', { system: finalSystemInstruction }, { historyLength: historyForLLM.length }, Date.now() - step4Time);
 
-            // 6. Call the LLM
+            // 5. Call the LLM
             const step5Time = Date.now();
             const llmResponse = await llmProvider.generateContent(historyForLLM, finalSystemInstruction);
             const llmResponseTime = Date.now() - step5Time;
             await this.logStep(runId, stepOrder++, 'CallLLM', { model: 'gemini-2.5-flash' }, { response: llmResponse }, llmResponseTime);
 
-            // 7. Finalize the run record
+            // 6. Finalize the run record
             const totalDuration = Date.now() - startTime;
              await sql`
                 UPDATE pipeline_runs

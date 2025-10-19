@@ -5,7 +5,8 @@
  */
 
 import { IMemoryExtractionConfig } from '../memory/types';
-import { UpstashVectorMemoryModule } from '../memory/modules/upstash_vector';
+import { SemanticMemoryModule } from '../memory/modules/semantic';
+import { EntityVectorMemoryModule } from '../memory/modules/entity_vector';
 import { StructuredMemoryModule } from '../memory/modules/structured';
 import llmProvider from '../llm';
 import { sql } from '@/lib/db';
@@ -42,12 +43,12 @@ export class MemoryExtractionPipeline {
             if (input.config.enableEntityExtraction) {
                 const step1Time = Date.now();
                 const entities = await this.extractEntities(input.text);
-                 await this.logStep(runId, stepOrder++, 'ExtractEntities', { text: input.text }, { entities }, Date.now() - step1Time);
+                await this.logStep(runId, stepOrder++, 'ExtractEntities', { text: input.text }, { entities }, Date.now() - step1Time);
 
                 if (entities.length > 0) {
                     const step2Time = Date.now();
                     await this.storeEntities(entities);
-                    await this.logStep(runId, stepOrder++, 'StoreEntities', { entities }, { count: entities.length }, Date.now() - step2Time);
+                    await this.logStep(runId, stepOrder++, 'StoreEntities(Postgres+Upstash)', { entities }, { count: entities.length }, Date.now() - step2Time);
                 }
             }
 
@@ -59,7 +60,7 @@ export class MemoryExtractionPipeline {
                 if (knowledgeChunks.length > 0) {
                     const step4Time = Date.now();
                     await this.storeKnowledge(knowledgeChunks);
-                    await this.logStep(runId, stepOrder++, 'StoreKnowledge', { chunks: knowledgeChunks }, { count: knowledgeChunks.length }, Date.now() - step4Time);
+                    await this.logStep(runId, stepOrder++, 'StoreKnowledge(Pinecone)', { chunks: knowledgeChunks }, { count: knowledgeChunks.length }, Date.now() - step4Time);
                 }
             }
 
@@ -97,11 +98,14 @@ export class MemoryExtractionPipeline {
                 },
             },
         };
+
+        // This is a complex reasoning task, so we use a more powerful model.
         const response = await llmProvider.generateContent(
             [{ role: 'user', parts: [{ text: prompt }] }],
             "You are a data extraction expert.",
-            // @ts-ignore - The SDK types might not be fully updated for responseSchema
-            { responseMimeType: 'application/json', responseSchema }
+            // @ts-ignore
+            { responseMimeType: 'application/json', responseSchema },
+            'gemini-2.5-pro' 
         );
         try {
             return JSON.parse(response);
@@ -113,8 +117,11 @@ export class MemoryExtractionPipeline {
 
     private async storeEntities(entities: {name: string; type: string; details: any}[]): Promise<void> {
         const structuredMemory = new StructuredMemoryModule();
+        const entityVectorMemory = new EntityVectorMemoryModule();
+
         for (const entity of entities) {
-            await structuredMemory.store({
+            // Store relational data in Postgres
+            const savedEntity = await structuredMemory.store({
                 type: 'entity',
                 data: {
                     name: entity.name,
@@ -122,6 +129,16 @@ export class MemoryExtractionPipeline {
                     details_json: JSON.stringify(entity.details),
                 }
             });
+
+            // Store vector data in Upstash
+            if (savedEntity) {
+                const entityText = `${entity.name} is a ${entity.type}. Details: ${JSON.stringify(entity.details)}`;
+                await entityVectorMemory.store({
+                    id: savedEntity.id, // Use the same ID for linking
+                    text: entityText,
+                    metadata: { entity_id: savedEntity.id, name: entity.name, type: entity.type }
+                });
+            }
         }
     }
 
@@ -142,7 +159,8 @@ export class MemoryExtractionPipeline {
             [{ role: 'user', parts: [{ text: prompt }] }],
             "You are a knowledge extraction expert.",
              // @ts-ignore
-            { responseMimeType: 'application/json', responseSchema }
+            { responseMimeType: 'application/json', responseSchema },
+            'gemini-2.5-flash'
         );
         try {
             return JSON.parse(response);
@@ -153,9 +171,9 @@ export class MemoryExtractionPipeline {
     }
 
     private async storeKnowledge(chunks: string[]): Promise<void> {
-        const vectorMemory = new UpstashVectorMemoryModule();
+        const semanticMemory = new SemanticMemoryModule();
         for (const chunk of chunks) {
-            await vectorMemory.store({ text: chunk });
+            await semanticMemory.store({ text: chunk });
         }
     }
 }
