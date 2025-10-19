@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx edgedb-cli migrate && next build",
+    "build": "npx edgedb migrate && next build",
     "start": "next start",
     "lint": "next lint",
     "db:create": "node scripts/create-tables.js",
@@ -19,7 +19,6 @@
     "@vercel/kv": "^3.0.0",
     "@vercel/postgres": "^0.10.0",
     "edgedb": "^2.0.1",
-    "edgedb-cli": "^1.5.2",
     "framer-motion": "^12.23.12",
     "next": "14.2.3",
     "react": "18.3.1",
