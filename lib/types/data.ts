@@ -1,3 +1,4 @@
+// lib/types/data.ts
 /**
  * @fileoverview Centralized type definitions for data models.
  */

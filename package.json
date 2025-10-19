@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "db:create": "node scripts/create-tables.js",
-    "db:seed": "node scripts/seed-features.js && node scripts/seed-subsystems.js && node scripts/seed-docs-and-goals.js && node scripts/seed-version-history.js",
+    "db:seed": "node scripts/seed-features.js && node scripts/seed-subsystems.js && node scripts/seed-docs-and-goals.js && node scripts/seed-version-history.js && node scripts/seed-data-sources.js",
     "postinstall": "npm run db:create && npm run db:seed"
   },
   "dependencies": {
