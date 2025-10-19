@@ -30,8 +30,16 @@ export async function GET(req: NextRequest, { params }: { params: { messageId: s
             SELECT * FROM pipeline_run_steps WHERE run_id = ${pipelineRun.id} ORDER BY step_order ASC;
         `;
         
+        // Sanitize sensitive info if needed in the future
+        const { final_llm_prompt, final_system_instruction, model_config_json, ...restOfRun } = pipelineRun;
+
         return NextResponse.json({
-            pipelineRun,
+            pipelineRun: {
+                ...restOfRun,
+                final_llm_prompt,
+                final_system_instruction,
+                model_config_json,
+            },
             pipelineSteps: stepRows,
         });
 

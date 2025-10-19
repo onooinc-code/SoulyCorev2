@@ -94,6 +94,28 @@ export async function generateTitleFromHistory(history: Content[]): Promise<stri
 }
 
 /**
+ * Generates a detailed summary for a conversation.
+ * @param history The conversation history to summarize.
+ * @returns A detailed summary of the conversation.
+ */
+export async function generateConversationSummary(history: Content[]): Promise<string> {
+    const ai = getAiClient();
+    const model = 'gemini-2.5-flash';
+    const prompt = `Based on the following conversation history, create a concise but comprehensive summary. The summary should capture the main topics, key decisions, and any action items discussed. Aim for a well-structured paragraph.
+
+Conversation History:
+---
+${history.map(m => `${m.role}: ${m.parts[0].text}`).join('\n')}
+---
+
+Summary:`;
+    
+    const contents: Content[] = [{ role: 'user', parts: [{ text: prompt }] }];
+    const response = await ai.models.generateContent({ model, contents });
+    return response.text?.trim() || 'Summary could not be generated.';
+}
+
+/**
  * Generates a summary for a given block of text.
  * @param text The text to summarize.
  * @returns A summary of the text.
@@ -107,6 +129,31 @@ export async function generateSummary(text: string): Promise<string> {
     // @google/genai-api-guideline-fix: Access the text property directly from the response.
     return response.text?.trim() || 'Could not generate summary.';
 }
+
+/**
+ * Generates an extremely concise summary of a text block, specifically for use as context.
+ * The goal is to preserve the core meaning in as few tokens as possible.
+ * @param text The text to summarize.
+ * @returns A very short summary of the text.
+ */
+export async function summarizeForContext(text: string): Promise<string> {
+    const ai = getAiClient();
+    const model = 'gemini-2.5-flash'; // Fast and efficient for this task
+    const prompt = `Create a highly condensed summary of the following text. The summary must capture the absolute core concepts and be as short as possible for use as a memory cue in a future AI prompt.
+    
+    Text to summarize:
+    ---
+    ${text.substring(0, 8000)}
+    ---
+    
+    Condensed Summary:`;
+
+    const contents: Content[] = [{ role: 'user', parts: [{ text: prompt }] }];
+    const response = await ai.models.generateContent({ model, contents });
+    // @google/genai-api-guideline-fix: Access the text property directly from the response.
+    return response.text?.trim() || 'Summary unavailable.';
+}
+
 
 /**
  * Rewrites a user's prompt based on the preceding conversation history to add more context or clarity.

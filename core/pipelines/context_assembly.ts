@@ -8,9 +8,8 @@ import { IContextAssemblyConfig } from '../memory/types';
 import { EpisodicMemoryModule } from '../memory/modules/episodic';
 import { SemanticMemoryModule, ISemanticQueryResult } from '../memory/modules/semantic';
 import { EntityVectorMemoryModule, IVectorQueryResult } from '../memory/modules/entity_vector';
-import { StructuredMemoryModule } from '../memory/modules/structured';
 import llmProvider from '../llm';
-import { Conversation, Contact, Message } from '@/lib/types';
+import { Conversation, Contact } from '@/lib/types';
 import { sql } from '@/lib/db';
 
 interface ContextAssemblyInput {
@@ -50,7 +49,6 @@ export class ContextAssemblyPipeline {
             const episodicMemory = new EpisodicMemoryModule();
             const semanticMemory = new SemanticMemoryModule();
             const entityMemory = new EntityVectorMemoryModule();
-            const structuredMemory = new StructuredMemoryModule();
 
             // 1. Retrieve Episodic Memory
             const step1Time = Date.now();
@@ -71,49 +69,62 @@ export class ContextAssemblyPipeline {
                 await this.logStep(runId, stepOrder++, 'RetrieveSemanticMemory(Pinecone)', { query: input.userQuery, topK: input.config.semanticMemoryTopK }, { results: semanticKnowledge.map(r => r.text) }, Date.now() - step2Time);
             }
 
-            // 3. Retrieve Associative Memory (Entities from Upstash)
+            // 3. Retrieve RELEVANT Entities via Semantic Search (from Upstash)
             let relatedEntities: IVectorQueryResult[] = [];
              if (input.conversation.useStructuredMemory) {
                  const step3Time = Date.now();
                  relatedEntities = await entityMemory.query({
                     queryText: input.userQuery,
-                    topK: 2, // Fetch fewer, more focused entities
+                    topK: 5, // Fetch relevant entities
                 });
-                await this.logStep(runId, stepOrder++, 'RetrieveEntityMemory(Upstash)', { query: input.userQuery, topK: 2 }, { results: relatedEntities.map(r => r.text) }, Date.now() - step3Time);
+                await this.logStep(runId, stepOrder++, 'RetrieveRelevantEntities(Upstash)', { query: input.userQuery, topK: 5 }, { results: relatedEntities.map(r => r.text) }, Date.now() - step3Time);
             }
 
             // 4. Assemble the prompt
             const step4Time = Date.now();
             let contextBlock = "--- CONTEXT ---\n";
             if (semanticKnowledge.length > 0) {
-                contextBlock += "Potentially relevant information from knowledge base:\n" + semanticKnowledge.map(r => `- ${r.text}`).join('\n') + '\n';
+                contextBlock += "Potentially relevant information from knowledge base:\n" + semanticKnowledge.map(r => `- ${r.text}`).join('\n') + '\n\n';
             }
             if (relatedEntities.length > 0) {
-                contextBlock += "Potentially relevant entities:\n" + relatedEntities.map(r => `- ${r.text}`).join('\n') + '\n';
+                contextBlock += "Potentially relevant entities:\n" + relatedEntities.map(r => `- ${r.text}`).join('\n') + '\n\n';
             }
             if (input.mentionedContacts.length > 0) {
-                contextBlock += "Information about mentioned contacts:\n" + input.mentionedContacts.map(c => `- ${c.name}: ${c.notes || ''}`).join('\n') + '\n';
+                contextBlock += "Information about mentioned contacts:\n" + input.mentionedContacts.map(c => `- ${c.name}: ${c.notes || ''}`).join('\n') + '\n\n';
             }
             
             const finalSystemInstruction = input.conversation.systemPrompt || "You are a helpful AI assistant.";
+            
             const historyForLLM = recentMessages.map(m => ({
                 role: m.role,
                 parts: [{ text: m.content }]
             }));
             
-            if (contextBlock !== "--- CONTEXT ---\n") {
+            if (contextBlock.trim() !== "--- CONTEXT ---") {
                 const lastMessage = historyForLLM.pop();
                 if (lastMessage) {
                     historyForLLM.push({ role: 'user', parts: [{ text: contextBlock + "\n--- USER QUERY ---\n" + lastMessage.parts[0].text }] });
                 }
             }
+
+            const modelConfig = {
+                model: input.conversation.model || 'gemini-2.5-flash',
+                temperature: input.conversation.temperature || 0.7,
+                topP: input.conversation.topP || 0.95,
+            };
+            const finalLlmPrompt = historyForLLM[historyForLLM.length - 1]?.parts[0].text;
             await this.logStep(runId, stepOrder++, 'AssemblePrompt', { system: finalSystemInstruction }, { historyLength: historyForLLM.length }, Date.now() - step4Time);
 
             // 5. Call the LLM
             const step5Time = Date.now();
-            const llmResponse = await llmProvider.generateContent(historyForLLM, finalSystemInstruction);
+            const llmResponse = await llmProvider.generateContent(
+                historyForLLM, 
+                finalSystemInstruction,
+                { temperature: modelConfig.temperature, topP: modelConfig.topP },
+                modelConfig.model
+            );
             const llmResponseTime = Date.now() - step5Time;
-            await this.logStep(runId, stepOrder++, 'CallLLM', { model: 'gemini-2.5-flash' }, { response: llmResponse }, llmResponseTime);
+            await this.logStep(runId, stepOrder++, 'CallLLM', modelConfig, { response: llmResponse }, llmResponseTime);
 
             // 6. Finalize the run record
             const totalDuration = Date.now() - startTime;
@@ -122,8 +133,9 @@ export class ContextAssemblyPipeline {
                 SET status = 'completed', 
                     duration_ms = ${totalDuration}, 
                     final_output = ${llmResponse},
-                    final_llm_prompt = ${historyForLLM[historyForLLM.length - 1]?.parts[0].text},
-                    final_system_instruction = ${finalSystemInstruction}
+                    final_llm_prompt = ${finalLlmPrompt},
+                    final_system_instruction = ${finalSystemInstruction},
+                    model_config_json = ${JSON.stringify(modelConfig)}
                 WHERE id = ${runId};
             `;
 

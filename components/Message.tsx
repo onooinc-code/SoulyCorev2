@@ -60,6 +60,7 @@ interface MessageProps {
     onSetConversationAlign: (align: 'left' | 'right') => void;
     onReply: (message: MessageType) => void;
     findMessageById: (id: string) => MessageType | undefined;
+    onViewContext: (type: 'prompt' | 'system' | 'config') => void;
 }
 
 const Message = ({
@@ -77,6 +78,7 @@ const Message = ({
     onSetConversationAlign,
     onReply,
     findMessageById,
+    onViewContext,
 }: MessageProps) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(message.content);
@@ -190,6 +192,7 @@ const Message = ({
                         onDelete={onDelete}
                         onRegenerate={onRegenerate}
                         onInspect={onInspect}
+                        onViewContext={onViewContext}
                         onViewHtml={html ? () => onViewHtml(html) : undefined}
                         onReply={() => onReply(message)}
                     />
@@ -228,6 +231,7 @@ const Message = ({
                                     onSetConversationAlign={onSetConversationAlign}
                                     onReply={onReply}
                                     findMessageById={findMessageById}
+                                    onViewContext={onViewContext}
                                 />
                             </div>
                         ))}

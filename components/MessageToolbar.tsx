@@ -5,7 +5,8 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { 
     CopyIcon, BookmarkIcon, BookmarkFilledIcon, SummarizeIcon, CollapseIcon, ExpandIcon, 
     CheckIcon, EditIcon, TrashIcon, RefreshIcon, TextAlignLeftIcon, TextAlignRightIcon, 
-    DotsHorizontalIcon, BeakerIcon, EyeIcon, ChatBubbleLeftRightIcon, CommandLineIcon, WrenchScrewdriverIcon
+    DotsHorizontalIcon, BeakerIcon, EyeIcon, ChatBubbleLeftRightIcon, CommandLineIcon, WrenchScrewdriverIcon,
+    BrainIcon
 } from '@/components/Icons';
 import { useLog } from '@/components/providers/LogProvider';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,6 +35,7 @@ interface MessageToolbarProps {
     onDelete: () => void;
     onRegenerate: () => void;
     onInspect: () => void;
+    onViewContext: (type: 'prompt' | 'system' | 'config') => void;
     onViewHtml?: () => void;
     onReply: () => void;
 }
@@ -62,7 +64,7 @@ const MessageToolbar = (props: MessageToolbarProps) => {
     }, [log, props.onCopy]);
 
     const allActions = useMemo<(MenuItem | 'separator')[]>(() => {
-        const { onReply, isBookmarked, onBookmark, onSummarize, onRegenerate, isUser, onEdit, onDelete, onViewHtml, onInspect, isCollapsed, onToggleCollapse, onSetAlign } = props;
+        const { onReply, isBookmarked, onBookmark, onSummarize, onRegenerate, isUser, onEdit, onDelete, onViewHtml, onInspect, onViewContext, isCollapsed, onToggleCollapse, onSetAlign } = props;
         
         return [
             { id: 'reply', icon: ChatBubbleLeftRightIcon, action: onReply, title: 'Reply to this message' },
@@ -74,9 +76,10 @@ const MessageToolbar = (props: MessageToolbarProps) => {
             { id: 'delete', icon: TrashIcon, action: onDelete, title: 'Delete message', className: 'hover:text-red-400' },
             'separator',
             { id: 'viewHtml', icon: EyeIcon, action: onViewHtml, title: 'Render HTML content', isHtml: true, isModelOnly: true },
-            { id: 'inspect', icon: BeakerIcon, action: onInspect, title: 'Inspect Cognitive Process (Context)' },
-            { id: 'inspect_prompt', icon: CommandLineIcon, action: onInspect, title: 'View Full Prompt Sent to AI', isUserOnly: true },
-            { id: 'inspect_config', icon: WrenchScrewdriverIcon, action: onInspect, title: 'View Model Configuration', isUserOnly: true },
+            { id: 'inspect', icon: BeakerIcon, action: onInspect, title: 'Inspect Cognitive Process (Context)', isModelOnly: true },
+            { id: 'view_prompt', icon: CommandLineIcon, action: () => onViewContext('prompt'), title: 'View Full Prompt Sent to AI', isUserOnly: true },
+            { id: 'view_system', icon: BrainIcon, action: () => onViewContext('system'), title: 'View System Instructions', isUserOnly: true },
+            { id: 'view_config', icon: WrenchScrewdriverIcon, action: () => onViewContext('config'), title: 'View Model Configuration', isUserOnly: true },
             'separator',
             { id: 'collapse', icon: isCollapsed ? ExpandIcon : CollapseIcon, action: onToggleCollapse, title: isCollapsed ? 'Expand message' : 'Collapse message' },
             { id: 'align-left', icon: TextAlignLeftIcon, action: () => onSetAlign('left'), title: 'Align text left' },
@@ -85,11 +88,6 @@ const MessageToolbar = (props: MessageToolbarProps) => {
             if (typeof action === 'string') return true;
             if (action.isUserOnly && !isUser) return false;
             if (action.isModelOnly && isUser) return false;
-            if (action.id === 'inspect' && isUser) return false;
-            if (action.id !== 'inspect' && !isUser) {
-                const allowedForModel = ['reply', 'copy', 'bookmark', 'summarize', 'delete', 'collapse', 'align-left', 'align-right', 'viewHtml', 'regenerate'];
-                if (!allowedForModel.includes(action.id)) return false;
-            }
             if (action.isHtml && !onViewHtml) return false;
             return true;
         }) as (MenuItem | 'separator')[];

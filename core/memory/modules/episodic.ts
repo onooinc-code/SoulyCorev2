@@ -59,7 +59,22 @@ export class EpisodicMemoryModule implements ISingleMemoryModule {
             )
             RETURNING *;
         `;
-        return rows[0];
+        
+        const savedMessage = rows[0];
+
+        // If the message content is large, trigger a background task to summarize it.
+        const wordCount = savedMessage.content.split(/\s+/).length;
+        if (wordCount > 500) {
+            // Fire-and-forget, no need to await this.
+            fetch(`/api/messages/${savedMessage.id}/summarize-for-context`, {
+                method: 'POST'
+            }).catch(err => {
+                // Log the error but don't let it affect the main flow.
+                console.error(`Failed to trigger background summarization for message ${savedMessage.id}:`, err);
+            });
+        }
+
+        return savedMessage;
     }
 
     /**

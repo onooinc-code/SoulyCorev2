@@ -24,6 +24,7 @@ interface MessageListProps {
     onViewHtml: (htmlContent: string) => void;
     onSetConversationAlign: (align: 'left' | 'right') => void;
     onReply: (message: MessageType) => void;
+    onViewContext: (messageId: string, type: 'prompt' | 'system' | 'config') => void;
 }
 
 const ConversationTurnSeparator = () => (
@@ -59,7 +60,8 @@ const MessageList = ({
     onInspect,
     onViewHtml,
     onSetConversationAlign,
-    onReply
+    onReply,
+    onViewContext
 }: MessageListProps) => {
     const { scrollToMessageId, setScrollToMessageId } = useConversation();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -118,29 +120,45 @@ const MessageList = ({
             {threadedMessages.length > 0 ? (
                 <div className="w-full mt-auto">
                     <div className="space-y-4">
-                        {threadedMessages.map((msg, index) => (
-                            <React.Fragment key={msg.id}>
-                                <div data-message-id={msg.id}>
-                                    <Message 
-                                        message={msg}
-                                        onSummarize={onSummarize}
-                                        onToggleBookmark={onToggleBookmark}
-                                        onDelete={() => onDeleteMessage(msg.id)}
-                                        onUpdateMessage={onUpdateMessage}
-                                        onRegenerate={() => onRegenerate(msg.id)}
-                                        onInspect={() => onInspect(msg.id)}
-                                        isContextAssemblyRunning={isLoading && msg.role === 'user' && msg.id === lastMessageIds.user && !activeWorkflow}
-                                        isMemoryExtractionRunning={backgroundTaskCount > 0 && msg.role === 'model' && msg.id === lastMessageIds.model}
-                                        onViewHtml={onViewHtml}
-                                        currentConversation={currentConversation}
-                                        onSetConversationAlign={onSetConversationAlign}
-                                        onReply={onReply}
-                                        findMessageById={findMessageById}
-                                    />
-                                </div>
-                                {msg.role === 'model' && index < threadedMessages.length - 1 && <ConversationTurnSeparator />}
-                            </React.Fragment>
-                        ))}
+                        {threadedMessages.map((msg, index) => {
+                            // Find the user message ID that triggered this turn for inspection purposes
+                            let userMessageIdForInspection: string | null = null;
+                            if (msg.role === 'user') {
+                                userMessageIdForInspection = msg.id;
+                            } else { // It's a model message, find the last user message before it
+                                for (let i = index; i >= 0; i--) {
+                                    if (threadedMessages[i].role === 'user') {
+                                        userMessageIdForInspection = threadedMessages[i].id;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            return (
+                                <React.Fragment key={msg.id}>
+                                    <div data-message-id={msg.id}>
+                                        <Message 
+                                            message={msg}
+                                            onSummarize={onSummarize}
+                                            onToggleBookmark={onToggleBookmark}
+                                            onDelete={() => onDeleteMessage(msg.id)}
+                                            onUpdateMessage={onUpdateMessage}
+                                            onRegenerate={() => onRegenerate(msg.id)}
+                                            onInspect={() => userMessageIdForInspection && onInspect(userMessageIdForInspection)}
+                                            isContextAssemblyRunning={isLoading && msg.role === 'user' && msg.id === lastMessageIds.user && !activeWorkflow}
+                                            isMemoryExtractionRunning={backgroundTaskCount > 0 && msg.role === 'model' && msg.id === lastMessageIds.model}
+                                            onViewHtml={onViewHtml}
+                                            currentConversation={currentConversation}
+                                            onSetConversationAlign={onSetConversationAlign}
+                                            onReply={onReply}
+                                            findMessageById={findMessageById}
+                                            onViewContext={(type) => userMessageIdForInspection && onViewContext(userMessageIdForInspection, type)}
+                                        />
+                                    </div>
+                                    {msg.role === 'model' && index < threadedMessages.length - 1 && <ConversationTurnSeparator />}
+                                </React.Fragment>
+                            )
+                        })}
                         {isLoading && activeWorkflow && (
                             <motion.div 
                                 initial={{ opacity: 0, y: 10 }}

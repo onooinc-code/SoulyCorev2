@@ -68,3 +68,5 @@ export * from './icons/WrenchScrewdriverIcon';
 export * from './icons/XIcon';
 export * from './icons/CircleStackIcon';
 export * from './icons/ClipboardPasteIcon';
+export * from './icons/CubeIcon';
+export * from './icons/LinkIcon';

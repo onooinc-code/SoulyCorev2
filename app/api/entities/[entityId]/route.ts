@@ -1,18 +1,23 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import type { Entity } from '@/lib/types';
+import type { EntityDefinition } from '@/lib/types';
 
 export async function PUT(req: NextRequest, { params }: { params: { entityId: string } }) {
     try {
         const { entityId } = params;
-        const { name, type, details_json } = await req.json();
-        if (!name || !type || !details_json) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        const { name, type, description, aliases } = await req.json();
+        if (!name || !type) {
+            return NextResponse.json({ error: 'Missing required fields: name and type' }, { status: 400 });
         }
-        const { rows } = await sql<Entity>`
-            UPDATE entities
-            SET name = ${name}, type = ${type}, details_json = ${details_json}
+        const { rows } = await sql<EntityDefinition>`
+            UPDATE entity_definitions
+            SET 
+                name = ${name}, 
+                type = ${type}, 
+                description = ${description || null}, 
+                aliases = ${aliases ? JSON.stringify(aliases) : '[]'},
+                "lastUpdatedAt" = CURRENT_TIMESTAMP
             WHERE id = ${entityId}
             RETURNING *;
         `;
@@ -30,7 +35,7 @@ export async function PUT(req: NextRequest, { params }: { params: { entityId: st
 export async function DELETE(req: NextRequest, { params }: { params: { entityId: string } }) {
     try {
         const { entityId } = params;
-        const { rowCount } = await sql`DELETE FROM entities WHERE id = ${entityId};`;
+        const { rowCount } = await sql`DELETE FROM entity_definitions WHERE id = ${entityId};`;
         if (rowCount === 0) {
             return NextResponse.json({ error: 'Entity not found' }, { status: 404 });
         }

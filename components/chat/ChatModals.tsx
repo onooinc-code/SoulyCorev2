@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -16,6 +15,12 @@ const CognitiveInspectorModal = dynamic(() => import('../CognitiveInspectorModal
     loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><p className="text-white">Loading Inspector...</p></div>
 });
 
+// FIX: Added dynamic import for ContextViewerModal which was missing.
+const ContextViewerModal = dynamic(() => import('../ContextViewerModal'), {
+    ssr: false,
+    loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><p className="text-white">Loading Viewer...</p></div>
+});
+
 const HtmlViewerModal = dynamic(() => import('../HtmlViewerModal'), {
     ssr: false,
     loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><p className="text-white">Loading Viewer...</p></div>
@@ -31,6 +36,9 @@ interface ChatModalsProps {
     setSummaryModalState: React.Dispatch<React.SetStateAction<{ isOpen: boolean; text: string; isLoading: boolean; }>>;
     inspectorModalState: { isOpen: boolean; messageId: string | null; };
     setInspectorModalState: React.Dispatch<React.SetStateAction<{ isOpen: boolean; messageId: string | null; }>>;
+    // FIX: Added missing props for the context viewer modal.
+    contextViewerModalState: { isOpen: boolean; messageId: string | null; type: 'prompt' | 'system' | 'config' | null; };
+    setContextViewerModalState: React.Dispatch<React.SetStateAction<{ isOpen: boolean; messageId: string | null; type: 'prompt' | 'system' | 'config' | null; }>>;
     htmlModalState: { isOpen: boolean; content: string; };
     setHtmlModalState: React.Dispatch<React.SetStateAction<{ isOpen: boolean; content: string; }>>;
 }
@@ -45,6 +53,9 @@ const ChatModals = ({
     setSummaryModalState,
     inspectorModalState,
     setInspectorModalState,
+    // FIX: Destructured the missing props for use in the component.
+    contextViewerModalState,
+    setContextViewerModalState,
     htmlModalState,
     setHtmlModalState
 }: ChatModalsProps) => {
@@ -69,6 +80,13 @@ const ChatModals = ({
                 isOpen={inspectorModalState.isOpen}
                 onClose={() => setInspectorModalState({ isOpen: false, messageId: null })}
                 messageId={inspectorModalState.messageId}
+            />
+            {/* FIX: Rendered the missing ContextViewerModal. */}
+            <ContextViewerModal
+                isOpen={contextViewerModalState.isOpen}
+                onClose={() => setContextViewerModalState({ isOpen: false, messageId: null, type: null })}
+                messageId={contextViewerModalState.messageId}
+                contextType={contextViewerModalState.type}
             />
             <HtmlViewerModal 
                 isOpen={htmlModalState.isOpen}

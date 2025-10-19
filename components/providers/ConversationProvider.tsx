@@ -47,6 +47,7 @@ const ConversationContext = createContext<ConversationContextType | undefined>(u
 export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { log } = useLog();
     const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const summaryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
     const [unreadConversations, setUnreadConversations] = useState(new Set<string>());
@@ -70,9 +71,9 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
                 setCurrentConversation(null);
             }
         },
-        onConversationCreated: (newConversation) => {
+        onConversationCreated: (conversation) => {
             // This callback sets the new conversation as active after creation
-            setCurrentConversation(newConversation);
+            setCurrentConversation(conversation);
             setActiveView('chat');
         }
     });
@@ -174,6 +175,36 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
             }, 1500); // 1.5 second debounce delay
         }
     }, [currentConversation, log, setStatus, loadConversations]);
+    
+    // Effect for triggering background conversation summary
+    useEffect(() => {
+        if (summaryTimeoutRef.current) {
+            clearTimeout(summaryTimeoutRef.current);
+        }
+
+        if (currentConversation && messages.length > 0) {
+            log(`Activity detected in ${currentConversation.id}, resetting summary timer.`);
+            summaryTimeoutRef.current = setTimeout(() => {
+                log(`Conversation inactive, triggering summary generation for ${currentConversation.id}`);
+                fetch(`/api/conversations/${currentConversation.id}/summarize`, {
+                    method: 'POST',
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.id) log(`Background summary completed for ${data.id}.`);
+                })
+                .catch(err => {
+                    log('Failed to trigger background conversation summarization.', { error: err }, 'error');
+                });
+            }, 10 * 60 * 1000); // 10 minutes of inactivity
+        }
+
+        return () => {
+            if (summaryTimeoutRef.current) {
+                clearTimeout(summaryTimeoutRef.current);
+            }
+        };
+    }, [messages, currentConversation, log]);
 
 
     const contextValue = {

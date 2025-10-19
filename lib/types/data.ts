@@ -18,8 +18,8 @@ export interface Conversation {
     };
     enableProactiveSuggestions?: boolean;
     enableAutoSummarization?: boolean;
-    // FIX: Add missing property to Conversation type.
     enableMemoryExtraction?: boolean;
+    topics?: any; // JSONB can be any type
 }
 
 export interface Message {
@@ -34,6 +34,7 @@ export interface Message {
     parentMessageId?: string | null;
     tags?: string[];
     threadMessages?: Message[];
+    content_summary?: string;
 }
 
 // Memory & Knowledge
@@ -47,13 +48,34 @@ export interface Contact {
     tags?: string[];
 }
 
-export interface Entity {
+// New Entity and Relationship types for v3.3
+export interface EntityDefinition {
     id: string;
-    name: string;
+    name: string; // Canonical name
     type: string;
-    details_json: string;
+    description?: string; // LLM-generated description for semantic meaning
+    aliases?: any; // JSONB array of strings
+    createdAt: Date;
+    lastUpdatedAt: Date;
+}
+
+export interface EntityRelationship {
+    id: string;
+    source_entity_id: string;
+    target_entity_id: string;
+    predicate: string;
+    context?: string;
     createdAt: Date;
 }
+
+// New Segmentation types for v3.3
+export interface Segment {
+    id: string;
+    name: string;
+    description?: string;
+    type: 'Impact' | 'Topic';
+}
+
 
 export interface PromptChainStep {
     step: number;
