@@ -36,6 +36,8 @@ export interface Conversation {
   enableProactiveSuggestions?: boolean;
   enableAutoSummarization?: boolean;
   enableMemoryExtraction?: boolean;
+  useGraphMemory?: boolean;
+  useDocumentMemory?: boolean;
 }
 
 // --- Memory & Knowledge ---

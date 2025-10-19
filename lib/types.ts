@@ -1,3 +1,4 @@
-// FIX: This file was empty, causing "not a module" errors. It should re-export types.
-export * from './app';
-export * from './data';
+// FIX: This file had incorrect relative paths, causing type import errors across the app.
+// It should re-export types from the `lib/types` directory.
+export * from './types/app';
+export * from './types/data';

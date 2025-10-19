@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
         // V2 Core Engine: Use the Context Assembly Pipeline
         const contextPipeline = new ContextAssemblyPipeline();
         const assembledContext = await contextPipeline.run({
-            conversationId: conversation.id,
+            // FIX: Changed conversationId to conversation to match the ContextAssemblyInput interface.
+            conversation: conversation,
             userQuery: latestUserMessageContent,
             config: {
                 episodicMemoryDepth: 10,
