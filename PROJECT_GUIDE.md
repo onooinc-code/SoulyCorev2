@@ -1,7 +1,19 @@
 # HedraCore: The Definitive Developer's Guide
 
-**Version:** 0.3.0
+**Version:** 0.4.0
 **Status:** Live (Reflects Cognitive Architecture v2.0)
+
+---
+
+## Table of Contents
+
+1.  [Project Vision: The Total Recall Companion](#1-project-vision-the-total-recall-companion)
+2.  [System Architecture](#2-system-architecture)
+3.  [Technology Stack & Environment](#3-technology-stack--environment)
+4.  [Project Structure Deep Dive](#4-project-structure-deep-dive)
+5.  [Feature Registry & Hubs Deep Dive](#5-feature-registry--hubs-deep-dive)
+6.  [Development Workflow & Rules](#6-development-workflow--rules)
+7.  [Future Roadmap & Important Notes](#7-future-roadmap--important-notes)
 
 ---
 
@@ -133,16 +145,16 @@ A system for creating, managing, and using reusable prompt templates.
 The interface for managing **Procedural Memory** (the agent's capabilities).
 - **Tool Registry**: A CRUD interface to define tools the agent can use.
 - **Schema Definition**: Each tool requires a JSON Schema that defines its inputs, which the agent uses to form correct function calls.
-- **Status**: The backend and database infrastructure is complete. The UI is currently a placeholder but is ready for implementation.
+- **Status**: The backend and database infrastructure is complete. The UI is fully functional.
 
 ### 5.8. Tasks Hub (`/components/TasksHub.tsx`)
 A simple task and to-do list manager.
-- **Status**: The backend infrastructure (database table, API endpoints) is complete. The UI is currently a placeholder.
+- **Status**: The backend infrastructure (database table, API endpoints) and a full-featured UI are complete and functional.
 
 ### 5.9. Data Hub (`/components/data_hub`)
 A dashboard for monitoring and managing all connected data sources and storage services.
 - **Architecture**: Consists of a main center (`DataHubCenter.tsx`) with a tabbed interface for a `ServicesPanel` and `LogsPanel`. The `ServicesPanel` displays multiple `ServiceCard` components, each representing a data source, and is summarized by a `StatsRow`. A `DataHubWidget` provides a quick-view modal.
-- **Status**: **Placeholder Implementation.** The entire feature currently runs on **mock, hardcoded data**. The backend infrastructure (the `data_sources` table and seeding script) exists, but the frontend components are not yet connected to any API. The next step is to build the API endpoints and replace the mock data with live data.
+- **Status**: **Implemented.** The Data Hub is fully functional, fetching live data from the `data_sources` table via the `/api/data-sources` endpoints. It provides a real-time overview of all connected services, their status, and allows for configuration management through dedicated modals.
 
 ### 5.10. SoulyDev Center (`/components/dev_center`)
 An integrated control panel for developers.
