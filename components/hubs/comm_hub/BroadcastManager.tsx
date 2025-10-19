@@ -2,10 +2,12 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useNotification } from '@/lib/hooks/use-notifications';
 
 const BroadcastManager = () => {
     const [message, setMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
+    const { addNotification } = useNotification();
 
     const handleSend = () => {
         if (!message.trim()) return;
@@ -15,8 +17,12 @@ const BroadcastManager = () => {
         setTimeout(() => {
             setIsSending(false);
             setMessage('');
-            alert('Broadcast sent (simulated).');
-        }, 1500);
+            addNotification({
+                type: 'success',
+                title: 'Broadcast Sent',
+                message: `Message sent to all clients: "${message.substring(0, 30)}..."`
+            });
+        }, 1000);
     };
 
     return (

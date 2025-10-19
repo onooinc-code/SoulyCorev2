@@ -46,8 +46,13 @@ export async function POST(req: NextRequest) {
         const { rows } = await sql<EntityRelationship>`
             INSERT INTO entity_relationships (source_entity_id, target_entity_id, predicate, context)
             VALUES (${source_entity_id}, ${target_entity_id}, ${predicate}, ${context || null})
+            ON CONFLICT (source_entity_id, target_entity_id, predicate) DO NOTHING
             RETURNING *;
         `;
+        
+        if (rows.length === 0) {
+            return NextResponse.json({ message: "Relationship already exists." }, { status: 200 });
+        }
         
         return NextResponse.json(rows[0], { status: 201 });
 

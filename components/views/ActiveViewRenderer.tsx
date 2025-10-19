@@ -13,7 +13,7 @@ const componentMap = {
     contacts_hub: dynamic(() => import('@/components/ContactsHub')),
     prompts_hub: dynamic(() => import('@/components/PromptsHub')),
     tools_hub: dynamic(() => import('@/components/ToolsHub')),
-    tasks_hub: dynamic(() => import('@/components/TasksHub')),
+    projects_hub: dynamic(() => import('@/components/ProjectsHub')),
     data_hub: dynamic(() => import('@/components/data_hub/DataHubCenter')),
     dev_center: dynamic(() => import('@/components/dev_center/DevCenter')),
     comm_hub: dynamic(() => import('@/components/hubs/CommunicationHub')),
@@ -23,11 +23,12 @@ const componentMap = {
 const ActiveViewRenderer = () => {
     const { activeView } = useUIState();
 
-    const ActiveComponent = componentMap[activeView] || null;
+    // The chat view is handled specially in App.tsx, so we don't include it here.
+    const ActiveComponent = activeView !== 'chat' ? componentMap[activeView] : null;
 
     return (
         <div className="w-full h-full bg-gray-900">
-            {ActiveComponent ? <ActiveComponent /> : <div>View not found</div>}
+            {ActiveComponent ? <ActiveComponent /> : <div>View not found or is the default chat view.</div>}
         </div>
     );
 };

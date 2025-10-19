@@ -4,7 +4,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Experience } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
-import { motion } from 'framer-motion';
+import { useNotification } from '@/lib/hooks/use-notifications';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BrainIcon, TrashIcon } from '@/components/Icons';
 
 const ExperienceCard = ({ experience, onDelete }: { experience: Experience, onDelete: (id: string) => void }) => {
@@ -40,6 +41,7 @@ const ExperienceCard = ({ experience, onDelete }: { experience: Experience, onDe
 
 const ExperiencesHub = () => {
     const { log } = useLog();
+    const { addNotification } = useNotification();
     const [experiences, setExperiences] = useState<Experience[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -62,12 +64,15 @@ const ExperiencesHub = () => {
     }, [fetchExperiences]);
     
     const handleDelete = async (id: string) => {
-        if (!window.confirm("Are you sure you want to delete this learned experience?")) return;
+        if (!window.confirm("Are you sure you want to delete this learned experience? The agent will no longer be able to use it as a reference.")) return;
         try {
-             await fetch(`/api/experiences/${id}`, { method: 'DELETE' });
+             const res = await fetch(`/api/experiences/${id}`, { method: 'DELETE' });
+             if (!res.ok) throw new Error("Failed to delete experience");
+             addNotification({ type: 'success', title: 'Experience Deleted' });
              await fetchExperiences();
         } catch (error) {
              log('Error deleting experience', { error, id }, 'error');
+             addNotification({ type: 'error', title: 'Error', message: (error as Error).message });
         }
     };
 
@@ -80,7 +85,14 @@ const ExperiencesHub = () => {
             
             <main className="flex-1 overflow-y-auto pt-6 pr-2 space-y-4">
                 {isLoading ? <p>Loading experiences...</p> : experiences.length > 0 ? (
-                    experiences.map(exp => <ExperienceCard key={exp.id} experience={exp} onDelete={handleDelete} />)
+                    <AnimatePresence>
+                        {experiences.map(exp => (
+                            // FIX: Wrapped ExperienceCard in a div and moved the key prop to resolve a TypeScript error where the key was being passed as a prop.
+                            <div key={exp.id}>
+                                <ExperienceCard experience={exp} onDelete={handleDelete} />
+                            </div>
+                        ))}
+                    </AnimatePresence>
                 ) : (
                     <div className="text-center text-gray-500 py-16">
                         <BrainIcon className="w-12 h-12 mx-auto mb-4"/>

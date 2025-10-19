@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
     try {
         const { rows } = await sql<Experience>`
-            SELECT * FROM experiences ORDER BY "last_used_at" DESC, "createdAt" DESC;
+            SELECT * FROM experiences ORDER BY "last_used_at" DESC NULLS LAST, "createdAt" DESC;
         `;
         return NextResponse.json(rows);
     } catch (error) {

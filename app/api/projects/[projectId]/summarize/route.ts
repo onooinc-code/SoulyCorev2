@@ -22,17 +22,18 @@ export async function POST(req: NextRequest, { params }: { params: { projectId: 
         const { rows: taskRows } = await sql<ProjectTask>`SELECT * FROM project_tasks WHERE project_id = ${projectId}`;
         
         const prompt = `
-            Analyze the following project data and provide a concise summary of its status.
+            Analyze the following project data and provide a concise, professional summary of its status.
+            The summary should be formatted in Markdown.
 
             Project Name: ${project.name}
             Description: ${project.description}
             Status: ${project.status}
-            Due Date: ${project.due_date}
+            Due Date: ${project.due_date ? new Date(project.due_date).toLocaleDateString() : 'N/A'}
 
             Tasks:
-            ${taskRows.map(t => `- [${t.status === 'done' ? 'x' : ' '}] ${t.title}`).join('\n')}
+            ${taskRows.length > 0 ? taskRows.map(t => `- [${t.status === 'done' ? 'x' : ' '}] ${t.title}`).join('\n') : 'No tasks defined.'}
 
-            Provide a one-paragraph summary.
+            Provide a one-paragraph executive summary of the project's current state, highlighting progress and any potential blockers based on the tasks.
         `;
         
         const ai = getAiClient();
