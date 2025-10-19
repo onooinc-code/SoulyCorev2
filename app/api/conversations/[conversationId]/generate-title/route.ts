@@ -22,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: { conversatio
 
         // 2. Format for Gemini API
         const history: Content[] = messages.map(msg => ({
-            role: msg.role,
+            role: msg.role as 'user' | 'model',
             parts: [{ text: msg.content }]
         }));
 
