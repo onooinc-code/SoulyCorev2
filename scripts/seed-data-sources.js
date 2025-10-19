@@ -8,11 +8,11 @@ const dataSources = [
     { name: 'Upstash Vector', provider: 'Upstash', type: 'vector', status: 'needs_config', stats: [{ label: 'Vectors', value: 0 }, { label: 'Latency', value: 'N/A' }] },
     { name: 'Vercel GraphDB', provider: 'Vercel', type: 'graph', status: 'needs_config', stats: [{ label: 'Nodes', value: 0 }, { label: 'Latency', value: 'N/A' }] },
     { name: 'Vercel MongoDB', provider: 'Vercel', type: 'document_db', status: 'needs_config', stats: [{ label: 'Collections', value: 0 }, { label: 'Latency', value: 'N/A' }] },
-    { name: 'Vercel Redis', provider: 'Vercel', type: 'cache', status: 'disconnected', stats: [{ label: 'Keys', value: 0 }, { label: 'Latency', value: 'N/A' }] },
+    { name: 'Vercel Redis', provider: 'Vercel', type: 'cache', status: 'needs_config', stats: [{ label: 'Keys', value: 0 }, { label: 'Latency', value: 'N/A' }] },
     { name: 'Vercel Blob', provider: 'Vercel', type: 'blob', status: 'needs_config', stats: [{ label: 'Files', value: 0 }, { label: 'Size', value: '0MB' }] },
-    { name: 'Google Drive', provider: 'Google', type: 'file_system', status: 'disconnected', stats: [{ label: 'Files', value: 'N/A' }, { label: 'Auth', value: 'OAuth' }] },
-    { name: 'Self-Hosted MySQL', provider: 'Self-Hosted', type: 'relational_db', status: 'error', stats: [{ label: 'Status', value: 'Failed' }, { label: 'Latency', value: 'N/A' }] },
-    { name: 'Supabase', provider: 'Supabase', type: 'relational_db', status: 'unstable', stats: [{ label: 'Tables', value: 15 }, { label: 'Latency', value: '250ms' }] },
+    { name: 'Google Drive', provider: 'Google', type: 'file_system', status: 'needs_config', stats: [{ label: 'Files', value: 'N/A' }, { label: 'Auth', value: 'OAuth' }] },
+    { name: 'Self-Hosted MySQL', provider: 'Self-Hosted', type: 'relational_db', status: 'needs_config', stats: [{ label: 'Status', value: 'Mock' }, { label: 'Latency', value: 'N/A' }] },
+    { name: 'Supabase', provider: 'Supabase', type: 'relational_db', status: 'needs_config', stats: [{ label: 'Tables', value: 0 }, { label: 'Latency', value: 'N/A' }] },
 ];
 
 async function seedDataSources() {

@@ -62,6 +62,11 @@ const ServiceCard = ({ service, onSettingsClick }: ServiceCardProps) => {
                     </button>
                     <div className="flex-grow w-3/5 bg-gray-900/50 rounded-md flex items-center justify-center text-center p-1">
                         <span className="font-bold text-sm truncate text-white">{service.name}</span>
+                        {service.status === 'needs_config' && (
+                            <span className="ml-2 text-[10px] font-mono px-1.5 py-0.5 rounded bg-yellow-900/50 text-yellow-400 border border-yellow-500/30">
+                                MOCK
+                            </span>
+                        )}
                     </div>
                     <button className="flex-shrink-0 w-1/5 bg-gray-700/50 rounded-md flex items-center justify-center text-gray-300 hover:bg-gray-700 transition-colors" title="Actions">
                         <DotsHorizontalIcon className="w-5 h-5"/>
