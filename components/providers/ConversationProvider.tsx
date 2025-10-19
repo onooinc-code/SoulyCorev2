@@ -7,6 +7,7 @@ import { useAppStatus } from '@/lib/hooks/useAppStatus';
 import { useConversationList } from '@/lib/hooks/useConversationList';
 import { useMessageManager } from '@/lib/hooks/useMessageManager';
 import { useWorkflowManager } from '@/lib/hooks/useWorkflowManager';
+import { useUIState } from './UIStateProvider';
 
 // The context type definition remains comprehensive, combining the outputs of all hooks.
 interface ConversationContextType {
@@ -50,6 +51,7 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
     const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
     const [unreadConversations, setUnreadConversations] = useState(new Set<string>());
     const [scrollToMessageId, setScrollToMessageId] = useState<string | null>(null);
+    const { setActiveView } = useUIState();
 
     // --- HOOKS COMPOSITION ---
     const { 
@@ -71,6 +73,7 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
         onConversationCreated: (newConversation) => {
             // This callback sets the new conversation as active after creation
             setCurrentConversation(newConversation);
+            setActiveView('chat');
         }
     });
 
@@ -116,9 +119,10 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
         const convo = conversations.find(c => c.id === conversationId);
         if (convo) {
             setCurrentConversation(convo);
+            setActiveView('chat');
             // fetchMessages is now handled by the useEffect below
         }
-    }, [conversations, setMessages]);
+    }, [conversations, setMessages, setActiveView]);
     
     // This effect ensures the `currentConversation` object in state is always the latest version from the list.
      useEffect(() => {
