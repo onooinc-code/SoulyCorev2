@@ -1,3 +1,4 @@
+// components/NavigationRail.tsx
 
 "use client";
 
@@ -11,7 +12,8 @@ import {
     RocketLaunchIcon,
     ToolsIcon,
     TasksIcon,
-    CircleStackIcon
+    CircleStackIcon,
+    SearchIcon // Added SearchIcon
 } from '@/components/Icons';
 import { useLog } from './providers/LogProvider';
 
@@ -37,15 +39,16 @@ const NavigationRail = ({ setBookmarksOpen, setGlobalSettingsOpen }: {
     const { log } = useLog();
 
     useEffect(() => {
-        if (currentConversation) {
+        if (currentConversation && activeView !== 'search') {
             setActiveView('chat');
-        } else if (activeView === 'chat') {
+        } else if (!currentConversation && activeView === 'chat') {
             setActiveView('dashboard');
         }
     }, [currentConversation, setActiveView, activeView]);
 
     const mainViews: NavItemProps[] = [
         { viewName: 'dashboard', label: 'Dashboard', icon: DashboardIcon, tooltip: "Open the main Dashboard Center." },
+        { viewName: 'search', label: 'Search', icon: SearchIcon, tooltip: "Open Global Search." }, // Added Search view
         { viewName: 'agent_center', label: 'Agent Center', icon: RocketLaunchIcon, tooltip: "Manage and run autonomous agents." },
         { viewName: 'brain_center', label: 'Brain Center', icon: BrainIcon, tooltip: "Manage the AI's core cognitive functions." },
         { viewName: 'memory_center', label: 'Memory Center', icon: MemoryIcon, tooltip: "View and manage the AI's structured knowledge. (Cmd+K)" },
@@ -65,7 +68,13 @@ const NavigationRail = ({ setBookmarksOpen, setGlobalSettingsOpen }: {
 
     const NavButton = ({ item }: { item: NavItemProps }) => (
         <button
-            onClick={() => { log(`User navigated to ${item.label}`); setActiveView(item.viewName); setCurrentConversation(null); }}
+            onClick={() => { 
+                log(`User navigated to ${item.label}`); 
+                setActiveView(item.viewName); 
+                if (item.viewName !== 'search') {
+                    setCurrentConversation(null);
+                }
+            }}
             title={item.tooltip}
             className={`w-12 h-12 flex items-center justify-center rounded-lg transition-colors relative ${
                 activeView === item.viewName ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'

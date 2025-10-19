@@ -2,16 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useUIState } from './providers/UIStateProvider';
+// FIX: Corrected relative import path for useUIState to use the `@` alias.
+import { useUIState } from '@/components/providers/UIStateProvider';
 import { useConversation } from './providers/ConversationProvider';
 import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';
+// FIX: Corrected import path. This error is due to placeholder file content, which will also be fixed.
 import { useAppContextMenu } from '@/lib/hooks/useAppContextMenu';
 
 import ChatWindow from './ChatWindow';
 import NavigationRail from './NavigationRail';
 import ConversationPanel from './ConversationPanel';
 import ContextMenu from './ContextMenu';
-import GlobalModals from './modals/GlobalModals';
+// FIX: Corrected relative import path for GlobalModals to use the `@` alias.
+import GlobalModals from '@/components/modals/GlobalModals';
 import MorningBriefing from './MorningBriefing';
 import Notifications from './Notifications';
 import AppStatusBar from './AppStatusBar';

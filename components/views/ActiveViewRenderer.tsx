@@ -1,8 +1,10 @@
+// components/views/ActiveViewRenderer.tsx
 
 "use client";
 
 import React from 'react';
-import { useUIState } from '../providers/UIStateProvider';
+// FIX: Corrected relative import path to use the `@` alias.
+import { useUIState } from '@/components/providers/UIStateProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
@@ -17,9 +19,11 @@ const ToolsHub = dynamic(() => import('../ToolsHub'));
 const TasksHub = dynamic(() => import('../TasksHub'));
 const DataHubCenter = dynamic(() => import('../data_hub/DataHubCenter'));
 const DevCenter = dynamic(() => import('../dev_center/DevCenter'));
+const GlobalSearch = dynamic(() => import('../search/GlobalSearch')); // Added GlobalSearch
 
 const viewMap: { [key: string]: React.ComponentType } = {
     dashboard: DashboardCenter,
+    search: GlobalSearch, // Added search view
     agent_center: AgentCenter,
     brain_center: BrainCenter,
     memory_center: MemoryCenter,

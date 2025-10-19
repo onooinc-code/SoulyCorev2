@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
-import { useUIState } from './providers/UIStateProvider';
+// FIX: Corrected relative import path to use the `@` alias.
+import { useUIState } from '@/components/providers/UIStateProvider';
 import { PlusIcon, SparklesIcon, EditIcon, TrashIcon, SearchIcon, XIcon, SidebarLeftIcon, PinIcon, PinFilledIcon } from '@/components/Icons';
 import { useLog } from './providers/LogProvider';
 import { AnimatePresence, motion } from 'framer-motion';

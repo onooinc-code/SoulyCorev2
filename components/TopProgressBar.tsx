@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUIState } from './providers/UIStateProvider';
+// FIX: Corrected relative import path to use the `@` alias.
+import { useUIState } from '@/components/providers/UIStateProvider';
 
 const TopProgressBar = () => {
     const { isNavigating } = useUIState();

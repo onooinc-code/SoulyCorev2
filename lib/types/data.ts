@@ -41,6 +41,17 @@ export interface Conversation {
   useDocumentMemory?: boolean;
 }
 
+// --- Search ---
+export interface SearchResult {
+    type: 'conversation' | 'message' | 'contact';
+    title: string;
+    content?: string;
+    url: string;
+    id: string;
+    parentTitle?: string;
+}
+
+
 // --- Memory & Knowledge ---
 
 export interface Contact {
