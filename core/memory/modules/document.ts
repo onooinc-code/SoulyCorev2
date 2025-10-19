@@ -1,1 +1,2 @@
-full contents of core/memory/modules/document.ts
+// This module is a placeholder for future Document Database integration.
+export {};

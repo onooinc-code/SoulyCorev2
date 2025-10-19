@@ -1,1 +1,2 @@
-full contents of core/repositories/IConversationRepository.ts
+// This interface is a placeholder for a future repository pattern implementation.
+export {};

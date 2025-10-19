@@ -50,7 +50,9 @@ export const useWorkflowManager = ({ currentConversation, setStatus, addMessage,
 
                 // 2. Resolve arguments
                 const args: Record<string, any> = {};
-                for (const [argName, mapping] of Object.entries(currentStep.inputMapping)) {
+                // FIX: Explicitly cast the 'mapping' object to its expected type to resolve 'unknown' type errors.
+                for (const [argName, mappingUntyped] of Object.entries(currentStep.inputMapping)) {
+                    const mapping = mappingUntyped as { source: 'userInput' | 'stepOutput'; step?: number };
                     if (mapping.source === 'userInput') {
                         args[argName] = userInputs[argName];
                     } else if (mapping.source === 'stepOutput' && mapping.step) {
@@ -84,7 +86,9 @@ export const useWorkflowManager = ({ currentConversation, setStatus, addMessage,
                 const stepPrompt: Prompt = await promptRes.json();
                 
                 let interpolatedContent = stepPrompt.content;
-                for (const [variableName, mapping] of Object.entries(currentStep.inputMapping)) {
+                // FIX: Explicitly cast the 'mapping' object to its expected type to resolve 'unknown' type errors.
+                for (const [variableName, mappingUntyped] of Object.entries(currentStep.inputMapping)) {
+                    const mapping = mappingUntyped as { source: 'userInput' | 'stepOutput'; step?: number };
                     let value = mapping.source === 'userInput' ? userInputs[variableName] : stepOutputs[mapping.step!];
                     if (value === undefined) throw new Error(`Missing value for variable '${variableName}' in step ${stepDisplayNumber}`);
                     interpolatedContent = interpolatedContent.replace(new RegExp(`{{\\s*${variableName}\\s*}}`, 'g'), value);

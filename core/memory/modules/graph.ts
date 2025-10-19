@@ -1,1 +1,2 @@
-full contents of core/memory/modules/graph.ts
+// This module is a placeholder for future Graph Database integration.
+export {};

@@ -1,1 +1,2 @@
-full contents of core/memory/modules/upstash_vector.ts
+// This module is a placeholder for future Upstash Vector DB integration.
+export {};

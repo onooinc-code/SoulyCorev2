@@ -1,1 +1,2 @@
-full contents of core/repositories/PostgresConversationRepository.ts
+// This class is a placeholder for a future repository pattern implementation.
+export {};
