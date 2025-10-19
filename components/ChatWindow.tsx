@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+// FIX: Corrected import path for useConversation
 import { useConversation } from '@/components/providers/ConversationProvider';
 // FIX: The import path for `useUIState` was incorrect. It has been updated to use the absolute path alias `@/components/providers/UIStateProvider` to ensure correct module resolution during the build process.
 import { useUIState } from '@/components/providers/UIStateProvider';

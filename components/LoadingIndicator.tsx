@@ -1,8 +1,10 @@
 
+
 "use client";
 
 import React from 'react';
-import { useConversation } from './providers/ConversationProvider';
+// FIX: Corrected relative import for useConversation.
+import { useConversation } from '@/components/providers/ConversationProvider';
 import CognitiveStatusBar from './chat/CognitiveStatusBar';
 import { motion, AnimatePresence } from 'framer-motion';
 

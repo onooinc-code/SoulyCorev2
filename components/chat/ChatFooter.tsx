@@ -2,10 +2,12 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ChatInput from '../ChatInput';
+// FIX: Corrected import path for ChatInput.
+import ChatInput from '@/components/ChatInput';
 import type { Contact, Message } from '@/lib/types';
 import { XIcon } from '../Icons';
-import { useConversation } from '../providers/ConversationProvider';
+// FIX: Corrected relative import for useConversation.
+import { useConversation } from '@/components/providers/ConversationProvider';
 import CognitiveStatusBar from './CognitiveStatusBar';
 
 interface ChatFooterProps {

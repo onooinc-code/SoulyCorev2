@@ -1,233 +1,174 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
-import type { Conversation, Message, ActiveWorkflowState, IStatus } from '@/lib/types';
-import { useLog } from './LogProvider';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import type { Conversation, Message, Contact, IStatus, ActiveWorkflowState, Prompt } from '@/lib/types';
 import { useAppStatus } from '@/lib/hooks/useAppStatus';
 import { useConversationList } from '@/lib/hooks/useConversationList';
 import { useMessageManager } from '@/lib/hooks/useMessageManager';
 import { useWorkflowManager } from '@/lib/hooks/useWorkflowManager';
-import { useUIState } from './UIStateProvider';
+import { useLog } from './LogProvider';
 
-// The context type definition remains comprehensive, combining the outputs of all hooks.
 interface ConversationContextType {
     conversations: Conversation[];
     currentConversation: Conversation | null;
     messages: Message[];
-    setCurrentConversation: (conversationId: string | null) => void;
-    updateCurrentConversation: (updatedData: Partial<Conversation>) => void;
-    createNewConversation: () => Promise<void>;
-    addMessage: ReturnType<typeof useMessageManager>['addMessage'];
-    toggleBookmark: (messageId: string) => Promise<void>;
-    loadConversations: (segmentId?: string | null) => Promise<void>;
     isLoading: boolean;
     status: IStatus;
-    setStatus: (status: Partial<IStatus>) => void;
-    clearError: () => void;
-    deleteConversation: (conversationId: string) => Promise<void>;
-    updateConversationTitle: (conversationId: string, newTitle: string) => Promise<void>;
-    generateConversationTitle: (conversationId: string) => Promise<void>;
+    backgroundTaskCount: number;
+    activeWorkflow: ActiveWorkflowState | null;
+    unreadConversations: Set<string>;
+    scrollToMessageId: string | null;
+    activeSegmentId: string | null;
+
+    setCurrentConversation: (id: string | null) => void;
+    createNewConversation: () => void;
+    deleteConversation: (id: string) => void;
+    updateConversationTitle: (id: string, newTitle: string) => void;
+    generateConversationTitle: (id: string) => void;
+    loadConversations: (segmentId?: string | null) => Promise<void>;
+    updateCurrentConversation: (updates: Partial<Conversation>) => void;
+    
+    addMessage: (message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, mentionedContacts?: Contact[], historyOverride?: Message[], parentMessageId?: string | null) => Promise<{ aiResponse: string | null, suggestion: string | null }>;
+    toggleBookmark: (messageId: string) => Promise<void>;
     deleteMessage: (messageId: string) => Promise<void>;
     updateMessage: (messageId: string, newContent: string) => Promise<void>;
     regenerateAiResponse: (messageId: string) => Promise<void>;
     regenerateUserPromptAndGetResponse: (messageId: string) => Promise<void>;
-    unreadConversations: Set<string>;
     clearMessages: (conversationId: string) => Promise<void>;
-    backgroundTaskCount: number;
-    startBackgroundTask: () => void;
-    endBackgroundTask: () => void;
-    startWorkflow: ReturnType<typeof useWorkflowManager>['startWorkflow'];
-    activeWorkflow: ActiveWorkflowState | null;
-    scrollToMessageId: string | null;
+    
+    startWorkflow: (prompt: Prompt, userInputs: Record<string, string>) => void;
+    
+    setStatus: (status: Partial<IStatus>) => void;
+    clearError: () => void;
+    
     setScrollToMessageId: (messageId: string | null) => void;
-    activeSegmentId: string | null;
-    setActiveSegmentId: React.Dispatch<React.SetStateAction<string | null>>;
+    setActiveSegmentId: (segmentId: string | null) => void;
 }
 
 const ConversationContext = createContext<ConversationContextType | undefined>(undefined);
 
-export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { log } = useLog();
-    const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const summaryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
-    const [unreadConversations, setUnreadConversations] = useState(new Set<string>());
+    const { isLoading, setIsLoading, status, setStatus, clearError, backgroundTaskCount, startBackgroundTask, endBackgroundTask } = useAppStatus();
+    
+    const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+    const [unreadConversations, setUnreadConversations] = useState<Set<string>>(new Set());
     const [scrollToMessageId, setScrollToMessageId] = useState<string | null>(null);
     const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
-    const { setActiveView } = useUIState();
 
-    // --- HOOKS COMPOSITION ---
-    const { 
-        isLoading, setIsLoading, status, setStatus, clearError, 
-        backgroundTaskCount, startBackgroundTask, endBackgroundTask 
-    } = useAppStatus();
-
-    const { 
-        conversations, loadConversations, createNewConversation, 
-        deleteConversation, updateConversationTitle, generateConversationTitle 
-    } = useConversationList({
-        setIsLoading,
-        setStatus,
-        activeSegmentId,
-        onConversationDeleted: (conversationId) => {
-            if (currentConversation?.id === conversationId) {
-                setCurrentConversation(null);
-            }
-        },
-        onConversationCreated: (conversation) => {
-            // This callback sets the new conversation as active after creation
-            setCurrentConversation(conversation);
-            setActiveView('chat');
+    const onConversationDeleted = (deletedId: string) => {
+        if (currentConversationId === deletedId) {
+            setCurrentConversationId(null);
         }
-    });
-
-    const { 
-        messages, setMessages, fetchMessages, addMessage, toggleBookmark, 
-        deleteMessage, updateMessage, regenerateAiResponse, 
-        regenerateUserPromptAndGetResponse, clearMessages 
-    } = useMessageManager({
-        currentConversation,
-        setStatus,
-        setIsLoading,
-        startBackgroundTask,
-        endBackgroundTask,
-        onNewMessageWhileHidden: (conversationId) => {
-             setUnreadConversations(prev => new Set(prev).add(conversationId));
-        }
-    });
-
-    const { activeWorkflow, startWorkflow } = useWorkflowManager({
-        currentConversation,
-        setStatus,
-        addMessage,
-        setMessages,
-    });
+    };
     
-    // --- ORCHESTRATION LOGIC ---
-    // This logic remains in the provider as it connects the conversation list to the message list.
-    const setCurrentConversationById = useCallback(async (conversationId: string | null) => {
-        if (conversationId) {
-            setUnreadConversations(prev => {
-                const newSet = new Set(prev);
-                if (newSet.delete(conversationId)) return newSet;
-                return prev;
-            });
-        }
-        
-        if (!conversationId) {
-            setCurrentConversation(null);
-            setMessages([]);
-            return;
-        }
-
-        const convo = conversations.find(c => c.id === conversationId);
-        if (convo) {
-            setCurrentConversation(convo);
-            setActiveView('chat');
-            // fetchMessages is now handled by the useEffect below
-        }
-    }, [conversations, setMessages, setActiveView]);
-    
-    // This effect ensures the `currentConversation` object in state is always the latest version from the list.
-     useEffect(() => {
-        if (currentConversation) {
-            const updatedConvoInList = conversations.find(c => c.id === currentConversation.id);
-            if (updatedConvoInList && JSON.stringify(updatedConvoInList) !== JSON.stringify(currentConversation)) {
-                setCurrentConversation(updatedConvoInList);
-            }
-        }
-    }, [conversations, currentConversation]);
-    
-    // This effect triggers fetching messages when the active conversation changes.
-    useEffect(() => {
-        if (currentConversation) {
-            fetchMessages(currentConversation.id);
-        } else {
-            setMessages([]); // Clear messages if no conversation is selected
-        }
-    }, [currentConversation?.id, fetchMessages, setMessages]);
-
-    // Initial load of conversations.
-    useEffect(() => { loadConversations() }, [loadConversations]);
-
-    // This logic remains in the provider to orchestrate optimistic UI updates and debounced saving.
-    const updateCurrentConversation = useCallback((updatedData: Partial<Conversation>) => {
-        if (currentConversation) {
-            // Optimistic update for immediate UI feedback
-            const newConversation = { ...currentConversation, ...updatedData };
-            setCurrentConversation(newConversation);
-            
-            // Debounced save to database
-            if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-
-            debounceTimeout.current = setTimeout(async () => {
-                log('Debounced save triggered for conversation.', { id: newConversation.id, changes: updatedData });
-                try {
-                    const res = await fetch(`/api/conversations/${newConversation.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updatedData)
-                    });
-                    if (!res.ok) throw new Error('Failed to save conversation changes to the database.');
-                    // Refresh the entire list from DB to ensure consistency
-                    await loadConversations();
-                } catch (error) {
-                    log('Failed to save conversation changes.', { error: (error as Error).message }, 'error');
-                    setStatus({ error: 'Could not save conversation changes.' });
-                }
-            }, 1500); // 1.5 second debounce delay
-        }
-    }, [currentConversation, log, setStatus, loadConversations]);
-    
-    // Effect for triggering background conversation summary
-    useEffect(() => {
-        if (summaryTimeoutRef.current) {
-            clearTimeout(summaryTimeoutRef.current);
-        }
-
-        if (currentConversation && messages.length > 0) {
-            log(`Activity detected in ${currentConversation.id}, resetting summary timer.`);
-            summaryTimeoutRef.current = setTimeout(() => {
-                log(`Conversation inactive, triggering summary generation for ${currentConversation.id}`);
-                fetch(`/api/conversations/${currentConversation.id}/summarize`, {
-                    method: 'POST',
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if(data.id) log(`Background summary completed for ${data.id}.`);
-                })
-                .catch(err => {
-                    log('Failed to trigger background conversation summarization.', { error: err }, 'error');
-                });
-            }, 10 * 60 * 1000); // 10 minutes of inactivity
-        }
-
-        return () => {
-            if (summaryTimeoutRef.current) {
-                clearTimeout(summaryTimeoutRef.current);
-            }
-        };
-    }, [messages, currentConversation, log]);
-
-
-    const contextValue: ConversationContextType = {
-        conversations, currentConversation, messages,
-        setCurrentConversation: setCurrentConversationById,
-        updateCurrentConversation, createNewConversation, addMessage, toggleBookmark, loadConversations,
-        isLoading, status, setStatus, clearError,
-        deleteConversation, updateConversationTitle, generateConversationTitle, deleteMessage, updateMessage,
-        regenerateAiResponse, regenerateUserPromptAndGetResponse, unreadConversations, clearMessages,
-        backgroundTaskCount, startBackgroundTask, endBackgroundTask, startWorkflow, activeWorkflow,
-        scrollToMessageId, setScrollToMessageId,
-        activeSegmentId, setActiveSegmentId,
+    const onConversationCreated = (newConversation: Conversation) => {
+        setCurrentConversationId(newConversation.id);
     };
 
-    return <ConversationContext.Provider value={contextValue}>{children}</ConversationContext.Provider>;
+    const { conversations, loadConversations, createNewConversation, deleteConversation, updateConversationTitle, generateConversationTitle } = useConversationList({ setIsLoading, setStatus, activeSegmentId, onConversationDeleted, onConversationCreated });
+
+    const currentConversation = useMemo(() => conversations.find(c => c.id === currentConversationId) || null, [conversations, currentConversationId]);
+
+    const onNewMessageWhileHidden = (conversationId: string) => {
+        setUnreadConversations(prev => new Set(prev).add(conversationId));
+    };
+
+    const { messages, setMessages, fetchMessages, addMessage, toggleBookmark, deleteMessage, updateMessage, regenerateAiResponse, regenerateUserPromptAndGetResponse, clearMessages } = useMessageManager({
+        currentConversation, setStatus, setIsLoading, startBackgroundTask, endBackgroundTask, onNewMessageWhileHidden
+    });
+
+    const { activeWorkflow, startWorkflow } = useWorkflowManager({ currentConversation, setStatus, addMessage, setMessages });
+
+    const setCurrentConversationWithMessages = useCallback(async (id: string | null) => {
+        setCurrentConversationId(id);
+        if (id) {
+            setIsLoading(true);
+            await fetchMessages(id);
+            setIsLoading(false);
+            setUnreadConversations(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(id);
+                return newSet;
+            });
+        } else {
+            setMessages([]);
+        }
+    }, [fetchMessages, setIsLoading, setMessages]);
+
+    const updateCurrentConversation = useCallback(async (updates: Partial<Conversation>) => {
+        if (!currentConversationId) return;
+        
+        try {
+            const res = await fetch(`/api/conversations/${currentConversationId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates),
+            });
+            if (!res.ok) throw new Error('Failed to update conversation settings.');
+            await loadConversations(activeSegmentId); // Reload to get fresh data
+        } catch (error) {
+            setStatus({ error: (error as Error).message });
+            log('Failed to update conversation settings', { error }, 'error');
+            loadConversations(activeSegmentId);
+        }
+    }, [currentConversationId, setStatus, log, loadConversations, activeSegmentId]);
+
+    useEffect(() => {
+        if (conversations.length > 0 && !currentConversationId) {
+            // By default, don't select a conversation automatically to allow empty state.
+            // User must click a conversation to load it.
+        }
+    }, [conversations, currentConversationId, setCurrentConversationWithMessages]);
+    
+    const value: ConversationContextType = {
+        conversations,
+        currentConversation,
+        messages,
+        isLoading,
+        status,
+        backgroundTaskCount,
+        activeWorkflow,
+        unreadConversations,
+        scrollToMessageId,
+        activeSegmentId,
+        
+        setCurrentConversation: setCurrentConversationWithMessages,
+        createNewConversation,
+        deleteConversation,
+        updateConversationTitle,
+        generateConversationTitle,
+        loadConversations,
+        updateCurrentConversation,
+
+        addMessage,
+        toggleBookmark,
+        deleteMessage,
+        updateMessage,
+        regenerateAiResponse,
+        regenerateUserPromptAndGetResponse,
+        clearMessages,
+
+        startWorkflow,
+        
+        setStatus,
+        clearError,
+        
+        setScrollToMessageId,
+        setActiveSegmentId,
+    };
+    
+    return (
+        <ConversationContext.Provider value={value}>
+            {children}
+        </ConversationContext.Provider>
+    );
 };
 
 export const useConversation = () => {
     const context = useContext(ConversationContext);
-    if (context === undefined) throw new Error('useConversation must be used within a ConversationProvider');
+    if (context === undefined) {
+        throw new Error('useConversation must be used within a ConversationProvider');
+    }
     return context;
 };

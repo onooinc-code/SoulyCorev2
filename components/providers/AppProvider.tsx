@@ -1,6 +1,7 @@
 "use client";
 
-import { useConversation } from './ConversationProvider';
+// FIX: Corrected import path for ConversationProvider.
+import { useConversation } from '@/components/providers/ConversationProvider';
 import { useLog } from './LogProvider';
 // FIX: Corrected import path to use '@' alias.
 import { useSettings } from '@/components/providers/SettingsProvider';

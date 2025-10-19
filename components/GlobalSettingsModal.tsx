@@ -8,7 +8,8 @@ import { XIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
 // FIX: Corrected import path for useSettings.
 import { useSettings } from '@/components/providers/SettingsProvider';
-import { useConversation } from './providers/ConversationProvider';
+// FIX: Corrected relative import for useConversation.
+import { useConversation } from '@/components/providers/ConversationProvider';
 import type { AppSettings } from '@/lib/types';
 import { useLog } from './providers/LogProvider';
 

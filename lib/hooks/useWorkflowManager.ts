@@ -1,153 +1,91 @@
-
-
 "use client";
 
 // FIX: Added React import to resolve namespace errors.
 import React, { useState, useCallback } from 'react';
-import type { Prompt, ActiveWorkflowState, Conversation, IStatus, Message, Contact, Tool } from '@/lib/types';
+// FIX: Added imports for ActiveWorkflowState and IStatus types.
+import type { Conversation, Prompt, Message, ActiveWorkflowState, IStatus } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 
 interface UseWorkflowManagerProps {
     currentConversation: Conversation | null;
     setStatus: (status: Partial<IStatus>) => void;
-    addMessage: (message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, mentionedContacts?: Contact[], history?: Message[]) => Promise<{aiResponse: string | null, suggestion: string | null}>;
+    addMessage: (message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, mentionedContacts?: any[], historyOverride?: Message[], parentMessageId?: string | null) => Promise<{ aiResponse: string | null; suggestion: string | null }>;
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
-/**
- * A custom hook to manage the state and execution of multi-step prompt chains (workflows).
- */
 export const useWorkflowManager = ({ currentConversation, setStatus, addMessage, setMessages }: UseWorkflowManagerProps) => {
     const [activeWorkflow, setActiveWorkflow] = useState<ActiveWorkflowState | null>(null);
     const { log } = useLog();
 
-    /**
-     * Executes a single step of the active workflow and recursively calls itself for the next step.
-     */
-    const executeNextWorkflowStep = useCallback(async (workflowState: ActiveWorkflowState) => {
-        const { prompt, userInputs, currentStepIndex, stepOutputs } = workflowState;
-        
-        if (!prompt.chain_definition || currentStepIndex >= prompt.chain_definition.length) {
-            setStatus({ currentAction: "Workflow completed." });
-            setActiveWorkflow(null); // Workflow finished
-            setTimeout(() => setStatus({ currentAction: "" }), 2000);
+    const startWorkflow = useCallback((prompt: Prompt, userInputs: Record<string, string>) => {
+        if (prompt.type !== 'chain' || !prompt.chain_definition) {
+            log('Attempted to start a workflow with a non-chain prompt.', { promptId: prompt.id }, 'warn');
             return;
         }
+        
+        log('Starting workflow', { promptName: prompt.name, userInputs });
+        
+        const workflowState: ActiveWorkflowState = {
+            prompt,
+            userInputs,
+            currentStepIndex: 0,
+            stepOutputs: {},
+        };
+        
+        setActiveWorkflow(workflowState);
+        executeWorkflow(workflowState);
 
-        const currentStep = prompt.chain_definition[currentStepIndex];
-        const stepDisplayNumber = currentStep.step || currentStepIndex + 1;
-        setStatus({ currentAction: `Executing workflow: Step ${stepDisplayNumber} of ${prompt.chain_definition.length}` });
+    }, [log]);
 
-        let stepResult: string | null = null;
+    const executeWorkflow = async (workflowState: ActiveWorkflowState) => {
+        if (!currentConversation) {
+            setStatus({ error: "No active conversation to run workflow in." });
+            setActiveWorkflow(null);
+            return;
+        }
 
         try {
-            if (currentStep.type === 'tool' && currentStep.toolId) {
-                // --- Tool Execution Logic ---
-                log('Executing tool step in workflow', { step: currentStep });
+            const res = await fetch('/api/prompts/execute-chain', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    promptId: workflowState.prompt.id,
+                    userInputs: workflowState.userInputs,
+                }),
+            });
 
-                // 1. Add informational message that the tool is running
-                const toolExecutionMessage: Message = { id: crypto.randomUUID(), conversationId: currentConversation!.id, role: 'model', content: `*Executing tool for step ${stepDisplayNumber}...*`, createdAt: new Date(), lastUpdatedAt: new Date() };
-                setMessages(prev => [...prev, toolExecutionMessage]);
-
-                // 2. Resolve arguments
-                const args: Record<string, any> = {};
-                // FIX: Explicitly cast the 'mapping' object to its expected type to resolve 'unknown' type errors.
-                for (const [argName, mappingUntyped] of Object.entries(currentStep.inputMapping)) {
-                    const mapping = mappingUntyped as { source: 'userInput' | 'stepOutput'; step?: number };
-                    if (mapping.source === 'userInput') {
-                        args[argName] = userInputs[argName];
-                    } else if (mapping.source === 'stepOutput' && mapping.step) {
-                        args[argName] = stepOutputs[mapping.step];
-                    }
-                }
-
-                // 3. Call the backend to execute the tool
-                const res = await fetch('/api/agents/execute-tool', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ toolId: currentStep.toolId, args }),
-                });
-
-                if (!res.ok) {
-                    const errorData = await res.json();
-                    throw new Error(errorData.error || `Tool execution failed for step ${stepDisplayNumber}`);
-                }
-                const { result } = await res.json();
-                stepResult = result;
-
-                // 4. Add observation message to UI
-                const toolObservationMessage: Message = { id: crypto.randomUUID(), conversationId: currentConversation!.id, role: 'model', content: `**Observation (Step ${stepDisplayNumber}):**\n\n${stepResult}`, createdAt: new Date(), lastUpdatedAt: new Date() };
-                setMessages(prev => [...prev, toolObservationMessage]);
-
-            } else if (currentStep.type === 'prompt' && currentStep.promptId) {
-                // --- Prompt Execution Logic (existing) ---
-                log('Executing prompt step in workflow', { step: currentStep });
-                const promptRes = await fetch(`/api/prompts/${currentStep.promptId}`);
-                if (!promptRes.ok) throw new Error(`Could not fetch prompt for step ${stepDisplayNumber}`);
-                const stepPrompt: Prompt = await promptRes.json();
-                
-                let interpolatedContent = stepPrompt.content;
-                // FIX: Explicitly cast the 'mapping' object to its expected type to resolve 'unknown' type errors.
-                for (const [variableName, mappingUntyped] of Object.entries(currentStep.inputMapping)) {
-                    const mapping = mappingUntyped as { source: 'userInput' | 'stepOutput'; step?: number };
-                    let value = mapping.source === 'userInput' ? userInputs[variableName] : stepOutputs[mapping.step!];
-                    if (value === undefined) throw new Error(`Missing value for variable '${variableName}' in step ${stepDisplayNumber}`);
-                    interpolatedContent = interpolatedContent.replace(new RegExp(`{{\\s*${variableName}\\s*}}`, 'g'), value);
-                }
-                
-                // FIX: Add missing 'lastUpdatedAt' property to satisfy the Message type.
-                const { aiResponse } = await addMessage({ role: 'user', content: interpolatedContent, lastUpdatedAt: new Date() });
-                if (!aiResponse) throw new Error(`AI response was empty for step ${stepDisplayNumber}.`);
-                stepResult = aiResponse;
-            } else {
-                throw new Error(`Invalid step configuration at step ${stepDisplayNumber}`);
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || 'Workflow execution failed on the server.');
             }
 
-            // FIX: Added a strict null check for the 'stepResult' variable. This moves the state update
-            // inside the check, guaranteeing to the TypeScript compiler that the value is a string and
-            // resolving the build error.
-            if (stepResult !== null) {
-                // Prepare for the next step
-                const nextState: ActiveWorkflowState = { 
-                    ...workflowState, 
-                    currentStepIndex: currentStepIndex + 1, 
-                    stepOutputs: { ...stepOutputs, [stepDisplayNumber]: stepResult } 
-                };
-                setActiveWorkflow(nextState);
+            const finalResponse = data.finalResponse;
+            
+            // Log user inputs as first message
+            const userInputMessageContent = `Executing workflow "${workflowState.prompt.name}" with inputs:\n${JSON.stringify(workflowState.userInputs, null, 2)}`;
+            const optimisticUserMessage: Message = { role: 'user', content: userInputMessageContent, id: crypto.randomUUID(), createdAt: new Date(), conversationId: currentConversation.id, lastUpdatedAt: new Date() };
+            setMessages(prev => [...prev, optimisticUserMessage]);
+            
+            // Log final response as AI message
+            const aiResponseMessage: Omit<Message, 'id' | 'createdAt' | 'conversationId'> = {
+                role: 'model',
+                content: finalResponse,
+                lastUpdatedAt: new Date(),
+            };
+            
+            // Use the addMessage function to properly store the AI response
+            await addMessage(aiResponseMessage, [], [optimisticUserMessage]);
 
-                // Recursively call for the next step
-                executeNextWorkflowStep(nextState);
-            } else {
-                 throw new Error(`Step ${stepDisplayNumber} did not produce a valid string result.`);
-            }
 
         } catch (error) {
-            const errorMessage = `Workflow failed at step ${stepDisplayNumber}: ${(error as Error).message}`;
+            const errorMessage = `Workflow "${workflowState.prompt.name}" failed: ${(error as Error).message}`;
             setStatus({ error: errorMessage });
-            log('Workflow execution failed', { error: errorMessage }, 'error');
+            log('Workflow execution failed', { error: (error as Error).message }, 'error');
+        } finally {
             setActiveWorkflow(null);
         }
-    }, [addMessage, setStatus, currentConversation, log, setMessages]);
-
-
-    /**
-     * Initializes and starts a new workflow.
-     */
-    const startWorkflow = useCallback((prompt: Prompt, userInputs: Record<string, string>) => {
-        if (!currentConversation) {
-            setStatus({ error: "Cannot start a workflow without an active conversation." });
-            return;
-        }
-        if (!prompt.chain_definition || prompt.chain_definition.length === 0) {
-            setStatus({ error: "Cannot start a workflow with an empty chain definition." });
-            return;
-        }
-
-        const initialState: ActiveWorkflowState = { prompt, userInputs, currentStepIndex: 0, stepOutputs: {} };
-        setActiveWorkflow(initialState);
-        executeNextWorkflowStep(initialState);
-    }, [currentConversation, setStatus, executeNextWorkflowStep]);
-
+    };
+    
     return {
         activeWorkflow,
         startWorkflow,

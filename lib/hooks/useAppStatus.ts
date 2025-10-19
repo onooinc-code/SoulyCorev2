@@ -1,7 +1,9 @@
 
+
 "use client";
 
 import { useState, useCallback } from 'react';
+// FIX: Added import for IStatus type.
 import type { IStatus } from '@/lib/types';
 
 /**

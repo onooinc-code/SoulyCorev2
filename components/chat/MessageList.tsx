@@ -6,7 +6,8 @@ import { motion } from 'framer-motion';
 import type { Conversation, Message as MessageType, ActiveWorkflowState } from '@/lib/types';
 import Message from '../Message';
 import LoadingIndicator from '../LoadingIndicator';
-import { useConversation } from '../providers/ConversationProvider';
+// FIX: Corrected relative import for useConversation.
+import { useConversation } from '@/components/providers/ConversationProvider';
 import { CpuChipIcon } from '../Icons';
 
 interface MessageListProps {

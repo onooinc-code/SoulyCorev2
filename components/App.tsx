@@ -1,99 +1,76 @@
-// components/App.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import React from 'react';
+import ChatWindow from '@/components/ChatWindow';
+import Sidebar from '@/components/Sidebar';
 import { useUIState } from '@/components/providers/UIStateProvider';
-import { useConversation } from './providers/ConversationProvider';
-import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';
-import { useAppContextMenu } from '@/lib/hooks/useAppContextMenu';
-
-import ChatWindow from './ChatWindow';
+import { AnimatePresence, motion } from 'framer-motion';
 import NavigationRail from './NavigationRail';
-import ConversationPanel from './ConversationPanel';
+import ActiveViewRenderer from './views/ActiveViewRenderer';
+import { useAppContextMenu } from '@/lib/hooks/useAppContextMenu';
 import ContextMenu from './ContextMenu';
-// FIX: Corrected import path for GlobalModals.
-import GlobalModals from '@/components/modals/GlobalModals';
+import GlobalModals from './modals/GlobalModals';
 import MorningBriefing from './MorningBriefing';
-import Notifications from './Notifications';
+import UniversalProgressIndicator from './UniversalProgressIndicator';
 import AppStatusBar from './AppStatusBar';
 import TopProgressBar from './TopProgressBar';
-import ActiveViewRenderer from './views/ActiveViewRenderer';
-import DataHubWidget from './data_hub/DataHubWidget';
+import Notifications from './Notifications';
+import { useConversation } from './providers/ConversationProvider';
 
 export const App = () => {
-    const {
-        activeView,
-        isConversationPanelOpen,
+    const { 
+        isConversationPanelOpen, 
         isConversationPanelMinimized,
-        isMobileView,
-        isZenMode,
-        isFullscreen,
-        setCommandPaletteOpen,
-        isDataHubWidgetOpen,
-        setDataHubWidgetOpen,
+        activeView 
     } = useUIState();
 
-    const { currentConversation, createNewConversation } = useConversation();
     const { menuItems, contextMenu, handleContextMenu, closeContextMenu } = useAppContextMenu();
+    const { currentConversation } = useConversation();
 
-    const [isClient, setIsClient] = useState(false);
-    useEffect(() => { setIsClient(true) }, []);
-
-    useKeyboardShortcuts({
-        'mod+k': () => setCommandPaletteOpen(prev => !prev),
-        'mod+n': () => createNewConversation(),
-    });
-    
-    useEffect(() => {
-        if (isFullscreen) window.focus();
-    }, [isFullscreen]);
-
-    const showChat = activeView === 'chat' && currentConversation;
+    const mainContent = activeView === 'chat' && currentConversation ? <ChatWindow /> : <ActiveViewRenderer />;
 
     return (
-        <div 
-            className={`w-screen h-screen overflow-hidden flex flex-col transition-all duration-300 ${isMobileView ? 'max-w-sm mx-auto my-auto h-[80vh] rounded-2xl shadow-2xl border-4 border-gray-700' : ''}`}
+        <main
+            className="flex h-screen w-screen overflow-hidden bg-gray-900"
             onContextMenu={handleContextMenu}
         >
             <TopProgressBar />
-            <Notifications />
+            <UniversalProgressIndicator />
+            <NavigationRail />
             
-            <div className="flex flex-1 min-h-0">
-                {!isZenMode && <NavigationRail />}
+            <AnimatePresence>
+                {isConversationPanelOpen && (
+                    <motion.div
+                        initial={{ width: 0, padding: 0, marginRight: 0 }}
+                        animate={{ 
+                            width: isConversationPanelMinimized ? 80 : 320,
+                            padding: isConversationPanelMinimized ? 0 : '',
+                            marginRight: isConversationPanelMinimized ? 0 : '' 
+                        }}
+                        exit={{ width: 0, padding: 0, marginRight: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="flex-shrink-0 h-full overflow-hidden bg-gray-800"
+                    >
+                        <Sidebar />
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-                <AnimatePresence>
-                    {!isZenMode && isConversationPanelOpen && (
-                        <motion.div
-                            initial={{ width: 0, opacity: 0 }}
-                            animate={{ width: isConversationPanelMinimized ? 68 : 320, opacity: 1 }}
-                            exit={{ width: 0, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: 'easeInOut' }}
-                            className="flex-shrink-0 h-full"
-                            onAnimationComplete={() => window.dispatchEvent(new Event('resize'))}
-                        >
-                            <ConversationPanel isMinimized={isConversationPanelMinimized} />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                <main className="flex-1 min-w-0 h-full">
-                    {showChat ? <ChatWindow /> : <ActiveViewRenderer />}
-                </main>
+            <div className="flex-1 flex flex-col min-w-0 h-full relative">
+                {mainContent}
             </div>
-            
-            {!isZenMode && <AppStatusBar />}
 
-            {/* Overlays */}
-            <GlobalModals />
-            <ContextMenu
-                items={menuItems}
-                position={contextMenu.position}
+            <ContextMenu 
                 isOpen={contextMenu.isOpen}
+                position={contextMenu.position}
+                items={menuItems}
                 onClose={closeContextMenu}
             />
-            {isClient && <MorningBriefing />}
-            <DataHubWidget isOpen={isDataHubWidgetOpen} onClose={() => setDataHubWidgetOpen(false)} />
-        </div>
+
+            <GlobalModals />
+            <MorningBriefing />
+            <Notifications />
+            <AppStatusBar />
+        </main>
     );
 };

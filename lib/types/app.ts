@@ -1,10 +1,28 @@
-// FIX: Added import for Prompt to be used in ActiveWorkflowState.
-// FIX: Changed import path to be relative.
-import type { Prompt } from './data';
-
-export type Role = 'user' | 'model';
+/**
+ * @fileoverview This file contains application-level types, such as UI state and settings,
+ * that are not direct representations of database models.
+ */
 
 export type CognitivePhase = 'idle' | 'retrieving' | 'assembling' | 'prompting' | 'generating';
+
+export interface CognitiveStatus {
+    phase: CognitivePhase;
+    details: string;
+}
+
+// A generic status object used throughout the app
+export interface IStatus {
+    currentAction: string | CognitiveStatus | null;
+    error: string | null;
+}
+
+// Represents the state of an active workflow (chained prompt)
+export interface ActiveWorkflowState {
+    prompt: import('./data').Prompt;
+    userInputs: Record<string, string>;
+    currentStepIndex: number;
+    stepOutputs: Record<number, string>;
+}
 
 export interface AppSettings {
     defaultModelConfig: {
@@ -17,9 +35,7 @@ export interface AppSettings {
         useSemanticMemory: boolean;
         useStructuredMemory: boolean;
     };
-    enableDebugLog: {
-        enabled: boolean;
-    };
+    enableDebugLog: { enabled: boolean };
     featureFlags: {
         enableMemoryExtraction: boolean;
         enableProactiveSuggestions: boolean;
@@ -27,31 +43,10 @@ export interface AppSettings {
     };
     global_ui_settings?: {
         fontSize?: string;
-        messageFontSize?: 'sm' | 'base' | 'lg' | 'xl';
+        messageFontSize?: 'xs' | 'sm' | 'base' | 'lg';
         theme?: 'theme-dark' | 'theme-light' | 'theme-solarized';
-    };
+    }
 }
 
-export interface Log {
-    id: string;
-    timestamp: Date;
-    message: string;
-    payload: Record<string, any> | null;
-    level: 'info' | 'warn' | 'error';
-}
-
-export interface IStatus {
-  currentAction: string | { phase: CognitivePhase; details: string };
-  error: string | null;
-}
-
-// FIX: Moved ActiveWorkflowState here from ConversationProvider to resolve export error.
-export interface ActiveWorkflowState {
-  prompt: Prompt;
-  userInputs: Record<string, string>;
-  currentStepIndex: number;
-  stepOutputs: Record<number, string>;
-}
-
-// Ensure this file is treated as a module.
-export {};
+// For notification system
+export type NotificationType = 'success' | 'error' | 'info' | 'warning';

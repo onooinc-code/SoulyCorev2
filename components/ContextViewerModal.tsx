@@ -28,7 +28,7 @@ const modalConfig = {
         icon: WrenchScrewdriverIcon,
         key: 'model_config_json',
     }
-}
+};
 
 const ContextViewerModal = ({ isOpen, onClose, messageId, contextType }: ContextViewerModalProps) => {
     const [data, setData] = useState<PipelineRun | null>(null);
@@ -63,7 +63,7 @@ const ContextViewerModal = ({ isOpen, onClose, messageId, contextType }: Context
         const contentKey = modalConfig[contextType].key as keyof PipelineRun;
         let content = data[contentKey];
 
-        if (typeof content === 'object') {
+        if (typeof content === 'object' && content !== null) {
             content = JSON.stringify(content, null, 2);
         } else if (!content) {
             content = "No data recorded for this field.";
@@ -86,7 +86,7 @@ const ContextViewerModal = ({ isOpen, onClose, messageId, contextType }: Context
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
+                    className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4"
                     onClick={onClose}
                 >
                     <motion.div

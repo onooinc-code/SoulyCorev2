@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import type { Prompt, PromptChainStep, Tool } from '@/lib/types';
 import { WorkflowBuilder } from './WorkflowBuilder';
+// FIX: Corrected relative import for useConversation.
 import { useConversation } from '@/components/providers/ConversationProvider';
 
 interface PromptFormProps {
@@ -42,7 +43,7 @@ export const PromptForm = ({ currentPrompt, setCurrentPrompt, onSave, singleProm
                 <div className="flex items-center gap-4 text-sm">
                     <span>Type:</span>
                     <label className="flex items-center gap-2">
-                        <input type="radio" value="single" checked={currentPrompt.type === 'single'} onChange={() => setCurrentPrompt({ ...currentPrompt, type: 'single' })} />
+                        <input type="radio" value="single" checked={currentPrompt.type === 'single' || !currentPrompt.type} onChange={() => setCurrentPrompt({ ...currentPrompt, type: 'single' })} />
                         Single
                     </label>
                     <label className="flex items-center gap-2">
@@ -52,7 +53,7 @@ export const PromptForm = ({ currentPrompt, setCurrentPrompt, onSave, singleProm
                 </div>
                 <input value={currentPrompt.name || ''} onChange={e => setCurrentPrompt({ ...currentPrompt, name: e.target.value })} placeholder="Prompt Name (e.g., 'Meeting Summarizer')" className="w-full p-2 bg-gray-700 rounded-lg text-sm"/>
                 
-                {currentPrompt.type === 'single' ? (
+                {currentPrompt.type === 'single' || !currentPrompt.type ? (
                     <textarea value={currentPrompt.content || ''} onChange={e => setCurrentPrompt({ ...currentPrompt, content: e.target.value })} placeholder="Prompt Content..." className="w-full p-2 bg-gray-700 rounded-lg text-sm font-mono" rows={5}></textarea>
                 ) : (
                     <WorkflowBuilder 

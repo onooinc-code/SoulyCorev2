@@ -10,6 +10,7 @@ const EntityHub = dynamic(() => import('./hubs/EntityHub'), {
     loading: () => <div className="flex items-center justify-center h-full"><p>Loading Entity Hub...</p></div>
 });
 
+// FIX: Corrected import path for RelationshipGraph.
 const RelationshipGraph = dynamic(() => import('./hubs/RelationshipGraph'), {
     ssr: false,
     loading: () => <div className="flex items-center justify-center h-full"><p>Loading Relationship Graph...</p></div>

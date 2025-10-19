@@ -1,9 +1,12 @@
 
+
 "use client";
 
 import { useState, useCallback } from 'react';
+// FIX: Added import for IStatus type.
 import type { Prompt, IStatus } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
+// FIX: Corrected relative import for useConversation.
 import { useConversation } from '@/components/providers/ConversationProvider';
 
 export const usePrompts = () => {

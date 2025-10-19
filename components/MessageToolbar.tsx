@@ -39,7 +39,15 @@ interface MessageToolbarProps {
     onViewContext: (type: 'prompt' | 'system' | 'config') => void;
 }
 
-const ToolbarButton = ({ onClick, title, children, disabled }: { onClick?: () => void, title: string, children: React.ReactNode, disabled?: boolean }) => (
+// FIX: Made children optional to resolve type errors on self-closing button usages.
+interface ToolbarButtonProps {
+    onClick?: () => void;
+    title: string;
+    children?: React.ReactNode;
+    disabled?: boolean;
+}
+
+const ToolbarButton = ({ onClick, title, children, disabled }: ToolbarButtonProps) => (
     <button
         onClick={onClick}
         title={title}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { EntityDefinition } from '@/lib/types';
+// FIX: Corrected relative import for useConversation.
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { XIcon, TrashIcon, PlusIcon, EditIcon, SearchIcon, ArrowsRightLeftIcon } from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';

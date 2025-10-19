@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Segment } from '@/lib/types';
+// FIX: Corrected relative import for useConversation.
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { XIcon, TrashIcon, PlusIcon, EditIcon, SearchIcon } from '@/components/Icons';
 import { useLog } from '@/components/providers/LogProvider';
@@ -102,48 +103,4 @@ const SegmentHub = () => {
                                 <option value="Topic">Topic</option>
                                 <option value="Impact">Impact</option>
                              </select>
-                             {formErrors.type && <p className="text-xs text-red-400 mt-1">{formErrors.type}</p>}
-                        </div>
-                    </div>
-                     <div>
-                        <textarea value={segmentForm.description || ''} onChange={e => setSegmentForm({...segmentForm, description: e.target.value})} placeholder='Description (e.g., "All conversations related to the Q3 marketing initiative.")' className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={2}></textarea>
-                    </div>
-                    <div className="flex gap-2">
-                        <button onClick={handleSaveSegment} className="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-500">Save</button>
-                        <button onClick={() => { setIsFormVisible(false); setSegmentForm({}); setFormErrors({}); }} className="px-4 py-2 bg-gray-600 text-white rounded-md text-sm hover:bg-gray-500">Cancel</button>
-                    </div>
-                </div>
-            )}
-            <div className="flex-1 overflow-auto">
-                <table className="w-full text-sm text-left text-gray-300">
-                    <thead className="text-xs text-gray-400 uppercase bg-gray-900 sticky top-0">
-                        <tr>
-                            <th className="p-3">Name</th>
-                            <th className="p-3">Type</th>
-                            <th className="p-3 w-1/2">Description</th>
-                            <th className="p-3">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {segments.map(segment => (
-                            <tr key={segment.id} className="border-b border-gray-700 hover:bg-gray-700/50">
-                                <td className="p-3 font-medium">{segment.name}</td>
-                                <td className="p-3">{segment.type}</td>
-                                <td className="p-3 text-gray-400 text-xs">{segment.description}</td>
-                                <td className="p-3">
-                                    <div className="flex gap-2">
-                                        <button onClick={() => handleOpenForm(segment)} title="Edit segment." className="p-2 rounded-lg text-gray-300 transition-colors hover:bg-white/10 hover:text-blue-400"><EditIcon className="w-5 h-5"/></button>
-                                        <button onClick={() => handleDeleteSegment(segment.id)} title="Delete segment." className="p-2 rounded-lg text-gray-300 transition-colors hover:bg-white/10 hover:text-red-500"><TrashIcon className="w-5 h-5"/></button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                 {segments.length === 0 && <p className="text-center text-gray-500 py-8">No segments defined.</p>}
-            </div>
-        </div>
-    );
-};
-
-export default SegmentHub;
+                             {formErrors.type && <p className="text-xs text

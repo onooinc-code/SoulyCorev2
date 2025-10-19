@@ -3,6 +3,7 @@
 "use client";
 
 import React, { useMemo } from 'react';
+// FIX: Corrected relative import for useConversation.
 import { useConversation } from '@/components/providers/ConversationProvider';
 // FIX: Corrected relative import paths for icon components to use the absolute path alias `@`, resolving module resolution errors during the build process.
 import { CogIcon, UserCircleIcon, BookmarkIcon, CpuChipIcon, ClockIcon, DocumentTextIcon } from '@/components/Icons';

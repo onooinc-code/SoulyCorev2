@@ -7,7 +7,8 @@ import { SearchIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, UsersIcon } from
 import type { SearchResult } from '@/app/api/search/route';
 // FIX: Corrected relative import path to use the `@` alias.
 import { useUIState } from '@/components/providers/UIStateProvider';
-import { useConversation } from '../providers/ConversationProvider';
+// FIX: Corrected relative import for useConversation.
+import { useConversation } from '@/components/providers/ConversationProvider';
 
 const resultIcons: Record<SearchResult['type'], React.FC<any>> = {
     conversation: ChatBubbleLeftRightIcon,

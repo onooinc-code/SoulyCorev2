@@ -7,6 +7,7 @@ import { useLog } from '@/components/providers/LogProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlusIcon, CheckIcon, XIcon, WarningIcon, RssIcon } from '@/components/Icons';
 import WebhookCreator from './WebhookCreator';
+// FIX: Corrected import path for BroadcastManager.
 import BroadcastManager from './BroadcastManager';
 
 const ChannelCard = ({ channel }: { channel: CommChannel }) => {

@@ -1,14 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { SendIcon, PaperclipIcon, PromptsIcon } from './Icons';
-// FIX: Corrected import path for types.
 import type { Contact, Prompt } from '@/lib/types';
-import { useLog } from './providers/LogProvider';
-import { AnimatePresence, motion } from 'framer-motion';
+import { SendIcon, PaperclipIcon } from '@/components/Icons';
+import { useLog } from '@/components/providers/LogProvider';
 import { usePrompts } from '@/lib/hooks/usePrompts';
 import FillPromptVariablesModal from './FillPromptVariablesModal';
-import { useConversation } from './providers/ConversationProvider';
 
 interface ChatInputProps {
     onSendMessage: (content: string, mentionedContacts: Contact[]) => void;
@@ -16,137 +13,116 @@ interface ChatInputProps {
 }
 
 const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
-    const [inputValue, setInputValue] = useState('');
+    const [content, setContent] = useState('');
     const [mentionedContacts, setMentionedContacts] = useState<Contact[]>([]);
-    const [isPromptLauncherOpen, setIsPromptLauncherOpen] = useState(false);
-    const [isVariablesModalOpen, setIsVariablesModalOpen] = useState(false);
-    const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
+    const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+    const [promptToFill, setPromptToFill] = useState<Prompt | null>(null);
     const [promptVariables, setPromptVariables] = useState<string[]>([]);
-    const textAreaRef = useRef<HTMLTextAreaElement>(null);
+    
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const { log } = useLog();
-    const { startWorkflow } = useConversation();
-    
-    // Using a dedicated hook for prompts logic
-    const { prompts, isLoading: isLoadingPrompts } = usePrompts();
-    
+    const { prompts, fetchPrompts } = usePrompts();
+
+    useEffect(() => {
+        fetchPrompts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+
     const adjustTextareaHeight = () => {
-        if (textAreaRef.current) {
-            textAreaRef.current.style.height = 'auto';
-            textAreaRef.current.style.height = `${textAreaRef.current.scrollHeight}px`;
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
     };
 
-    useEffect(adjustTextareaHeight, [inputValue]);
+    useEffect(adjustTextareaHeight, [content]);
+    
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            handleSend();
+        }
+        
+        if (event.key === '/') {
+            // Placeholder for slash command/prompt menu
+            console.log("Slash command triggered");
+        }
+    };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            if (!isLoading && inputValue.trim()) {
-                onSendMessage(inputValue, mentionedContacts);
-                setInputValue('');
-                setMentionedContacts([]);
-            }
+    const handleSend = () => {
+        if (content.trim() && !isLoading) {
+            onSendMessage(content, mentionedContacts);
+            setContent('');
+            setMentionedContacts([]);
+            log('User sent a message.', { contentLength: content.length });
         }
     };
     
-    const handlePromptSelect = (prompt: Prompt) => {
-        setIsPromptLauncherOpen(false);
+    const handleUsePrompt = (prompt: Prompt) => {
         const variableRegex = /{{\s*(\w+)\s*}}/g;
         const matches = [...prompt.content.matchAll(variableRegex)];
         const variables = [...new Set(matches.map(match => match[1]))];
-        
-        if (prompt.type === 'chain') {
-            const userInputs = (prompt.chain_definition || []).flatMap(step => 
-                Object.entries(step.inputMapping).filter(([, mapping]) => (mapping as any).source === 'userInput').map(([varName]) => varName)
-            );
-            const uniqueUserInputs = [...new Set(userInputs)];
-             if (uniqueUserInputs.length > 0) {
-                setSelectedPrompt(prompt);
-                setPromptVariables(uniqueUserInputs);
-                setIsVariablesModalOpen(true);
-            } else {
-                startWorkflow(prompt, {});
-            }
 
-        } else if (variables.length > 0) {
-            setSelectedPrompt(prompt);
+        if (variables.length > 0) {
+            setPromptToFill(prompt);
             setPromptVariables(variables);
-            setIsVariablesModalOpen(true);
+            setIsPromptModalOpen(true);
         } else {
-            setInputValue(prompt.content);
-            textAreaRef.current?.focus();
+            setContent(prev => `${prev}${prompt.content}`);
         }
     };
     
-    const handleVariableSubmit = (values: Record<string, string>) => {
-        if (!selectedPrompt) return;
-        
-        if (selectedPrompt.type === 'chain') {
-            startWorkflow(selectedPrompt, values);
-        } else {
-            let finalContent = selectedPrompt.content;
-            for (const [key, value] of Object.entries(values)) {
-                finalContent = finalContent.replace(new RegExp(`{{\\s*${key}\\s*}}`, 'g'), value);
-            }
-            setInputValue(finalContent);
+    const handlePromptVariablesSubmit = (values: Record<string, string>) => {
+        if (!promptToFill) return;
+        let finalContent = promptToFill.content;
+        for (const [key, value] of Object.entries(values)) {
+            finalContent = finalContent.replace(new RegExp(`{{\\s*${key}\\s*}}`, 'g'), value);
         }
-        setIsVariablesModalOpen(false);
-        setSelectedPrompt(null);
+        setContent(prev => `${prev}${finalContent}`);
     };
 
     return (
-        <div className="bg-gray-800 p-4 border-t border-gray-700">
+        <div className="bg-gray-800 p-4 border-t border-white/10">
             <div className="max-w-4xl mx-auto flex items-end gap-3">
-                <div className="relative">
-                    <button onClick={() => setIsPromptLauncherOpen(p => !p)} className="p-2 text-gray-400 hover:text-white" title="Use a Prompt">
-                        <PromptsIcon className="w-6 h-6"/>
-                    </button>
-                    <AnimatePresence>
-                    {isPromptLauncherOpen && (
-                        <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:10}} className="absolute bottom-full mb-2 w-72 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden">
-                            <div className="p-2 text-sm font-semibold border-b border-gray-700">Prompts</div>
-                            <div className="max-h-60 overflow-y-auto">
-                                {isLoadingPrompts ? <div className="p-4 text-center text-xs">Loading...</div> : prompts.map(p => (
-                                    <button key={p.id} onClick={() => handlePromptSelect(p)} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-800">{p.name}</button>
-                                ))}
-                            </div>
-                        </motion.div>
-                    )}
-                    </AnimatePresence>
+                <button
+                    className="p-3 text-gray-400 hover:text-white hover:bg-gray-700 rounded-full transition-colors"
+                    title="Attach file (coming soon)"
+                    disabled
+                >
+                    <PaperclipIcon className="w-6 h-6" />
+                </button>
+
+                <div className="flex-1 relative">
+                    <textarea
+                        ref={textareaRef}
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Type your message, or type '/' for prompts..."
+                        className="w-full bg-gray-700 rounded-lg p-3 text-base resize-none overflow-y-auto max-h-48 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        rows={1}
+                        disabled={isLoading}
+                    />
                 </div>
 
-                <button className="p-2 text-gray-400 hover:text-white" title="Attach file (coming soon)" disabled>
-                    <PaperclipIcon className="w-6 h-6"/>
-                </button>
-
-                <textarea
-                    ref={textAreaRef}
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Type your message..."
-                    className="flex-1 bg-gray-700 rounded-lg p-3 resize-none max-h-40 overflow-y-auto text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    rows={1}
-                    disabled={isLoading}
-                />
-                
                 <button
-                    onClick={() => onSendMessage(inputValue, mentionedContacts)}
-                    disabled={isLoading || !inputValue.trim()}
-                    className="p-3 bg-indigo-600 rounded-lg text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleSend}
+                    disabled={isLoading || !content.trim()}
+                    className="p-3 bg-indigo-600 text-white rounded-full transition-colors hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Send message (Enter)"
                 >
-                    <SendIcon className="w-6 h-6"/>
+                    <SendIcon className="w-6 h-6" />
                 </button>
             </div>
-             {selectedPrompt && (
-                <FillPromptVariablesModal 
-                    isOpen={isVariablesModalOpen}
-                    onClose={() => setIsVariablesModalOpen(false)}
-                    prompt={selectedPrompt}
-                    variables={promptVariables}
-                    onSubmit={handleVariableSubmit}
-                />
-            )}
+            
+             <FillPromptVariablesModal
+                isOpen={isPromptModalOpen}
+                onClose={() => setIsPromptModalOpen(false)}
+                prompt={promptToFill}
+                variables={promptVariables}
+                onSubmit={handlePromptVariablesSubmit}
+            />
         </div>
     );
 };

@@ -1,7 +1,9 @@
 
+
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+// FIX: Added imports for IStatus and CognitivePhase types.
 import type { Message, Conversation, Contact, IStatus, CognitivePhase } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 
@@ -67,7 +69,7 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
         phaseTimers.current.push(setTimeout(() => setStatus({ currentAction: { phase: 'generating', details: 'Generating response from the model...' }}), 2200));
 
 
-        const optimisticUserMessage: Message = { ...message, id: crypto.randomUUID(), createdAt: new Date(), conversationId: currentConversation.id, parentMessageId: parentMessageId };
+        const optimisticUserMessage: Message = { ...message, id: crypto.randomUUID(), createdAt: new Date(), conversationId: currentConversation.id, parentMessageId: parentMessageId, lastUpdatedAt: new Date() };
         
         // Don't show optimistic user message if it's part of a workflow history override
         if (!historyOverride) {
@@ -170,7 +172,7 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
         
         // The last message in the history is the user prompt that led to the AI response.
         const userPrompt = historyToResend[historyToResend.length - 1];
-        await addMessage({ role: 'user', content: userPrompt.content }, [], historyToResend.slice(0, -1));
+        await addMessage({ role: 'user', content: userPrompt.content, lastUpdatedAt: new Date() }, [], historyToResend.slice(0, -1));
     }, [messages, addMessage, deleteMessage]);
 
     const regenerateUserPromptAndGetResponse = useCallback(async (messageId: string) => {
@@ -193,7 +195,7 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
             }
             
             // Send the new rewritten prompt
-            await addMessage({ role: 'user', content: rewrittenPrompt }, [], historyForContext);
+            await addMessage({ role: 'user', content: rewrittenPrompt, lastUpdatedAt: new Date() }, [], historyForContext);
         } catch (error) {
             setStatus({ error: `Failed during prompt regeneration: ${(error as Error).message}` });
         }

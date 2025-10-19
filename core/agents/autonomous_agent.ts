@@ -1,149 +1,161 @@
 // core/agents/autonomous_agent.ts
 import { sql } from '@/lib/db';
-import { generateAgentContent } from '@/lib/gemini-server';
-import { executeTool } from '@/core/tools';
-import type { AgentRun, AgentPlanPhase, AgentRunStep, Tool } from '@/lib/types';
+import { executeTool } from '../tools';
+import type { AgentPlanPhase } from '@/lib/types';
 import { ExperienceConsolidationPipeline } from '../pipelines/experience_consolidation';
-import { Content, Tool as GeminiTool, FunctionDeclaration, Type } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
+
+const MAX_STEPS_PER_PHASE = 10;
 
 export class AutonomousAgent {
     private runId: string;
-    private goal: string;
+    private mainGoal: string;
     private plan: Omit<AgentPlanPhase, 'id' | 'run_id' | 'steps' | 'result' | 'started_at' | 'completed_at'>[];
+    private ai: GoogleGenAI;
+    private memory: string[] = [];
 
-    constructor(runId: string, goal: string, plan: any[]) {
+    constructor(runId: string, mainGoal: string, plan: any[]) {
         this.runId = runId;
-        this.goal = goal;
+        this.mainGoal = mainGoal;
         this.plan = plan;
+
+        const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+        if (!apiKey) throw new Error("API key not found for AutonomousAgent.");
+        // @google/genai-api-guideline-fix: Initialize GoogleGenAI with a named apiKey parameter.
+        this.ai = new GoogleGenAI({ apiKey });
     }
 
-    async run() {
-        // This is a fire-and-forget method to run the agent in the background.
-        this.execute().catch(async (error) => {
-            console.error(`Agent run ${this.runId} failed:`, error);
-            await sql`
-                UPDATE agent_runs SET status = 'failed', result_summary = ${(error as Error).message}, "completedAt" = CURRENT_TIMESTAMP WHERE id = ${this.runId};
-            `;
-        });
-    }
-
-    private async execute() {
-        let finalResult = '';
-        for (const phase of this.plan) {
-            const { rows: phaseRows } = await sql`
-                INSERT INTO agent_run_phases (run_id, phase_order, goal, status, started_at)
-                VALUES (${this.runId}, ${phase.phase_order}, ${phase.goal}, 'running', CURRENT_TIMESTAMP)
-                RETURNING id;
-            `;
-            const phaseId = phaseRows[0].id;
-            
-            try {
-                const phaseResult = await this.executePhase(phase, phaseId);
-                await sql`
-                    UPDATE agent_run_phases SET status = 'completed', result = ${phaseResult}, completed_at = CURRENT_TIMESTAMP WHERE id = ${phaseId};
-                `;
-                finalResult += `Phase ${phase.phase_order} Result: ${phaseResult}\n`;
-            } catch (error) {
-                 await sql`
-                    UPDATE agent_run_phases SET status = 'failed', result = ${(error as Error).message}, completed_at = CURRENT_TIMESTAMP WHERE id = ${phaseId};
-                `;
-                throw error; // Propagate error to stop the main run
+    public async run() {
+        console.log(`[AgentRun ${this.runId}] Starting run with goal: ${this.mainGoal}`);
+        try {
+            for (const phaseDef of this.plan) {
+                await this.executePhase(phaseDef);
             }
+            const finalResult = `Successfully completed all phases for the goal: ${this.mainGoal}. Final thoughts: ${this.memory.join('\n')}`;
+            await this.finalizeRun('completed', finalResult);
+
+            // Fire-and-forget experience consolidation
+            new ExperienceConsolidationPipeline().run(this.runId);
+
+        } catch (error) {
+            const errorMessage = `[AgentRun ${this.runId}] Run failed: ${(error as Error).message}`;
+            console.error(errorMessage, (error as Error).stack);
+            await this.finalizeRun('failed', errorMessage);
         }
-
-        await sql`
-            UPDATE agent_runs SET status = 'completed', result_summary = ${finalResult}, "completedAt" = CURRENT_TIMESTAMP WHERE id = ${this.runId};
-        `;
-        
-        // Fire-and-forget experience consolidation
-        new ExperienceConsolidationPipeline().run(this.runId);
     }
 
-    private async executePhase(phase: any, phaseId: string): Promise<string> {
-        const MAX_STEPS = 10;
-        const stepHistory: AgentRunStep[] = [];
+    private async executePhase(phaseDef: Omit<AgentPlanPhase, 'id' | 'run_id' | 'steps' | 'result' | 'started_at' | 'completed_at'>) {
+        // 1. Create phase record in DB
+        const { rows: phaseRows } = await sql<AgentPlanPhase>`
+            INSERT INTO agent_run_phases (run_id, phase_order, goal, status, started_at)
+            VALUES (${this.runId}, ${phaseDef.phase_order}, ${phaseDef.goal}, 'running', NOW())
+            RETURNING id;
+        `;
+        const phaseId = phaseRows[0].id;
+        console.log(`[AgentRun ${this.runId}] Starting Phase ${phaseDef.phase_order}: ${phaseDef.goal}`);
 
-        // 1. Fetch available tools from the database
-        const { rows: toolRows } = await sql<Tool>`SELECT name, description, schema_json FROM tools;`;
-        const finishTool: FunctionDeclaration = {
-            name: 'finish',
-            description: 'Call this function when you have successfully completed the current phase goal and have the final answer.',
-            parameters: {
-                type: Type.OBJECT,
-                properties: {
-                    result: {
-                        type: Type.STRING,
-                        description: 'The final result or summary of the completed phase goal.'
-                    }
-                },
-                required: ['result']
-            }
-        };
+        let stepCount = 0;
+        let lastObservation = "No observation yet. Begin by thinking about the first step to achieve your goal.";
 
-        const availableTools: GeminiTool[] = [{
-            functionDeclarations: [...toolRows.map(t => t.schema_json), finishTool]
-        }];
-
-        for (let i = 1; i <= MAX_STEPS; i++) {
-            // 2. REASON
-            const historyForPrompt: Content[] = [{
-                role: 'user',
-                parts: [{ text: `
-                    OVERALL GOAL: "${this.goal}"
-                    CURRENT PHASE GOAL: "${phase.goal}"
-
-                    PREVIOUS STEPS IN THIS PHASE:
-                    ${stepHistory.length > 0 ? stepHistory.map(s => `Thought: ${s.thought}\nAction: ${s.action}(${JSON.stringify(s.action_input)})\nObservation: ${s.observation}`).join('\n---\n') : "No steps taken yet."}
-
-                    Your task is to decide the next logical step to achieve the current phase goal.
-                    Based on the goal and history, formulate a 'thought' about what to do next, then choose one of the available tools to execute.
-                    If you have sufficient information to answer the phase goal, call the 'finish' tool.
-                    Your response should include your thought process as text and a 'functionCall' to a tool.
-                `}]
-            }];
-
-            const systemInstruction = "You are an autonomous agent executing a plan. Your response must include your thought process and a function call to one of the available tools.";
-            const response = await generateAgentContent(historyForPrompt, systemInstruction, availableTools);
-
-            const thoughtText = response.text?.trim() || "The model did not provide a thought. Proceeding with action.";
-            const functionCall = response.functionCalls?.[0];
-
-            if (!functionCall) {
-                if(thoughtText) {
-                     return thoughtText;
-                }
-                throw new Error("Agent failed to produce a valid tool call or text response.");
-            }
+        while (stepCount < MAX_STEPS_PER_PHASE) {
+            stepCount++;
             
-            // 3. ACT
-            if (functionCall.name === 'finish') {
-                return functionCall.args.result as string;
-            }
+            // 2. Generate thought and action
+            const { thought, action, action_input, is_final_answer } = await this.generateNextStep(phaseDef.goal, lastObservation);
 
-            const { rows: stepRows } = await sql<AgentRunStep>`
-                INSERT INTO agent_run_steps (run_id, phase_id, step_order, thought, action, action_input, observation, status)
-                VALUES (${this.runId}, ${phaseId}, ${i}, ${thoughtText}, ${functionCall.name}, ${JSON.stringify(functionCall.args)}, '', 'running')
+            // 3. Log the step (thought process)
+            const { rows: stepRows } = await sql`
+                INSERT INTO agent_run_steps (run_id, phase_id, step_order, thought, action, action_input, observation, status, started_at)
+                VALUES (${this.runId}, ${phaseId}, ${stepCount}, ${thought}, ${action}, ${JSON.stringify(action_input)}, '', 'running', NOW())
                 RETURNING id;
             `;
             const stepId = stepRows[0].id;
-            
-            const observation = await executeTool(functionCall.name, functionCall.args);
-            
-            // 4. OBSERVE
-            await sql`
-                UPDATE agent_run_steps SET observation = ${observation}, status = 'completed' WHERE id = ${stepId};
-            `;
 
-            const newStep: any = {
-                id: stepId,
-                thought: thoughtText,
-                action: functionCall.name,
-                action_input: functionCall.args,
-                observation: observation,
-            };
-            stepHistory.push(newStep);
+            if (is_final_answer) {
+                await this.finalizePhase(phaseId, 'completed', action_input.final_answer);
+                return;
+            }
+
+            // 4. Execute the tool/action
+            const observation = await executeTool(action, action_input);
+            lastObservation = observation;
+
+            // 5. Update step with observation
+            await sql`
+                UPDATE agent_run_steps 
+                SET observation = ${observation}, status = 'completed', completed_at = NOW()
+                WHERE id = ${stepId};
+            `;
         }
 
-        throw new Error("Agent exceeded maximum number of steps for this phase.");
+        throw new Error(`Phase ${phaseDef.phase_order} exceeded max steps.`);
+    }
+
+    private async generateNextStep(phaseGoal: string, lastObservation: string): Promise<{ thought: string, action: string, action_input: any, is_final_answer: boolean }> {
+        const prompt = `
+            You are an autonomous agent executing a phase of a larger plan.
+            Your Main Goal: ${this.mainGoal}
+            Current Phase Goal: ${phaseGoal}
+            
+            Available Tools: web_search, calculator
+
+            Your Memory (previous phase results):
+            ${this.memory.join('\n') || 'None'}
+            
+            Last Observation:
+            ${lastObservation}
+
+            Based on the above, decide your next thought and action.
+            If you have sufficient information to complete the current phase goal, your action should be 'final_answer' with the answer in 'final_answer' argument.
+            Respond with a single JSON object with "thought", "action", and "action_input" keys. "action_input" must be an object.
+        `;
+        
+        const result = await this.ai.models.generateContent({
+            // @google/genai-api-guideline-fix: Use 'gemini-2.5-flash' for this task.
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+
+        try {
+            // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
+            const responseJson = JSON.parse(result.text.trim().replace(/```json|```/g, ''));
+            const isFinal = responseJson.action === 'final_answer';
+            return {
+                thought: responseJson.thought,
+                action: responseJson.action,
+                action_input: responseJson.action_input,
+                is_final_answer: isFinal
+            };
+        } catch (e) {
+            // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
+            console.error("Failed to parse agent's JSON response:", result.text);
+            return {
+                thought: "I failed to generate a valid JSON response. I will try again.",
+                action: "final_answer",
+                action_input: { final_answer: "Error: Could not decide on an action." },
+                is_final_answer: true,
+            };
+        }
+    }
+    
+    private async finalizePhase(phaseId: string, status: 'completed' | 'failed', result: string) {
+        await sql`
+            UPDATE agent_run_phases
+            SET status = ${status}, result = ${result}, completed_at = NOW()
+            WHERE id = ${phaseId};
+        `;
+        if (status === 'completed') {
+            this.memory.push(result);
+        }
+        console.log(`[AgentRun ${this.runId}] Finalized Phase. Status: ${status}. Result: ${result}`);
+    }
+
+    private async finalizeRun(status: 'completed' | 'failed', resultSummary: string) {
+        await sql`
+            UPDATE agent_runs
+            SET status = ${status}, result_summary = ${resultSummary}, "completedAt" = NOW()
+            WHERE id = ${this.runId};
+        `;
+        console.log(`[AgentRun ${this.runId}] Finalized Run. Status: ${status}`);
     }
 }

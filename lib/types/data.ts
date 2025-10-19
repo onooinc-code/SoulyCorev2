@@ -16,6 +16,8 @@ export interface Conversation {
     ui_settings?: Record<string, any>;
     useSemanticMemory?: boolean;
     useStructuredMemory?: boolean;
+    // FIX: Added missing property used in memory extraction logic.
+    enableMemoryExtraction?: boolean;
     createdAt: Date;
     lastUpdatedAt: Date;
 }
@@ -332,6 +334,25 @@ export interface HedraGoal {
     content: string;
     lastUpdatedAt: Date;
 }
+
+// FIX: Added missing Log type.
+export interface Log {
+    id: string;
+    timestamp: Date;
+    message: string;
+    payload?: Record<string, any>;
+    level: 'info' | 'warn' | 'error';
+}
+
+// FIX: Added missing Brain type.
+export interface Brain {
+    id: string;
+    name: string;
+    config_json: Record<string, any>;
+    createdAt: Date;
+    lastUpdatedAt: Date;
+}
+
 
 // For Nivo charts
 export interface FeatureStatusChartData {

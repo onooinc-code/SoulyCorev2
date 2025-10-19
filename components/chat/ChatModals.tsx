@@ -17,7 +17,7 @@ const CognitiveInspectorModal = dynamic(() => import('../CognitiveInspectorModal
 });
 
 // FIX: Added dynamic import for ContextViewerModal which was missing.
-const ContextViewerModal = dynamic(() => import('../ContextViewerModal'), {
+const ContextViewerModal = dynamic(() => import('@/components/ContextViewerModal'), {
     ssr: false,
     loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><p className="text-white">Loading Viewer...</p></div>
 });

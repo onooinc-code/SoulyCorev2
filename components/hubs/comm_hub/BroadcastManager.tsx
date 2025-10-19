@@ -5,38 +5,45 @@ import React, { useState } from 'react';
 
 const BroadcastManager = () => {
     const [message, setMessage] = useState('');
-    const [segment, setSegment] = useState('all');
+    const [isSending, setIsSending] = useState(false);
+
+    const handleSend = () => {
+        if (!message.trim()) return;
+        setIsSending(true);
+        console.log("Broadcasting message:", message);
+        // Simulate API call
+        setTimeout(() => {
+            setIsSending(false);
+            setMessage('');
+            alert('Broadcast sent (simulated).');
+        }, 1500);
+    };
 
     return (
-        <div className="p-4 bg-gray-900/50 rounded-lg h-full flex flex-col">
-            <h4 className="text-lg font-bold mb-4">Send Broadcast</h4>
-            <div className="flex-1 flex flex-col gap-4">
-                <textarea 
-                    value={message}
-                    onChange={e => setMessage(e.target.value)}
-                    placeholder="Compose your message..."
-                    className="w-full flex-1 p-2 bg-gray-700 rounded-lg text-sm resize-none"
-                />
-                <div className="flex items-center gap-4">
-                    <label htmlFor="segment" className="text-sm text-gray-400">Target Segment:</label>
-                    <select 
-                        id="segment"
-                        value={segment}
-                        onChange={e => setSegment(e.target.value)}
-                        className="p-2 bg-gray-700 rounded-lg text-sm"
-                    >
-                        <option value="all">All Users</option>
-                        <option value="new">New Users (Last 7 Days)</option>
-                        <option value="power">Power Users</option>
-                    </select>
+        <div className="p-4 bg-gray-900/50 rounded-lg">
+            <h4 className="text-lg font-bold mb-4">Send App-Wide Broadcast</h4>
+            <div className="space-y-4">
+                 <div>
+                    <label htmlFor="broadcast-message" className="block text-sm font-medium text-gray-400 mb-2">
+                        Broadcast Message
+                    </label>
+                    <textarea
+                        id="broadcast-message"
+                        value={message}
+                        onChange={e => setMessage(e.target.value)}
+                        placeholder="e.g., System will be down for maintenance at 2 AM EST."
+                        className="w-full p-2 bg-gray-700 rounded-lg text-sm"
+                        rows={3}
+                    />
                 </div>
+                <button
+                    onClick={handleSend}
+                    disabled={isSending || !message.trim()}
+                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-md font-semibold hover:bg-purple-500 disabled:opacity-50"
+                >
+                    {isSending ? 'Sending...' : 'Send Broadcast'}
+                </button>
             </div>
-            <button 
-                disabled
-                className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-500 disabled:opacity-50"
-            >
-                Send Broadcast (Disabled)
-            </button>
         </div>
     );
 };
