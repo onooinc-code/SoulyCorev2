@@ -37,7 +37,7 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
         return { messageCount, totalTokens, bookmarkedCount, wordCount, avgResponseTime };
     }, [currentConversation, messages]);
 
-    // FIX: Resolve ReactNode type error. status.currentAction can be an object, which cannot be rendered directly.
+    // @google/genai-api-guideline-fix: Resolve ReactNode type error. status.currentAction can be an object, which cannot be rendered directly.
     // This logic extracts the `details` string if it's an object, or uses the string value.
     const currentActionText =
         typeof status.currentAction === 'object' && status.currentAction
