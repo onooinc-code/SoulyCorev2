@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -8,16 +9,13 @@ import type { SVGProps } from 'react';
 // Define a generic IconType
 export type IconType = React.FC<SVGProps<SVGSVGElement>>;
 
-// FIX: Corrected the MenuItem discriminated union type. Removed `isSeparator?: false | undefined`
-// from the main item definition to create a stricter separation between a regular menu item and a separator.
-// This resolves a TypeScript inference error where an object like `{ isSeparator: true }` was being
-// incorrectly matched against both parts of the union, leading to type conflicts.
 type MenuItemAction = {
     label: string;
     action?: (e?: React.MouseEvent) => void;
     icon?: IconType;
     disabled?: boolean;
     children?: MenuItem[];
+    isSeparator?: false | undefined;
 };
 
 export type MenuItem = { isSeparator: true } | MenuItemAction;
@@ -72,25 +70,27 @@ const SubMenu = ({ items, parentRect }: { items: MenuItem[]; parentRect: DOMRect
             className="fixed w-60 bg-gray-800/80 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl z-[101] p-1.5"
         >
             {items.map((item, index) => {
+// FIX: Use an explicit `else` block to help TypeScript correctly narrow the `MenuItem` union type.
                 if (item.isSeparator) {
                     return <div key={`sub-sep-${index}`} className="h-px bg-gray-700 my-1.5" />;
+                } else {
+                    const Icon = item.icon;
+                    return (
+                         <button
+                            key={item.label}
+                            disabled={item.disabled}
+                            onClick={(e) => {
+                                if (item.action) {
+                                    item.action(e);
+                                }
+                            }}
+                            className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {Icon && <Icon className="w-4 h-4" />}
+                            <span>{item.label}</span>
+                        </button>
+                    );
                 }
-                const Icon = item.icon;
-                return (
-                     <button
-                        key={item.label}
-                        disabled={item.disabled}
-                        onClick={(e) => {
-                            if (item.action) {
-                                item.action(e);
-                            }
-                        }}
-                        className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {Icon && <Icon className="w-4 h-4" />}
-                        <span>{item.label}</span>
-                    </button>
-                );
             })}
         </motion.div>
     )
@@ -149,16 +149,19 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>, item: MenuItem) => {
         window.clearTimeout(subMenuTimer.current);
-        if ('children' in item && item.children) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            subMenuTimer.current = window.setTimeout(() => {
-                setActiveSubMenu(item.label);
-                setActiveSubMenuRect(rect);
-            }, 150);
-        } else {
-             subMenuTimer.current = window.setTimeout(() => {
-                setActiveSubMenu(null);
-             }, 300);
+// FIX: Use an explicit `else` block to help TypeScript correctly narrow the `MenuItem` union type.
+        if (!item.isSeparator) {
+            if (item.children) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                subMenuTimer.current = window.setTimeout(() => {
+                    setActiveSubMenu(item.label);
+                    setActiveSubMenuRect(rect);
+                }, 150);
+            } else {
+                 subMenuTimer.current = window.setTimeout(() => {
+                    setActiveSubMenu(null);
+                 }, 300);
+            }
         }
     };
 
@@ -188,35 +191,36 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                     onMouseEnter={handleSubMenuEnter}
                 >
                     {items.map((item, index) => {
+// FIX: Use an explicit `else` block to help TypeScript correctly narrow the `MenuItem` union type.
                         if (item.isSeparator) {
                             return <div key={`sep-${index}`} className="h-px bg-gray-700 my-1.5" />;
+                        } else {
+                            const Icon = item.icon;
+                            return (
+                                <button
+                                    key={item.label}
+                                    onMouseEnter={(e) => handleMouseEnter(e, item)}
+                                    onClick={(e) => {
+                                        if (item.children) {
+                                            e.stopPropagation();
+                                            setActiveSubMenu(prev => prev === item.label ? null : item.label);
+                                            setActiveSubMenuRect(e.currentTarget.getBoundingClientRect());
+                                        } else if (item.action) {
+                                            item.action(e);
+                                            onClose();
+                                        }
+                                    }}
+                                    disabled={item.disabled}
+                                    className="w-full flex items-center justify-between text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        {Icon && <Icon className="w-4 h-4" />}
+                                        <span>{item.label}</span>
+                                    </div>
+                                    {item.children && <span className="text-xs">▶</span>}
+                                </button>
+                            );
                         }
-
-                        const Icon = item.icon;
-                        return (
-                            <button
-                                key={item.label}
-                                onMouseEnter={(e) => handleMouseEnter(e, item)}
-                                onClick={(e) => {
-                                    if ('children' in item && item.children) {
-                                        e.stopPropagation();
-                                        setActiveSubMenu(prev => prev === item.label ? null : item.label);
-                                        setActiveSubMenuRect(e.currentTarget.getBoundingClientRect());
-                                    } else if (item.action) {
-                                        item.action(e);
-                                        onClose();
-                                    }
-                                }}
-                                disabled={item.disabled}
-                                className="w-full flex items-center justify-between text-left px-3 py-2 text-sm text-gray-200 rounded-md hover:bg-indigo-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <div className="flex items-center gap-3">
-                                    {Icon && <Icon className="w-4 h-4" />}
-                                    <span>{item.label}</span>
-                                </div>
-                                {'children' in item && item.children && <span className="text-xs">▶</span>}
-                            </button>
-                        );
                     })}
                 </motion.div>
                 
@@ -225,21 +229,24 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                         {activeSubMenu && items.find(i => !i.isSeparator && i.label === activeSubMenu)?.children && (
                             <SubMenu 
                                 items={(items.find(i => !i.isSeparator && i.label === activeSubMenu)!.children! as MenuItem[]).map((child): MenuItem => {
+// FIX: Use an explicit `else` block to help TypeScript correctly narrow the `MenuItem` union type.
                                     if (child.isSeparator) {
                                         return child;
+                                    } else {
+                                        return {
+                                            label: child.label,
+                                            icon: child.icon,
+                                            disabled: child.disabled,
+                                            children: child.children,
+                                            isSeparator: child.isSeparator,
+                                            action: (e) => {
+                                                if (child.action) {
+                                                    child.action(e);
+                                                }
+                                                onClose();
+                                            },
+                                        };
                                     }
-                                    return {
-                                        label: child.label,
-                                        icon: child.icon,
-                                        disabled: child.disabled,
-                                        children: child.children,
-                                        action: (e) => {
-                                            if (child.action) {
-                                                child.action(e);
-                                            }
-                                            onClose();
-                                        },
-                                    };
                                 })} 
                                 parentRect={activeSubMenuRect} 
                             />
