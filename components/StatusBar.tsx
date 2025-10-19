@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useMemo } from 'react';
@@ -37,8 +36,7 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
         return { messageCount, totalTokens, bookmarkedCount, wordCount, avgResponseTime };
     }, [currentConversation, messages]);
 
-    // @google/genai-api-guideline-fix: Resolve ReactNode type error. status.currentAction can be an object, which cannot be rendered directly.
-    // This logic extracts the `details` string if it's an object, or uses the string value.
+    // FIX: Resolved a React type error. `status.currentAction` can be an object, which is not a valid React child. This change ensures that if `status.currentAction` is an object, its `details` string property is rendered instead.
     const currentActionText =
         typeof status.currentAction === 'object' && status.currentAction
             ? status.currentAction.details
