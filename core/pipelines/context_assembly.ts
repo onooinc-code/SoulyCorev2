@@ -51,8 +51,11 @@ export class ContextAssemblyPipeline {
             ? this.structuredMemory.query({ type: 'contact', name: mentionedContacts[0].name })
             : Promise.resolve([]);
 
-        const graphMemoriesPromise = conversation.useGraphMemory
-            ? this.graphMemory.query({ entityName: userQuery.split(" ")[0] }) // Simple entity extraction for now
+        // A simple heuristic to extract a potential entity name (capitalized word) from the query for the graph DB
+        const potentialEntityName = userQuery.split(' ').find(word => word.length > 2 && word[0] === word[0].toUpperCase());
+
+        const graphMemoriesPromise = (conversation.useGraphMemory && potentialEntityName)
+            ? this.graphMemory.query({ entityName: potentialEntityName })
             : Promise.resolve([]);
 
         const [semanticMemories, structuredMemories, graphMemories] = await Promise.all([

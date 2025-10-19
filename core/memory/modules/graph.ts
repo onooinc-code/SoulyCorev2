@@ -63,7 +63,7 @@ export class GraphMemoryModule implements ISingleMemoryModule {
      */
     async query(params: IGraphMemoryQueryParams): Promise<string[]> {
         if (!params.entityName) {
-            throw new Error('GraphMemoryModule.query requires an entityName.');
+            return [];
         }
         const client = getEdgeDBClient();
         
@@ -79,8 +79,12 @@ export class GraphMemoryModule implements ISingleMemoryModule {
         const results = await client.queryJSON(query, { entityName: params.entityName });
         const relationships = JSON.parse(results);
         
+        if (!Array.isArray(relationships)) {
+            return [];
+        }
+        
         return relationships.map((rel: any) => 
-            `${rel.subject.name} -> ${rel.predicate} -> ${rel.object.name}`
+            `${rel.subject.name} ${rel.predicate.replace(/_/g, ' ')} ${rel.object.name}`
         );
     }
 }

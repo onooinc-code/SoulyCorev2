@@ -63,7 +63,7 @@ export class MemoryExtractionPipeline {
                     properties: {
                         entities: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, type: { type: Type.STRING }, details: { type: Type.STRING } } } },
                         knowledge: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        relationships: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { subject: { type: Type.STRING }, predicate: { type: Type.STRING }, object: { type: Type.STRING } } } }
+                        relationships: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { subject: { type: Type.STRING }, predicate: { type: Type.STRING }, object: { type: Type.STRING } }, required: ['subject', 'predicate', 'object'] } }
                     },
                     required: ['entities', 'knowledge', 'relationships']
                 }
@@ -81,7 +81,6 @@ export class MemoryExtractionPipeline {
     async run(input: MemoryExtractionInput): Promise<void> {
         const { text, conversationId, config } = input;
         
-        // const conversation = await this.conversationRepo.getById(conversationId);
         const { rows } = await sql<Conversation>`SELECT * FROM conversations WHERE id = ${conversationId}`;
         const conversation = rows[0];
         if (!conversation) {
@@ -89,7 +88,7 @@ export class MemoryExtractionPipeline {
             return;
         }
 
-        if (!config.enableEntityExtraction && !config.enableKnowledgeExtraction && !conversation.useGraphMemory && !conversation.useDocumentMemory) {
+        if (!config.enableEntityExtraction && !config.enableKnowledgeExtraction && !conversation.useGraphMemory) {
             return; // Nothing to do
         }
 
@@ -101,10 +100,6 @@ export class MemoryExtractionPipeline {
             if (config.enableEntityExtraction && entities.length > 0) {
                 for (const entity of entities) {
                     promises.push(this.structuredMemory.store({ type: 'entity', data: { name: entity.name, type: entity.type, details_json: JSON.stringify(entity.details) } }));
-                    // Also store in vector memory if enabled
-                    if (conversation.useDocumentMemory) { // Assuming useDocumentMemory controls this for now
-                        // promises.push(this.vectorMemory.store({ text: `${entity.name} (${entity.type}): ${entity.details}` }));
-                    }
                 }
             }
 
@@ -114,7 +109,7 @@ export class MemoryExtractionPipeline {
                 }
             }
 
-            if (conversation.useGraphMemory && relationships.length > 0) {
+            if (conversation.useGraphMemory && relationships && relationships.length > 0) {
                  for (const rel of relationships) {
                     promises.push(this.graphMemory.store({ relationship: { subject: rel.subject, predicate: rel.predicate, object: rel.object } }));
                 }

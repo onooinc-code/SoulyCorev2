@@ -18,7 +18,7 @@ const WorkflowStepCard = ({ step, onUpdate, onRemove, singlePrompts, tools, avai
     const getPromptVariables = (promptId: string): string[] => {
         const prompt = singlePrompts.find(p => p.id === promptId);
         if (!prompt) return [];
-        const variableRegex = /{{\\s*(\\w+)\\s*}}/g;
+        const variableRegex = /{{\s*(\w+)\s*}}/g;
         const matches = [...prompt.content.matchAll(variableRegex)];
         return [...new Set(matches.map(match => match[1]))];
     };
@@ -27,7 +27,11 @@ const WorkflowStepCard = ({ step, onUpdate, onRemove, singlePrompts, tools, avai
         const tool = tools.find(t => t.id === toolId);
         if (!tool || !tool.schema_json) return [];
         try {
-            const schema = JSON.parse(tool.schema_json);
+            // FIX: The tool schema can be either a JSON string or a pre-parsed object.
+            // This check handles both cases to prevent an error when calling JSON.parse on an object.
+            const schema = typeof tool.schema_json === 'string'
+                ? JSON.parse(tool.schema_json)
+                : tool.schema_json;
             return Object.keys(schema.properties || {});
         } catch (e) {
             return [];
