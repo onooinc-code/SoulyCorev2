@@ -1,4 +1,5 @@
 
+
 "use client";
 
 // FIX: Added React import to resolve namespace errors.
@@ -45,7 +46,7 @@ export const useWorkflowManager = ({ currentConversation, setStatus, addMessage,
                 log('Executing tool step in workflow', { step: currentStep });
 
                 // 1. Add informational message that the tool is running
-                const toolExecutionMessage: Message = { id: crypto.randomUUID(), conversationId: currentConversation!.id, role: 'model', content: `*Executing tool for step ${stepDisplayNumber}...*`, createdAt: new Date() };
+                const toolExecutionMessage: Message = { id: crypto.randomUUID(), conversationId: currentConversation!.id, role: 'model', content: `*Executing tool for step ${stepDisplayNumber}...*`, createdAt: new Date(), lastUpdatedAt: new Date() };
                 setMessages(prev => [...prev, toolExecutionMessage]);
 
                 // 2. Resolve arguments
@@ -75,7 +76,7 @@ export const useWorkflowManager = ({ currentConversation, setStatus, addMessage,
                 stepResult = result;
 
                 // 4. Add observation message to UI
-                const toolObservationMessage: Message = { id: crypto.randomUUID(), conversationId: currentConversation!.id, role: 'model', content: `**Observation (Step ${stepDisplayNumber}):**\n\n${stepResult}`, createdAt: new Date() };
+                const toolObservationMessage: Message = { id: crypto.randomUUID(), conversationId: currentConversation!.id, role: 'model', content: `**Observation (Step ${stepDisplayNumber}):**\n\n${stepResult}`, createdAt: new Date(), lastUpdatedAt: new Date() };
                 setMessages(prev => [...prev, toolObservationMessage]);
 
             } else if (currentStep.type === 'prompt' && currentStep.promptId) {
@@ -94,7 +95,8 @@ export const useWorkflowManager = ({ currentConversation, setStatus, addMessage,
                     interpolatedContent = interpolatedContent.replace(new RegExp(`{{\\s*${variableName}\\s*}}`, 'g'), value);
                 }
                 
-                const { aiResponse } = await addMessage({ role: 'user', content: interpolatedContent });
+                // FIX: Add missing 'lastUpdatedAt' property to satisfy the Message type.
+                const { aiResponse } = await addMessage({ role: 'user', content: interpolatedContent, lastUpdatedAt: new Date() });
                 if (!aiResponse) throw new Error(`AI response was empty for step ${stepDisplayNumber}.`);
                 stepResult = aiResponse;
             } else {

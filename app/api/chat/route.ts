@@ -47,6 +47,8 @@ export async function POST(req: NextRequest) {
             content: llmResponse,
             tokenCount: Math.ceil(llmResponse.length / 4),
             responseTime: llmResponseTime,
+            // FIX: Add missing lastUpdatedAt property to satisfy the Message type.
+            lastUpdatedAt: new Date(),
         };
         await episodicMemory.store({
             conversationId: conversation.id,

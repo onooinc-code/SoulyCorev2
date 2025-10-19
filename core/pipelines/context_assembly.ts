@@ -1,12 +1,10 @@
-// core/pipelines/context_assembly.ts
 import { EpisodicMemoryModule } from '../memory/modules/episodic';
-import { SemanticMemoryModule } from '../memory/modules/semantic';
+import { SemanticMemoryModule, ISemanticQueryResult } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
-import { sql } from '@/lib/db';
 import llmProvider from '@/core/llm';
-import type { Conversation, Contact, PipelineRun } from '@/lib/types';
+import { sql } from '@/lib/db';
+import type { Conversation, Contact, PipelineRun, Message } from '@/lib/types';
 import { IContextAssemblyConfig } from '../memory/types';
-import type { Content } from '@google/genai';
 
 interface IContextAssemblyParams {
     conversation: Conversation;
@@ -26,15 +24,15 @@ export class ContextAssemblyPipeline {
         this.semanticMemory = new SemanticMemoryModule();
         this.structuredMemory = new StructuredMemoryModule();
     }
-    
-    private async logStep(runId: string, order: number, name: string, input: any, execution: () => Promise<any>) {
+
+    private async logStep(runId: string, order: number, name: string, input: any, execution: () => Promise<any>, modelUsed?: string, promptUsed?: string, configUsed?: any) {
         const startTime = Date.now();
         try {
             const output = await execution();
             const duration = Date.now() - startTime;
             await sql`
-                INSERT INTO pipeline_run_steps (run_id, step_order, step_name, input_payload, output_payload, duration_ms, status)
-                VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
+                INSERT INTO pipeline_run_steps (run_id, step_order, step_name, input_payload, output_payload, duration_ms, status, model_used, prompt_used, config_used)
+                VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed', ${modelUsed || null}, ${promptUsed || null}, ${configUsed ? JSON.stringify(configUsed) : null});
             `;
             return output;
         } catch (error) {
@@ -53,65 +51,95 @@ export class ContextAssemblyPipeline {
 
         const { rows: runRows } = await sql<PipelineRun>`
             INSERT INTO pipeline_runs (message_id, pipeline_type, status)
-            VALUES (${userMessageId}, 'ContextAssembly', 'running') RETURNING id, "createdAt";
+            VALUES (${userMessageId}, 'ContextAssembly', 'running') RETURNING id;
         `;
         const runId = runRows[0].id;
+        const startTime = Date.now();
 
         try {
-            const history = await this.logStep(runId, 1, 'Fetch Episodic Memory', { conversationId: conversation.id, depth: config.episodicMemoryDepth }, () => 
+            // Step 1: Retrieve Episodic Memory (Recent Conversation History)
+            const recentMessages = await this.logStep(runId, 1, 'Retrieve Episodic Memory', { conversationId: conversation.id, depth: config.episodicMemoryDepth }, () =>
                 this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth })
-            );
+            ) as Message[];
 
-            const semanticMemories = await this.logStep(runId, 2, 'Query Semantic Memory', { query: userQuery, topK: config.semanticMemoryTopK }, () => 
-                this.semanticMemory.query({ queryText: userQuery, topK: config.semanticMemoryTopK })
-            );
+            // Step 2: Retrieve Semantic Memory (Relevant Knowledge)
+            const semanticResults = await this.logStep(runId, 2, 'Retrieve Semantic Memory', { userQuery, topK: config.semanticMemoryTopK }, () =>
+                conversation.useSemanticMemory
+                    ? this.semanticMemory.query({ queryText: userQuery, topK: config.semanticMemoryTopK })
+                    : Promise.resolve([])
+            ) as ISemanticQueryResult[];
 
-            let contextString = "--- CONTEXT ---\n";
-            if (semanticMemories.length > 0) {
-                contextString += "Relevant Knowledge:\n" + semanticMemories.map((m: any) => `- ${m.text}`).join('\n') + '\n\n';
-            }
-            if (mentionedContacts.length > 0) {
-                contextString += "Mentioned Contacts:\n" + mentionedContacts.map(c => `- ${c.name}: ${c.notes || c.email}`).join('\n') + '\n\n';
-            }
+            // Step 3: Retrieve Structured Memory (Mentioned Contacts)
+            // The mentionedContacts are already passed in, so this is about formatting.
+            const structuredContext = await this.logStep(runId, 3, 'Format Structured Memory', { mentionedContacts }, () =>
+                 (conversation.useStructuredMemory && mentionedContacts.length > 0)
+                    ? mentionedContacts.map(c => `Contact: ${c.name} - ${c.notes || c.email || 'No details'}`).join('\n')
+                    : Promise.resolve("")
+            ) as string;
+
+            // Step 4: Assemble the final prompt components
+            const { systemInstruction, history } = await this.logStep(runId, 4, 'Assemble Context', { semanticResults, structuredContext, recentMessages }, () => {
+                let contextBlock = "";
+                if (semanticResults.length > 0) {
+                    contextBlock += "--- Relevant Knowledge ---\n";
+                    contextBlock += semanticResults.map(r => r.text).join('\n');
+                    contextBlock += "\n--------------------------\n";
+                }
+                if (structuredContext) {
+                    contextBlock += "--- Mentioned Contacts ---\n";
+                    contextBlock += structuredContext;
+                    contextBlock += "\n--------------------------\n";
+                }
+
+                const finalSystemInstruction = `${conversation.systemPrompt || 'You are a helpful AI assistant.'}\n\n${contextBlock}`;
+                
+                const formattedHistory = recentMessages.map(m => ({
+                    role: m.role,
+                    parts: [{ text: m.content }]
+                }));
+                // Add the current user query to the history for the LLM call
+                formattedHistory.push({ role: 'user', parts: [{ text: userQuery }] });
+
+                return Promise.resolve({ systemInstruction: finalSystemInstruction, history: formattedHistory });
+            });
             
-            const historyForModel: Content[] = history.map((m: any) => ({
-                role: m.role,
-                parts: [{ text: m.content }]
-            }));
-            
-            if (contextString.length > 17) { // "--- CONTEXT ---\n".length is 16, so > 17 means something was added
-                historyForModel.push({ role: 'user', parts: [{ text: contextString }] });
-            }
-            historyForModel.push({ role: 'user', parts: [{ text: userQuery }] });
-
             const modelConfig = {
-                temperature: conversation.temperature || undefined,
-                topP: conversation.topP || undefined
+                temperature: conversation.temperature || 0.7,
+                topP: conversation.topP || 0.95,
             };
 
-            const startTime = Date.now();
-            const llmResponse = await this.logStep(runId, 3, 'Generate LLM Response', { promptLength: historyForModel.length }, () =>
-                llmProvider.generateContent(historyForModel, conversation.systemPrompt || '', modelConfig, conversation.model || undefined)
+            // Step 5: Call the LLM
+            const llmResponse = await this.logStep(
+                runId,
+                5,
+                'Generate LLM Response',
+                { historyLength: history.length },
+                () => llmProvider.generateContent(history, systemInstruction, modelConfig, conversation.model || undefined),
+                conversation.model || 'default',
+                "History provided in payload",
+                modelConfig
             );
+
             const llmResponseTime = Date.now() - startTime;
             
             await sql`
                 UPDATE pipeline_runs 
                 SET 
                     status = 'completed', 
-                    duration_ms = ${Date.now() - new Date(runRows[0].createdAt).getTime()}, 
+                    duration_ms = ${llmResponseTime}, 
                     final_output = ${llmResponse},
-                    final_llm_prompt = ${historyForModel.map(c => c.parts.map(p => 'text' in p ? p.text : '').join(' ')).join('\n')},
-                    final_system_instruction = ${conversation.systemPrompt || ''},
+                    final_llm_prompt = ${history[history.length - 1].parts[0].text},
+                    final_system_instruction = ${systemInstruction},
                     model_config_json = ${JSON.stringify(modelConfig)}
                 WHERE id = ${runId};
             `;
-
+            
             return { llmResponse, llmResponseTime };
 
         } catch (error) {
+            const totalDuration = Date.now() - startTime;
             await sql`
-                UPDATE pipeline_runs SET status = 'failed', duration_ms = ${Date.now() - new Date(runRows[0].createdAt).getTime()}, final_output = ${(error as Error).message} WHERE id = ${runId};
+                UPDATE pipeline_runs SET status = 'failed', duration_ms = ${totalDuration}, final_output = ${(error as Error).message} WHERE id = ${runId};
             `;
             console.error("ContextAssemblyPipeline failed:", error);
             throw error;

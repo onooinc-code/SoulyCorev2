@@ -6,7 +6,7 @@ import { useAppControls } from '@/lib/hooks/useAppControls';
 import { useDisplayModeManager } from '@/lib/hooks/useDisplayModeManager';
 import { usePanelManager } from '@/lib/hooks/usePanelManager';
 
-type ActiveView = 'chat' | 'dashboard' | 'search' | 'agent_center' | 'brain_center' | 'memory_center' | 'contacts_hub' | 'prompts_hub' | 'tools_hub' | 'tasks_hub' | 'data_hub' | 'dev_center' | 'comm_hub';
+type ActiveView = 'chat' | 'dashboard' | 'search' | 'agent_center' | 'brain_center' | 'memory_center' | 'contacts_hub' | 'prompts_hub' | 'tools_hub' | 'tasks_hub' | 'data_hub' | 'dev_center' | 'comm_hub' | 'experiences_hub';
 
 interface UIStateContextType {
     activeView: ActiveView;

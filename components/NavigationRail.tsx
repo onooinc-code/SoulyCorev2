@@ -5,7 +5,7 @@ import React from 'react';
 import {
     DashboardIcon, SearchIcon, RocketLaunchIcon, BrainIcon, MemoryIcon,
     UsersIcon, PromptsIcon, ToolsIcon, TasksIcon, CircleStackIcon, CodeIcon,
-    ChatBubbleLeftRightIcon
+    ChatBubbleLeftRightIcon, KnowledgeIcon
 } from '@/components/Icons';
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { useConversation } from './providers/ConversationProvider';
@@ -21,6 +21,7 @@ const navItems = [
     { view: 'tools_hub', icon: ToolsIcon, label: 'Tools Hub' },
     { view: 'tasks_hub', icon: TasksIcon, label: 'Tasks Hub' },
     { view: 'data_hub', icon: CircleStackIcon, label: 'Data Hub' },
+    { view: 'experiences_hub', icon: KnowledgeIcon, label: 'Experiences Hub' },
     { view: 'dev_center', icon: CodeIcon, label: 'Dev Center' },
 ];
 

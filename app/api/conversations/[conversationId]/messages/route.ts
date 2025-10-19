@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Message } from '@/lib/types';
@@ -39,6 +40,8 @@ export async function POST(req: NextRequest, { params }: { params: { conversatio
             isBookmarked: message.isBookmarked,
             parentMessageId: message.parentMessageId,
             tags: message.tags,
+            // FIX: Add missing lastUpdatedAt property to satisfy the Message type.
+            lastUpdatedAt: new Date(),
         };
         
         const savedMessage = await episodicMemory.store({

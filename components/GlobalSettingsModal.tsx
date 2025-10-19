@@ -6,7 +6,8 @@ import React, { useState, useEffect } from 'react';
 // FIX: Corrected a relative import path for the `XIcon` component to use the absolute path alias `@`, resolving a module resolution error during the build process.
 import { XIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
-import { useSettings } from './providers/SettingsProvider';
+// FIX: Corrected import path for useSettings.
+import { useSettings } from '@/components/providers/SettingsProvider';
 import { useConversation } from './providers/ConversationProvider';
 import type { AppSettings } from '@/lib/types';
 import { useLog } from './providers/LogProvider';

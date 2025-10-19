@@ -292,6 +292,15 @@ export interface AgentRunStep extends DbRecord {
     status: 'running' | 'completed';
 }
 
+export interface Experience extends DbRecord {
+    source_run_id: string | null;
+    goal_template: string;
+    trigger_keywords: string[] | null;
+    steps_json: Record<string, any> | null;
+    confidence_score: number;
+    usage_count: number;
+}
+
 // Tasks
 export interface Task extends DbRecord {
     title: string;

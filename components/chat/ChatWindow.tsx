@@ -86,6 +86,8 @@ const ChatWindow = () => {
             role: 'user',
             content,
             tokenCount: Math.ceil(content.length / 4),
+            // FIX: Add missing lastUpdatedAt property to satisfy the Message type.
+            lastUpdatedAt: new Date(),
         };
 
         const { aiResponse, suggestion } = await addMessage(userMessage, mentionedContacts, undefined, replyToMessage?.id);

@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import llmProvider from '@/core/llm';
 // import { executeTool } from '@/core/tools'; // Placeholder for future tool execution
 import type { AgentRun, AgentPlanPhase, AgentRunStep } from '@/lib/types';
+import { ExperienceConsolidationPipeline } from '../pipelines/experience_consolidation';
 
 export class AutonomousAgent {
     private runId: string;
@@ -53,6 +54,9 @@ export class AutonomousAgent {
         await sql`
             UPDATE agent_runs SET status = 'completed', result_summary = ${finalResult}, "completedAt" = CURRENT_TIMESTAMP WHERE id = ${this.runId};
         `;
+        
+        // Fire-and-forget experience consolidation
+        new ExperienceConsolidationPipeline().run(this.runId);
     }
 
     private async executePhase(phase: any, phaseId: string): Promise<string> {
