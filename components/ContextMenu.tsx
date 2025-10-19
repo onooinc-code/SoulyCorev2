@@ -17,7 +17,6 @@ export type MenuItem = {
     action?: (e?: React.MouseEvent) => void;
     icon?: IconType;
     disabled?: boolean;
-    isSeparator?: false | undefined;
     children?: MenuItem[];
 };
 
@@ -147,7 +146,7 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
     
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>, item: MenuItem) => {
         window.clearTimeout(subMenuTimer.current);
-        if (item.children) {
+        if ('children' in item && item.children) {
             const rect = e.currentTarget.getBoundingClientRect();
             subMenuTimer.current = window.setTimeout(() => {
                 setActiveSubMenu(item.label);
@@ -196,7 +195,7 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                                 key={item.label}
                                 onMouseEnter={(e) => handleMouseEnter(e, item)}
                                 onClick={(e) => {
-                                    if (item.children) {
+                                    if ('children' in item && item.children) {
                                         e.stopPropagation();
                                         setActiveSubMenu(prev => prev === item.label ? null : item.label);
                                         setActiveSubMenuRect(e.currentTarget.getBoundingClientRect());
@@ -212,7 +211,7 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                                     {Icon && <Icon className="w-4 h-4" />}
                                     <span>{item.label}</span>
                                 </div>
-                                {item.children && <span className="text-xs">▶</span>}
+                                {'children' in item && item.children && <span className="text-xs">▶</span>}
                             </button>
                         );
                     })}
@@ -220,9 +219,9 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                 
                 <div onMouseEnter={handleSubMenuEnter} onMouseLeave={handleMouseLeave}>
                     <AnimatePresence>
-                        {activeSubMenu && items.find(i => i.label === activeSubMenu)?.children && (
+                        {activeSubMenu && items.find(i => 'label' in i && i.label === activeSubMenu)?.children && (
                             <SubMenu 
-                                items={(items.find(i => i.label === activeSubMenu)!.children! as MenuItem[]).map((child): MenuItem => {
+                                items={(items.find(i => 'label' in i && i.label === activeSubMenu)!.children! as MenuItem[]).map((child): MenuItem => {
                                     if (child.isSeparator) {
                                         return child;
                                     }
@@ -233,7 +232,7 @@ const ContextMenu = ({ items, position, isOpen, onClose }: ContextMenuProps) => 
                                         label: child.label,
                                         icon: child.icon,
                                         disabled: child.disabled,
-                                        children: child.children,
+                                        children: 'children' in child ? child.children : undefined,
                                         action: (e) => {
                                             if (child.action) {
                                                 child.action(e);

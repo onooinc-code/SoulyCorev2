@@ -35,13 +35,17 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
         return { messageCount, totalTokens, bookmarkedCount, wordCount, avgResponseTime };
     }, [currentConversation, messages]);
 
+    // FIX: Resolve ReactNode type error by extracting the conditional logic into a variable.
+    const currentActionText =
+        typeof status.currentAction === 'object' && status.currentAction !== null
+            ? status.currentAction.details
+            : status.currentAction || 'Ready';
+
     return (
         <div className="bg-gray-800/60 backdrop-blur-xl text-gray-400 text-xs p-2 border-t border-white/10 flex justify-between items-center gap-4">
             <div className="flex-1 italic truncate min-w-0">
                 <span>
-                    {typeof status.currentAction === 'object' && status.currentAction !== null
-                        ? status.currentAction.details
-                        : status.currentAction || 'Ready'}
+                    {currentActionText}
                 </span>
             </div>
 

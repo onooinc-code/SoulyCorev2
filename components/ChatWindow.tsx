@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -133,7 +131,7 @@ const ChatWindow = () => {
     const isDbError = !!(status.error && /database|vercel|table|relation.+does not exist/i.test(status.error));
 
     return (
-        <div className="flex flex-col flex-1 min-h-0 bg-gray-900">
+        <div className="flex flex-col h-full bg-gray-900">
             {!isZenMode && <Header />}
             
             <MessageList 

@@ -57,7 +57,7 @@ export const useAppContextMenu = () => {
         setContextMenu(prev => ({ ...prev, isOpen: false }));
     }, []);
 
-    const menuItems: MenuItem[] = useMemo(() => [
+    const menuItems = useMemo(() => [
         { label: 'Application', children: [
             { label: 'New Chat', icon: PlusIcon, action: createNewConversation },
             { label: 'Open Command Palette', icon: SearchIcon, action: () => setCommandPaletteOpen(true) },
@@ -72,8 +72,8 @@ export const useAppContextMenu = () => {
         { label: 'Conversation', disabled: !currentConversation, children: [
             { label: 'Show Conversation List', icon: ChatBubbleLeftRightIcon, action: () => setConversationPanelOpen(true) },
             { isSeparator: true },
-            { label: 'Clear All Messages', icon: TrashIcon, action: () => { if(currentConversation) clearMessages(currentConversation.id) } },
-            { label: 'Delete Conversation', icon: TrashIcon, action: () => { if(currentConversation) deleteConversation(currentConversation.id) } },
+            { label: 'Clear All Messages', icon: TrashIcon, action: () => { if(currentConversation) clearMessages(currentConversation.id); } },
+            { label: 'Delete Conversation', icon: TrashIcon, action: () => { if(currentConversation) deleteConversation(currentConversation.id); } },
         ]},
         { isSeparator: true },
         { label: 'Memory', children: [
@@ -93,7 +93,7 @@ export const useAppContextMenu = () => {
             { label: 'Data Hub', icon: CircleStackIcon, action: () => setActiveView('data_hub') },
             { label: 'Dev Center', icon: CodeIcon, action: () => setActiveView('dev_center') },
         ]},
-    ], [
+    ] as MenuItem[], [
         createNewConversation, currentConversation, deleteConversation, clearMessages, 
         restartApp, exitApp, setActiveView, setConversationPanelOpen, setCommandPaletteOpen,
         setBookmarksModalOpen, setGlobalSettingsModalOpen, setShortcutsModalOpen,
