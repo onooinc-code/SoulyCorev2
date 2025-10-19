@@ -2,12 +2,14 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+// FIX: Corrected relative import paths for icon components and the `useLog` hook to use the absolute path alias `@`, resolving module resolution errors during the build process.
 import { 
     CopyIcon, BookmarkIcon, BookmarkFilledIcon, SummarizeIcon, CollapseIcon, ExpandIcon, 
     CheckIcon, EditIcon, TrashIcon, RefreshIcon, TextAlignLeftIcon, TextAlignRightIcon, 
     DotsHorizontalIcon, BeakerIcon, EyeIcon, ChatBubbleLeftRightIcon, CommandLineIcon, WrenchScrewdriverIcon
-} from './Icons';
-import { useLog } from './providers/LogProvider';
+} from '@/components/Icons';
+// FIX: Corrected relative import paths for icon components and the `useLog` hook to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { useLog } from '@/components/providers/LogProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // A helper type for menu items

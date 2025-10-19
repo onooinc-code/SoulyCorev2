@@ -27,6 +27,7 @@ export interface AppSettings {
     global_ui_settings?: {
         fontSize?: string;
         messageFontSize?: 'sm' | 'base' | 'lg' | 'xl';
+        theme?: 'theme-dark' | 'theme-light' | 'theme-solarized';
     };
 }
 

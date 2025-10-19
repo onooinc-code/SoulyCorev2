@@ -2,10 +2,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { SendIcon, PaperclipIcon, XIcon, PromptsIcon } from './Icons';
+// FIX: Corrected relative import paths for icon components and the `useLog` hook to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { SendIcon, PaperclipIcon, XIcon, PromptsIcon } from '@/components/Icons';
 import type { Contact, Prompt } from '@/lib/types';
 import { useConversation } from '@/components/providers/ConversationProvider';
-import { useLog } from './providers/LogProvider';
+// FIX: Corrected relative import paths for icon components and the `useLog` hook to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { useLog } from '@/components/providers/LogProvider';
 import dynamic from 'next/dynamic';
 
 const FillPromptVariablesModal = dynamic(() => import('@/components/FillPromptVariablesModal'), {

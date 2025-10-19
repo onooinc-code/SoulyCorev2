@@ -149,11 +149,10 @@ const TasksHub = () => {
                     <div className="space-y-2">
                         <AnimatePresence>
                              {pendingTasks.map(task => (
-// FIX: Wrapped TaskItem in a div with a key to resolve TypeScript error where the key was being passed down as a prop.
-<div key={task.id}>
-<TaskItem task={task} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} onEdit={() => {}} />
-</div>
-))}
+                                <div key={task.id}>
+                                    <TaskItem task={task} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} onEdit={() => {}} />
+                                </div>
+                            ))}
                         </AnimatePresence>
                     </div>
                 </div>
@@ -162,11 +161,10 @@ const TasksHub = () => {
                     <div className="space-y-2">
                          <AnimatePresence>
                             {completedTasks.map(task => (
-// FIX: Wrapped TaskItem in a div with a key to resolve TypeScript error where the key was being passed down as a prop.
-<div key={task.id}>
-<TaskItem task={task} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} onEdit={() => {}} />
-</div>
-))}
+                                <div key={task.id}>
+                                    <TaskItem task={task} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} onEdit={() => {}} />
+                                </div>
+                            ))}
                         </AnimatePresence>
                     </div>
                 </div>

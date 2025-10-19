@@ -7,7 +7,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import type { Message as MessageType, Conversation } from '@/lib/types';
-import { UserCircleIcon, CpuChipIcon } from './Icons';
+// FIX: Corrected a relative import path for icon components to use the absolute path alias `@`, resolving a module resolution error during the build process.
+import { UserCircleIcon, CpuChipIcon } from '@/components/Icons';
 import MessageToolbar from './MessageToolbar';
 import MessageFooter from './MessageFooter';
 import { useSettings } from './providers/SettingsProvider';

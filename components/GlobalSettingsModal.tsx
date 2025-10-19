@@ -3,15 +3,18 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { XIcon } from './Icons';
+// FIX: Corrected a relative import path for the `XIcon` component to use the absolute path alias `@`, resolving a module resolution error during the build process.
+import { XIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
 import { useSettings } from './providers/SettingsProvider';
 import { useConversation } from './providers/ConversationProvider';
 import type { AppSettings } from '@/lib/types';
 import { useLog } from './providers/LogProvider';
 
+type Theme = 'theme-dark' | 'theme-light' | 'theme-solarized';
+
 const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void; }) => {
-    const { settings, saveSettings } = useSettings();
+    const { settings, saveSettings, setTheme } = useSettings();
     const { setStatus, clearError } = useConversation();
     const { log } = useLog();
     const [localSettings, setLocalSettings] = useState<AppSettings | null>(null);
@@ -69,6 +72,11 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
             return newSettings;
         });
     };
+    
+    const handleThemeChange = (theme: Theme) => {
+        setTheme(theme);
+        handleSettingChange('global_ui_settings.theme', theme);
+    }
 
     const renderContent = () => {
         if (!localSettings) {
@@ -78,10 +86,31 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
                 </div>
             );
         }
+        
+        const currentTheme = localSettings.global_ui_settings?.theme || 'theme-dark';
 
         return (
             <>
                 <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+                    {/* Theming */}
+                    <div className="p-4 bg-gray-900/50 rounded-lg">
+                        <h3 className="font-semibold text-lg mb-2">Appearance</h3>
+                         <div className="grid grid-cols-3 gap-3">
+                            <button onClick={() => handleThemeChange('theme-dark')} className={`p-3 rounded-lg border-2 ${currentTheme === 'theme-dark' ? 'border-indigo-500' : 'border-gray-700'}`}>
+                                <div className="w-full h-12 bg-[#111827] rounded-md mb-2"></div>
+                                <span className="text-sm">Dark</span>
+                            </button>
+                             <button onClick={() => handleThemeChange('theme-light')} className={`p-3 rounded-lg border-2 ${currentTheme === 'theme-light' ? 'border-indigo-500' : 'border-gray-700'}`}>
+                                <div className="w-full h-12 bg-[#f3f4f6] rounded-md mb-2"></div>
+                                <span className="text-sm">Light</span>
+                            </button>
+                             <button onClick={() => handleThemeChange('theme-solarized')} className={`p-3 rounded-lg border-2 ${currentTheme === 'theme-solarized' ? 'border-indigo-500' : 'border-gray-700'}`}>
+                                <div className="w-full h-12 bg-[#002b36] rounded-md mb-2"></div>
+                                <span className="text-sm">Solarized</span>
+                            </button>
+                         </div>
+                    </div>
+
                     {/* Default Model Config */}
                     <div className="p-4 bg-gray-900/50 rounded-lg">
                         <h3 className="font-semibold text-lg mb-2">Default Model Config</h3>

@@ -3,13 +3,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useConversation } from './providers/ConversationProvider';
-import { useUIState } from './providers/UIStateProvider';
+// FIX: Corrected relative import paths for the UIState provider and icon components to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { useUIState } from '@/components/providers/UIStateProvider';
 import { useSettings } from './providers/SettingsProvider';
+// FIX: Corrected relative import paths for the UIState provider and icon components to use the absolute path alias `@`, resolving module resolution errors during the build process.
 import { 
     SparklesIcon, EditIcon, TrashIcon, SidebarLeftIcon, LogIcon, 
     MinusIcon, PlusIcon, PowerIcon, RefreshIcon,
     FullscreenIcon, ExitFullscreenIcon 
-} from './Icons';
+} from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import ToolbarButton from './ToolbarButton';
 import type { VersionHistory } from '@/lib/types';

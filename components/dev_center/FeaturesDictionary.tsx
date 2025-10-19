@@ -4,9 +4,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Feature, FeatureStatus, UiUxSubFeature } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PlusIcon, TrashIcon, EditIcon, XIcon } from '../Icons';
+// FIX: Corrected relative import paths for icon components and hooks to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { PlusIcon, TrashIcon, EditIcon, XIcon } from '@/components/Icons';
 import { useConversation } from '@/components/providers/ConversationProvider';
-import { useLog } from '../providers/LogProvider';
+// FIX: Corrected relative import paths for icon components and hooks to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { useLog } from '@/components/providers/LogProvider';
 
 const statusOptions: FeatureStatus[] = ['✅ Completed', '🟡 Needs Improvement', '🔴 Needs Refactor', '⚪ Planned'];
 

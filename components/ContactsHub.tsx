@@ -4,9 +4,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Contact } from '@/lib/types';
 import { motion } from 'framer-motion';
-import { PlusIcon, TrashIcon, EditIcon } from './Icons';
+// FIX: Corrected relative import paths for icon components and the `useLog` hook to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { PlusIcon, TrashIcon, EditIcon } from '@/components/Icons';
 import { useConversation } from '@/components/providers/ConversationProvider';
-import { useLog } from './providers/LogProvider';
+// FIX: Corrected relative import paths for icon components and the `useLog` hook to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { useLog } from '@/components/providers/LogProvider';
 
 type SortKey = keyof Contact;
 

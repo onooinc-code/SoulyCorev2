@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -6,11 +5,14 @@ import type { AppSettings } from '@/lib/types';
 import { useLog } from './LogProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';
 
+type Theme = 'theme-dark' | 'theme-light' | 'theme-solarized';
+
 interface SettingsContextType {
     settings: AppSettings | null;
     saveSettings: (newSettings: AppSettings) => Promise<void>;
     changeGlobalFontSize: (direction: 'increase' | 'decrease') => void;
     changeMessageFontSize: (direction: 'increase' | 'decrease') => void;
+    setTheme: (theme: Theme) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -37,6 +39,7 @@ const defaultSettings: AppSettings = {
     global_ui_settings: {
         fontSize: '16px',
         messageFontSize: 'sm',
+        theme: 'theme-dark',
     }
 };
 
@@ -107,6 +110,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
                 document.documentElement.style.fontSize = size;
             }
         }
+        if (settings?.global_ui_settings?.theme) {
+            document.documentElement.className = ''; // Clear previous themes
+            document.documentElement.classList.add(settings.global_ui_settings.theme);
+        }
     }, [settings]);
 
     const changeGlobalFontSize = useCallback((direction: 'increase' | 'decrease') => {
@@ -150,11 +157,21 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     }, [log, settings, saveSettings]);
 
+    const setTheme = useCallback((theme: Theme) => {
+        if (!settings) return;
+        log(`Changing theme to: ${theme}`);
+        const newSettings = JSON.parse(JSON.stringify(settings));
+        if (!newSettings.global_ui_settings) newSettings.global_ui_settings = {};
+        newSettings.global_ui_settings.theme = theme;
+        saveSettings(newSettings);
+    }, [log, settings, saveSettings]);
+
     const contextValue = {
         settings,
         saveSettings,
         changeGlobalFontSize,
         changeMessageFontSize,
+        setTheme,
     };
 
     return (

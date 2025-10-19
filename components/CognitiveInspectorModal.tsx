@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XIcon, InfoIcon, CommandLineIcon, WrenchScrewdriverIcon, BrainIcon } from './Icons';
+// FIX: Corrected a relative import path for icon components to use the absolute path alias `@`, resolving a module resolution error during the build process.
+import { XIcon, InfoIcon, CommandLineIcon, WrenchScrewdriverIcon, BrainIcon } from '@/components/Icons';
 import type { PipelineRun, PipelineRunStep } from '@/lib/types';
 
 interface CognitiveInspectorModalProps {

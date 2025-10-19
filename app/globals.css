@@ -1,13 +1,80 @@
-
+/* FIX: The app previously used direct color values from Tailwind, making it difficult to theme.
+This update refactors the styling to use CSS variables for colors, fonts, and other themeable
+properties, enabling a dynamic theming engine. Three themes (dark, light, solarized) are defined. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root, .theme-dark {
+    --bg-primary: #111827; /* gray-900 */
+    --bg-secondary: #1f2937; /* gray-800 */
+    --bg-tertiary: #374151; /* gray-700 */
+    --bg-interactive: #4f46e5; /* indigo-600 */
+    --bg-interactive-hover: #4338ca; /* indigo-700 */
+    
+    --text-primary: #f9fafb; /* gray-50 */
+    --text-secondary: #d1d5db; /* gray-300 */
+    --text-muted: #9ca3af; /* gray-400 */
+    --text-interactive: #ffffff;
+    
+    --border-primary: #374151; /* gray-700 */
+    --border-interactive: #6366f1; /* indigo-500 */
+    --border-focus: #818cf8; /* indigo-400 */
+
+    --prose-code-bg: #374151;
+    --prose-pre-bg: #1f2937;
+    --prose-link: #60a5fa;
+  }
+
+  .theme-light {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f3f4f6; /* gray-100 */
+    --bg-tertiary: #e5e7eb; /* gray-200 */
+    --bg-interactive: #4f46e5;
+    --bg-interactive-hover: #6366f1;
+    
+    --text-primary: #111827; /* gray-900 */
+    --text-secondary: #374151; /* gray-700 */
+    --text-muted: #6b7280; /* gray-500 */
+    --text-interactive: #ffffff;
+    
+    --border-primary: #d1d5db; /* gray-300 */
+    --border-interactive: #4f46e5;
+    --border-focus: #4338ca;
+
+    --prose-code-bg: #e5e7eb;
+    --prose-pre-bg: #f3f4f6;
+    --prose-link: #3b82f6;
+  }
+
+  .theme-solarized {
+    --bg-primary: #002b36;
+    --bg-secondary: #073642;
+    --bg-tertiary: #586e75;
+    --bg-interactive: #268bd2;
+    --bg-interactive-hover: #2aa198;
+
+    --text-primary: #93a1a1;
+    --text-secondary: #839496;
+    --text-muted: #657b83;
+    --text-interactive: #ffffff;
+
+    --border-primary: #073642;
+    --border-interactive: #268bd2;
+    --border-focus: #2aa198;
+    
+    --prose-code-bg: #073642;
+    --prose-pre-bg: #002b36;
+    --prose-link: #2aa198;
+  }
+
   html,
   body {
     height: 100%;
     overflow: hidden; /* Prevent body scrollbars */
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
   }
 
   /* Fix word wrapping issues in narrow containers, especially with long words or RTL text */
@@ -16,22 +83,14 @@
     word-wrap: break-word; /* for older browsers */
   }
 
-  html.font-size-sm {
-    font-size: 14px;
-  }
-  html.font-size-base {
-    font-size: 16px; /* Default */
-  }
-  html.font-size-lg {
-    font-size: 18px;
-  }
-  html.font-size-xl {
-    font-size: 20px;
-  }
+  html.font-size-sm { font-size: 14px; }
+  html.font-size-base { font-size: 16px; /* Default */ }
+  html.font-size-lg { font-size: 18px; }
+  html.font-size-xl { font-size: 20px; }
 }
 
 .prose-custom {
-  color: #d1d5db;
+  color: var(--text-secondary);
   font-family: 'Cairo', 'Droid Sans Arabic', sans-serif; /* Added requested font */
   font-size: 1rem; /* This will be overridden by the new classes below */
   line-height: 1.6;
@@ -48,16 +107,16 @@ html.message-font-xl .prose-custom { font-size: 17px; }
 
 
 .prose-custom code {
-    color: #e5e7eb;
-    background-color: #374151;
+    color: var(--text-primary);
+    background-color: var(--prose-code-bg);
     padding: 0.2em 0.4em;
     margin: 0;
     font-size: 85%;
     border-radius: 6px;
 }
 .prose-custom pre {
-    background-color: #1f2937;
-    color: #d1d5db;
+    background-color: var(--prose-pre-bg);
+    color: var(--text-secondary);
     padding: 1em;
     border-radius: 8px;
     overflow-x: auto;
@@ -69,7 +128,7 @@ html.message-font-xl .prose-custom { font-size: 17px; }
     padding: 0;
 }
 .prose-custom a {
-  color: #60a5fa;
+  color: var(--prose-link);
   text-decoration-line: underline;
 }
 .prose-custom ol, .prose-custom ul {
@@ -91,12 +150,12 @@ html.message-font-xl .prose-custom { font-size: 17px; }
   margin: 0;
 }
 .prose-custom strong {
-  color: #f9fafb;
+  color: var(--text-primary);
 }
 .prose-custom blockquote {
-  border-right-color: #4b5563; /* Adjusted for RTL */
+  border-right-color: var(--border-primary); /* Adjusted for RTL */
   border-left-color: transparent;
-  color: #9ca3af;
+  color: var(--text-muted);
   padding-right: 1em; /* Adjusted for RTL */
   padding-left: 0;
   margin-right: 0; /* Adjusted for RTL */

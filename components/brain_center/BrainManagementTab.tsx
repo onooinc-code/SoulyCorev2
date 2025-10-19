@@ -3,9 +3,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Brain } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PlusIcon, TrashIcon, EditIcon } from '../Icons';
+// FIX: Corrected relative import paths for icon components and hooks to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { PlusIcon, TrashIcon, EditIcon } from '@/components/Icons';
 import { useAppContext } from '@/components/providers/AppProvider';
-import { useLog } from '../providers/LogProvider';
+// FIX: Corrected relative import paths for icon components and hooks to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { useLog } from '@/components/providers/LogProvider';
 
 const BrainManagementTab = () => {
     const { setStatus, clearError } = useAppContext();

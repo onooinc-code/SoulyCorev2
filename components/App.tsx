@@ -1,148 +1,106 @@
-
 "use client";
 
-import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-
-// Providers & Hooks
-import { useConversation } from './providers/ConversationProvider';
+import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useUIState } from './providers/UIStateProvider';
+import { useConversation } from './providers/ConversationProvider';
 import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';
 import { useAppContextMenu } from '@/lib/hooks/useAppContextMenu';
 
-// Layout Components
+import ChatWindow from './ChatWindow';
 import NavigationRail from './NavigationRail';
 import ConversationPanel from './ConversationPanel';
-import MorningBriefing from './MorningBriefing';
-import TopProgressBar from './TopProgressBar';
-import AppStatusBar from './AppStatusBar';
-import Notifications from './Notifications';
-
-// Modals & Views
-import GlobalModals from './modals/GlobalModals';
-import ActiveViewRenderer from './views/ActiveViewRenderer';
 import ContextMenu from './ContextMenu';
-import ChatWindow from './ChatWindow';
+import GlobalModals from './modals/GlobalModals';
+import MorningBriefing from './MorningBriefing';
+import Notifications from './Notifications';
+import AppStatusBar from './AppStatusBar';
+import TopProgressBar from './TopProgressBar';
+import ActiveViewRenderer from './views/ActiveViewRenderer';
+import DataHubWidget from './data_hub/DataHubWidget';
 
 export const App = () => {
-    // State from providers
-    const { currentConversation, setCurrentConversation } = useConversation();
-    const { 
-        isConversationPanelOpen, 
+    const {
+        activeView,
+        isConversationPanelOpen,
+        setConversationPanelOpen,
         isConversationPanelMinimized,
         isMobileView,
         isZenMode,
-        isContextMenuEnabled,
+        isFullscreen,
+        isCommandPaletteOpen, 
         setCommandPaletteOpen,
-        setActiveView,
-        setHardResetModalOpen,
-        isHardResetModalOpen
+        isDataHubWidgetOpen,
+        setDataHubWidgetOpen,
     } = useUIState();
 
-    // Local state for modals and context menu
-    const [contextMenu, setContextMenu] = useState<{ isOpen: boolean; position: { x: number; y: number } }>({ isOpen: false, position: { x: 0, y: 0 } });
-    const [bookmarksOpen, setBookmarksOpen] = useState(false);
-    const [globalSettingsOpen, setGlobalSettingsOpen] = useState(false);
-    const [shortcutsOpen, setShortcutsOpen] = useState(false);
-    const [addKnowledgeOpen, setAddKnowledgeOpen] = useState(false);
-    const [responseViewerOpen, setResponseViewerOpen] = useState(false);
+    const { currentConversation, createNewConversation } = useConversation();
+    const { menuItems, contextMenu, handleContextMenu, closeContextMenu } = useAppContextMenu();
 
-    // Context menu items derived from hook
-    const menuItems = useAppContextMenu({
-        setBookmarksOpen,
-        setGlobalSettingsOpen,
-        setShortcutsOpen,
-        setAddKnowledgeOpen,
-        setResponseViewerOpen,
-        setCommandPaletteOpen
-    });
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => { setIsClient(true) }, []);
 
-    // Keyboard shortcuts
-    useKeyboardShortcuts({
+    const shortcuts = {
         'mod+k': () => setCommandPaletteOpen(prev => !prev),
-        'escape': () => {
-            setContextMenu({ isOpen: false, position: { x: 0, y: 0 } });
-            setBookmarksOpen(false);
-            setGlobalSettingsOpen(false);
-            setShortcutsOpen(false);
-            setAddKnowledgeOpen(false);
-            setResponseViewerOpen(false);
-            setCommandPaletteOpen(false);
-        }
-    });
-
-    // Right-click handler
-    const handleContextMenu = (e: React.MouseEvent) => {
-        if (!isContextMenuEnabled) return;
-        e.preventDefault();
-        setContextMenu({ isOpen: true, position: { x: e.clientX, y: e.clientY } });
+        'mod+n': () => createNewConversation(),
     };
+    useKeyboardShortcuts(shortcuts);
+    
+    // Automatically focus the window when entering fullscreen to enable shortcuts
+    useEffect(() => {
+        if (isFullscreen) {
+            window.focus();
+        }
+    }, [isFullscreen]);
 
-    const handleResetComplete = useCallback(() => {
-        setCurrentConversation(null);
-        setActiveView('dashboard');
-    }, [setCurrentConversation, setActiveView]);
-
-    const mainContent = currentConversation ? <ChatWindow /> : <ActiveViewRenderer />;
+    const showChat = activeView === 'chat' && currentConversation;
 
     return (
         <div 
-            className={`h-screen w-screen bg-gray-900 text-gray-100 flex overflow-hidden font-sans ${isMobileView ? 'mobile-view' : ''}`}
+            className={`w-screen h-screen overflow-hidden flex transition-all duration-300 ${isMobileView ? 'max-w-sm mx-auto my-auto h-[80vh] rounded-2xl shadow-2xl border-4 border-gray-700' : ''}`}
             onContextMenu={handleContextMenu}
         >
             <TopProgressBar />
             <Notifications />
             
-            <AnimatePresence>
-                {!isZenMode && <NavigationRail setBookmarksOpen={setBookmarksOpen} setGlobalSettingsOpen={setGlobalSettingsOpen} />}
-            </AnimatePresence>
+            {!isZenMode && <NavigationRail setBookmarksOpen={() => {}} setGlobalSettingsOpen={() => {}} />}
 
             <AnimatePresence>
-                {isConversationPanelOpen && !isZenMode && (
+                {!isZenMode && isConversationPanelOpen && (
                     <motion.div
                         initial={{ width: 0, opacity: 0 }}
-                        animate={{ 
-                            width: isConversationPanelMinimized ? '4.5rem' : '20rem',
-                            opacity: 1
-                        }}
+                        animate={{ width: isConversationPanelMinimized ? 68 : 320, opacity: 1 }}
                         exit={{ width: 0, opacity: 0 }}
                         transition={{ duration: 0.3, ease: 'easeInOut' }}
-                        className="flex-shrink-0"
+                        className="flex-shrink-0 h-full"
+                        onAnimationComplete={() => {
+                            // This is a workaround to force resize on components that need it, e.g., charts
+                            window.dispatchEvent(new Event('resize'));
+                        }}
                     >
                         <ConversationPanel isMinimized={isConversationPanelMinimized} />
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            <main className="flex-1 flex flex-col min-w-0 pb-6">
-                {mainContent}
+            <main className="flex-1 min-w-0 h-full">
+                {showChat ? <ChatWindow /> : <ActiveViewRenderer />}
             </main>
             
-            <GlobalModals
-                bookmarksOpen={bookmarksOpen}
-                setBookmarksOpen={setBookmarksOpen}
-                globalSettingsOpen={globalSettingsOpen}
-                setGlobalSettingsOpen={setGlobalSettingsOpen}
-                shortcutsOpen={shortcutsOpen}
-                setShortcutsOpen={setShortcutsOpen}
-                addKnowledgeOpen={addKnowledgeOpen}
-                setAddKnowledgeOpen={setAddKnowledgeOpen}
-                responseViewerOpen={responseViewerOpen}
-                setResponseViewerOpen={setResponseViewerOpen}
-                isHardResetModalOpen={isHardResetModalOpen}
-                setHardResetModalOpen={setHardResetModalOpen}
-                onResetComplete={handleResetComplete}
-            />
+            <GlobalModals isCommandPaletteOpen={isCommandPaletteOpen} setCommandPaletteOpen={setCommandPaletteOpen} />
 
             <ContextMenu
                 items={menuItems}
-                isOpen={contextMenu.isOpen}
                 position={contextMenu.position}
-                onClose={() => setContextMenu({ ...contextMenu, isOpen: false })}
+                isOpen={contextMenu.isOpen}
+                onClose={closeContextMenu}
             />
             
-            <MorningBriefing />
-            <AppStatusBar />
+            {isClient && <MorningBriefing />}
+
+            {!isZenMode && <AppStatusBar />}
+
+            <DataHubWidget isOpen={isDataHubWidgetOpen} onClose={() => setDataHubWidgetOpen(false)} />
         </div>
     );
 };

@@ -5,8 +5,10 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Feature, FeatureTest as TestCase, TestStatus } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/components/providers/AppProvider';
-import { useLog } from '../providers/LogProvider';
-import { CheckIcon, XIcon, MinusIcon } from '../Icons';
+// FIX: Corrected relative import paths for icon components and hooks to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { useLog } from '@/components/providers/LogProvider';
+// FIX: Corrected relative import paths for icon components and hooks to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { CheckIcon, XIcon, MinusIcon } from '@/components/Icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 

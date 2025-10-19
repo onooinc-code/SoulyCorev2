@@ -4,9 +4,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Entity, Tool } from '@/lib/types';
 import { useConversation } from '@/components/providers/ConversationProvider';
-import { XIcon, TrashIcon, PlusIcon, EditIcon, SearchIcon } from './Icons';
+// FIX: Corrected relative import paths for icon components and the `useLog` hook to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { XIcon, TrashIcon, PlusIcon, EditIcon, SearchIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
-import { useLog } from './providers/LogProvider';
+// FIX: Corrected relative import paths for icon components and the `useLog` hook to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { useLog } from '@/components/providers/LogProvider';
 
 type Tab = 'structured' | 'procedural' | 'settings';
 

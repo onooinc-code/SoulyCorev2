@@ -2,8 +2,10 @@
 
 import React, { useMemo } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
-import { CogIcon, UserCircleIcon, BookmarkIcon, CpuChipIcon, ClockIcon, DocumentTextIcon } from './Icons';
-import { ChatBubbleLeftRightIcon } from './Icons';
+// FIX: Corrected relative import paths for icon components to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { CogIcon, UserCircleIcon, BookmarkIcon, CpuChipIcon, ClockIcon, DocumentTextIcon } from '@/components/Icons';
+// FIX: Corrected relative import paths for icon components to use the absolute path alias `@`, resolving module resolution errors during the build process.
+import { ChatBubbleLeftRightIcon } from '@/components/Icons';
 
 interface StatusBarProps {
     onSettingsClick: () => void;

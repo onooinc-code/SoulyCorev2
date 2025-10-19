@@ -4,7 +4,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLog } from './providers/LogProvider';
-import { InfoIcon, WarningIcon, ErrorIcon, SearchIcon, CopyIcon, CheckIcon } from './Icons';
+// FIX: Corrected a relative import path for icon components to use the absolute path alias `@`, resolving a module resolution error during the build process.
+import { InfoIcon, WarningIcon, ErrorIcon, SearchIcon, CopyIcon, CheckIcon } from '@/components/Icons';
 import { LogEntry as LogEntryType } from './providers/LogProvider';
 
 
