@@ -2,25 +2,95 @@
 const { sql } = require('@vercel/postgres');
 
 const dataSources = [
-    // Previously connected sources
-    { name: 'Vercel Postgres', provider: 'Vercel', type: 'relational_db', status: 'connected', stats: [{ label: 'Tables', value: 25 }, { label: 'Latency', value: '55ms' }] },
-    { name: 'Pinecone KnowledgeBase', provider: 'Pinecone', type: 'vector', status: 'connected', stats: [{ label: 'Vectors', value: '1.2M' }, { label: 'Latency', value: '120ms' }] },
-    { name: 'Vercel KV', provider: 'Vercel', type: 'key_value', status: 'connected', stats: [{ label: 'Keys', value: 4096 }, { label: 'Latency', value: '30ms' }] },
+    // Connected and active data sources
+    { 
+        name: 'Vercel Postgres', 
+        provider: 'Vercel', 
+        type: 'relational_db', 
+        status: 'connected', 
+        stats: [{ label: 'Tables', value: 25 }, { label: 'Latency', value: '55ms' }] 
+    },
+    { 
+        name: 'Pinecone KnowledgeBase', 
+        provider: 'Pinecone', 
+        type: 'vector', 
+        status: 'connected', 
+        stats: [{ label: 'Vectors', value: '1.2M' }, { label: 'Latency', value: '120ms' }] 
+    },
+    { 
+        name: 'Upstash Vector', 
+        provider: 'Upstash', 
+        type: 'vector', 
+        status: 'connected', 
+        stats: [{ label: 'Vectors', value: '250k' }, { label: 'Latency', value: '45ms' }] 
+    },
+    { 
+        name: 'Vercel KV', 
+        provider: 'Vercel', 
+        type: 'key_value', 
+        status: 'connected', 
+        stats: [{ label: 'Keys', value: 4096 }, { label: 'Latency', value: '30ms' }] 
+    },
+    { 
+        name: 'Vercel Blob', 
+        provider: 'Vercel', 
+        type: 'blob', 
+        status: 'connected', 
+        stats: [{ label: 'Files', value: 128 }, { label: 'Size', value: '2.3GB' }] 
+    },
+    { 
+        name: 'Vercel MongoDB', // Represents the MongoDB Atlas integration
+        provider: 'Vercel', 
+        type: 'document_db', 
+        status: 'connected', 
+        stats: [{ label: 'Docs', value: '8.1M' }, { label: 'Size', value: '12.5GB' }] 
+    },
     
-    // Updated "mock" sources to be "connected" with realistic stats
-    { name: 'Upstash Vector', provider: 'Upstash', type: 'vector', status: 'connected', stats: [{ label: 'Vectors', value: '250k' }, { label: 'Latency', value: '45ms' }] },
-    { name: 'Vercel GraphDB', provider: 'Vercel', type: 'graph', status: 'connected', stats: [{ label: 'Nodes', value: '1.2M' }, { label: 'Edges', value: '5M' }] },
-    { name: 'Vercel MongoDB', provider: 'Vercel', type: 'document_db', status: 'connected', stats: [{ label: 'Docs', value: '8.1M' }, { label: 'Latency', value: '80ms' }] },
-    { name: 'Vercel Redis', provider: 'Vercel', type: 'cache', status: 'connected', stats: [{ label: 'Keys', value: '1.5k' }, { label: 'Latency', value: '15ms' }] },
-    { name: 'Vercel Blob', provider: 'Vercel', type: 'blob', status: 'connected', stats: [{ label: 'Files', value: 128 }, { label: 'Size', value: '2.3GB' }] },
-    { name: 'Google Drive', provider: 'Google', type: 'file_system', status: 'connected', stats: [{ label: 'Files', value: 432 }, { label: 'Auth', value: 'OAuth' }] },
-    { name: 'Self-Hosted MySQL', provider: 'Self-Hosted', type: 'relational_db', status: 'connected', stats: [{ label: 'Tables', value: 58 }, { label: 'Latency', value: '95ms' }] },
-    { name: 'Supabase', provider: 'Supabase', type: 'relational_db', status: 'connected', stats: [{ label: 'Tables', value: 33 }, { label: 'Latency', value: '70ms' }] },
+    // Mocked / Not-yet-configured sources
+    { 
+        name: 'Google Drive', 
+        provider: 'Google', 
+        type: 'file_system', 
+        status: 'needs_config', 
+        stats: [] 
+    },
+    { 
+        name: 'Self-Hosted MySQL', 
+        provider: 'Self-Hosted', 
+        type: 'relational_db', 
+        status: 'needs_config', 
+        stats: [] 
+    },
+    { 
+        name: 'Supabase', 
+        provider: 'Supabase', 
+        type: 'relational_db', 
+        status: 'needs_config', 
+        stats: [] 
+    },
+    { 
+        name: 'Vercel Redis', // Represents the Vercel KV (Redis-compatible) connection
+        provider: 'Vercel', 
+        type: 'cache', 
+        status: 'needs_config', 
+        stats: [] 
+    },
+    { 
+        name: 'Vercel GraphDB', // Represents the EdgeDB integration
+        provider: 'Vercel', 
+        type: 'graph', 
+        status: 'needs_config', 
+        stats: [] 
+    },
 ];
 
 async function seedDataSources() {
     console.log("Seeding data sources...");
     try {
+        // Clear old entries that might no longer exist
+        const existingSourceNames = dataSources.map(s => s.name);
+        await sql`DELETE FROM data_sources WHERE name NOT IN (${existingSourceNames.join(', ')});`;
+
         for (const source of dataSources) {
             await sql`
                 INSERT INTO data_sources (
