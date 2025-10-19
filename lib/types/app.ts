@@ -1,5 +1,6 @@
 // FIX: Added import for Prompt to be used in ActiveWorkflowState.
-import type { Prompt } from '@/lib/types/data';
+// FIX: Changed import path to be relative.
+import type { Prompt } from './data';
 
 export type Role = 'user' | 'model';
 
