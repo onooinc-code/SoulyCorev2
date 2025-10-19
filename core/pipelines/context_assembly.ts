@@ -106,7 +106,8 @@ export class ContextAssemblyPipeline {
         }
     }
 
-    private assemblePrompt(conversation: Conversation, recentMessages: Message[], semanticContext: ISemanticQueryResult[], structuredContext: Contact[], userQuery: string) {
+    // FIX: Made this an async function to ensure it returns a Promise, satisfying the type required by the `logStep` utility.
+    private async assemblePrompt(conversation: Conversation, recentMessages: Message[], semanticContext: ISemanticQueryResult[], structuredContext: Contact[], userQuery: string) {
         const systemInstructionParts: string[] = [];
         if (conversation.systemPrompt) {
             systemInstructionParts.push(conversation.systemPrompt);

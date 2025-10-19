@@ -90,7 +90,8 @@ export async function generateAgentContent(history: Content[], systemInstruction
 
 export async function summarizeForContext(content: string): Promise<string | null> {
     const systemInstruction = `Summarize the following text into a very short, dense paragraph suitable for providing context to an AI in a future conversation. Focus on key facts, entities, and decisions.`;
-    const response = await generateChatResponse([{ role: 'user', parts: [{ text }] }], systemInstruction);
+    // FIX: The variable in scope is `content`, not `text`. Changed to correctly pass the content to the AI model.
+    const response = await generateChatResponse([{ role: 'user', parts: [{ text: content }] }], systemInstruction);
     return response.text?.trim() || null;
 }
 
