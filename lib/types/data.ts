@@ -18,6 +18,8 @@ export interface Conversation {
     };
     enableProactiveSuggestions?: boolean;
     enableAutoSummarization?: boolean;
+    // FIX: Add missing property to Conversation type.
+    enableMemoryExtraction?: boolean;
 }
 
 export interface Message {

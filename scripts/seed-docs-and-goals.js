@@ -1,5 +1,4 @@
 // scripts/seed-docs-and-goals.js
-require('dotenv').config({ path: '.env.local' });
 const { sql } = require('@vercel/postgres');
 const fs = require('fs/promises');
 const path = require('path');

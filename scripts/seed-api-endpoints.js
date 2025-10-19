@@ -1,5 +1,4 @@
 // scripts/seed-api-endpoints.js
-require('dotenv').config({ path: '.env.local' });
 const { sql } = require('@vercel/postgres');
 
 const endpoints = [
