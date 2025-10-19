@@ -1,4 +1,4 @@
-
+// components/agent_center/AgentCenter.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -8,6 +8,8 @@ import { useAppContext } from '../providers/AppProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import RunReport from './RunReport';
 import PlanDisplay from './PlanDisplay';
+import EmptyState from '../ui/EmptyState';
+import { RocketLaunchIcon } from '../Icons';
 
 type ViewState = 'idle' | 'planning' | 'review' | 'executing';
 
@@ -92,12 +94,10 @@ const AgentCenter = () => {
 
             const newRun: AgentRun = await res.json();
             
-            await fetchRuns(); // Refresh the list
+            await fetchRuns();
             
-            // Immediately switch to the report view for the new run
             setActiveRunId(newRun.id); 
             
-            // Reset the creation view state, but keep the UI showing the new run
             setViewState('idle');
             setCurrentPlan(null);
             setGoal('');
@@ -105,7 +105,7 @@ const AgentCenter = () => {
         } catch (error) {
             log('Failed to execute plan', { error }, 'error');
             setStatus({ error: (error as Error).message });
-            setViewState('review'); // Go back to review on failure
+            setViewState('review');
         } finally {
             setIsLoading(false);
             setStatus({ currentAction: '' });
@@ -120,7 +120,6 @@ const AgentCenter = () => {
     };
 
     const renderLeftPanel = () => {
-        // Always show the run history now, as planning/review happens on the right panel
         return (
             <>
                 <div className="bg-gray-800/50 p-4 rounded-lg">
@@ -129,7 +128,7 @@ const AgentCenter = () => {
                     <textarea
                         value={goal}
                         onChange={(e) => setGoal(e.target.value)}
-                        placeholder="e.g., 'Research the top 3 AI frameworks for frontend development and create a comparison table.'"
+                        placeholder="e.g., 'Research the top 3 AI frameworks...'"
                         className="w-full p-2 bg-gray-700 rounded-lg text-sm resize-y"
                         rows={4}
                         disabled={isLoading || viewState !== 'idle'}
@@ -148,11 +147,7 @@ const AgentCenter = () => {
                         {runs.map(run => (
                             <button
                                 key={run.id}
-                                onClick={() => {
-                                    if (viewState === 'idle') {
-                                        setActiveRunId(run.id)
-                                    }
-                                }}
+                                onClick={() => { if (viewState === 'idle') setActiveRunId(run.id) }}
                                 disabled={viewState !== 'idle'}
                                 className={`w-full text-left p-3 rounded-md transition-colors ${activeRunId === run.id && viewState === 'idle' ? 'bg-indigo-600/30' : 'bg-gray-700/50 hover:bg-gray-700'} disabled:cursor-not-allowed`}
                             >
@@ -194,9 +189,11 @@ const AgentCenter = () => {
                 {activeRunId ? (
                     <RunReport runId={activeRunId} />
                 ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500 text-center p-8">
-                        <p>Select a run from the history or define a new goal to begin.</p>
-                    </div>
+                    <EmptyState 
+                        icon={RocketLaunchIcon}
+                        title="Agent Center"
+                        description="Select a past run from the history list, or define a new goal to begin an autonomous operation."
+                    />
                 )}
             </motion.div>
         )
@@ -213,7 +210,7 @@ const AgentCenter = () => {
                     {renderLeftPanel()}
                 </div>
 
-                <div className="col-span-8 bg-gray-800/50 p-4 rounded-lg overflow-hidden">
+                <div className="col-span-8 bg-gray-800/50 rounded-lg overflow-hidden">
                     <AnimatePresence mode="wait">
                         {renderRightPanel()}
                     </AnimatePresence>

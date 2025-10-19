@@ -1,16 +1,17 @@
+// components/providers/UIStateProvider.tsx
 "use client";
 
-import React, { createContext, useContext, ReactNode, useState, useCallback } from 'react';
+import React, from 'react';
 import { useAppControls } from '@/lib/hooks/useAppControls';
 import { useDisplayModeManager } from '@/lib/hooks/useDisplayModeManager';
 import { usePanelManager } from '@/lib/hooks/usePanelManager';
 
-type ActiveView = 'chat' | 'dashboard' | 'search' | 'agent_center' | 'brain_center' | 'memory_center' | 'contacts_hub' | 'prompts_hub' | 'tools_hub' | 'tasks_hub' | 'data_hub' | 'dev_center';
+type ActiveView = 'chat' | 'dashboard' | 'search' | 'agent_center' | 'brain_center' | 'memory_center' | 'contacts_hub' | 'prompts_hub' | 'tools_hub' | 'tasks_hub' | 'data_hub' | 'dev_center' | 'comm_hub';
 
 interface UIStateContextType {
     activeView: ActiveView;
     setActiveView: (view: ActiveView) => void;
-    isNavigating: boolean; // For top progress bar
+    isNavigating: boolean;
 
     // From useAppControls
     restartApp: () => void;
@@ -38,34 +39,56 @@ interface UIStateContextType {
     isDataHubWidgetOpen: boolean;
     setDataHubWidgetOpen: React.Dispatch<React.SetStateAction<boolean>>;
     
+    // Global Modals State
+    isBookmarksModalOpen: boolean;
+    setBookmarksModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isGlobalSettingsModalOpen: boolean;
+    setGlobalSettingsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isShortcutsModalOpen: boolean;
+    setShortcutsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isAddKnowledgeModalOpen: boolean;
+    setAddKnowledgeModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isHardResetModalOpen: boolean;
+    setHardResetModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isResponseViewerModalOpen: boolean;
+    setResponseViewerModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+
     isContextMenuEnabled: boolean;
     toggleContextMenu: () => void;
 }
 
-const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
+const UIStateContext = React.createContext<UIStateContextType | undefined>(undefined);
 
-export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [activeView, rawSetActiveView] = useState<ActiveView>('dashboard');
-    const [isNavigating, setIsNavigating] = useState(false);
-    const [isContextMenuEnabled, setIsContextMenuEnabled] = useState(true);
+export const UIStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [activeView, rawSetActiveView] = React.useState<ActiveView>('dashboard');
+    const [isNavigating, setIsNavigating] = React.useState(false);
+    const [isContextMenuEnabled, setIsContextMenuEnabled] = React.useState(true);
 
-    const appControls = useAppControls();
+    // Global Modals State
+    const [isBookmarksModalOpen, setBookmarksModalOpen] = React.useState(false);
+    const [isGlobalSettingsModalOpen, setGlobalSettingsModalOpen] = React.useState(false);
+    const [isShortcutsModalOpen, setShortcutsModalOpen] = React.useState(false);
+    const [isAddKnowledgeModalOpen, setAddKnowledgeModalOpen] = React.useState(false);
+    const [isHardResetModalOpen, setHardResetModalOpen] = React.useState(false);
+    const [isResponseViewerModalOpen, setResponseViewerModalOpen] = React.useState(false);
+
+
+    const appControls = useAppControls({ setHardResetModalOpen });
     const displayMode = useDisplayModeManager();
     const panelManager = usePanelManager();
     
-    const setActiveView = useCallback((view: ActiveView) => {
+    const setActiveView = React.useCallback((view: ActiveView) => {
         if (activeView === view) return;
         setIsNavigating(true);
         rawSetActiveView(view);
-        // Simulate navigation time for progress bar
         setTimeout(() => setIsNavigating(false), 500); 
     }, [activeView]);
 
-    const toggleContextMenu = useCallback(() => {
+    const toggleContextMenu = React.useCallback(() => {
         setIsContextMenuEnabled(prev => !prev);
     }, []);
 
-    const value = {
+    const value: UIStateContextType = {
         activeView,
         setActiveView,
         isNavigating,
@@ -74,6 +97,18 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
         ...panelManager,
         isContextMenuEnabled,
         toggleContextMenu,
+        isBookmarksModalOpen,
+        setBookmarksModalOpen,
+        isGlobalSettingsModalOpen,
+        setGlobalSettingsModalOpen,
+        isShortcutsModalOpen,
+        setShortcutsModalOpen,
+        isAddKnowledgeModalOpen,
+        setAddKnowledgeModalOpen,
+        isHardResetModalOpen,
+        setHardResetModalOpen,
+        isResponseViewerModalOpen,
+        setResponseViewerModalOpen,
     };
 
     return (
@@ -84,7 +119,7 @@ export const UIStateProvider: React.FC<{ children: ReactNode }> = ({ children })
 };
 
 export const useUIState = () => {
-    const context = useContext(UIStateContext);
+    const context = React.useContext(UIStateContext);
     if (context === undefined) {
         throw new Error('useUIState must be used within a UIStateProvider');
     }

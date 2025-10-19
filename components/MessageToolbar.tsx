@@ -1,18 +1,15 @@
-
+// components/MessageToolbar.tsx
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-// FIX: Corrected relative import paths for icon components and the `useLog` hook to use the absolute path alias `@`, resolving module resolution errors during the build process.
 import { 
     CopyIcon, BookmarkIcon, BookmarkFilledIcon, SummarizeIcon, CollapseIcon, ExpandIcon, 
     CheckIcon, EditIcon, TrashIcon, RefreshIcon, TextAlignLeftIcon, TextAlignRightIcon, 
     DotsHorizontalIcon, BeakerIcon, EyeIcon, ChatBubbleLeftRightIcon, CommandLineIcon, WrenchScrewdriverIcon
 } from '@/components/Icons';
-// FIX: Corrected relative import paths for icon components and the `useLog` hook to use the absolute path alias `@`, resolving module resolution errors during the build process.
 import { useLog } from '@/components/providers/LogProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// A helper type for menu items
 type MenuItem = {
     id: string;
     icon: React.FC<React.SVGProps<SVGSVGElement>>;
@@ -88,9 +85,8 @@ const MessageToolbar = (props: MessageToolbarProps) => {
             if (typeof action === 'string') return true;
             if (action.isUserOnly && !isUser) return false;
             if (action.isModelOnly && isUser) return false;
-            if (action.id === 'inspect' && isUser) return false; // Hide generic inspect for user messages
+            if (action.id === 'inspect' && isUser) return false;
             if (action.id !== 'inspect' && !isUser) {
-                 // Only show reply, copy, bookmark, summarize, delete, collapse for model messages
                 const allowedForModel = ['reply', 'copy', 'bookmark', 'summarize', 'delete', 'collapse', 'align-left', 'align-right', 'viewHtml', 'regenerate'];
                 if (!allowedForModel.includes(action.id)) return false;
             }
@@ -105,31 +101,26 @@ const MessageToolbar = (props: MessageToolbarProps) => {
 
     return (
         <div className="flex items-center">
-            {/* Large screen view */}
             <div className="hidden md:flex items-center gap-1 text-gray-400 bg-black/20 backdrop-blur-md border border-white/10 rounded-full px-2 py-0.5">
                 {allActions.map((action, index) => {
                     if (action === 'separator') {
-                        // Avoid rendering separator if it's at the beginning or end
-                        if(index === 0 || index === allActions.length - 1) return null;
-                        // Avoid rendering separator if the next one is also a separator
-                        if(allActions[index+1] === 'separator') return null;
+                        if(index === 0 || index === allActions.length - 1 || allActions[index+1] === 'separator') return null;
                         return <div key={`sep-${index}`} className="w-px h-4 bg-white/10 mx-1"></div>;
                     }
                     const { id, icon: Icon, action: onClick, title, className } = action as MenuItem;
                     return (
-                        <button key={id} onClick={onClick} className={`p-1.5 rounded-full hover:bg-white/10 transition-colors ${className || 'hover:text-white'}`} title={title}>
+                        <button key={id} onClick={onClick} className={`p-1.5 rounded-full hover:bg-white/10 transition-colors ${className || 'hover:text-white'}`} title={title} aria-label={title}>
                             <Icon className="w-4 h-4" />
                         </button>
                     );
                 })}
             </div>
 
-            {/* Small screen view */}
             <div className="flex md:hidden items-center gap-1 text-gray-400 bg-black/20 backdrop-blur-md border border-white/10 rounded-full px-2 py-0.5">
                 {primaryMobileActions.map(action => {
                      const { id, icon: Icon, action: onClick, title, className } = action as MenuItem;
                      return (
-                         <button key={id} onClick={onClick} className={`p-1.5 rounded-full hover:bg-white/10 transition-colors ${className || 'hover:text-white'}`} title={title}>
+                         <button key={id} onClick={onClick} className={`p-1.5 rounded-full hover:bg-white/10 transition-colors ${className || 'hover:text-white'}`} title={title} aria-label={title}>
                              <Icon className="w-4 h-4" />
                          </button>
                      );
@@ -137,7 +128,7 @@ const MessageToolbar = (props: MessageToolbarProps) => {
                 {secondaryMobileActions.length > 0 && (
                      <div className="relative">
                         <div className="w-px h-4 bg-white/10 mx-1"></div>
-                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-1.5 rounded-full hover:bg-white/10 hover:text-white transition-colors" title="More actions">
+                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-1.5 rounded-full hover:bg-white/10 hover:text-white transition-colors" title="More actions" aria-label="More actions">
                             <DotsHorizontalIcon className="w-4 h-4" />
                         </button>
                         <AnimatePresence>
@@ -152,8 +143,7 @@ const MessageToolbar = (props: MessageToolbarProps) => {
                                 >
                                    {secondaryMobileActions.map((action, index) => {
                                        if (action === 'separator') {
-                                            if (index > 0 && index < secondaryMobileActions.length - 1) {
-                                                if (secondaryMobileActions[index - 1] === 'separator' || secondaryMobileActions[index + 1] === 'separator') return null;
+                                            if (index > 0 && index < secondaryMobileActions.length - 1 && secondaryMobileActions[index - 1] !== 'separator' && secondaryMobileActions[index + 1] !== 'separator') {
                                                 return <div key={`mob-sep-${index}`} className="h-px bg-gray-700 my-1" />;
                                             }
                                             return null;

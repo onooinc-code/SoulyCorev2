@@ -1,3 +1,4 @@
+// components/CommandPalette.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -21,7 +22,9 @@ const CommandPalette = ({ isOpen, onClose }: CommandPaletteProps) => {
         setConversationPanelOpen, 
         setLogPanelOpen,
         restartApp,
-        exitApp
+        exitApp,
+        setBookmarksModalOpen,
+        setGlobalSettingsModalOpen
     } = useUIState();
     
     const { createNewConversation, clearMessages, currentConversation } = useConversation();
@@ -39,19 +42,28 @@ const CommandPalette = ({ isOpen, onClose }: CommandPaletteProps) => {
         'clearCurrentConversation': () => {
             if (currentConversation) {
                 clearMessages(currentConversation.id);
-                onClose();
             }
+            onClose();
         },
-        // These are placeholders as their modals are managed in GlobalModals
-        'openBookmarks': () => {},
-        'openGlobalSettings': () => {},
+        'openBookmarks': () => {
+            setBookmarksModalOpen(true);
+            onClose();
+        },
+        'openGlobalSettings': () => {
+            setGlobalSettingsModalOpen(true);
+            onClose();
+        },
         'toggleLogPanel': () => {
             setLogPanelOpen(p => !p);
             onClose();
         },
-        'restartApp': () => restartApp(),
-        'exitApp': () => exitApp(),
-    }), [setActiveView, createNewConversation, setConversationPanelOpen, clearMessages, currentConversation, setLogPanelOpen, restartApp, exitApp, onClose]);
+        'restartApp': restartApp, // No need for extra arrow function
+        'exitApp': exitApp,       // No need for extra arrow function
+    }), [
+        setActiveView, createNewConversation, setConversationPanelOpen, 
+        clearMessages, currentConversation, setLogPanelOpen, restartApp, 
+        exitApp, setBookmarksModalOpen, setGlobalSettingsModalOpen, onClose
+    ]);
 
     const filteredActions = useMemo(() => {
         if (!query) return actions;
@@ -69,17 +81,24 @@ const CommandPalette = ({ isOpen, onClose }: CommandPaletteProps) => {
     }, [filteredActions]);
 
     const executeAction = useCallback((action: Action) => {
-        const [handlerId, arg] = action.handlerId.split('-');
-        const handler = handlers[handlerId];
+        const [handlerKey, arg] = action.handlerId.split('-');
+        let handler: ((...args: any[]) => void) | undefined;
+
+        if (handlerKey.startsWith('setActiveView')) {
+            handler = handlers['setActiveView'];
+        } else {
+            handler = handlers[handlerKey];
+        }
+        
         if (handler) {
             handler(arg);
-        } else if (handlerId.startsWith('setActiveView')) {
-             handlers['setActiveView'](arg);
         }
     }, [handlers]);
 
     const handleKeyDown = useCallback(
         (e: KeyboardEvent) => {
+            if (!isOpen) return;
+
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 setSelectedIndex((prev) => (prev + 1) % filteredActions.length);
@@ -95,19 +114,17 @@ const CommandPalette = ({ isOpen, onClose }: CommandPaletteProps) => {
                 onClose();
             }
         },
-        [filteredActions, selectedIndex, executeAction, onClose]
+        [isOpen, filteredActions, selectedIndex, executeAction, onClose]
     );
 
     useEffect(() => {
-        if (isOpen) {
-            window.addEventListener('keydown', handleKeyDown);
-        } else {
-            setQuery(''); // Reset query on close
-        }
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [isOpen, handleKeyDown]);
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleKeyDown]);
+    
+    useEffect(() => {
+        if (!isOpen) setQuery('');
+    }, [isOpen]);
 
     return (
         <AnimatePresence>

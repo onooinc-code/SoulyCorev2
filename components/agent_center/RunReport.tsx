@@ -1,5 +1,4 @@
-
-
+// components/agent_center/RunReport.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -51,11 +50,11 @@ const Step = ({ step }: { step: AgentRunStep }) => (
 );
 
 const PhaseReport = ({ phase }: { phase: AgentPlanPhase }) => {
-    const phaseStatusInfo: Record<AgentPlanPhase['status'], { icon: React.ReactNode; color: string }> = {
-        pending: { icon: <ClockIcon className="w-5 h-5" />, color: 'text-gray-400' },
-        running: { icon: <SparklesIcon className="w-5 h-5 animate-pulse" />, color: 'text-yellow-400' },
-        completed: { icon: <CheckIcon className="w-5 h-5" />, color: 'text-green-400' },
-        failed: { icon: <XIcon className="w-5 h-5" />, color: 'text-red-400' },
+    const phaseStatusInfo: Record<AgentPlanPhase['status'], { icon: React.ReactNode; color: string; pulse: boolean }> = {
+        pending: { icon: <ClockIcon className="w-5 h-5" />, color: 'text-gray-400', pulse: false },
+        running: { icon: <SparklesIcon className="w-5 h-5" />, color: 'text-yellow-400', pulse: true },
+        completed: { icon: <CheckIcon className="w-5 h-5" />, color: 'text-green-400', pulse: false },
+        failed: { icon: <XIcon className="w-5 h-5" />, color: 'text-red-400', pulse: false },
     };
     const status = phaseStatusInfo[phase.status];
 
@@ -67,7 +66,7 @@ const PhaseReport = ({ phase }: { phase: AgentPlanPhase }) => {
             className="bg-gray-800/50 p-4 rounded-lg"
         >
             <div className="flex items-center gap-3 border-b border-gray-700 pb-2 mb-3">
-                <div className={`p-1.5 rounded-full ${status.color}`}>{status.icon}</div>
+                <div className={`p-1.5 rounded-full ${status.color} ${status.pulse ? 'animate-pulse' : ''}`}>{status.icon}</div>
                 <div>
                     <h4 className="font-semibold text-gray-200">Phase {phase.phase_order}</h4>
                     <p className="text-sm text-gray-400">{phase.goal}</p>
@@ -75,7 +74,6 @@ const PhaseReport = ({ phase }: { phase: AgentPlanPhase }) => {
             </div>
             <AnimatePresence>
                 <div className="space-y-4">
-                    {/* FIX: Wrapped iterated component in a div with a key to resolve TypeScript error. */}
                     {phase.steps?.map(step => <div key={step.id}><Step step={step} /></div>)}
                 </div>
             </AnimatePresence>
@@ -90,7 +88,6 @@ const RunReport = ({ runId }: RunReportProps) => {
     const [phasesWithSteps, setPhasesWithSteps] = useState<AgentPlanPhase[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [elapsedTime, setElapsedTime] = useState('0s');
-    // FIX: Replaced NodeJS.Timeout with ReturnType<typeof setInterval> to avoid NodeJS namespace dependency in the browser.
     const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
@@ -115,7 +112,6 @@ const RunReport = ({ runId }: RunReportProps) => {
                 const data: {run: AgentRun, phases: AgentPlanPhase[], steps: AgentRunStep[]} = await res.json();
                 setRun(data.run);
                 
-                // Group steps by phase
                 const stepsByPhaseId = data.steps.reduce((acc, step) => {
                     if (step.phase_id) {
                         if (!acc[step.phase_id]) acc[step.phase_id] = [];
@@ -155,7 +151,6 @@ const RunReport = ({ runId }: RunReportProps) => {
     }, [runId, log]);
 
      useEffect(() => {
-        // FIX: Replaced NodeJS.Timeout with ReturnType<typeof setInterval> to avoid NodeJS namespace dependency in the browser.
         let timer: ReturnType<typeof setInterval>;
         if (run?.status === 'running') {
             timer = setInterval(() => {
@@ -178,12 +173,12 @@ const RunReport = ({ runId }: RunReportProps) => {
         return <div className="flex items-center justify-center h-full text-gray-500">Could not find data for this run.</div>;
     }
 
-    const statusInfoMap: Record<AgentRun['status'], { icon: React.FC<React.SVGProps<SVGSVGElement>>; color: string; label: string }> = {
-        planning: { icon: SparklesIcon, color: 'text-blue-400', label: 'Planning' },
-        awaiting_approval: { icon: ClockIcon, color: 'text-orange-400', label: 'Awaiting Approval' },
-        running: { icon: SparklesIcon, color: 'text-yellow-400', label: 'Running' },
-        completed: { icon: CheckIcon, color: 'text-green-400', label: 'Completed' },
-        failed: { icon: XIcon, color: 'text-red-400', label: 'Failed' },
+    const statusInfoMap: Record<AgentRun['status'], { icon: React.FC<React.SVGProps<SVGSVGElement>>; color: string; label: string; pulse: boolean; }> = {
+        planning: { icon: SparklesIcon, color: 'text-blue-400', label: 'Planning', pulse: true },
+        awaiting_approval: { icon: ClockIcon, color: 'text-orange-400', label: 'Awaiting Approval', pulse: false },
+        running: { icon: SparklesIcon, color: 'text-yellow-400', label: 'Running', pulse: true },
+        completed: { icon: CheckIcon, color: 'text-green-400', label: 'Completed', pulse: false },
+        failed: { icon: XIcon, color: 'text-red-400', label: 'Failed', pulse: false },
     };
 
     const statusInfo = statusInfoMap[run.status];
@@ -199,7 +194,7 @@ const RunReport = ({ runId }: RunReportProps) => {
                 <h3 className="font-semibold text-lg text-gray-200">{run.goal}</h3>
                 <div className="flex items-center gap-4 text-sm mt-2">
                     {statusInfo && (
-                        <div className={`flex items-center gap-1.5 font-semibold ${statusInfo.color}`}>
+                        <div className={`flex items-center gap-1.5 font-semibold ${statusInfo.color} ${statusInfo.pulse ? 'animate-pulse' : ''}`}>
                             <statusInfo.icon className="w-5 h-5"/>
                             <span>{statusInfo.label}</span>
                         </div>
@@ -215,7 +210,6 @@ const RunReport = ({ runId }: RunReportProps) => {
 
             <div className="flex-1 overflow-y-auto pr-2 space-y-4">
                 <AnimatePresence>
-                    {/* FIX: Wrapped iterated component in a div with a key to resolve TypeScript error. */}
                     {phasesWithSteps.map(phase => (
                         <div key={phase.id}><PhaseReport phase={phase} /></div>
                     ))}

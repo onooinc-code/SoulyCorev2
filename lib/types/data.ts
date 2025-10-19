@@ -295,6 +295,28 @@ export interface DataSource {
   lastUpdatedAt: Date;
 }
 
+// --- Communication Hub ---
+
+export interface CommChannel {
+  id: string;
+  name: string;
+  type: 'webhook' | 'email_inbound' | 'app_broadcast';
+  status: 'active' | 'inactive' | 'error';
+  config_json: Record<string, any>;
+  createdAt: Date;
+  lastUpdatedAt: Date;
+}
+
+export interface CommMessage {
+  id: string;
+  channelId: string;
+  contactId?: string;
+  content: string;
+  payload_json: Record<string, any>;
+  status: 'received' | 'processed' | 'failed';
+  createdAt: Date;
+}
+
 
 // --- Pipelines ---
 export interface PipelineRun {

@@ -1,6 +1,7 @@
+// components/modals/GlobalModals.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import dynamic from 'next/dynamic';
 import { useUIState } from '../providers/UIStateProvider';
 
@@ -11,36 +12,37 @@ const CommandPalette = dynamic(() => import('../CommandPalette'));
 const ShortcutsModal = dynamic(() => import('../ShortcutsModal'));
 const AddKnowledgeModal = dynamic(() => import('../AddKnowledgeModal'));
 const HardResetModal = dynamic(() => import('../HardResetModal'));
+const ResponseViewerModal = dynamic(() => import('../ResponseViewerModal'));
 
-interface GlobalModalsProps {
-    isCommandPaletteOpen: boolean;
-    setCommandPaletteOpen: (isOpen: boolean) => void;
-}
 
-// NOTE: This component's state management needs to be refactored and hoisted to a global UI context (UIStateProvider).
-// For now, we'll manage the state locally to fix the build errors.
-const GlobalModals = ({ isCommandPaletteOpen, setCommandPaletteOpen }: GlobalModalsProps) => {
-    const [isBookmarksModalOpen, setBookmarksModalOpen] = useState(false);
-    const [isGlobalSettingsModalOpen, setGlobalSettingsModalOpen] = useState(false);
-    const [isShortcutsModalOpen, setShortcutsModalOpen] = useState(false);
-    const [isAddKnowledgeModalOpen, setAddKnowledgeModalOpen] = useState(false);
-    const [isHardResetModalOpen, setHardResetModalOpen] = useState(false);
-    const { restartApp } = useUIState();
-
-    // This component will eventually listen to global state to open modals.
-    // The placeholder implementation uses local state. The right-click context menu
-    // also needs to be wired up to these setters.
+// This component is now a pure presenter, controlled entirely by the global UIStateProvider.
+const GlobalModals = () => {
+    const {
+        isCommandPaletteOpen, setCommandPaletteOpen,
+        isBookmarksModalOpen, setBookmarksModalOpen,
+        isGlobalSettingsModalOpen, setGlobalSettingsModalOpen,
+        isShortcutsModalOpen, setShortcutsModalOpen,
+        isAddKnowledgeModalOpen, setAddKnowledgeModalOpen,
+        isHardResetModalOpen, setHardResetModalOpen,
+        isResponseViewerModalOpen, setResponseViewerModalOpen,
+        restartApp,
+    } = useUIState();
 
     return (
         <>
             <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
-
-            {/* The following modals are placeholders until their triggers are fully implemented */}
+            
             {isBookmarksModalOpen && <BookmarksModal isOpen={isBookmarksModalOpen} setIsOpen={setBookmarksModalOpen} />}
+            
             {isGlobalSettingsModalOpen && <GlobalSettingsModal setIsOpen={setGlobalSettingsModalOpen} />}
+            
             {isShortcutsModalOpen && <ShortcutsModal isOpen={isShortcutsModalOpen} onClose={() => setShortcutsModalOpen(false)} />}
+            
             {isAddKnowledgeModalOpen && <AddKnowledgeModal isOpen={isAddKnowledgeModalOpen} onClose={() => setAddKnowledgeModalOpen(false)} />}
-            {isHardResetModalOpen && <HardResetModal isOpen={isHardResetModalOpen} onClose={() => setHardResetModalOpen(false)} onComplete={restartApp} />}
+            
+            {isHardResetModalOpen && <HardResetModal isOpen={isHardResetModalOpen} onClose={() => setHardResetModalOpen(false)} onComplete={() => window.location.reload()} />}
+
+            {isResponseViewerModalOpen && <ResponseViewerModal isOpen={isResponseViewerModalOpen} onClose={() => setResponseViewerModalOpen(false)} />}
         </>
     );
 };

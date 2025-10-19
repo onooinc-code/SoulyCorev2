@@ -47,6 +47,7 @@ export * from './icons/PowerIcon';
 export * from './icons/PromptsIcon';
 export * from './icons/RefreshIcon';
 export * from './icons/RocketLaunchIcon';
+export * from './icons/RssIcon';
 export * from './icons/ScissorsIcon';
 export * from './icons/SearchIcon';
 export * from './icons/SendIcon';

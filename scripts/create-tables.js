@@ -306,6 +306,32 @@ async function createTables() {
     `);
     console.log("Table 'data_sources' created or already exists.");
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS comm_channels (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(255) NOT NULL,
+        type VARCHAR(50) NOT NULL,
+        status VARCHAR(50) NOT NULL,
+        config_json JSONB,
+        "createdAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        "lastUpdatedAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log("Table 'comm_channels' created or already exists.");
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS comm_messages (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        channel_id UUID REFERENCES comm_channels(id) ON DELETE CASCADE,
+        contact_id UUID REFERENCES contacts(id) ON DELETE SET NULL,
+        content TEXT,
+        payload_json JSONB,
+        status VARCHAR(50) NOT NULL,
+        "createdAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log("Table 'comm_messages' created or already exists.");
+
 
     console.log("All tables created or verified successfully.");
   } catch (err) {

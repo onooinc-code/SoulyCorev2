@@ -13,7 +13,8 @@ import {
     ToolsIcon,
     TasksIcon,
     CircleStackIcon,
-    SearchIcon // Added SearchIcon
+    SearchIcon,
+    RssIcon
 } from '@/components/Icons';
 import { useLog } from './providers/LogProvider';
 
@@ -24,23 +25,23 @@ interface NavItemProps {
     tooltip: string;
 }
 
-const NavigationRail = ({ setBookmarksOpen, setGlobalSettingsOpen }: {
-    setBookmarksOpen: (isOpen: boolean) => void;
-    setGlobalSettingsOpen: (isOpen: boolean) => void;
-}) => {
+const NavigationRail = () => {
     const { 
         activeView, 
         setActiveView, 
         isConversationPanelOpen,
         setConversationPanelOpen,
         setLogPanelOpen,
+        setBookmarksModalOpen,
+        setGlobalSettingsModalOpen,
     } = useUIState();
     const { createNewConversation, currentConversation, setCurrentConversation } = useConversation();
     const { log } = useLog();
 
     useEffect(() => {
-        if (currentConversation && activeView !== 'search') {
-            setActiveView('chat');
+        if (currentConversation && activeView !== 'search' && activeView !== 'chat') {
+             // If a conversation is active but user navigates away, set view to chat.
+             // This logic might need refinement based on desired UX. For now, we allow hubs.
         } else if (!currentConversation && activeView === 'chat') {
             setActiveView('dashboard');
         }
@@ -48,7 +49,8 @@ const NavigationRail = ({ setBookmarksOpen, setGlobalSettingsOpen }: {
 
     const mainViews: NavItemProps[] = [
         { viewName: 'dashboard', label: 'Dashboard', icon: DashboardIcon, tooltip: "Open the main Dashboard Center." },
-        { viewName: 'search', label: 'Search', icon: SearchIcon, tooltip: "Open Global Search." }, // Added Search view
+        { viewName: 'search', label: 'Search', icon: SearchIcon, tooltip: "Open Global Search." },
+        { viewName: 'comm_hub', label: 'Communication Hub', icon: RssIcon, tooltip: "Manage communication channels." },
         { viewName: 'agent_center', label: 'Agent Center', icon: RocketLaunchIcon, tooltip: "Manage and run autonomous agents." },
         { viewName: 'brain_center', label: 'Brain Center', icon: BrainIcon, tooltip: "Manage the AI's core cognitive functions." },
         { viewName: 'memory_center', label: 'Memory Center', icon: MemoryIcon, tooltip: "View and manage the AI's structured knowledge. (Cmd+K)" },
@@ -61,8 +63,8 @@ const NavigationRail = ({ setBookmarksOpen, setGlobalSettingsOpen }: {
     ];
 
     const utilityViews = [
-        { label: 'Bookmarks', icon: BookmarkListIcon, action: () => { log('User opened Bookmarks modal.'); setBookmarksOpen(true); }, tooltip: "View all bookmarked messages." },
-        { label: 'Global Settings', icon: SettingsIcon, action: () => { log('User opened Global Settings.'); setGlobalSettingsOpen(true); }, tooltip: "Configure application-wide settings." },
+        { label: 'Bookmarks', icon: BookmarkListIcon, action: () => { log('User opened Bookmarks modal.'); setBookmarksModalOpen(true); }, tooltip: "View all bookmarked messages." },
+        { label: 'Global Settings', icon: SettingsIcon, action: () => { log('User opened Global Settings.'); setGlobalSettingsModalOpen(true); }, tooltip: "Configure application-wide settings." },
         { label: 'Toggle Log Panel', icon: LogIcon, action: () => { log('User toggled the log panel.'); setLogPanelOpen(prev => !prev); }, tooltip: "Show or hide the developer log panel." },
     ];
 
@@ -70,12 +72,21 @@ const NavigationRail = ({ setBookmarksOpen, setGlobalSettingsOpen }: {
         <button
             onClick={() => { 
                 log(`User navigated to ${item.label}`); 
-                setActiveView(item.viewName); 
-                if (item.viewName !== 'search') {
-                    setCurrentConversation(null);
+                // Don't clear currentConversation when switching to chat view
+                if(item.viewName !== 'chat') {
+                    if (activeView === 'chat') {
+                        // Keep convo active when switching from chat to search
+                        if (item.viewName !== 'search') {
+                             setCurrentConversation(null);
+                        }
+                    } else {
+                        setCurrentConversation(null);
+                    }
                 }
+                setActiveView(item.viewName as any); 
             }}
             title={item.tooltip}
+            aria-label={item.tooltip}
             className={`w-12 h-12 flex items-center justify-center rounded-lg transition-colors relative ${
                 activeView === item.viewName ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
             }`}
@@ -93,6 +104,7 @@ const NavigationRail = ({ setBookmarksOpen, setGlobalSettingsOpen }: {
                 <button
                     onClick={createNewConversation}
                     title="New Chat (Cmd+N)"
+                    aria-label="New Chat"
                     className="w-12 h-12 flex items-center justify-center rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
                 >
                     <PlusIcon className="w-6 h-6" />
@@ -100,6 +112,7 @@ const NavigationRail = ({ setBookmarksOpen, setGlobalSettingsOpen }: {
                 <button
                     onClick={() => setConversationPanelOpen(prev => !prev)}
                     title={isConversationPanelOpen ? "Hide Conversations" : "Show Conversations"}
+                    aria-label={isConversationPanelOpen ? "Hide Conversations" : "Show Conversations"}
                     className={`w-12 h-12 flex items-center justify-center rounded-lg transition-colors ${
                         isConversationPanelOpen ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
                     }`}
@@ -120,6 +133,7 @@ const NavigationRail = ({ setBookmarksOpen, setGlobalSettingsOpen }: {
                         key={item.label}
                         onClick={item.action}
                         title={item.tooltip}
+                        aria-label={item.tooltip}
                         className="w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
                     >
                         <item.icon className="w-6 h-6" />

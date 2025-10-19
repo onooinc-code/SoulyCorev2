@@ -1,6 +1,8 @@
 // This is a placeholder for a more dynamic action registry.
 // In a real app, this might be auto-generated or built from multiple sources.
 
+// FIX: Added React import to resolve namespace error for React.FC.
+import React from 'react';
 import {
     PlusIcon, MemoryIcon, UsersIcon, CodeIcon, BookmarkListIcon,
     SettingsIcon, LogIcon, BrainIcon, DashboardIcon, PromptsIcon,

@@ -1,6 +1,7 @@
+// lib/hooks/useAppContextMenu.ts
 "use client";
 
-import { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { 
@@ -22,13 +23,17 @@ import type { MenuItem } from '@/components/ContextMenu';
 
 export const useAppContextMenu = () => {
     const { 
-        activeView, 
         setActiveView,
         isContextMenuEnabled,
         setConversationPanelOpen,
         setCommandPaletteOpen,
         restartApp,
-        exitApp
+        exitApp,
+        setBookmarksModalOpen,
+        setGlobalSettingsModalOpen,
+        setShortcutsModalOpen,
+        setAddKnowledgeModalOpen,
+        setResponseViewerModalOpen,
     } = useUIState();
     const {
         currentConversation,
@@ -56,10 +61,11 @@ export const useAppContextMenu = () => {
         { label: 'Application', children: [
             { label: 'New Chat', icon: PlusIcon, action: createNewConversation },
             { label: 'Open Command Palette', icon: SearchIcon, action: () => setCommandPaletteOpen(true) },
-            { label: 'Global Settings', icon: SettingsIcon, action: () => {} /* Handled in GlobalModals */ },
-            { label: 'Keyboard Shortcuts', icon: KeyboardIcon, action: () => {} /* Handled in GlobalModals */ },
+            { label: 'Global Settings', icon: SettingsIcon, action: () => setGlobalSettingsModalOpen(true) },
+            { label: 'Keyboard Shortcuts', icon: KeyboardIcon, action: () => setShortcutsModalOpen(true) },
+            { label: 'View Last AI Report', icon: CodeIcon, action: () => setResponseViewerModalOpen(true) },
             { isSeparator: true },
-            { label: 'Hard Refresh App', icon: RefreshIcon, action: restartApp },
+            { label: 'Hard Reset App', icon: RefreshIcon, action: restartApp },
             { label: 'Exit Application', icon: PowerIcon, action: exitApp },
         ]},
         { isSeparator: true },
@@ -71,8 +77,8 @@ export const useAppContextMenu = () => {
         ]},
         { isSeparator: true },
         { label: 'Memory', children: [
-            { label: 'Add Knowledge Snippet', icon: KnowledgeIcon, action: () => {} /* Handled in GlobalModals */ },
-            { label: 'View Bookmarks', icon: BookmarkListIcon, action: () => {} /* Handled in GlobalModals */ },
+            { label: 'Add Knowledge Snippet', icon: KnowledgeIcon, action: () => setAddKnowledgeModalOpen(true) },
+            { label: 'View Bookmarks', icon: BookmarkListIcon, action: () => setBookmarksModalOpen(true) },
         ]},
         { isSeparator: true },
         { label: 'Quick Access', children: [
@@ -87,7 +93,12 @@ export const useAppContextMenu = () => {
             { label: 'Data Hub', icon: CircleStackIcon, action: () => setActiveView('data_hub') },
             { label: 'Dev Center', icon: CodeIcon, action: () => setActiveView('dev_center') },
         ]},
-    ], [createNewConversation, currentConversation, deleteConversation, clearMessages, restartApp, exitApp, setActiveView, setConversationPanelOpen, setCommandPaletteOpen]);
+    ], [
+        createNewConversation, currentConversation, deleteConversation, clearMessages, 
+        restartApp, exitApp, setActiveView, setConversationPanelOpen, setCommandPaletteOpen,
+        setBookmarksModalOpen, setGlobalSettingsModalOpen, setShortcutsModalOpen,
+        setAddKnowledgeModalOpen, setResponseViewerModalOpen
+    ]);
 
     return {
         menuItems,
