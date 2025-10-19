@@ -4,7 +4,7 @@ import { StructuredMemoryModule } from '../memory/modules/structured';
 import { GraphMemoryModule } from '../memory/modules/graph';
 import llmProvider from '../llm';
 import { IContextAssemblyConfig } from '../memory/types';
-import type { Contact, Message, Conversation } from '@/lib/types';
+import type { Contact, Message, Conversation, Entity } from '@/lib/types';
 import type { Content } from '@google/genai';
 
 interface ContextAssemblyInput {
@@ -78,7 +78,7 @@ export class ContextAssemblyPipeline {
             contextAdded = true;
         }
         if (structuredMemories.length > 0) {
-            contextString += "Mentioned contacts:\n" + structuredMemories.map((c: Contact) => `- ${c.name}: ${c.notes || c.company || c.email}`).join('\n') + "\n\n";
+            contextString += "Mentioned contacts:\n" + (structuredMemories as Contact[]).map((c) => `- ${c.name}: ${c.notes || c.company || c.email}`).join('\n') + "\n\n";
             contextAdded = true;
         }
         if (graphMemories.length > 0) {
