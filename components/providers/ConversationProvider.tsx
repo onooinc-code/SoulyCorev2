@@ -19,7 +19,7 @@ interface ConversationContextType {
     createNewConversation: () => Promise<void>;
     addMessage: ReturnType<typeof useMessageManager>['addMessage'];
     toggleBookmark: (messageId: string) => Promise<void>;
-    loadConversations: () => Promise<void>;
+    loadConversations: (segmentId?: string | null) => Promise<void>;
     isLoading: boolean;
     status: IStatus;
     setStatus: (status: Partial<IStatus>) => void;
@@ -40,6 +40,8 @@ interface ConversationContextType {
     activeWorkflow: ActiveWorkflowState | null;
     scrollToMessageId: string | null;
     setScrollToMessageId: (messageId: string | null) => void;
+    activeSegmentId: string | null;
+    setActiveSegmentId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const ConversationContext = createContext<ConversationContextType | undefined>(undefined);
@@ -52,6 +54,7 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
     const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
     const [unreadConversations, setUnreadConversations] = useState(new Set<string>());
     const [scrollToMessageId, setScrollToMessageId] = useState<string | null>(null);
+    const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
     const { setActiveView } = useUIState();
 
     // --- HOOKS COMPOSITION ---
@@ -66,6 +69,7 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
     } = useConversationList({
         setIsLoading,
         setStatus,
+        activeSegmentId,
         onConversationDeleted: (conversationId) => {
             if (currentConversation?.id === conversationId) {
                 setCurrentConversation(null);
@@ -207,7 +211,7 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }, [messages, currentConversation, log]);
 
 
-    const contextValue = {
+    const contextValue: ConversationContextType = {
         conversations, currentConversation, messages,
         setCurrentConversation: setCurrentConversationById,
         updateCurrentConversation, createNewConversation, addMessage, toggleBookmark, loadConversations,
@@ -216,6 +220,7 @@ export const ConversationProvider: React.FC<{ children: ReactNode }> = ({ childr
         regenerateAiResponse, regenerateUserPromptAndGetResponse, unreadConversations, clearMessages,
         backgroundTaskCount, startBackgroundTask, endBackgroundTask, startWorkflow, activeWorkflow,
         scrollToMessageId, setScrollToMessageId,
+        activeSegmentId, setActiveSegmentId,
     };
 
     return <ConversationContext.Provider value={contextValue}>{children}</ConversationContext.Provider>;

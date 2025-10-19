@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Tool } from '@/lib/types';
@@ -30,14 +29,14 @@ export async function POST(req: NextRequest) {
         
         let parsedSchema;
         try {
-            parsedSchema = JSON.parse(schema_json);
+            parsedSchema = typeof schema_json === 'string' ? JSON.parse(schema_json) : schema_json;
         } catch (e) {
             return NextResponse.json({ error: 'schema_json must be valid JSON.' }, { status: 400 });
         }
 
         const { rows } = await sql<Tool>`
             INSERT INTO tools (name, description, schema_json, "lastUpdatedAt")
-            VALUES (${name}, ${description}, ${parsedSchema}, CURRENT_TIMESTAMP)
+            VALUES (${name}, ${description}, ${JSON.stringify(parsedSchema)}, CURRENT_TIMESTAMP)
             RETURNING id, name, description, schema_json, "createdAt", "lastUpdatedAt";
         `;
         

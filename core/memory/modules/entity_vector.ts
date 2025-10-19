@@ -80,4 +80,12 @@ export class EntityVectorMemoryModule implements ISingleMemoryModule {
             score: match.score,
         }));
     }
+
+    /**
+     * Deletes one or more vectors from the index by their IDs.
+     * @param ids - A single ID or an array of IDs to delete.
+     */
+    async delete(ids: string | string[]): Promise<void> {
+        await this.index.delete(ids);
+    }
 }

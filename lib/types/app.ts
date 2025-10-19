@@ -1,5 +1,5 @@
 // FIX: Added import for Prompt to be used in ActiveWorkflowState.
-import type { Prompt } from './data';
+import type { Prompt } from '@/lib/types/data';
 
 export type Role = 'user' | 'model';
 
@@ -51,3 +51,6 @@ export interface ActiveWorkflowState {
   currentStepIndex: number;
   stepOutputs: Record<number, string>;
 }
+
+// Ensure this file is treated as a module.
+export {};

@@ -11,7 +11,7 @@ import { StructuredMemoryModule } from '../memory/modules/structured';
 import llmProvider from '../llm';
 import { sql } from '@/lib/db';
 import { Type } from '@google/genai';
-import type { EntityDefinition } from '@/lib/types';
+import type { EntityDefinition, Segment } from '@/lib/types';
 
 interface MemoryExtractionInput {
     text: string; // The text to analyze (e.g., user query + AI response)
@@ -76,7 +76,11 @@ export class MemoryExtractionPipeline {
                 }
             }
 
-            // ... (Knowledge extraction and topic extraction remain the same) ...
+            if (input.config.enableSegmentExtraction) {
+                const stepTime = Date.now();
+                const linkedSegments = await this._extractAndLinkSegments(input.text, input.messageId);
+                await this.logStep(runId, stepOrder++, 'ExtractAndLinkSegments', { text: input.text }, { linkedSegments }, Date.now() - stepTime);
+            }
 
             const totalDuration = Date.now() - startTime;
             await sql`
@@ -200,6 +204,78 @@ export class MemoryExtractionPipeline {
             }
         } catch (e) {
             console.error("Failed to parse or store relationships:", response, e);
+        }
+    }
+
+    private async _extractAndLinkSegments(text: string, messageId: string): Promise<string[]> {
+        const { rows: segments } = await sql<Segment>`SELECT id, name, description FROM segments`;
+        if (segments.length === 0) {
+            return [];
+        }
+
+        const segmentListForPrompt = segments.map(s => `- ${s.name}: ${s.description || 'No description'}`).join('\n');
+        const prompt = `
+            Analyze the following text and determine which of the predefined segments it belongs to.
+            The text may belong to multiple segments.
+
+            Text to analyze:
+            ---
+            "${text}"
+            ---
+
+            Available Segments:
+            ---
+            ${segmentListForPrompt}
+            ---
+
+            Based on the text, identify all relevant segment names.
+        `;
+
+        const responseSchema = {
+            type: Type.OBJECT,
+            properties: {
+                relevant_segments: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.STRING,
+                        description: 'The name of a relevant segment.'
+                    }
+                }
+            }
+        };
+
+        const responseJsonStr = await llmProvider.generateContent(
+            [{ role: 'user', parts: [{ text: prompt }] }],
+            "You are a text classification expert. Respond only with the requested JSON object.",
+            // @ts-ignore
+            { responseMimeType: 'application/json', responseSchema },
+            'gemini-2.5-pro'
+        );
+
+        try {
+            const response = JSON.parse(responseJsonStr);
+            const relevantSegmentNames: string[] = response.relevant_segments || [];
+
+            if (relevantSegmentNames.length > 0) {
+                const segmentMap = new Map(segments.map(s => [s.name, s.id]));
+                const valuesToInsert = relevantSegmentNames
+                    .map(name => segmentMap.get(name))
+                    .filter(id => !!id)
+                    .map(segmentId => `('${messageId}', '${segmentId}')`)
+                    .join(',');
+
+                if (valuesToInsert) {
+                    await sql.query(`
+                        INSERT INTO message_segments (message_id, segment_id)
+                        VALUES ${valuesToInsert}
+                        ON CONFLICT DO NOTHING;
+                    `);
+                }
+            }
+            return relevantSegmentNames;
+        } catch (e) {
+            console.error("Failed to parse or store segments from LLM response:", responseJsonStr, e);
+            return [];
         }
     }
 }

@@ -1,4 +1,4 @@
-
+// components/agent_center/PlanDisplay.tsx
 "use client";
 
 import React from 'react';
@@ -68,7 +68,6 @@ const PlanDisplay = ({ goal, plan, state, onApprove, onDiscard, onReplan }: Plan
                     </div>
                 )}
                 <AnimatePresence>
-                     {/* FIX: Wrapped the iterated `PhaseCard` component in a `div` with a `key` prop to resolve a TypeScript error where the key was being passed down as a prop. */}
                      {plan && plan.map((phase, index) => (
                         <div key={index}>
                             <PhaseCard 

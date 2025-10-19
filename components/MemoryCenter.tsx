@@ -1,9 +1,8 @@
-
 "use client";
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CubeIcon, LinkIcon } from './Icons'; // Assuming LinkIcon will be created
+import { CubeIcon, LinkIcon, TagIcon } from './Icons';
 import dynamic from 'next/dynamic';
 
 const EntityHub = dynamic(() => import('./hubs/EntityHub'), {
@@ -11,8 +10,18 @@ const EntityHub = dynamic(() => import('./hubs/EntityHub'), {
     loading: () => <div className="flex items-center justify-center h-full"><p>Loading Entity Hub...</p></div>
 });
 
+const RelationshipGraph = dynamic(() => import('./hubs/RelationshipGraph'), {
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center h-full"><p>Loading Relationship Graph...</p></div>
+});
 
-type Tab = 'entities' | 'relationships';
+const SegmentHub = dynamic(() => import('./hubs/SegmentHub'), {
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center h-full"><p>Loading Segment Hub...</p></div>
+});
+
+
+type Tab = 'entities' | 'relationships' | 'segments';
 
 const MemoryCenter = () => {
     const [activeTab, setActiveTab] = useState<Tab>('entities');
@@ -34,13 +43,9 @@ const MemoryCenter = () => {
             case 'entities': 
                 return <EntityHub />;
             case 'relationships': 
-                return (
-                    <div className="p-8 text-center text-gray-400">
-                        <h3 className="text-xl font-bold mb-4">Relationship Graph</h3>
-                        <p>This section is under development.</p>
-                        <p className="text-sm mt-2">A visual graph of entity relationships will be available here soon.</p>
-                    </div>
-                );
+                return <RelationshipGraph />;
+            case 'segments':
+                return <SegmentHub />;
             default: return null;
         }
     };
@@ -54,6 +59,7 @@ const MemoryCenter = () => {
             <div className="flex items-center gap-2 mb-4 flex-shrink-0">
                 <TabButton tabName="entities" label="Entities" icon={CubeIcon} />
                 <TabButton tabName="relationships" label="Relationships" icon={LinkIcon} />
+                <TabButton tabName="segments" label="Segments" icon={TagIcon} />
             </div>
 
             <div className="flex-1 bg-gray-800 rounded-lg overflow-hidden min-h-0">

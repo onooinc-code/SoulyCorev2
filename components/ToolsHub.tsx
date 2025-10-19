@@ -8,7 +8,6 @@ import { useLog } from '@/components/providers/LogProvider';
 import { useAppContext } from '@/components/providers/AppProvider';
 import { PlusIcon, TrashIcon, EditIcon, XIcon } from '@/components/Icons';
 
-// FIX: Create a specific type for the form state to handle schema_json as a string.
 type ToolFormState = Omit<Partial<Tool>, 'schema_json'> & { schema_json: string };
 
 const ToolsHub = () => {
@@ -17,7 +16,6 @@ const ToolsHub = () => {
     const [tools, setTools] = useState<Tool[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
-    // FIX: Use the new ToolFormState for the component's state.
     const [currentTool, setCurrentTool] = useState<ToolFormState | null>(null);
     const [jsonError, setJsonError] = useState<string | null>(null);
 
@@ -40,7 +38,6 @@ const ToolsHub = () => {
         fetchTools();
     }, [fetchTools]);
 
-    // FIX: Update function signature and logic to use the new ToolFormState.
     const handleOpenForm = (tool: Tool | null = null) => {
         const action = tool ? 'edit' : 'new';
         log(`User opened tool form for ${action} tool.`, { toolId: tool?.id });
@@ -73,7 +70,6 @@ const ToolsHub = () => {
         if (!currentTool || !currentTool.name) return;
 
         try {
-            // FIX: Validate the schema_json string, which is now the correct type in state.
             if (currentTool.schema_json) JSON.parse(currentTool.schema_json);
             setJsonError(null);
         } catch (e) {
@@ -139,11 +135,9 @@ const ToolsHub = () => {
                     <input value={currentTool?.name || ''} onChange={e => setCurrentTool(t => t ? {...t, name: e.target.value} : null)} placeholder="Tool Name (e.g., 'web_search')" className="w-full p-2 bg-gray-700 rounded-lg text-sm"/>
                     <textarea value={currentTool?.description || ''} onChange={e => setCurrentTool(t => t ? {...t, description: e.target.value} : null)} placeholder="Tool Description" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={3}></textarea>
                      <div>
-                        <label className="text-xs text-gray-400">Tool Schema (OpenAPI/JSON format for Gemini Function Calling)</label>
+                        <label className="text-xs text-gray-400">Tool Schema (Gemini Function Calling format)</label>
                         <textarea 
-                            // FIX: Correctly bind to the string-based schema_json in the form state.
                             value={currentTool?.schema_json || ''} 
-                            // FIX: Update the state with the new string value from the textarea.
                             onChange={e => setCurrentTool(t => t ? {...t, schema_json: e.target.value} : null)} 
                             className={`w-full p-2 bg-gray-700 rounded-lg text-sm font-mono ${jsonError ? 'border border-red-500' : ''}`}
                             rows={8}

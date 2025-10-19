@@ -1,6 +1,3 @@
-
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { AgentRun, AgentRunStep, AgentPlanPhase, Tool as DbTool } from '@/lib/types';
@@ -105,7 +102,6 @@ Your task is to use the available tools to achieve this phase's goal.
                 if (agentResponse.functionCalls && agentResponse.functionCalls.length > 0) {
                     const toolCall = agentResponse.functionCalls[0];
                     
-                    // FIX: Add a guard to ensure toolCall.name is defined before proceeding.
                     if (!toolCall.name) {
                         throw new Error("Agent response contained a tool call with no name.");
                     }

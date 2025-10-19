@@ -47,6 +47,7 @@ const ChatWindow = () => {
     const [isAgentConfigModalOpen, setAgentConfigModalOpen] = useState(false);
     const [summaryModalState, setSummaryModalState] = useState<{isOpen: boolean, text: string, isLoading: boolean}>({isOpen: false, text: '', isLoading: false});
     const [inspectorModalState, setInspectorModalState] = useState<{ isOpen: boolean; messageId: string | null }>({ isOpen: false, messageId: null });
+    // FIX: Added state for the ContextViewerModal to resolve type errors.
     const [contextViewerModalState, setContextViewerModalState] = useState<{ isOpen: boolean, messageId: string | null, type: 'prompt' | 'system' | 'config' | null }>({ isOpen: false, messageId: null, type: null });
     const [htmlModalState, setHtmlModalState] = useState({ isOpen: false, content: '' });
 
@@ -124,6 +125,7 @@ const ChatWindow = () => {
         setHtmlModalState({ isOpen: true, content: htmlContent });
     };
     
+    // FIX: Added handler to open the ContextViewerModal.
     const handleViewContext = (messageId: string, type: 'prompt' | 'system' | 'config') => {
         setContextViewerModalState({ isOpen: true, messageId, type });
     };
@@ -151,6 +153,7 @@ const ChatWindow = () => {
                 onUpdateMessage={updateMessage}
                 onRegenerate={handleRegenerate}
                 onInspect={(messageId) => setInspectorModalState({ isOpen: true, messageId })}
+                // FIX: Passed the onViewContext handler to MessageList.
                 onViewContext={handleViewContext}
                 onViewHtml={handleViewHtml}
                 onSetConversationAlign={handleSetConversationAlign}
@@ -196,6 +199,7 @@ const ChatWindow = () => {
                 setSummaryModalState={setSummaryModalState}
                 inspectorModalState={inspectorModalState}
                 setInspectorModalState={setInspectorModalState}
+                // FIX: Passed the context viewer modal state and setter to ChatModals.
                 contextViewerModalState={contextViewerModalState}
                 setContextViewerModalState={setContextViewerModalState}
                 htmlModalState={htmlModalState}

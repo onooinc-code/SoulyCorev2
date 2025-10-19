@@ -1,25 +1,23 @@
-// lib/types/data.ts
-
-// Conversation & Messaging
+// Conversation & Messages
 export interface Conversation {
     id: string;
     title: string;
     createdAt: Date;
     lastUpdatedAt: Date;
-    systemPrompt?: string;
-    useSemanticMemory?: boolean;
-    useStructuredMemory?: boolean;
+    userId?: string;
+    summary?: string;
     model?: string;
+    systemPrompt?: string;
     temperature?: number;
     topP?: number;
+    useSemanticMemory?: boolean;
+    useStructuredMemory?: boolean;
+    enableMemoryExtraction?: boolean;
     ui_settings?: {
         textAlign?: 'left' | 'right';
+        messageFontSize?: 'sm' | 'base' | 'lg' | 'xl';
         model_for_response?: string;
     };
-    enableProactiveSuggestions?: boolean;
-    enableAutoSummarization?: boolean;
-    enableMemoryExtraction?: boolean;
-    topics?: any; // JSONB can be any type
 }
 
 export interface Message {
@@ -27,6 +25,7 @@ export interface Message {
     conversationId: string;
     role: 'user' | 'model';
     content: string;
+    content_summary?: string;
     createdAt: Date;
     tokenCount?: number;
     responseTime?: number;
@@ -34,10 +33,9 @@ export interface Message {
     parentMessageId?: string | null;
     tags?: string[];
     threadMessages?: Message[];
-    content_summary?: string;
 }
 
-// Memory & Knowledge
+// Contacts
 export interface Contact {
     id: string;
     name: string;
@@ -46,15 +44,17 @@ export interface Contact {
     phone?: string;
     notes?: string;
     tags?: string[];
+    createdAt: Date;
+    lastUpdatedAt: Date;
 }
 
-// New Entity and Relationship types for v3.3
+// Entities & Relationships
 export interface EntityDefinition {
     id: string;
-    name: string; // Canonical name
+    name: string;
     type: string;
-    description?: string; // LLM-generated description for semantic meaning
-    aliases?: any; // JSONB array of strings
+    description?: string;
+    aliases?: string[];
     createdAt: Date;
     lastUpdatedAt: Date;
 }
@@ -68,23 +68,27 @@ export interface EntityRelationship {
     createdAt: Date;
 }
 
-// New Segmentation types for v3.3
-export interface Segment {
+export interface GraphNode {
     id: string;
     name: string;
-    description?: string;
-    type: 'Impact' | 'Topic';
+    type: string;
+}
+
+export interface GraphEdge {
+    id: string;
+    source: string;
+    target: string;
+    label: string;
+    context?: string;
+}
+
+export interface RelationshipGraphData {
+    nodes: GraphNode[];
+    edges: GraphEdge[];
 }
 
 
-export interface PromptChainStep {
-    step: number;
-    type: 'prompt' | 'tool';
-    promptId: string | null;
-    toolId: string | null;
-    inputMapping: Record<string, { source: 'userInput' | 'stepOutput'; step?: number }>;
-}
-
+// Prompts & Tools
 export interface Prompt {
     id: string;
     name: string;
@@ -93,6 +97,16 @@ export interface Prompt {
     tags?: string[];
     type: 'single' | 'chain';
     chain_definition?: PromptChainStep[];
+    createdAt: Date;
+    lastUpdatedAt: Date;
+}
+
+export interface PromptChainStep {
+    step: number;
+    type: 'prompt' | 'tool';
+    promptId: string | null;
+    toolId: string | null;
+    inputMapping: Record<string, { source: 'userInput' | 'stepOutput'; step?: number }>;
 }
 
 export interface Tool {
@@ -104,161 +118,7 @@ export interface Tool {
     lastUpdatedAt: Date;
 }
 
-// Project & Feature Management
-export type FeatureStatus = '✅ Completed' | '🟡 Needs Improvement' | '🔴 Needs Refactor' | '⚪ Planned';
-
-export interface UiUxSubFeature {
-    subFeature: string;
-    description: string;
-    status: FeatureStatus;
-}
-
-export interface Feature {
-    id: string;
-    name: string;
-    overview: string;
-    status: FeatureStatus;
-    ui_ux_breakdown_json: string | UiUxSubFeature[];
-    logic_flow: string;
-    key_files_json: string | string[];
-    notes?: string;
-}
-
-export interface VersionHistory {
-    id: string;
-    version: string;
-    release_date: string;
-    changes: string;
-}
-
-// Cognitive Engine & Pipelines
-export interface Brain {
-    id: string;
-    name: string;
-    config_json: Record<string, any>;
-    createdAt: Date;
-}
-
-export interface PipelineRun {
-    id: string;
-    message_id: string;
-    pipeline_type: 'ContextAssembly' | 'MemoryExtraction';
-    status: 'running' | 'completed' | 'failed' | 'not_found';
-    final_output: string;
-    final_llm_prompt?: string;
-    final_system_instruction?: string;
-    model_config_json?: Record<string, any>;
-    duration_ms?: number;
-}
-
-export interface PipelineRunStep {
-    id: string;
-    run_id: string;
-    step_order: number;
-    step_name: string;
-    status: 'completed' | 'failed';
-    input_payload?: Record<string, any>;
-    output_payload?: Record<string, any>;
-    model_used?: string;
-    config_used?: Record<string, any>;
-    prompt_used?: string;
-    error_message?: string;
-    duration_ms?: number;
-}
-
-// API & Testing
-export type ApiTestStatus = 'Passed' | 'Failed' | 'Not Run';
-
-export interface ApiEndpoint {
-    id: string;
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-    path: string;
-    group_name: string;
-    description?: string;
-    default_params_json?: Record<string, any>;
-    default_body_json?: Record<string, any>;
-    expected_status_code: number;
-    last_test_at?: Date;
-    last_test_status: ApiTestStatus;
-}
-
-export interface EndpointTestLog {
-    id: string;
-    endpoint_id: string;
-    status: ApiTestStatus;
-    status_code: number;
-    response_body?: Record<string, any>;
-    response_headers?: Record<string, any>;
-    duration_ms: number;
-    createdAt: Date;
-}
-
-export type TestStatus = 'Passed' | 'Failed' | 'Not Run';
-
-export interface FeatureTest {
-    id: string;
-    featureId: string;
-    description: string;
-    manual_steps?: string;
-    expected_result: string;
-    last_run_at?: Date;
-    last_run_status: TestStatus;
-    createdAt: Date;
-}
-
-// Dashboard & Hedra
-export interface Documentation {
-    id: string;
-    doc_key: string;
-    title: string;
-    content: string;
-    lastUpdatedAt: Date;
-}
-
-export interface HedraGoal {
-    id: string;
-    section_key: string;
-    content: string;
-    lastUpdatedAt: Date;
-}
-
-export interface Subsystem {
-    id: string;
-    name: string;
-    description: string;
-    progress: number;
-    healthScore: 'A+' | 'A' | 'B' | 'C' | 'D' | 'F';
-    dependencies: string[];
-    resources: { name: string; url: string }[];
-    milestones: { description: string; completed: boolean }[];
-    githubStats: {
-        commits: number;
-        pullRequests: number;
-        issues: number;
-        repoUrl: string;
-    };
-    tasks?: {
-        completed: string[];
-        remaining: string[];
-    };
-    orderIndex?: number;
-}
-
-export type FeatureStatusChartData = {
-    id: string;
-    label: string;
-    value: number;
-    color: string;
-};
-
-export type PipelinePerformanceChartData = {
-    pipeline: string;
-    Completed: number;
-    Failed: number;
-    'Avg Duration (ms)': number;
-};
-
-// Agents
+// Agent Execution
 export interface AgentRun {
     id: string;
     goal: string;
@@ -275,32 +135,170 @@ export interface AgentPlanPhase {
     phase_order: number;
     goal: string;
     status: 'pending' | 'running' | 'completed' | 'failed';
-    steps?: AgentRunStep[];
     result?: string;
     started_at?: Date;
     completed_at?: Date;
+    steps?: AgentRunStep[];
 }
 
 export interface AgentRunStep {
     id: string;
     run_id: string;
-    phase_id: string;
+    phase_id: string | null;
     step_order: number;
-    thought?: string;
-    action_type: 'tool' | 'finish';
-    action_input?: Record<string, any>;
+    thought: string;
+    action_type: string;
+    action_input?: any;
     observation?: string;
+    createdAt: Date;
 }
 
-// Communication Hub
-export interface CommChannel {
+// Development & Project Management
+export interface Feature {
     id: string;
     name: string;
-    type: 'webhook' | 'email_inbound' | 'app_broadcast';
-    status: 'active' | 'inactive' | 'error';
-    config_json: Record<string, any>;
+    overview: string;
+    status: FeatureStatus;
+    ui_ux_breakdown_json: UiUxSubFeature[] | string;
+    logic_flow: string;
+    key_files_json: string[] | string;
+    notes: string;
     createdAt: Date;
     lastUpdatedAt: Date;
+}
+
+export type FeatureStatus = '✅ Completed' | '🟡 Needs Improvement' | '🔴 Needs Refactor' | '⚪ Planned';
+
+export interface UiUxSubFeature {
+    subFeature: string;
+    description: string;
+    status: FeatureStatus;
+}
+
+export interface FeatureTest {
+    id: string;
+    featureId: string;
+    description: string;
+    manual_steps?: string;
+    expected_result: string;
+    last_run_status: TestStatus;
+    last_run_at?: Date;
+    createdAt: Date;
+}
+
+export type TestStatus = 'Passed' | 'Failed' | 'Not Run';
+
+export interface ApiEndpoint {
+    id: string;
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    path: string;
+    group_name: string;
+    description?: string;
+    default_params_json?: Record<string, any>;
+    default_body_json?: Record<string, any>;
+    expected_status_code: number;
+    last_test_status: ApiTestStatus;
+    last_test_at?: Date;
+    createdAt: Date;
+}
+
+export type ApiTestStatus = 'Passed' | 'Failed' | 'Not Run';
+
+export interface EndpointTestLog {
+    id: string;
+    endpoint_id: string;
+    status: ApiTestStatus;
+    status_code: number;
+    response_body?: Record<string, any>;
+    response_headers?: Record<string, any>;
+    duration_ms: number;
+    createdAt: Date;
+}
+
+// Versioning
+export interface VersionHistory {
+    id: string;
+    version: string;
+    release_date: Date;
+    changes: string;
+}
+
+// Pipeline & Inspection
+export interface PipelineRun {
+    id: string;
+    message_id: string;
+    pipeline_type: 'ContextAssembly' | 'MemoryExtraction';
+    status: 'running' | 'completed' | 'failed' | 'not_found';
+    duration_ms?: number;
+    final_output?: string;
+    final_llm_prompt?: string;
+    final_system_instruction?: string;
+    model_config_json?: Record<string, any>;
+    createdAt: Date;
+}
+
+export interface PipelineRunStep {
+    id: string;
+    run_id: string;
+    step_order: number;
+    step_name: string;
+    input_payload: any;
+    output_payload: any;
+    duration_ms: number;
+    status: 'completed' | 'failed';
+    model_used?: string;
+    config_used?: Record<string, any>;
+    prompt_used?: string;
+    error_message?: string;
+    createdAt: Date;
+}
+
+// Dashboard & Subsystems
+export interface Subsystem {
+    id: string;
+    name: string;
+    description: string;
+    progress: number;
+    healthScore: 'A+' | 'A' | 'B' | 'C' | 'D' | 'F';
+    dependencies: string[];
+    resources: { name: string, url: string }[];
+    milestones: { description: string, completed: boolean }[];
+    githubStats: {
+        commits: number;
+        pullRequests: number;
+        issues: number;
+        repoUrl: string;
+    };
+    tasks?: {
+        completed: string[];
+        remaining: string[];
+    }
+}
+
+export interface HedraGoal {
+    section_key: string;
+    content: string;
+    lastUpdatedAt: Date;
+}
+
+export interface Documentation {
+    id: string;
+    doc_key: string;
+    title: string;
+    content: string;
+    lastUpdatedAt: Date;
+}
+
+// Tasks
+export interface Task {
+    id: string;
+    title: string;
+    description?: string;
+    status: 'todo' | 'in_progress' | 'completed';
+    due_date?: Date;
+    createdAt: Date;
+    lastUpdatedAt: Date;
+    completed_at?: Date;
 }
 
 // Data Hub
@@ -314,19 +312,49 @@ export interface DataSource {
     type: DataSourceType;
     status: DataSourceStatus;
     config_json: Record<string, any>;
-    stats_json: { label: string, value: string | number }[];
+    stats_json: { label: string; value: string | number }[];
     createdAt: Date;
     lastUpdatedAt: Date;
 }
 
-// Tasks Hub
-export interface Task {
+// Brains & Comm Channels
+export interface Brain {
     id: string;
-    title: string;
-    description?: string;
-    due_date?: Date;
-    status: 'todo' | 'in_progress' | 'completed';
-    completed_at?: Date;
+    name: string;
+    config_json: Record<string, any>;
     createdAt: Date;
     lastUpdatedAt: Date;
+}
+
+export interface CommChannel {
+    id: string;
+    name: string;
+    type: 'webhook' | 'app_broadcast' | 'email_inbound';
+    status: 'active' | 'inactive' | 'error';
+    config_json: Record<string, any>;
+    createdAt: Date;
+    lastUpdatedAt: Date;
+}
+
+// Chart Data
+export interface FeatureStatusChartData {
+    id: string;
+    label: string;
+    value: number;
+    color: string;
+}
+
+export interface PipelinePerformanceChartData {
+    pipeline: string;
+    Completed: number;
+    Failed: number;
+    'Avg Duration (ms)': number;
+}
+
+// Segments for conversation categorization
+export interface Segment {
+    id: string;
+    name: string;
+    type: 'Topic' | 'Impact';
+    description?: string;
 }

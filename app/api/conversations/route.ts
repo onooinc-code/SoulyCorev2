@@ -5,11 +5,29 @@ import { Conversation } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 // GET all conversations
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
-        const { rows } = await sql<Conversation>`
-            SELECT * FROM conversations ORDER BY "lastUpdatedAt" DESC;
-        `;
+        const { searchParams } = new URL(req.url);
+        const segmentId = searchParams.get('segmentId');
+
+        let rows;
+        if (segmentId) {
+            const result = await sql<Conversation>`
+                SELECT DISTINCT c.* 
+                FROM conversations c
+                JOIN messages m ON c.id = m."conversationId"
+                JOIN message_segments ms ON m.id = ms.message_id
+                WHERE ms.segment_id = ${segmentId}
+                ORDER BY c."lastUpdatedAt" DESC;
+            `;
+            rows = result.rows;
+        } else {
+            const result = await sql<Conversation>`
+                SELECT * FROM conversations ORDER BY "lastUpdatedAt" DESC;
+            `;
+            rows = result.rows;
+        }
+        
         return NextResponse.json(rows);
     } catch (error) {
         console.error('Failed to fetch conversations:', error);

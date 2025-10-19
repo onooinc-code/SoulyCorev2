@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useCallback, useEffect } from 'react';
@@ -8,6 +7,7 @@ import { useLog } from '@/components/providers/LogProvider';
 interface UseConversationListProps {
     setIsLoading: (loading: boolean) => void;
     setStatus: (status: Partial<IStatus>) => void;
+    activeSegmentId: string | null;
     onConversationDeleted: (conversationId: string) => void;
     onConversationCreated: (conversation: Conversation) => void;
 }
@@ -15,25 +15,32 @@ interface UseConversationListProps {
 /**
  * A custom hook responsible for managing the state and API interactions for the list of conversations.
  */
-export const useConversationList = ({ setIsLoading, setStatus, onConversationDeleted, onConversationCreated }: UseConversationListProps) => {
+export const useConversationList = ({ setIsLoading, setStatus, activeSegmentId, onConversationDeleted, onConversationCreated }: UseConversationListProps) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const { log } = useLog();
 
-    const loadConversations = useCallback(async () => {
-        log('Fetching conversation list...');
+    const loadConversations = useCallback(async (segmentId?: string | null) => {
+        log('Fetching conversation list...', { segmentId });
         try {
-            const response = await fetch('/api/conversations');
+            let url = '/api/conversations';
+            if (segmentId) {
+                url += `?segmentId=${segmentId}`;
+            }
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Failed to fetch conversations');
             const convos = await response.json();
             setConversations(convos);
             log(`Successfully fetched ${convos.length} conversations.`);
-            return convos; // Return the fetched data for immediate use if needed
         } catch (error) {
             const errorMessage = 'Could not load conversations.';
             setStatus({ error: errorMessage });
             log(errorMessage, { error: { message: (error as Error).message } }, 'error');
         }
     }, [setStatus, log]);
+
+    useEffect(() => {
+        loadConversations(activeSegmentId);
+    }, [activeSegmentId, loadConversations]);
 
     const createNewConversation = useCallback(async () => {
         setIsLoading(true);

@@ -70,3 +70,5 @@ export * from './icons/CircleStackIcon';
 export * from './icons/ClipboardPasteIcon';
 export * from './icons/CubeIcon';
 export * from './icons/LinkIcon';
+export * from './icons/ArrowsRightLeftIcon';
+export * from './icons/TagIcon';

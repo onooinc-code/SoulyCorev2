@@ -63,4 +63,8 @@ export interface IMemoryExtractionConfig {
      * Flag to enable or disable knowledge chunk extraction.
      */
     enableKnowledgeExtraction: boolean;
+    /**
+     * Flag to enable or disable segment extraction.
+     */
+    enableSegmentExtraction: boolean;
 }

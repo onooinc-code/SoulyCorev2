@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Tool } from '@/lib/types';
@@ -15,7 +14,7 @@ export async function PUT(req: NextRequest, { params }: { params: { toolId: stri
         
         let parsedSchema;
         try {
-            parsedSchema = JSON.parse(schema_json);
+            parsedSchema = typeof schema_json === 'string' ? JSON.parse(schema_json) : schema_json;
         } catch (e) {
             return NextResponse.json({ error: 'schema_json must be valid JSON.' }, { status: 400 });
         }
@@ -25,7 +24,7 @@ export async function PUT(req: NextRequest, { params }: { params: { toolId: stri
             SET 
                 name = ${name}, 
                 description = ${description}, 
-                schema_json = ${parsedSchema},
+                schema_json = ${JSON.stringify(parsedSchema)},
                 "lastUpdatedAt" = CURRENT_TIMESTAMP
             WHERE id = ${toolId}
             RETURNING id, name, description, schema_json, "createdAt", "lastUpdatedAt";

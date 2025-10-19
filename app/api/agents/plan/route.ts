@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, Type } from "@google/genai";
 
@@ -55,7 +54,7 @@ export async function POST(req: NextRequest) {
 
         const result = await ai.models.generateContent({
             model: modelName,
-            contents: prompt,
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
             config: {
                 responseMimeType: "application/json",
                 responseSchema: responseSchema,

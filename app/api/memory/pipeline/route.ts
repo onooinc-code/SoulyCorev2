@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
             config: {
                 enableEntityExtraction: true,
                 enableKnowledgeExtraction: true,
+                enableSegmentExtraction: true,
             }
         }).catch(err => {
             console.error("Background memory extraction failed:", err);

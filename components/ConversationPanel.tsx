@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
 // FIX: Corrected relative import path to use the `@` alias.
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { PlusIcon, SparklesIcon, EditIcon, TrashIcon, SearchIcon, XIcon, SidebarLeftIcon, PinIcon, PinFilledIcon } from '@/components/Icons';
 import { useLog } from './providers/LogProvider';
 import { AnimatePresence, motion } from 'framer-motion';
-import type { Conversation } from '@/lib/types';
+import type { Conversation, Segment } from '@/lib/types';
 import SidebarToolbar from './SidebarToolbar';
 import ConversationSearch from './ConversationSearch';
 
@@ -63,6 +63,8 @@ const ConversationPanel = ({ isMinimized }: ConversationPanelProps) => {
         isLoading,
         unreadConversations,
         setScrollToMessageId,
+        activeSegmentId,
+        setActiveSegmentId,
     } = useConversation();
     const { setConversationPanelOpen, setIsConversationPanelMinimized, isConversationPanelPinned, setIsConversationPanelPinned } = useUIState();
     const { log } = useLog();
@@ -70,7 +72,23 @@ const ConversationPanel = ({ isMinimized }: ConversationPanelProps) => {
     const [editingTitle, setEditingTitle] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearchMode, setIsSearchMode] = useState(false);
+    const [segments, setSegments] = useState<Segment[]>([]);
     
+    useEffect(() => {
+        const fetchSegments = async () => {
+            try {
+                const res = await fetch('/api/segments');
+                if (res.ok) {
+                    const data = await res.json();
+                    setSegments(data.segments);
+                }
+            } catch (error) {
+                log('Failed to fetch segments for filter dropdown', { error }, 'error');
+            }
+        };
+        fetchSegments();
+    }, [log]);
+
     const handleSetConversation = (id: string) => {
         if (editingConversationId === id) return;
         log('User selected a conversation.', { conversationId: id });
@@ -168,15 +186,29 @@ const ConversationPanel = ({ isMinimized }: ConversationPanelProps) => {
                     </div>
                 </div>
                 {!isMinimized && !isSearchMode && (
-                    <div className="relative mb-4">
-                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search conversations..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full bg-gray-700 rounded-lg pl-9 pr-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                    <div className="space-y-2 mb-4">
+                        <div className="relative">
+                            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search conversations..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full bg-gray-700 rounded-lg pl-9 pr-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        {segments.length > 0 && (
+                             <select
+                                value={activeSegmentId || ''}
+                                onChange={e => setActiveSegmentId(e.target.value || null)}
+                                className="w-full bg-gray-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                <option value="">All Conversations</option>
+                                {segments.map(segment => (
+                                    <option key={segment.id} value={segment.id}>{segment.name}</option>
+                                ))}
+                            </select>
+                        )}
                     </div>
                 )}
             </div>
