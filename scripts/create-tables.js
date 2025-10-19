@@ -116,6 +116,17 @@ async function createTables() {
             );
         `;
 
+        await client.sql`
+            CREATE TABLE IF NOT EXISTS documents (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                filename VARCHAR(255) NOT NULL,
+                mime_type VARCHAR(100) NOT NULL,
+                storage_url TEXT NOT NULL,
+                size_bytes INTEGER,
+                "createdAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+
         // Dev Center & System Tables
         await client.sql`
             CREATE TABLE IF NOT EXISTS features (

@@ -6,7 +6,7 @@
 
 import { IContextAssemblyConfig } from '../memory/types';
 import { EpisodicMemoryModule } from '../memory/modules/episodic';
-import { SemanticMemoryModule, ISemanticQueryResult } from '../memory/modules/semantic';
+import { UpstashVectorMemoryModule, IVectorQueryResult } from '../memory/modules/upstash_vector';
 import { StructuredMemoryModule } from '../memory/modules/structured';
 import llmProvider from '../llm';
 import { Conversation, Contact, Message } from '@/lib/types';
@@ -48,7 +48,7 @@ export class ContextAssemblyPipeline {
         try {
             let stepOrder = 1;
             const episodicMemory = new EpisodicMemoryModule();
-            const semanticMemory = new SemanticMemoryModule();
+            const vectorMemory = new UpstashVectorMemoryModule();
             const structuredMemory = new StructuredMemoryModule();
 
             // 2. Retrieve Episodic Memory
@@ -61,14 +61,14 @@ export class ContextAssemblyPipeline {
 
 
             // 3. Retrieve Semantic Memory
-            let semanticKnowledge: ISemanticQueryResult[] = [];
+            let semanticKnowledge: IVectorQueryResult[] = [];
             if (input.conversation.useSemanticMemory) {
                  const step2Time = Date.now();
-                 semanticKnowledge = await semanticMemory.query({
+                 semanticKnowledge = await vectorMemory.query({
                     queryText: input.userQuery,
                     topK: input.config.semanticMemoryTopK,
                 });
-                await this.logStep(runId, stepOrder++, 'RetrieveSemanticMemory', { query: input.userQuery, topK: input.config.semanticMemoryTopK }, { results: semanticKnowledge.map(r => r.text) }, Date.now() - step2Time);
+                await this.logStep(runId, stepOrder++, 'RetrieveVectorMemory', { query: input.userQuery, topK: input.config.semanticMemoryTopK }, { results: semanticKnowledge.map(r => r.text) }, Date.now() - step2Time);
             }
 
             // 4. Retrieve Structured Memory

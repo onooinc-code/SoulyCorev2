@@ -5,7 +5,7 @@
  */
 
 import { IMemoryExtractionConfig } from '../memory/types';
-import { SemanticMemoryModule } from '../memory/modules/semantic';
+import { UpstashVectorMemoryModule } from '../memory/modules/upstash_vector';
 import { StructuredMemoryModule } from '../memory/modules/structured';
 import llmProvider from '../llm';
 import { sql } from '@/lib/db';
@@ -153,9 +153,9 @@ export class MemoryExtractionPipeline {
     }
 
     private async storeKnowledge(chunks: string[]): Promise<void> {
-        const semanticMemory = new SemanticMemoryModule();
+        const vectorMemory = new UpstashVectorMemoryModule();
         for (const chunk of chunks) {
-            await semanticMemory.store({ text: chunk });
+            await vectorMemory.store({ text: chunk });
         }
     }
 }

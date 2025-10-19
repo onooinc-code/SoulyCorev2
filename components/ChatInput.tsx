@@ -29,7 +29,9 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
     const [showMentions, setShowMentions] = useState(false);
     const [mentionQuery, setMentionQuery] = useState('');
     const [mentionedContacts, setMentionedContacts] = useState<Contact[]>([]);
-    const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+    const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
+    const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
     
     const [isPromptsListOpen, setIsPromptsListOpen] = useState(false);
     const [prompts, setPrompts] = useState<Prompt[]>([]);
@@ -125,27 +127,53 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
         log('User selected @mention', { contactName: name });
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (loadEvent) => setImageDataUrl(loadEvent.target?.result as string);
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        if (file.type.startsWith('image/')) {
+            setAttachmentPreview(URL.createObjectURL(file));
         }
+        
+        setIsUploading(true);
+        setStatus({ currentAction: 'Uploading file...' });
+        try {
+            const res = await fetch(`/api/files/upload?filename=${file.name}`, {
+                method: 'POST',
+                body: file,
+            });
+
+            if (!res.ok) {
+                throw new Error('File upload failed');
+            }
+
+            const { url } = await res.json();
+            setAttachmentUrl(url);
+            log('File uploaded successfully', { url });
+
+        } catch (error) {
+            setStatus({ error: (error as Error).message });
+            setAttachmentPreview(null);
+        } finally {
+            setIsUploading(false);
+            setStatus({ currentAction: '' });
+        }
+
         if (e.target) e.target.value = '';
     };
 
-    const removeImage = () => {
-        setImageDataUrl(null);
+    const removeAttachment = () => {
+        setAttachmentUrl(null);
+        setAttachmentPreview(null);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!content.trim() && !imageDataUrl) return;
-        let messageContent = imageDataUrl ? `![user image](${imageDataUrl})\n\n${content}` : content;
+        if (!content.trim() && !attachmentUrl) return;
+        let messageContent = attachmentUrl ? `![user image](${attachmentUrl})\n\n${content}` : content;
         onSendMessage(messageContent, mentionedContacts);
         setContent('');
-        setImageDataUrl(null);
+        removeAttachment();
         setMentionedContacts([]);
         setShowMentions(false);
     };
@@ -249,12 +277,17 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
                     </ul>
                 </div>
             )}
-            {imageDataUrl && (
+            {attachmentPreview && (
                 <div className="relative w-20 h-20 mb-2">
-                    <img src={imageDataUrl} alt="Upload preview" className="w-full h-full object-cover rounded-md" />
-                    <button onClick={removeImage} className="absolute -top-2 -right-2 bg-gray-600 rounded-full p-0.5 text-white hover:bg-gray-500 z-10" title="Remove attached image">
+                    <img src={attachmentPreview} alt="Upload preview" className="w-full h-full object-cover rounded-md" />
+                    <button onClick={removeAttachment} className="absolute -top-2 -right-2 bg-gray-600 rounded-full p-0.5 text-white hover:bg-gray-500 z-10" title="Remove attached image">
                         <XIcon className="w-4 h-4" />
                     </button>
+                    {isUploading && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                        </div>
+                    )}
                 </div>
             )}
             <form onSubmit={handleSubmit} className="flex items-start space-x-2">
@@ -276,7 +309,7 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
                     type="button" 
                     onClick={() => fileInputRef.current?.click()}
                     className="p-3 rounded-xl text-gray-200 transition-all duration-200 bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                    disabled={isLoading || !!imageDataUrl}
+                    disabled={isLoading || !!attachmentUrl || isUploading}
                     title="Attach an image"
                 >
                     <PaperclipIcon className="w-5 h-5" />
@@ -290,7 +323,7 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
                         placeholder="Type your message or add an image..."
                         className="w-full p-2 pr-24 bg-gray-700 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                         rows={1}
-                        disabled={isLoading}
+                        disabled={isLoading || isUploading}
                     />
                     {mentionedContacts.length > 0 && (
                          <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-500/50 text-indigo-200 text-xs px-2 py-1 rounded-full">
@@ -301,7 +334,7 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
                  <button
                     type="submit"
                     className="p-3 bg-indigo-600/50 hover:bg-indigo-600/80 backdrop-blur-sm border border-indigo-400/30 rounded-xl text-white transition-all duration-200 hover:scale-110 disabled:bg-indigo-400/50 disabled:cursor-not-allowed"
-                    disabled={isLoading || (!content.trim() && !imageDataUrl)}
+                    disabled={isLoading || isUploading || (!content.trim() && !attachmentUrl)}
                     title="Send message"
                 >
                     <SendIcon className="w-5 h-5" />
