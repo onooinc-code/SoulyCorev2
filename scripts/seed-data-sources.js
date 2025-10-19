@@ -2,17 +2,20 @@
 const { sql } = require('@vercel/postgres');
 
 const dataSources = [
+    // Previously connected sources
     { name: 'Vercel Postgres', provider: 'Vercel', type: 'relational_db', status: 'connected', stats: [{ label: 'Tables', value: 25 }, { label: 'Latency', value: '55ms' }] },
     { name: 'Pinecone KnowledgeBase', provider: 'Pinecone', type: 'vector', status: 'connected', stats: [{ label: 'Vectors', value: '1.2M' }, { label: 'Latency', value: '120ms' }] },
     { name: 'Vercel KV', provider: 'Vercel', type: 'key_value', status: 'connected', stats: [{ label: 'Keys', value: 4096 }, { label: 'Latency', value: '30ms' }] },
-    { name: 'Upstash Vector', provider: 'Upstash', type: 'vector', status: 'needs_config', stats: [{ label: 'Vectors', value: 0 }, { label: 'Latency', value: 'N/A' }] },
-    { name: 'Vercel GraphDB', provider: 'Vercel', type: 'graph', status: 'needs_config', stats: [{ label: 'Nodes', value: 0 }, { label: 'Latency', value: 'N/A' }] },
-    { name: 'Vercel MongoDB', provider: 'Vercel', type: 'document_db', status: 'needs_config', stats: [{ label: 'Collections', value: 0 }, { label: 'Latency', value: 'N/A' }] },
-    { name: 'Vercel Redis', provider: 'Vercel', type: 'cache', status: 'needs_config', stats: [{ label: 'Keys', value: 0 }, { label: 'Latency', value: 'N/A' }] },
-    { name: 'Vercel Blob', provider: 'Vercel', type: 'blob', status: 'needs_config', stats: [{ label: 'Files', value: 0 }, { label: 'Size', value: '0MB' }] },
-    { name: 'Google Drive', provider: 'Google', type: 'file_system', status: 'needs_config', stats: [{ label: 'Files', value: 'N/A' }, { label: 'Auth', value: 'OAuth' }] },
-    { name: 'Self-Hosted MySQL', provider: 'Self-Hosted', type: 'relational_db', status: 'needs_config', stats: [{ label: 'Status', value: 'Mock' }, { label: 'Latency', value: 'N/A' }] },
-    { name: 'Supabase', provider: 'Supabase', type: 'relational_db', status: 'needs_config', stats: [{ label: 'Tables', value: 0 }, { label: 'Latency', value: 'N/A' }] },
+    
+    // Updated "mock" sources to be "connected" with realistic stats
+    { name: 'Upstash Vector', provider: 'Upstash', type: 'vector', status: 'connected', stats: [{ label: 'Vectors', value: '250k' }, { label: 'Latency', value: '45ms' }] },
+    { name: 'Vercel GraphDB', provider: 'Vercel', type: 'graph', status: 'connected', stats: [{ label: 'Nodes', value: '1.2M' }, { label: 'Edges', value: '5M' }] },
+    { name: 'Vercel MongoDB', provider: 'Vercel', type: 'document_db', status: 'connected', stats: [{ label: 'Docs', value: '8.1M' }, { label: 'Latency', value: '80ms' }] },
+    { name: 'Vercel Redis', provider: 'Vercel', type: 'cache', status: 'connected', stats: [{ label: 'Keys', value: '1.5k' }, { label: 'Latency', value: '15ms' }] },
+    { name: 'Vercel Blob', provider: 'Vercel', type: 'blob', status: 'connected', stats: [{ label: 'Files', value: 128 }, { label: 'Size', value: '2.3GB' }] },
+    { name: 'Google Drive', provider: 'Google', type: 'file_system', status: 'connected', stats: [{ label: 'Files', value: 432 }, { label: 'Auth', value: 'OAuth' }] },
+    { name: 'Self-Hosted MySQL', provider: 'Self-Hosted', type: 'relational_db', status: 'connected', stats: [{ label: 'Tables', value: 58 }, { label: 'Latency', value: '95ms' }] },
+    { name: 'Supabase', provider: 'Supabase', type: 'relational_db', status: 'connected', stats: [{ label: 'Tables', value: 33 }, { label: 'Latency', value: '70ms' }] },
 ];
 
 async function seedDataSources() {

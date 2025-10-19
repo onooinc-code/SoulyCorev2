@@ -6,6 +6,8 @@ import DashboardPanel from '../DashboardPanel';
 import { useLog } from '../../providers/LogProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';
 
+const LOCAL_STORAGE_KEY = 'dashboard:quick-note:backup';
+
 const QuickNotesPanel = () => {
     const [note, setNote] = useState('');
     const [status, setStatus] = useState<'idle' | 'loading' | 'saving' | 'saved'>('loading');
@@ -18,24 +20,35 @@ const QuickNotesPanel = () => {
             const res = await fetch('/api/dashboard/quick-note');
             if (res.ok) {
                 const data = await res.json();
-                setNote(data.note || '');
+                const serverNote = data.note || '';
+                setNote(serverNote);
+                localStorage.setItem(LOCAL_STORAGE_KEY, serverNote);
             } else {
-                 throw new Error('Failed to fetch note');
+                 throw new Error('Failed to fetch note from server');
             }
         } catch (error) {
             log('Error fetching quick note', { error }, 'error');
-            addNotification({ type: 'error', title: 'Could not load note.' });
+            addNotification({ type: 'warning', title: 'Could not sync note', message: 'Using local version.' });
+            const localNote = localStorage.getItem(LOCAL_STORAGE_KEY);
+            setNote(localNote || '');
         } finally {
             setStatus('idle');
         }
     }, [log, addNotification]);
 
     useEffect(() => {
+        // Load from local storage first for instant display, then fetch to sync.
+        const localNote = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (localNote) {
+            setNote(localNote);
+        }
         fetchNote();
     }, [fetchNote]);
 
     const handleSave = async () => {
         setStatus('saving');
+        // Save to local storage immediately for responsiveness
+        localStorage.setItem(LOCAL_STORAGE_KEY, note);
         try {
             const res = await fetch('/api/dashboard/quick-note', {
                 method: 'PUT',
@@ -44,11 +57,11 @@ const QuickNotesPanel = () => {
             });
             if (!res.ok) throw new Error('Failed to save note');
             setStatus('saved');
-            addNotification({ type: 'success', title: 'Note Saved' });
+            addNotification({ type: 'success', title: 'Note Saved & Synced' });
             setTimeout(() => setStatus('idle'), 2000);
         } catch (error) {
             log('Error saving quick note', { error }, 'error');
-            addNotification({ type: 'error', title: 'Save Failed', message: 'Could not save the note.' });
+            addNotification({ type: 'error', title: 'Save Failed', message: 'Note saved locally but failed to sync.' });
             setStatus('idle');
         }
     };
