@@ -45,6 +45,20 @@ const dataSources = [
         status: 'connected', 
         stats: [{ label: 'Docs', value: '8.1M' }, { label: 'Size', value: '12.5GB' }] 
     },
+    { 
+        name: 'Vercel Redis', // Represents the Vercel KV (Redis-compatible) connection
+        provider: 'Vercel', 
+        type: 'cache', 
+        status: 'connected', 
+        stats: [{ label: 'Keys', value: 4096 }, { label: 'Latency', value: '30ms' }] 
+    },
+    { 
+        name: 'Vercel GraphDB', // Represents the EdgeDB integration
+        provider: 'Vercel', 
+        type: 'graph', 
+        status: 'connected', 
+        stats: [{ label: 'Objects', value: 1572 }, { label: 'Latency', value: '80ms' }] 
+    },
     
     // Mocked / Not-yet-configured sources
     { 
@@ -68,28 +82,14 @@ const dataSources = [
         status: 'needs_config', 
         stats: [] 
     },
-    { 
-        name: 'Vercel Redis', // Represents the Vercel KV (Redis-compatible) connection
-        provider: 'Vercel', 
-        type: 'cache', 
-        status: 'needs_config', 
-        stats: [] 
-    },
-    { 
-        name: 'Vercel GraphDB', // Represents the EdgeDB integration
-        provider: 'Vercel', 
-        type: 'graph', 
-        status: 'needs_config', 
-        stats: [] 
-    },
 ];
 
 async function seedDataSources() {
     console.log("Seeding data sources...");
     try {
         // Clear old entries that might no longer exist
-        const existingSourceNames = dataSources.map(s => s.name);
-        await sql`DELETE FROM data_sources WHERE name NOT IN (${existingSourceNames.join(', ')});`;
+        const existingSourceNames = dataSources.map(s => `'${s.name.replace(/'/g, "''")}'`).join(', ');
+        await sql.query(`DELETE FROM data_sources WHERE name NOT IN (${existingSourceNames});`);
 
         for (const source of dataSources) {
             await sql`
