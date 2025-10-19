@@ -43,7 +43,6 @@ const ServiceCard = ({ service, onSettingsClick }: ServiceCardProps) => {
     const TypeIcon = typeInfo[service.type]?.icon || CircleStackIcon;
     const sInfo = statusInfo[service.status];
 
-    // FIX: Changed `service.stats` to `service.stats_json` to match the `DataSource` type definition, resolving a property access error.
     const displayStats = service.stats_json || [];
     const paddedStats = [...displayStats, ...Array(Math.max(0, 4 - displayStats.length)).fill({ label: '-', value: '-' })].slice(0, 4);
 
@@ -54,7 +53,7 @@ const ServiceCard = ({ service, onSettingsClick }: ServiceCardProps) => {
             whileHover={{ y: -5, boxShadow: '0 10px 20px rgba(0,0,0,0.3)' }}
             className="bg-gray-800 rounded-lg border border-gray-700/80 p-3 flex flex-col justify-between h-52"
         >
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 flex-grow">
                 {/* Header */}
                 <div className="flex items-stretch gap-1">
                     <button className="flex-shrink-0 w-1/5 bg-gray-700/50 rounded-md flex items-center justify-center text-gray-300 hover:bg-gray-700 transition-colors" title={`Type: ${service.type}`}>
@@ -73,19 +72,27 @@ const ServiceCard = ({ service, onSettingsClick }: ServiceCardProps) => {
                     </button>
                 </div>
                 
-                {/* Stats */}
-                <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                    {paddedStats.map((stat, index) => (
-                        <div key={`${stat.label}-${index}`} className="bg-gray-900/50 p-1.5 rounded-md flex flex-col justify-center">
-                            <p className={`font-bold text-base truncate ${stat.value === '-' ? 'text-gray-600' : 'text-white'}`}>{stat.value}</p>
-                            <p className="text-gray-400 truncate">{stat.label}</p>
-                        </div>
-                    ))}
-                </div>
+                {/* Conditional Stats/Message */}
+                {service.status === 'connected' ? (
+                    <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                        {paddedStats.map((stat, index) => (
+                            <div key={`${stat.label}-${index}`} className="bg-gray-900/50 p-1.5 rounded-md flex flex-col justify-center">
+                                <p className={`font-bold text-base truncate ${stat.value === '-' ? 'text-gray-600' : 'text-white'}`}>{stat.value}</p>
+                                <p className="text-gray-400 truncate">{stat.label}</p>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex-grow flex flex-col items-center justify-center text-center p-2 bg-gray-900/50 rounded-md">
+                        <WrenchScrewdriverIcon className="w-6 h-6 text-yellow-400 mb-1" />
+                        <p className="text-xs font-semibold text-yellow-300">Configuration Required</p>
+                        <p className="text-[10px] text-gray-500 mt-1">Click settings to connect</p>
+                    </div>
+                )}
             </div>
 
             {/* Controls & Actions */}
-            <div className="grid grid-cols-4 gap-2 text-xs">
+            <div className="grid grid-cols-4 gap-2 text-xs mt-3">
                 {/* Row 1 */}
                 <button title={`Status: ${service.status}`} className="w-full h-8 flex items-center justify-center rounded-md bg-gray-700/50">
                     <div className={`w-3 h-3 rounded-full ${sInfo.color} ${sInfo.pulse ? 'animate-pulse' : ''}`}></div>
