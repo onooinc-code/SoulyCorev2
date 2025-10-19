@@ -1,7 +1,7 @@
 // components/providers/UIStateProvider.tsx
 "use client";
 
-import React, from 'react';
+import React from 'react';
 import { useAppControls } from '@/lib/hooks/useAppControls';
 import { useDisplayModeManager } from '@/lib/hooks/useDisplayModeManager';
 import { usePanelManager } from '@/lib/hooks/usePanelManager';
