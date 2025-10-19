@@ -4,9 +4,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import type { Task } from '@/lib/types';
-import { useLog } from '../providers/LogProvider';
-import { useAppContext } from '../providers/AppProvider';
-import { PlusIcon, TrashIcon, EditIcon, CheckIcon, XIcon } from '../Icons';
+import { useLog } from '@/components/providers/LogProvider';
+import { useAppContext } from '@/components/providers/AppProvider';
+import { PlusIcon, TrashIcon, EditIcon, CheckIcon, XIcon } from '@/components/Icons';
 
 const TaskItem = ({ task, onUpdate, onDelete, onEdit }: { task: Task; onUpdate: (id: string, updates: Partial<Task>) => void; onDelete: (id: string) => void; onEdit: (task: Task) => void; }) => {
     const isCompleted = task.status === 'completed';

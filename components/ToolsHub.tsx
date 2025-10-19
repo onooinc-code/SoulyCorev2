@@ -4,9 +4,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Tool } from '@/lib/types';
-import { useLog } from '../providers/LogProvider';
-import { useAppContext } from '../providers/AppProvider';
-import { PlusIcon, TrashIcon, EditIcon, XIcon } from '../Icons';
+import { useLog } from '@/components/providers/LogProvider';
+import { useAppContext } from '@/components/providers/AppProvider';
+import { PlusIcon, TrashIcon, EditIcon, XIcon } from '@/components/Icons';
 
 const ToolsHub = () => {
     const { log } = useLog();
