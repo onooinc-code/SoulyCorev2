@@ -168,7 +168,7 @@ export const generateProactiveSuggestion = async (history: Content[]): Promise<s
            const client = getAiClient();
            const conversationHistoryText = history
                 .slice(-4)
-                .map(m => `${m.role}: ${m.parts[0].text}`)
+                .map(m => `${m.role}: ${m.parts?.[0]?.text ?? ''}`)
                 .join('\n');
 
            const prompt = `Based on the last few messages of this conversation, suggest a relevant proactive action. For example, if they are talking about a person, suggest mentioning them with @. If they discuss planning, suggest creating a task. Be concise and phrase it as a question. If no action is obvious, return an empty string. Conversation:\n\n${conversationHistoryText}`;
@@ -192,7 +192,7 @@ export const generateTitleFromHistory = async (history: Content[]): Promise<stri
     try {
         const client = getAiClient();
         const conversationHistoryText = history
-            .map(m => `${m.role}: ${m.parts[0].text}`)
+            .map(m => `${m.role}: ${m.parts?.[0]?.text ?? ''}`)
             .join('\n');
         
         const prompt = `Based on the following conversation, create a short and concise title (5 words or less). Do not add quotes or any other formatting.\n\n---\n\n${conversationHistoryText}`;
@@ -230,7 +230,7 @@ export const regenerateUserPrompt = async (
     try {
         const client = getAiClient();
         const conversationHistoryText = history
-            .map(m => `${m.role}: ${m.parts[0].text}`)
+            .map(m => `${m.role}: ${m.parts?.[0]?.text ?? ''}`)
             .join('\n');
         
         const prompt = `
