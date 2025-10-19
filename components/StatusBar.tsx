@@ -36,9 +36,10 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
         return { messageCount, totalTokens, bookmarkedCount, wordCount, avgResponseTime };
     }, [currentConversation, messages]);
 
-    // FIX: Resolved a React type error. `status.currentAction` can be an object, which is not a valid React child. This change ensures that if `status.currentAction` is an object, its `details` string property is rendered instead.
+    // FIX: The status.currentAction can be an object, which is not a valid React child.
+    // This ensures that if status.currentAction is an object, its `details` string property is rendered instead.
     const currentActionText =
-        typeof status.currentAction === 'object' && status.currentAction
+        typeof status.currentAction === 'object' && status.currentAction !== null
             ? status.currentAction.details
             : status.currentAction || 'Ready';
 

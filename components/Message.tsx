@@ -113,7 +113,7 @@ const Message = ({
     const parentMessage = message.parentMessageId ? findMessageById(message.parentMessageId) : null;
     
     const bubbleStyles = isUser
-        ? "bg-white border-gray-300/30 rounded-t-2xl rounded-bl-2xl rounded-br-sm"
+        ? "bg-indigo-600/50 border-indigo-500/30 rounded-t-2xl rounded-bl-2xl rounded-br-sm"
         : "bg-gradient-to-br from-gray-700/70 to-gray-800/60 border-gray-500/30 rounded-t-2xl rounded-br-2xl rounded-bl-sm";
     
     const textAlignClass = currentConversation?.ui_settings?.textAlign === 'right' ? 'text-right' : 'text-left';
@@ -141,7 +141,7 @@ const Message = ({
                 {isUser ? <UserCircleIcon className="w-6 h-6 text-gray-400" /> : <CpuChipIcon className="w-6 h-6 text-indigo-400" />}
             </div>
             <div className={`flex flex-col flex-1 min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
-                <div className={`relative p-4 w-full max-w-4xl shadow-lg backdrop-blur-lg border ${bubbleStyles} ${isUser ? 'bubble-light-text' : ''}`}>
+                <div className={`relative p-4 w-full max-w-4xl shadow-lg backdrop-blur-lg border ${bubbleStyles}`}>
                     {parentMessage && (
                         <div className="text-xs text-gray-400 mb-2 border-l-2 border-gray-500 pl-2">
                             Replying to <strong>{parentMessage.role === 'user' ? 'you' : 'the model'}</strong>: <em>"{parentMessage.content.substring(0, 50)}..."</em>

@@ -1,11 +1,16 @@
+/**
+ * @fileoverview Implementation of the Context Assembly Pipeline (Read Path).
+ * This pipeline is responsible for gathering and synthesizing information from
+ * various memory modules to create an optimized context for the LLM on each turn.
+ */
+
+import { IContextAssemblyConfig } from '../memory/types';
 import { EpisodicMemoryModule } from '../memory/modules/episodic';
 import { SemanticMemoryModule, ISemanticQueryResult } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
-import { GraphMemoryModule } from '../memory/modules/graph';
 import llmProvider from '../llm';
-import { IContextAssemblyConfig } from '../memory/types';
-import type { Contact, Message, Conversation, Entity } from '@/lib/types';
-import type { Content } from '@google/genai';
+import { Conversation, Contact, Message } from '@/lib/types';
+import { sql } from '@/lib/db';
 
 interface ContextAssemblyInput {
     conversation: Conversation;
@@ -15,91 +20,117 @@ interface ContextAssemblyInput {
     userMessageId: string;
 }
 
-interface AssembledContext {
+interface ContextAssemblyOutput {
     llmResponse: string;
     llmResponseTime: number;
-    retrievedSemanticMemories: ISemanticQueryResult[];
-    retrievedEpisodicMemories: Message[];
-    retrievedStructuredMemories: any[];
 }
 
 export class ContextAssemblyPipeline {
-    private episodicMemory: EpisodicMemoryModule;
-    private semanticMemory: SemanticMemoryModule;
-    private structuredMemory: StructuredMemoryModule;
-    private graphMemory: GraphMemoryModule;
 
-    constructor() {
-        this.episodicMemory = new EpisodicMemoryModule();
-        this.semanticMemory = new SemanticMemoryModule();
-        this.structuredMemory = new StructuredMemoryModule();
-        this.graphMemory = new GraphMemoryModule();
+    private async logStep(runId: string, order: number, name: string, input: any, output: any, duration: number) {
+        await sql`
+            INSERT INTO pipeline_run_steps (run_id, step_order, step_name, input_payload, output_payload, duration_ms, status)
+            VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
+        `;
     }
 
-    async run(input: ContextAssemblyInput): Promise<AssembledContext> {
+    public async run(input: ContextAssemblyInput): Promise<ContextAssemblyOutput> {
         const startTime = Date.now();
-        const { conversation, userQuery, config, mentionedContacts } = input;
-
-        // 1. Retrieve memories from all relevant modules based on conversation settings
-        const episodicMemories = await this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth });
         
-        const semanticMemoriesPromise = conversation.useSemanticMemory
-            ? this.semanticMemory.query({ queryText: userQuery, topK: config.semanticMemoryTopK })
-            : Promise.resolve([]);
+        // 1. Create a run record
+        const { rows: runRows } = await sql`
+            INSERT INTO pipeline_runs (message_id, pipeline_type, status)
+            VALUES (${input.userMessageId}, 'ContextAssembly', 'running')
+            RETURNING id;
+        `;
+        const runId = runRows[0].id;
+
+        try {
+            let stepOrder = 1;
+            const episodicMemory = new EpisodicMemoryModule();
+            const semanticMemory = new SemanticMemoryModule();
+            const structuredMemory = new StructuredMemoryModule();
+
+            // 2. Retrieve Episodic Memory
+            const step1Time = Date.now();
+            const recentMessages = await episodicMemory.query({
+                conversationId: input.conversation.id,
+                limit: input.config.episodicMemoryDepth,
+            });
+            await this.logStep(runId, stepOrder++, 'RetrieveEpisodicMemory', { limit: input.config.episodicMemoryDepth }, { messageCount: recentMessages.length }, Date.now() - step1Time);
+
+
+            // 3. Retrieve Semantic Memory
+            let semanticKnowledge: ISemanticQueryResult[] = [];
+            if (input.conversation.useSemanticMemory) {
+                 const step2Time = Date.now();
+                 semanticKnowledge = await semanticMemory.query({
+                    queryText: input.userQuery,
+                    topK: input.config.semanticMemoryTopK,
+                });
+                await this.logStep(runId, stepOrder++, 'RetrieveSemanticMemory', { query: input.userQuery, topK: input.config.semanticMemoryTopK }, { results: semanticKnowledge.map(r => r.text) }, Date.now() - step2Time);
+            }
+
+            // 4. Retrieve Structured Memory
+            // For now, this is just the mentioned contacts. Could be expanded to search entities.
+            const step3Time = Date.now();
+            await this.logStep(runId, stepOrder++, 'RetrieveStructuredMemory', { mentionedContacts: input.mentionedContacts.map(c => c.name) }, { contactCount: input.mentionedContacts.length }, Date.now() - step3Time);
+
+            // 5. Assemble the prompt
+            const step4Time = Date.now();
+            let contextBlock = "--- CONTEXT ---\n";
+            if (semanticKnowledge.length > 0) {
+                contextBlock += "Potentially relevant information from knowledge base:\n" + semanticKnowledge.map(r => `- ${r.text}`).join('\n') + '\n';
+            }
+            if (input.mentionedContacts.length > 0) {
+                contextBlock += "Information about mentioned contacts:\n" + input.mentionedContacts.map(c => `- ${c.name}: ${c.notes || ''}`).join('\n') + '\n';
+            }
             
-        const structuredMemoriesPromise = conversation.useStructuredMemory && mentionedContacts.length > 0
-            ? this.structuredMemory.query({ type: 'contact', name: mentionedContacts[0].name })
-            : Promise.resolve([]);
+            const finalSystemInstruction = input.conversation.systemPrompt || "You are a helpful AI assistant.";
+            const historyForLLM = recentMessages.map(m => ({
+                role: m.role,
+                parts: [{ text: m.content }]
+            }));
+            
+            // Add the context block before the latest user message
+            if (contextBlock !== "--- CONTEXT ---\n") {
+                const lastMessage = historyForLLM.pop();
+                if (lastMessage) {
+                    historyForLLM.push({ role: 'user', parts: [{ text: contextBlock + "\n--- USER QUERY ---\n" + lastMessage.parts[0].text }] });
+                }
+            }
+            await this.logStep(runId, stepOrder++, 'AssemblePrompt', { system: finalSystemInstruction }, { historyLength: historyForLLM.length }, Date.now() - step4Time);
 
-        // A simple heuristic to extract a potential entity name (capitalized word) from the query for the graph DB
-        const potentialEntityName = userQuery.split(' ').find(word => word.length > 2 && word[0] === word[0].toUpperCase());
+            // 6. Call the LLM
+            const step5Time = Date.now();
+            const llmResponse = await llmProvider.generateContent(historyForLLM, finalSystemInstruction);
+            const llmResponseTime = Date.now() - step5Time;
+            await this.logStep(runId, stepOrder++, 'CallLLM', { model: 'gemini-2.5-flash' }, { response: llmResponse }, llmResponseTime);
 
-        const graphMemoriesPromise = (conversation.useGraphMemory && potentialEntityName)
-            ? this.graphMemory.query({ entityName: potentialEntityName })
-            : Promise.resolve([]);
+            // 7. Finalize the run record
+            const totalDuration = Date.now() - startTime;
+             await sql`
+                UPDATE pipeline_runs
+                SET status = 'completed', 
+                    duration_ms = ${totalDuration}, 
+                    final_output = ${llmResponse},
+                    final_llm_prompt = ${historyForLLM[historyForLLM.length - 1]?.parts[0].text},
+                    final_system_instruction = ${finalSystemInstruction}
+                WHERE id = ${runId};
+            `;
 
-        const [semanticMemories, structuredMemories, graphMemories] = await Promise.all([
-            semanticMemoriesPromise,
-            structuredMemoriesPromise,
-            graphMemoriesPromise
-        ]);
-        
-        // 2. Build the history and context string for the prompt
-        const history: Content[] = episodicMemories.map(m => ({
-            role: m.role as 'user' | 'model',
-            parts: [{ text: m.content }]
-        }));
-        
-        let contextString = "--- CONTEXT ---\n";
-        let contextAdded = false;
+            return { llmResponse, llmResponseTime };
 
-        if (semanticMemories.length > 0) {
-            contextString += "Relevant knowledge:\n" + semanticMemories.map(m => `- ${m.text}`).join('\n') + "\n\n";
-            contextAdded = true;
+        } catch (error) {
+            const totalDuration = Date.now() - startTime;
+            const errorMessage = (error as Error).message;
+            await sql`
+                UPDATE pipeline_runs
+                SET status = 'failed', duration_ms = ${totalDuration}, final_output = ${errorMessage}
+                WHERE id = ${runId};
+            `;
+            console.error("ContextAssemblyPipeline failed:", error);
+            throw error;
         }
-        if (structuredMemories.length > 0) {
-            contextString += "Mentioned contacts:\n" + (structuredMemories as Contact[]).map((c) => `- ${c.name}: ${c.notes || c.company || c.email}`).join('\n') + "\n\n";
-            contextAdded = true;
-        }
-        if (graphMemories.length > 0) {
-            contextString += "Related concepts:\n" + graphMemories.map(r => `- ${r}`).join('\n') + "\n\n";
-            contextAdded = true;
-        }
-        contextString += "--- END CONTEXT ---";
-        
-        const finalPrompt = contextAdded ? `${contextString}\n\nUser query: ${userQuery}` : userQuery;
-        history.push({ role: 'user', parts: [{ text: finalPrompt }] });
-
-        // 3. Call the LLM
-        const llmResponse = await llmProvider.generateContent(history, conversation.systemPrompt || "You are a helpful AI assistant. Use the provided context to inform your response.");
-        const llmResponseTime = Date.now() - startTime;
-
-        return {
-            llmResponse,
-            llmResponseTime,
-            retrievedEpisodicMemories: episodicMemories,
-            retrievedSemanticMemories: semanticMemories,
-            retrievedStructuredMemories: structuredMemories,
-        };
     }
 }

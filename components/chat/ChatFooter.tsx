@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -72,8 +71,7 @@ const ChatFooter = ({
                     <button onClick={onDismissSuggestion} className="text-xs text-gray-400 hover:underline">Dismiss</button>
                  </motion.div>
             )}
-            <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} />
-
+            
             <AnimatePresence>
                 {isLoading && typeof status.currentAction === 'object' && (
                     <motion.div
@@ -88,6 +86,8 @@ const ChatFooter = ({
                     </motion.div>
                 )}
             </AnimatePresence>
+            
+            <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} />
         </div>
     );
 };

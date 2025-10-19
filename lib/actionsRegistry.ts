@@ -14,7 +14,8 @@ import {
     SearchIcon,
     PowerIcon,
     RefreshIcon,
-    TrashIcon
+    TrashIcon,
+    KnowledgeIcon
 } from '@/components/Icons';
 
 export interface Action {

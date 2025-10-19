@@ -32,36 +32,40 @@ export class StructuredMemoryModule implements ISingleMemoryModule {
      * @inheritdoc
      * Stores or updates a structured data record (an entity or a contact).
      * @param params - An object containing the type of data and the data itself.
+     * @returns A promise that resolves with the created or updated record.
      */
-    async store(params: IStructuredMemoryStoreParams): Promise<void> {
+    async store(params: IStructuredMemoryStoreParams): Promise<Entity | Contact | null> {
         switch (params.type) {
             case 'entity': {
                 const { data } = params;
                 if (!data.name || !data.type) {
                     throw new Error('StructuredMemoryModule.store (entity) requires name and type.');
                 }
-                await sql`
+                const { rows } = await sql<Entity>`
                     INSERT INTO entities (id, name, type, details_json)
-                    VALUES (${data.id || uuidv4()}, ${data.name}, ${data.type as string}, ${data.details_json || '{}'})
-                    ON CONFLICT (name, type) DO UPDATE SET details_json = EXCLUDED.details_json, "createdAt" = CURRENT_TIMESTAMP;
+                    VALUES (${data.id || uuidv4()}, ${data.name as string}, ${data.type as string}, ${data.details_json || '{}'})
+                    ON CONFLICT (name, type) DO UPDATE SET details_json = EXCLUDED.details_json, "createdAt" = CURRENT_TIMESTAMP
+                    RETURNING *;
                 `;
-                break;
+                return rows[0] || null;
             }
             case 'contact': {
                 const { data } = params;
                  if (!data.name) {
                     throw new Error('StructuredMemoryModule.store (contact) requires a name.');
                 }
-                await sql`
-                    INSERT INTO contacts (id, name, email, company, phone, notes, tags)
-                    VALUES (${data.id || uuidv4()}, ${data.name}, ${data.email || null}, ${data.company || null}, ${data.phone || null}, ${data.notes || null}, ${data.tags ? (data.tags as any) : null})
+                const { rows } = await sql<Contact>`
+                    INSERT INTO contacts (id, name, email, company, phone, notes, tags, "lastUpdatedAt")
+                    VALUES (${data.id || uuidv4()}, ${data.name as string}, ${data.email || null}, ${data.company || null}, ${data.phone || null}, ${data.notes || null}, ${data.tags ? (data.tags as any) : null}, CURRENT_TIMESTAMP)
                     ON CONFLICT (name, email) DO UPDATE SET
                         company = EXCLUDED.company,
                         phone = EXCLUDED.phone,
                         notes = EXCLUDED.notes,
-                        tags = EXCLUDED.tags;
+                        tags = EXCLUDED.tags,
+                        "lastUpdatedAt" = CURRENT_TIMESTAMP
+                    RETURNING *;
                 `;
-                break;
+                return rows[0] || null;
             }
             default:
                 throw new Error(`Unsupported data type for structured memory.`);

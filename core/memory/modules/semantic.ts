@@ -29,6 +29,8 @@ interface ISemanticMemoryQueryParams {
     queryText: string;
     /** The number of top results to return. Defaults to 3. */
     topK?: number;
+    /** Optional metadata filter to apply to the query. */
+    filter?: Record<string, any>;
 }
 
 /**
@@ -90,6 +92,7 @@ export class SemanticMemoryModule implements ISingleMemoryModule {
             vector: queryEmbedding,
             topK,
             includeMetadata: true,
+            filter: params.filter,
         });
 
         const results: ISemanticQueryResult[] = queryResponse.matches.map((match: ScoredPineconeRecord) => {

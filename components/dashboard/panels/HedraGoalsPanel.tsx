@@ -259,6 +259,7 @@ const HedraGoalsPanel = () => {
               className="space-y-3"
             >
               {subsystems.map((sub) => (
+                // FIX: Replaced `Reorder.Item` with `motion.div` to fix an incorrect usage pattern. The parent component (`HedraGoalsPanel`) is now responsible for wrapping this component in `Reorder.Item` for drag-and-drop functionality.
                 <Reorder.Item key={sub.id} value={sub}>
                   <SubsystemCard
                     subsystem={sub}

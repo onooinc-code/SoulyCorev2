@@ -1,9 +1,10 @@
 
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { AgentRun, AgentRunStep, AgentPlanPhase, Tool as DbTool } from '@/lib/types';
-import { GoogleGenAI, Type, Content, Tool, FunctionDeclaration } from "@google/genai";
+import { GoogleGenAI, Type, Content, Tool, FunctionDeclaration, GenerateContentResponse } from "@google/genai";
 import { generateAgentContent } from '@/lib/gemini-server';
 
 export const dynamic = 'force-dynamic';
