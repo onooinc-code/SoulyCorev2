@@ -28,7 +28,7 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "@edgedb/cli": "^1.5.2",
+    "edgedb-cli": "^1.5.2",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
