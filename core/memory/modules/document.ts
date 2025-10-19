@@ -1,0 +1,1 @@
+full contents of core/memory/modules/document.ts

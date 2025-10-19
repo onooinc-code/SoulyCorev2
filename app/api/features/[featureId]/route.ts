@@ -1,8 +1,7 @@
 
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import { Feature } from '@/lib/types';
+import { Feature, FeatureStatus } from '@/lib/types';
 
 export async function PUT(req: NextRequest, { params }: { params: { featureId: string } }) {
     try {
@@ -25,8 +24,8 @@ export async function PUT(req: NextRequest, { params }: { params: { featureId: s
         // Validate and parse JSON fields before updating
         let parsedUiUx, parsedKeyFiles;
         try {
-            parsedUiUx = ui_ux_breakdown_json ? JSON.parse(ui_ux_breakdown_json as string) : null;
-            parsedKeyFiles = key_files_json ? JSON.parse(key_files_json as string) : null;
+            parsedUiUx = ui_ux_breakdown_json ? (typeof ui_ux_breakdown_json === 'string' ? JSON.parse(ui_ux_breakdown_json) : ui_ux_breakdown_json) : null;
+            parsedKeyFiles = key_files_json ? (typeof key_files_json === 'string' ? JSON.parse(key_files_json) : key_files_json) : null;
         } catch (e) {
             return NextResponse.json({ error: "Invalid JSON format for UI Breakdown or Key Files.", details: { message: (e as Error).message } }, { status: 400 });
         }
@@ -37,10 +36,10 @@ export async function PUT(req: NextRequest, { params }: { params: { featureId: s
             SET 
                 name = ${name}, 
                 overview = ${overview}, 
-                status = ${status}, 
-                ui_ux_breakdown_json = ${parsedUiUx}, 
+                status = ${status as FeatureStatus}, 
+                ui_ux_breakdown_json = ${JSON.stringify(parsedUiUx)}, 
                 logic_flow = ${logic_flow}, 
-                key_files_json = ${parsedKeyFiles}, 
+                key_files_json = ${JSON.stringify(parsedKeyFiles)}, 
                 notes = ${notes},
                 "lastUpdatedAt" = CURRENT_TIMESTAMP
             WHERE id = ${featureId}

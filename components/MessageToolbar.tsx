@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { 
     CopyIcon, BookmarkIcon, BookmarkFilledIcon, SummarizeIcon, CollapseIcon, ExpandIcon, 
     CheckIcon, EditIcon, TrashIcon, RefreshIcon, TextAlignLeftIcon, TextAlignRightIcon, 
-    DotsHorizontalIcon, BeakerIcon, EyeIcon, ChatBubbleLeftRightIcon 
+    DotsHorizontalIcon, BeakerIcon, EyeIcon, ChatBubbleLeftRightIcon, CommandLineIcon, WrenchScrewdriverIcon
 } from './Icons';
 import { useLog } from './providers/LogProvider';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -74,9 +74,11 @@ const MessageToolbar = (props: MessageToolbarProps) => {
             { id: 'edit', icon: EditIcon, action: onEdit, title: 'Edit your message', className: 'hover:text-blue-400', isUserOnly: true },
             { id: 'delete', icon: TrashIcon, action: onDelete, title: 'Delete message', className: 'hover:text-red-400' },
             'separator',
-            // FIX: Added `isModelOnly: true` to ensure TypeScript correctly infers the type for the filter logic below. This action should only appear on model messages.
             { id: 'viewHtml', icon: EyeIcon, action: onViewHtml, title: 'Render HTML content', isHtml: true, isModelOnly: true },
-            { id: 'inspect', icon: BeakerIcon, action: onInspect, title: 'Inspect cognitive process' },
+            { id: 'inspect', icon: BeakerIcon, action: onInspect, title: 'Inspect Cognitive Process (Context)' },
+            { id: 'inspect_prompt', icon: CommandLineIcon, action: onInspect, title: 'View Full Prompt Sent to AI', isUserOnly: true },
+            { id: 'inspect_config', icon: WrenchScrewdriverIcon, action: onInspect, title: 'View Model Configuration', isUserOnly: true },
+            'separator',
             { id: 'collapse', icon: isCollapsed ? ExpandIcon : CollapseIcon, action: onToggleCollapse, title: isCollapsed ? 'Expand message' : 'Collapse message' },
             { id: 'align-left', icon: TextAlignLeftIcon, action: () => onSetAlign('left'), title: 'Align text left' },
             { id: 'align-right', icon: TextAlignRightIcon, action: () => onSetAlign('right'), title: 'Align text right' },
@@ -84,6 +86,12 @@ const MessageToolbar = (props: MessageToolbarProps) => {
             if (typeof action === 'string') return true;
             if (action.isUserOnly && !isUser) return false;
             if (action.isModelOnly && isUser) return false;
+            if (action.id === 'inspect' && isUser) return false; // Hide generic inspect for user messages
+            if (action.id !== 'inspect' && !isUser) {
+                 // Only show reply, copy, bookmark, summarize, delete, collapse for model messages
+                const allowedForModel = ['reply', 'copy', 'bookmark', 'summarize', 'delete', 'collapse', 'align-left', 'align-right', 'viewHtml', 'regenerate'];
+                if (!allowedForModel.includes(action.id)) return false;
+            }
             if (action.isHtml && !onViewHtml) return false;
             return true;
         }) as (MenuItem | 'separator')[];
@@ -99,6 +107,10 @@ const MessageToolbar = (props: MessageToolbarProps) => {
             <div className="hidden md:flex items-center gap-1 text-gray-400 bg-black/20 backdrop-blur-md border border-white/10 rounded-full px-2 py-0.5">
                 {allActions.map((action, index) => {
                     if (action === 'separator') {
+                        // Avoid rendering separator if it's at the beginning or end
+                        if(index === 0 || index === allActions.length - 1) return null;
+                        // Avoid rendering separator if the next one is also a separator
+                        if(allActions[index+1] === 'separator') return null;
                         return <div key={`sep-${index}`} className="w-px h-4 bg-white/10 mx-1"></div>;
                     }
                     const { id, icon: Icon, action: onClick, title, className } = action as MenuItem;
@@ -139,6 +151,7 @@ const MessageToolbar = (props: MessageToolbarProps) => {
                                    {secondaryMobileActions.map((action, index) => {
                                        if (action === 'separator') {
                                             if (index > 0 && index < secondaryMobileActions.length - 1) {
+                                                if (secondaryMobileActions[index - 1] === 'separator' || secondaryMobileActions[index + 1] === 'separator') return null;
                                                 return <div key={`mob-sep-${index}`} className="h-px bg-gray-700 my-1" />;
                                             }
                                             return null;

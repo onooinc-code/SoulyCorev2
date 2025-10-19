@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XIcon, InfoIcon } from './Icons';
+import { XIcon, InfoIcon, CommandLineIcon, WrenchScrewdriverIcon, BrainIcon } from './Icons';
 import type { PipelineRun, PipelineRunStep } from '@/lib/types';
 
 interface CognitiveInspectorModalProps {
@@ -73,10 +73,30 @@ const PipelineStep = ({ step }: { step: PipelineRunStep }) => (
     </div>
 );
 
+const renderContent = (data: any, title: string, icon: React.ReactNode) => {
+    if (!data) return null;
+    let content;
+    if (typeof data === 'object') {
+        content = JSON.stringify(data, null, 2);
+    } else {
+        content = String(data);
+    }
+
+    return (
+        <div className="bg-gray-900/50 p-4 rounded-lg flex flex-col">
+            <h3 className="font-semibold text-lg mb-2 text-indigo-400 flex items-center gap-2">{icon}{title}</h3>
+            <pre className="text-xs whitespace-pre-wrap font-mono bg-gray-900 p-3 rounded-md overflow-auto flex-1">
+                <code>{content}</code>
+            </pre>
+        </div>
+    );
+};
+
 const CognitiveInspectorModal = ({ isOpen, onClose, messageId }: CognitiveInspectorModalProps) => {
     const [inspectionData, setInspectionData] = useState<InspectionData | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'summary' | 'steps'>('summary');
 
     useEffect(() => {
         if (isOpen && messageId) {
@@ -84,6 +104,7 @@ const CognitiveInspectorModal = ({ isOpen, onClose, messageId }: CognitiveInspec
                 setIsLoading(true);
                 setError(null);
                 setInspectionData(null);
+                setActiveTab('summary');
                 try {
                     const res = await fetch(`/api/inspect/${messageId}`);
                     const data = await res.json();
@@ -101,7 +122,7 @@ const CognitiveInspectorModal = ({ isOpen, onClose, messageId }: CognitiveInspec
         }
     }, [isOpen, messageId]);
 
-    const renderContent = () => {
+    const renderBody = () => {
         if (isLoading) return <p className="text-gray-400 text-center">Loading inspection data...</p>;
         if (error) return <p className="text-red-400 text-center">Error: {error}</p>;
         if (!inspectionData) return <p className="text-gray-500 text-center">No data to display.</p>;
@@ -124,32 +145,30 @@ const CognitiveInspectorModal = ({ isOpen, onClose, messageId }: CognitiveInspec
         }
 
         return (
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-                <div className="bg-gray-900/50 p-4 rounded-lg flex flex-col">
-                    <h3 className="font-semibold text-lg mb-2 text-indigo-400">Pipeline Run: {pipelineRun.pipeline_type}</h3>
-                    <div className="space-y-1 text-sm text-gray-300 mb-4">
-                        <p><strong>Status:</strong> <span className={`font-semibold ${pipelineRun.status === 'completed' ? 'text-green-400' : 'text-yellow-400'}`}>{pipelineRun.status}</span></p>
-                        <p><strong>Duration:</strong> {pipelineRun.duration_ms}ms</p>
-                    </div>
-                    <h4 className="font-semibold text-gray-200 mb-1">Final Output:</h4>
-                    <pre className="text-xs whitespace-pre-wrap font-mono bg-gray-900 p-3 rounded-md overflow-auto flex-1">
-                        <code>{pipelineRun.final_output}</code>
-                    </pre>
+             <>
+                <div className="mb-4 flex items-center gap-2 p-1 bg-gray-900/50 rounded-lg">
+                    <button onClick={() => setActiveTab('summary')} className={`w-1/2 p-2 text-sm rounded-md ${activeTab === 'summary' ? 'bg-indigo-600' : ''}`}>Summary</button>
+                    <button onClick={() => setActiveTab('steps')} className={`w-1/2 p-2 text-sm rounded-md ${activeTab === 'steps' ? 'bg-indigo-600' : ''}`}>Detailed Steps ({pipelineSteps.length})</button>
                 </div>
-                 <div className="bg-gray-900/50 p-4 rounded-lg flex flex-col">
-                    <h3 className="font-semibold text-lg mb-2 text-green-400">Execution Steps</h3>
-                    <div className="space-y-3 overflow-y-auto flex-1 pr-2">
-                        {/* FIX: Wrapped the iterated component in a div with the key to resolve a TypeScript error.
-                            The 'key' prop is a React-specific prop for list reconciliation and is not passed to the component,
-                            but the type system was flagging it as an unexpected prop. */}
+
+                {activeTab === 'summary' ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+                        {renderContent(pipelineRun.final_llm_prompt, 'Final Prompt', <CommandLineIcon className="w-5 h-5" />)}
+                        <div className="flex flex-col gap-4">
+                            {renderContent(pipelineRun.final_system_instruction, 'System Instructions', <BrainIcon className="w-5 h-5" />)}
+                            {renderContent(pipelineRun.model_config_json, 'Model Configuration', <WrenchScrewdriverIcon className="w-5 h-5" />)}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="space-y-3 overflow-y-auto h-full pr-2">
                         {pipelineSteps.map(step => (
                             <div key={step.id}>
                                 <PipelineStep step={step} />
                             </div>
                         ))}
                     </div>
-                </div>
-            </div>
+                )}
+            </>
         );
     }
 
@@ -168,7 +187,7 @@ const CognitiveInspectorModal = ({ isOpen, onClose, messageId }: CognitiveInspec
                         animate={{ scale: 1, y: 0 }}
                         exit={{ scale: 0.9, y: 20 }}
                         transition={{ duration: 0.2 }}
-                        className="bg-gray-800 rounded-lg shadow-xl w-full max-w-5xl h-full max-h-[90vh] flex flex-col"
+                        className="bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl h-full max-h-[90vh] flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
@@ -177,8 +196,8 @@ const CognitiveInspectorModal = ({ isOpen, onClose, messageId }: CognitiveInspec
                                 <XIcon className="w-6 h-6" />
                             </button>
                         </div>
-                        <div className="flex-1 p-6 overflow-y-auto">
-                           {renderContent()}
+                        <div className="flex-1 p-6 overflow-hidden">
+                           {renderBody()}
                         </div>
                     </motion.div>
                 </motion.div>

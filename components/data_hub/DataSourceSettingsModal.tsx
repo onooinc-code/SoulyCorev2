@@ -6,7 +6,6 @@ import type { DataSource } from '@/lib/types';
 import {
     VercelPostgresModal,
     PineconeModal,
-    UpstashVectorModal,
     VercelKVModal,
     VercelBlobModal,
     SupabaseModal,
@@ -34,7 +33,7 @@ const DataSourceSettingsModal = ({ isOpen, onClose, service, onSaveSuccess }: Da
     const componentMap: { [key: string]: React.FC<any> } = {
         'Vercel Postgres': VercelPostgresModal,
         'Pinecone KnowledgeBase': PineconeModal,
-        'Upstash Vector': UpstashVectorModal,
+        // 'Upstash Vector': UpstashVectorModal, // Placeholder
         'Vercel KV': VercelKVModal,
         'Vercel Blob': VercelBlobModal,
         'Supabase': SupabaseModal,

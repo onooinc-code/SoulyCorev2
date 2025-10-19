@@ -1,217 +1,59 @@
-/**
- * @fileoverview Implements the Memory Extraction Pipeline (Write Path).
- * This service analyzes a completed conversation turn, uses the LLM to extract key
- * information, and stores it in the appropriate long-term memory modules.
- */
-
-import { sql } from '@/lib/db';
-import { SemanticMemoryModule } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
-import { GoogleGenAI, Type } from "@google/genai";
+import { SemanticMemoryModule } from '../memory/modules/semantic';
+import { IMemoryExtractionConfig } from '../memory/types';
+import { extractDataFromText } from '@/lib/gemini-server';
+import { sql } from '@/lib/db';
 
-interface IExtractAndStoreParams {
-    textToAnalyze: string;
-    runId: string; // For logging
-    modelOverride?: string;
-}
-
-interface IExtractedData {
-    entities: { name: string; type: string; details: string; }[];
-    knowledge: string[];
+interface PipelineInput {
+    text: string;
+    messageId: string;
+    conversationId: string;
+    config: IMemoryExtractionConfig;
 }
 
 export class MemoryExtractionPipeline {
-    private semanticMemory: SemanticMemoryModule;
-    private structuredMemory: StructuredMemoryModule;
+    private structuredMemory = new StructuredMemoryModule();
+    private semanticMemory = new SemanticMemoryModule();
 
-    constructor() {
-        this.semanticMemory = new SemanticMemoryModule();
-        this.structuredMemory = new StructuredMemoryModule();
-    }
-    
-    private async logStep<T>(
-        runId: string,
-        stepOrder: number,
-        stepName: string,
-        fn: () => Promise<T>,
-        details?: { input?: any; model?: string; prompt?: string; config?: any; }
-    ): Promise<T> {
-        const startTime = Date.now();
-        try {
-            const result = await fn();
-            const duration = Date.now() - startTime;
-            await sql`
-                INSERT INTO pipeline_run_steps (
-                    run_id, step_order, step_name, status, input_payload, 
-                    output_payload, model_used, prompt_used, config_used, 
-                    duration_ms, end_time
-                )
-                VALUES (
-                    ${runId}, ${stepOrder}, ${stepName}, 'completed', 
-                    ${details?.input ? JSON.stringify(details.input) : null}, 
-                    ${JSON.stringify(result)}, ${details?.model || null}, ${details?.prompt || null}, 
-                    ${details?.config ? JSON.stringify(details.config) : null}, 
-                    ${duration}, CURRENT_TIMESTAMP
-                );
-            `;
-            return result;
-        } catch (e) {
-            const duration = Date.now() - startTime;
-            const errorMessage = (e as Error).message;
-            await sql`
-                INSERT INTO pipeline_run_steps (
-                    run_id, step_order, step_name, status, input_payload, 
-                    error_message, duration_ms, end_time
-                )
-                VALUES (
-                    ${runId}, ${stepOrder}, ${stepName}, 'failed', 
-                    ${details?.input ? JSON.stringify(details.input) : null}, 
-                    ${errorMessage}, ${duration}, CURRENT_TIMESTAMP
-                );
-            `;
-            throw e;
-        }
-    }
-
-
-    /**
-     * Analyzes a block of text, extracts structured entities and semantic knowledge,
-     * and stores them in their respective memory modules.
-     * @param params - An object containing the text to analyze and the runId for logging.
-     * @returns A promise that resolves when the extraction and storage are complete.
-     */
-    async extractAndStore(params: IExtractAndStoreParams): Promise<void> {
-        const { textToAnalyze, runId, modelOverride } = params;
-        const startTime = Date.now();
-
-        try {
-            const extractedData = await this.extractDataWithLLM(textToAnalyze, runId, modelOverride);
-
-            if (!extractedData) {
-                throw new Error("Failed to extract data from text.");
-            }
-
-            const { entities, knowledge } = extractedData;
-            let finalOutput = '';
-
-            if (entities && entities.length > 0) {
-                await this.logStep(runId, 2, 'StoreEntities', async () => {
-                    for (const entity of entities) {
-                        await this.structuredMemory.store({ type: 'entity', data: { name: entity.name, type: entity.type, details_json: entity.details } });
-                    }
-                    return { storedCount: entities.length };
-                });
-                finalOutput += `Stored ${entities.length} entities. `;
-            }
-
-            if (knowledge && knowledge.length > 0) {
-                 await this.logStep(runId, 3, 'StoreKnowledge', async () => {
-                    for (const chunk of knowledge) {
-                        if (chunk.split(' ').length < 5) continue;
-                        await this.semanticMemory.store({ text: chunk });
-                    }
-                    return { storedCount: knowledge.length };
-                 });
-                 finalOutput += `Stored ${knowledge.length} knowledge chunks.`;
-            }
-
-            // Finalize the main run record
-            const duration = Date.now() - startTime;
-            await sql`
-                UPDATE pipeline_runs SET status = 'completed', final_output = ${finalOutput}, end_time = CURRENT_TIMESTAMP, duration_ms = ${duration} WHERE id = ${runId};
-            `;
-        } catch (e) {
-            const duration = Date.now() - startTime;
-            const errorMessage = (e as Error).message;
-             await sql`
-                UPDATE pipeline_runs SET status = 'failed', error_message = ${errorMessage}, end_time = CURRENT_TIMESTAMP, duration_ms = ${duration} WHERE id = ${runId};
-            `;
-             console.error(`MemoryExtractionPipeline failed for run ${runId}:`, e);
-        }
-    }
-
-    /**
-     * Uses the configured LLM provider to extract structured data from a text block.
-     * This is a private helper method for the pipeline.
-     * @param text - The text to analyze.
-     * @param runId - The ID of the current pipeline run for logging.
-     * @param modelOverride - Optional model name to use for this extraction.
-     * @returns A promise that resolves with the extracted data object.
-     */
-    private async extractDataWithLLM(text: string, runId: string, modelOverride?: string): Promise<IExtractedData | null> {
-        const prompt = `
-            From the following text, perform two tasks:
-            1. Extract key entities (people, places, organizations, projects, concepts).
-            2. Extract distinct, self-contained chunks of information that could be useful knowledge for the future.
-            
-            Return the result as a single JSON object with two keys: "entities" and "knowledge".
-            - "entities" should be an array of objects, each with "name", "type", and "details" properties.
-            - "knowledge" should be an array of strings. Do not extract trivial statements.
-
-            Text:
-            ---
-            ${text}
-            ---
-        `;
-
-        const modelConfig = {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                    entities: {
-                        type: Type.ARRAY,
-                        items: {
-                            type: Type.OBJECT,
-                            properties: {
-                                name: { type: Type.STRING },
-                                type: { type: Type.STRING },
-                                details: { type: Type.STRING }
-                            },
-                            required: ['name', 'type', 'details']
-                        }
-                    },
-                    knowledge: {
-                        type: Type.ARRAY,
-                        items: { type: Type.STRING }
-                    }
-                },
-                required: ['entities', 'knowledge']
-            }
-        };
+    async run(input: PipelineInput): Promise<void> {
+        const runResult = await sql`INSERT INTO pipeline_runs (pipeline_type, status, message_id) VALUES ('MemoryExtraction', 'running', ${input.messageId}) RETURNING id, "createdAt";`;
+        const runId = runResult.rows[0].id;
+        const startTime = new Date(runResult.rows[0].createdAt).getTime();
         
-        // @google/genai-api-guideline-fix: Use 'gemini-2.5-flash' for general text tasks.
-        const modelName = modelOverride || 'gemini-2.5-flash';
+        try {
+            // Step 1: Extract Data using LLM
+            const extractedData = await extractDataFromText(input.text);
+            await sql`INSERT INTO pipeline_run_steps (run_id, step_order, step_name, status, output_payload) VALUES (${runId}, 1, 'Extract Entities and Knowledge', 'completed', ${JSON.stringify({ entities: extractedData.entities.length, knowledge: extractedData.knowledge.length })})`;
 
-        const fn = async () => {
-            try {
-                const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-                if (!apiKey) throw new Error("API key not found for extraction.");
-                const ai = new GoogleGenAI({ apiKey });
-
-                const result = await ai.models.generateContent({
-                    model: modelName,
-                    contents: prompt,
-                    config: modelConfig,
-                });
-
-                if (!result || !result.text) {
-                    console.error("Data extraction failed: No text in response.");
-                    return { entities: [], knowledge: [] };
+            // Step 2: Store Entities
+            if (input.config.enableEntityExtraction && extractedData.entities.length > 0) {
+                for (const entity of extractedData.entities) {
+                    await this.structuredMemory.store({
+                        type: 'entity',
+                        data: {
+                            name: entity.name,
+                            type: entity.type,
+                            details_json: JSON.stringify(entity.details)
+                        }
+                    });
                 }
-                const jsonStr = result.text.trim();
-                return JSON.parse(jsonStr);
-            } catch (e) {
-                console.error("MemoryExtractionPipeline: LLM data extraction failed:", e);
-                throw e; // Re-throw to be caught by logStep
             }
-        };
+            await sql`INSERT INTO pipeline_run_steps (run_id, step_order, step_name, status, output_payload) VALUES (${runId}, 2, 'Store Structured Entities', 'completed', ${JSON.stringify({ count: extractedData.entities.length })})`;
 
-        return this.logStep(runId, 1, 'ExtractDataWithLLM', fn, {
-            input: { textLength: text.length },
-            model: modelName,
-            prompt,
-            config: modelConfig,
-        });
+            // Step 3: Store Knowledge
+            if (input.config.enableKnowledgeExtraction && extractedData.knowledge.length > 0) {
+                for (const chunk of extractedData.knowledge) {
+                    await this.semanticMemory.store({ text: chunk });
+                }
+            }
+             await sql`INSERT INTO pipeline_run_steps (run_id, step_order, step_name, status, output_payload) VALUES (${runId}, 3, 'Store Semantic Knowledge', 'completed', ${JSON.stringify({ count: extractedData.knowledge.length })})`;
+
+            // Finalize run
+            await sql`UPDATE pipeline_runs SET status = 'completed', duration_ms = ${Date.now() - startTime} WHERE id = ${runId};`;
+        } catch (error) {
+            console.error(`MemoryExtractionPipeline failed for run ${runId}`, error);
+            await sql`UPDATE pipeline_runs SET status = 'failed', final_output = ${(error as Error).message}, duration_ms = ${Date.now() - startTime} WHERE id = ${runId};`;
+            // Do not re-throw, as this is a background process.
+        }
     }
 }

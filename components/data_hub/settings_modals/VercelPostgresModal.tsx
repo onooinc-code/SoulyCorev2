@@ -1,7 +1,6 @@
-
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { XIcon, CopyIcon, CheckIcon } from '../../Icons';
 import type { DataSource } from '@/lib/types';

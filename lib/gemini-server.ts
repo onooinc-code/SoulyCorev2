@@ -6,6 +6,7 @@ let ai: GoogleGenAI | null = null;
 // This function lazily initializes the GoogleGenAI client as a singleton.
 const getAiClient = () => {
   if (!ai) {
+    // FIX: Fallback to process.env.API_KEY to align with Vercel's environment variable naming conventions.
     const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
     if (!apiKey) {
       throw new Error("API key not found. Please set GEMINI_API_KEY or API_KEY in your environment variables.");
@@ -167,9 +168,6 @@ export const generateProactiveSuggestion = async (history: Content[]): Promise<s
            const client = getAiClient();
            const conversationHistoryText = history
                 .slice(-4)
-                .filter((m): m is { role: string; parts: { text: string }[] } => 
-                    typeof m === 'object' && m !== null && Array.isArray(m.parts) && m.parts.length > 0
-                )
                 .map(m => `${m.role}: ${m.parts[0].text}`)
                 .join('\n');
 
@@ -194,9 +192,6 @@ export const generateTitleFromHistory = async (history: Content[]): Promise<stri
     try {
         const client = getAiClient();
         const conversationHistoryText = history
-            .filter((m): m is { role: string; parts: { text: string }[] } =>
-                typeof m === 'object' && m !== null && Array.isArray(m.parts) && m.parts.length > 0
-            )
             .map(m => `${m.role}: ${m.parts[0].text}`)
             .join('\n');
         
@@ -235,9 +230,6 @@ export const regenerateUserPrompt = async (
     try {
         const client = getAiClient();
         const conversationHistoryText = history
-            .filter((m): m is { role: string; parts: { text: string }[] } =>
-                typeof m === 'object' && m !== null && Array.isArray(m.parts) && m.parts.length > 0
-            )
             .map(m => `${m.role}: ${m.parts[0].text}`)
             .join('\n');
         

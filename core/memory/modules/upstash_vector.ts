@@ -1,0 +1,1 @@
+full contents of core/memory/modules/upstash_vector.ts

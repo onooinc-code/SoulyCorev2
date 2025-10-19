@@ -8,7 +8,7 @@ export class PostgresDataSourceRepository implements IDataSourceRepository {
         const { stats_json, config_json, ...rest } = row;
         return {
             ...rest,
-            stats: stats_json || [],
+            stats_json: stats_json || [],
             config_json: config_json || {},
             createdAt: new Date(row.createdAt),
             lastUpdatedAt: new Date(row.lastUpdatedAt),
@@ -58,7 +58,7 @@ export class PostgresDataSourceRepository implements IDataSourceRepository {
                     type = ${toUpdate.type},
                     status = ${toUpdate.status},
                     config_json = ${JSON.stringify(toUpdate.config_json || {})},
-                    stats_json = ${JSON.stringify(toUpdate.stats || [])},
+                    stats_json = ${JSON.stringify(toUpdate.stats_json || [])},
                     "lastUpdatedAt" = CURRENT_TIMESTAMP
                 WHERE id = ${source.id}
                 RETURNING *;
@@ -66,13 +66,13 @@ export class PostgresDataSourceRepository implements IDataSourceRepository {
             return this.mapRowToDataSource(rows[0]);
         } else {
             // Create logic
-            const { name, provider, type, status, config_json, stats } = source;
+            const { name, provider, type, status, config_json, stats_json } = source;
             if (!name || !provider || !type) {
                  throw new Error('Name, provider, and type are required to create a new DataSource.');
             }
              const { rows } = await sql`
                 INSERT INTO data_sources (name, provider, type, status, config_json, stats_json, "lastUpdatedAt")
-                VALUES (${name}, ${provider}, ${type}, ${status || 'needs_config'}, ${JSON.stringify(config_json || {})}, ${JSON.stringify(stats || [])}, CURRENT_TIMESTAMP)
+                VALUES (${name}, ${provider}, ${type}, ${status || 'needs_config'}, ${JSON.stringify(config_json || {})}, ${JSON.stringify(stats_json || [])}, CURRENT_TIMESTAMP)
                 RETURNING *;
             `;
             return this.mapRowToDataSource(rows[0]);

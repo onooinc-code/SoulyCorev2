@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -43,7 +42,8 @@ const ServiceCard = ({ service, onSettingsClick }: ServiceCardProps) => {
     const TypeIcon = typeInfo[service.type]?.icon || CircleStackIcon;
     const sInfo = statusInfo[service.status];
 
-    const displayStats = service.stats || [];
+    // FIX: Changed `service.stats` to `service.stats_json` to match the `DataSource` type definition, resolving a property access error.
+    const displayStats = service.stats_json || [];
     const paddedStats = [...displayStats, ...Array(Math.max(0, 4 - displayStats.length)).fill({ label: '-', value: '-' })].slice(0, 4);
 
     return (

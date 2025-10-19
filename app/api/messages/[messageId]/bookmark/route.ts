@@ -1,5 +1,4 @@
 
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import type { Message } from '@/lib/types';

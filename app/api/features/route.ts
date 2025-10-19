@@ -1,8 +1,7 @@
 
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import { Feature } from '@/lib/types';
+import { Feature, FeatureStatus } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,10 +50,10 @@ export async function POST(req: NextRequest) {
             VALUES (
                 ${name}, 
                 ${overview}, 
-                ${status}, 
-                ${parsedUiUx}, 
+                ${status as FeatureStatus}, 
+                ${JSON.stringify(parsedUiUx)}, 
                 ${logic_flow}, 
-                ${parsedKeyFiles}, 
+                ${JSON.stringify(parsedKeyFiles)}, 
                 ${notes},
                 CURRENT_TIMESTAMP
             )

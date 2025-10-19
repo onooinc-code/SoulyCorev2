@@ -1,9 +1,8 @@
 
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { generateChatResponse } from '@/lib/gemini-server';
-import { Prompt } from '@/lib/types';
+import { Prompt, PromptChainStep } from '@/lib/types';
 import { Content } from '@google/genai';
 
 export async function POST(req: NextRequest) {

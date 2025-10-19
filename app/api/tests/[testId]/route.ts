@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db, sql } from '@/lib/db';
-import type { FeatureTest } from '@/lib/types';
+import type { FeatureTest, TestStatus } from '@/lib/types';
 
 /**
  * @handler GET
@@ -52,7 +52,7 @@ export async function PUT(req: NextRequest, { params }: { params: { testId: stri
         }
         if (last_run_status !== undefined) {
             updates.push(`last_run_status = $${queryIndex++}`);
-            values.push(last_run_status);
+            values.push(last_run_status as TestStatus);
             updates.push(`"last_run_at" = CURRENT_TIMESTAMP`);
         }
 
