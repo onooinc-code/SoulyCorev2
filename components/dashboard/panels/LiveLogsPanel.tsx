@@ -4,7 +4,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardPanel from '../DashboardPanel';
 import { useLog } from '../../providers/LogProvider';
-// FIX: Corrected relative import path to use the `@` alias.
 import { useUIState } from '@/components/providers/UIStateProvider';
 import type { LogEntry } from '../../providers/LogProvider';
 import { motion, AnimatePresence } from 'framer-motion';

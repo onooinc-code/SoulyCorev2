@@ -4,7 +4,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import DashboardPanel from '../DashboardPanel';
 import { useLog } from '../../providers/LogProvider';
-// FIX: Corrected relative import path to use the `@` alias.
 import { useUIState } from '@/components/providers/UIStateProvider';
 import type { Task } from '@/lib/types';
 import { motion } from 'framer-motion';

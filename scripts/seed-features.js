@@ -50,8 +50,12 @@ async function seedFeatures() {
     console.log("Seeding features dictionary...");
     try {
         // Clear existing features to ensure a clean slate
-        await sql`TRUNCATE TABLE features RESTART IDENTITY;`;
-        console.log("Cleared existing features.");
+        // FIX: Added CASCADE to the TRUNCATE command. This is necessary because the `feature_tests` table
+        // has a foreign key constraint that references the `features` table. TRUNCATE...CASCADE will
+        // automatically truncate both `features` and any tables that depend on it, resolving the
+        // foreign key violation error during the database seeding process.
+        await sql`TRUNCATE TABLE features RESTART IDENTITY CASCADE;`;
+        console.log("Cleared existing features and related test data.");
 
         for (const feature of features) {
             await sql`
