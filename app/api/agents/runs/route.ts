@@ -1,7 +1,7 @@
 // app/api/agents/runs/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import { AgentRun, AgentPlanPhase } from '@/lib/types';
+import { AgentRun } from '@/lib/types';
 import { AutonomousAgent } from '@/core/agents/autonomous_agent';
 
 export const dynamic = 'force-dynamic';

@@ -1,6 +1,6 @@
-// components/data_hub/DataSourceSettingsModal.tsx
 "use client";
 
+// components/data_hub/DataSourceSettingsModal.tsx
 import React from 'react';
 import type { DataSource } from '@/lib/types';
 import {

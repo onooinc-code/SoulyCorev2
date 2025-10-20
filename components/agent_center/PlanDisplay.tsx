@@ -1,6 +1,6 @@
-// components/agent_center/PlanDisplay.tsx
 "use client";
 
+// components/agent_center/PlanDisplay.tsx
 import React from 'react';
 import { AgentPlanPhase } from '@/lib/types';
 import PhaseCard from './PhaseCard';

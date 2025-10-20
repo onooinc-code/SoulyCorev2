@@ -1,13 +1,11 @@
-// components/search/GlobalSearch.tsx
 "use client";
 
+// components/search/GlobalSearch.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { SearchIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, UsersIcon } from '../Icons';
 import type { SearchResult } from '@/app/api/search/route';
-// FIX: Corrected relative import path to use the `@` alias.
 import { useUIState } from '@/components/providers/UIStateProvider';
-// FIX: Corrected relative import for useConversation.
 import { useConversation } from '@/components/providers/ConversationProvider';
 
 const resultIcons: Record<SearchResult['type'], React.FC<any>> = {

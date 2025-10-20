@@ -1,6 +1,6 @@
-// components/hubs/comm_hub/ChannelDashboard.tsx
 "use client";
 
+// components/hubs/comm_hub/ChannelDashboard.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import type { CommChannel } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';

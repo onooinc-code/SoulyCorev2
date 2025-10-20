@@ -3,7 +3,6 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-// FIX: Added imports for IStatus and CognitivePhase types.
 import type { Message, Conversation, Contact, IStatus, CognitivePhase } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 

@@ -2,11 +2,9 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-// FIX: Corrected import path for ChatInput.
 import ChatInput from '@/components/ChatInput';
 import type { Contact, Message } from '@/lib/types';
 import { XIcon } from '../Icons';
-// FIX: Corrected relative import for useConversation.
 import { useConversation } from '@/components/providers/ConversationProvider';
 import CognitiveStatusBar from './CognitiveStatusBar';
 
@@ -89,7 +87,7 @@ const ChatFooter = ({
                 )}
             </AnimatePresence>
             
-            <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} />
+            <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} replyToMessage={replyToMessage} />
         </div>
     );
 };

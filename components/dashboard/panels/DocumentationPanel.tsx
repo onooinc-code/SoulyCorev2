@@ -1,6 +1,6 @@
-// components/dashboard/panels/DocumentationPanel.tsx
 "use client";
 
+// components/dashboard/panels/DocumentationPanel.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Documentation } from '@/lib/types';
 import { useLog } from '../../providers/LogProvider';

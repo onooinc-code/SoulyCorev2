@@ -1,12 +1,11 @@
-// components/CommandPalette.tsx
 "use client";
 
+// components/CommandPalette.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XIcon } from './Icons';
 import { actions, Action } from '@/lib/actionsRegistry';
 import { useUIState } from './providers/UIStateProvider';
-// FIX: Corrected relative import for useConversation.
 import { useConversation } from '@/components/providers/ConversationProvider';
 
 interface CommandPaletteProps {

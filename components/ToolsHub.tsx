@@ -1,6 +1,6 @@
-// components/ToolsHub.tsx
 "use client";
 
+// components/ToolsHub.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Tool } from '@/lib/types';

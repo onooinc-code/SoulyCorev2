@@ -1,4 +1,3 @@
-
 "use client";
 
 import { ResponsiveBar } from '@nivo/bar';

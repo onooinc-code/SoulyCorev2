@@ -1,6 +1,6 @@
-// components/hubs/RelationshipGraph.tsx
 "use client";
 
+// components/hubs/RelationshipGraph.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import type { RelationshipGraphData, GraphNode } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';

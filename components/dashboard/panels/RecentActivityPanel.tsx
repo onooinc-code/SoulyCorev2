@@ -1,6 +1,6 @@
-// components/dashboard/panels/RecentActivityPanel.tsx
 "use client";
 
+// components/dashboard/panels/RecentActivityPanel.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardPanel from '../DashboardPanel';
 import { useLog } from '../../providers/LogProvider';

@@ -1,6 +1,6 @@
-// components/dashboard/panels/SystemHealthPanel.tsx
 "use client";
 
+// components/dashboard/panels/SystemHealthPanel.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardPanel from '../DashboardPanel';
 import { useLog } from '../../providers/LogProvider';

@@ -1,9 +1,7 @@
 
 
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-// FIX: Corrected import path for Log type.
 import { Log } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';

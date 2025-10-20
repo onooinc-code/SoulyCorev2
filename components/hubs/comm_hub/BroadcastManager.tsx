@@ -1,6 +1,6 @@
-// components/hubs/comm_hub/BroadcastManager.tsx
 "use client";
 
+// components/hubs/comm_hub/BroadcastManager.tsx
 import React, { useState } from 'react';
 import { useNotification } from '@/lib/hooks/use-notifications';
 

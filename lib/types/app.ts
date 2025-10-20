@@ -50,3 +50,10 @@ export interface AppSettings {
 
 // For notification system
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
+
+export interface ConversationContextType {
+    // ... other properties
+    activeRunId: string | null;
+    startAgentRun: (goal: string) => Promise<void>;
+    startWorkflow: (prompt: import('./data').Prompt, userInputs: Record<string, string>) => void;
+}

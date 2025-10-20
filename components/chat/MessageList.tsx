@@ -2,11 +2,9 @@
 
 import React, { useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-// FIX: Corrected import paths for types.
 import type { Conversation, Message as MessageType, ActiveWorkflowState } from '@/lib/types';
 import Message from '../Message';
 import LoadingIndicator from '../LoadingIndicator';
-// FIX: Corrected relative import for useConversation.
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { CpuChipIcon } from '../Icons';
 

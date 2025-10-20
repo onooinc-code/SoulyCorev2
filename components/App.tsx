@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import ChatWindow from '@/components/ChatWindow';
+import ChatWindow from '@/components/chat/ChatWindow';
 import Sidebar from '@/components/Sidebar';
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { AnimatePresence, motion } from 'framer-motion';

@@ -1,6 +1,6 @@
-// components/agent_center/RunReport.tsx
 "use client";
 
+// components/agent_center/RunReport.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import type { AgentRun, AgentRunStep, AgentPlanPhase } from '@/lib/types';
 import { useLog } from '../providers/LogProvider';

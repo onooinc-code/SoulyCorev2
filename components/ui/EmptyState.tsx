@@ -1,6 +1,6 @@
-// components/ui/EmptyState.tsx
 "use client";
 
+// components/ui/EmptyState.tsx
 import React from 'react';
 import { motion } from 'framer-motion';
 

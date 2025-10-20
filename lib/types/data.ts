@@ -16,7 +16,6 @@ export interface Conversation {
     ui_settings?: Record<string, any>;
     useSemanticMemory?: boolean;
     useStructuredMemory?: boolean;
-    // FIX: Added missing property used in memory extraction logic.
     enableMemoryExtraction?: boolean;
     createdAt: Date;
     lastUpdatedAt: Date;
@@ -35,7 +34,6 @@ export interface Message {
     content_summary?: string;
     createdAt: Date;
     lastUpdatedAt: Date;
-    // FIX: This property was missing in some places. Added to the core type.
     threadMessages?: Message[];
 }
 
@@ -335,7 +333,6 @@ export interface HedraGoal {
     lastUpdatedAt: Date;
 }
 
-// FIX: Added missing Log type.
 export interface Log {
     id: string;
     timestamp: Date;
@@ -344,7 +341,6 @@ export interface Log {
     level: 'info' | 'warn' | 'error';
 }
 
-// FIX: Added missing Brain type.
 export interface Brain {
     id: string;
     name: string;

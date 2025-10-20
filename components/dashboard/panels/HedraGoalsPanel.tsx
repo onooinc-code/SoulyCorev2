@@ -1,6 +1,6 @@
-// components/dashboard/panels/HedraGoalsPanel.tsx
 "use client";
 
+// components/dashboard/panels/HedraGoalsPanel.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { Subsystem, HedraGoal } from '@/lib/types';

@@ -1,6 +1,6 @@
-// components/hubs/CommunicationHub.tsx
 "use client";
 
+// components/hubs/CommunicationHub.tsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import ChannelDashboard from './comm_hub/ChannelDashboard';

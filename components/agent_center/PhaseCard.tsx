@@ -1,6 +1,6 @@
-// components/agent_center/PhaseCard.tsx
 "use client";
 
+// components/agent_center/PhaseCard.tsx
 import React from 'react';
 import type { AgentPlanPhase } from '@/lib/types';
 import { motion } from 'framer-motion';

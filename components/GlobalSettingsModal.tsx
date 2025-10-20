@@ -3,20 +3,18 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-// FIX: Corrected a relative import path for the `XIcon` component to use the absolute path alias `@`, resolving a module resolution error during the build process.
 import { XIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
-// FIX: Corrected import path for useSettings.
 import { useSettings } from '@/components/providers/SettingsProvider';
-// FIX: Corrected relative import for useConversation.
 import { useConversation } from '@/components/providers/ConversationProvider';
 import type { AppSettings } from '@/lib/types';
 import { useLog } from './providers/LogProvider';
 
 type Theme = 'theme-dark' | 'theme-light' | 'theme-solarized';
+type MessageFontSize = 'xs' | 'sm' | 'base' | 'lg';
 
 const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void; }) => {
-    const { settings, saveSettings, setTheme } = useSettings();
+    const { settings, saveSettings, setTheme, changeGlobalFontSize } = useSettings();
     const { setStatus, clearError } = useConversation();
     const { log } = useLog();
     const [localSettings, setLocalSettings] = useState<AppSettings | null>(null);
@@ -66,7 +64,7 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
             if (!prev) return null;
             const keys = path.split('.');
             const newSettings = JSON.parse(JSON.stringify(prev)); // Deep copy
-            let current = newSettings;
+            let current: any = newSettings;
             for (let i = 0; i < keys.length - 1; i++) {
                 current = current[keys[i]];
             }

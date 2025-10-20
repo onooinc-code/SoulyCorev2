@@ -1,18 +1,21 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { Contact, Prompt } from '@/lib/types';
 import { SendIcon, PaperclipIcon } from '@/components/Icons';
 import { useLog } from '@/components/providers/LogProvider';
 import { usePrompts } from '@/lib/hooks/usePrompts';
 import FillPromptVariablesModal from './FillPromptVariablesModal';
+import { useConversation } from './providers/ConversationProvider';
+import { useUIState } from './providers/UIStateProvider';
 
 interface ChatInputProps {
     onSendMessage: (content: string, mentionedContacts: Contact[]) => void;
     isLoading: boolean;
+    replyToMessage: import('@/lib/types').Message | null;
 }
 
-const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
+const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps) => {
     const [content, setContent] = useState('');
     const [mentionedContacts, setMentionedContacts] = useState<Contact[]>([]);
     const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
@@ -22,40 +25,77 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const { log } = useLog();
     const { prompts, fetchPrompts } = usePrompts();
+    const { startAgentRun, startWorkflow, currentConversation } = useConversation();
+    const { setActiveView } = useUIState();
+
 
     useEffect(() => {
-        fetchPrompts();
+        if(currentConversation) fetchPrompts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [currentConversation]);
+
+    // Focus textarea when replying
+    useEffect(() => {
+        if (replyToMessage) {
+            textareaRef.current?.focus();
+        }
+    }, [replyToMessage]);
 
 
     const adjustTextareaHeight = () => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+            const scrollHeight = textareaRef.current.scrollHeight;
+            const maxHeight = 200; // 5 lines * 24px line-height approx
+            textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
         }
     };
 
     useEffect(adjustTextareaHeight, [content]);
     
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            handleSend();
-        }
-        
-        if (event.key === '/') {
-            // Placeholder for slash command/prompt menu
-            console.log("Slash command triggered");
-        }
-    };
-
     const handleSend = () => {
         if (content.trim() && !isLoading) {
+            
+            // Check for slash commands
+            if (content.startsWith('/agent')) {
+                const goal = content.replace('/agent', '').trim();
+                if(goal) {
+                    startAgentRun(goal);
+                    setContent('');
+                    setActiveView('agent_center');
+                }
+                return;
+            }
+            
+            if (content.startsWith('/workflow')) {
+                const workflowName = content.replace('/workflow', '').trim();
+                 if(workflowName) {
+                    // This is a simplified implementation. A real one would use a fuzzy search
+                    // and potentially a modal to select the workflow if ambiguous.
+                    const workflow = prompts.find(p => p.type === 'chain' && p.name.toLowerCase() === workflowName.toLowerCase());
+                    if (workflow) {
+                        // For now, assuming no user inputs are needed for this simple case.
+                        startWorkflow(workflow, {});
+                        setContent('');
+                    } else {
+                        // Handle workflow not found
+                        alert(`Workflow "${workflowName}" not found.`);
+                    }
+                }
+                return;
+            }
+
             onSendMessage(content, mentionedContacts);
             setContent('');
             setMentionedContacts([]);
             log('User sent a message.', { contentLength: content.length });
+        }
+    };
+
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            handleSend();
         }
     };
     
@@ -99,7 +139,7 @@ const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Type your message, or type '/' for prompts..."
+                        placeholder="Type your message, or type '/' for commands..."
                         className="w-full bg-gray-700 rounded-lg p-3 text-base resize-none overflow-y-auto max-h-48 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         rows={1}
                         disabled={isLoading}

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-// FIX: Added import for AppSettings type.
 import type { AppSettings } from '@/lib/types';
 import { useLog } from './LogProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';

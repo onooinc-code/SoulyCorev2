@@ -1,7 +1,6 @@
-// components/dashboard/panels/TasksSummaryPanel.tsx
 "use client";
 
-// FIX: Imported useState, useEffect, useCallback, and useMemo from React to resolve hook-related errors.
+// components/dashboard/panels/TasksSummaryPanel.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import DashboardPanel from '../DashboardPanel';
 import { useLog } from '../../providers/LogProvider';

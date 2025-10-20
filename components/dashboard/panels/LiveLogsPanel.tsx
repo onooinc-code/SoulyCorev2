@@ -1,6 +1,6 @@
-// components/dashboard/panels/LiveLogsPanel.tsx
 "use client";
 
+// components/dashboard/panels/LiveLogsPanel.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardPanel from '../DashboardPanel';
 import { useLog } from '../../providers/LogProvider';

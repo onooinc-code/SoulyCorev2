@@ -4,7 +4,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import type { Prompt, PromptChainStep, Tool } from '@/lib/types';
 import { WorkflowBuilder } from './WorkflowBuilder';
-// FIX: Corrected relative import for useConversation.
 import { useConversation } from '@/components/providers/ConversationProvider';
 
 interface PromptFormProps {

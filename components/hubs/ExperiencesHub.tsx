@@ -1,6 +1,6 @@
-// components/hubs/ExperiencesHub.tsx
 "use client";
 
+// components/hubs/ExperiencesHub.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Experience } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
@@ -87,7 +87,6 @@ const ExperiencesHub = () => {
                 {isLoading ? <p>Loading experiences...</p> : experiences.length > 0 ? (
                     <AnimatePresence>
                         {experiences.map(exp => (
-                            // FIX: Wrapped ExperienceCard in a div and moved the key prop to resolve a TypeScript error where the key was being passed as a prop.
                             <div key={exp.id}>
                                 <ExperienceCard experience={exp} onDelete={handleDelete} />
                             </div>

@@ -1,6 +1,6 @@
-// components/ui/SkeletonLoader.tsx
 "use client";
 
+// components/ui/SkeletonLoader.tsx
 import React from 'react';
 
 const SkeletonLoader = ({ className = 'h-4 bg-gray-700 rounded w-3/4' }: { className?: string }) => {

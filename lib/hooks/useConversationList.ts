@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect } from 'react';
-// FIX: Added import for IStatus type.
 import type { Conversation, IStatus } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 
