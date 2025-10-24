@@ -10,7 +10,7 @@ async function logWebhook(channelId: string, payload: any, headers: Headers) {
     try {
         await sql`
             INSERT INTO logs (message, payload, level)
-            VALUES (${`Webhook received on channel: ${channelId}`}, ${{ payload, headers: Object.fromEntries(headers.entries()) }}, 'info');
+            VALUES (${`Webhook received on channel: ${channelId}`}, ${JSON.stringify({ payload, headers: Object.fromEntries(headers.entries()) })}, 'info');
         `;
     } catch(e) {
         console.error('Failed to log webhook:', e);

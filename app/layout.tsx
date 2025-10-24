@@ -1,18 +1,11 @@
-
 "use client";
 
 import './globals.css';
 import React, { useEffect } from 'react';
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-  // FIX: Adding an explicit return type to the function signature helps TypeScript's inference engine,
-  // which can resolve complex type issues like the one causing the 'children' prop error in index.tsx.
-  // FIX: Changed from React.ReactElement to JSX.Element to resolve a subtle type inference issue.
-// FIX: Changed return type from `JSX.Element` to `React.ReactElement` to resolve the "Cannot find namespace 'JSX'" error. This ensures the type is available from the `React` import and corrects type inference for the component.
-}): React.ReactElement {
+// FIX: Refactored to use React.FC which provides better type inference for components with children,
+// resolving the TypeScript error in index.tsx where the 'children' prop was not being correctly inferred.
+const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useEffect(() => {
     // These effects replicate the static parts of the original layout for a CSR app.
     document.documentElement.lang = 'en';
@@ -35,8 +28,7 @@ export default function RootLayout({
     }
   }, []);
 
-  // FIX: The component was returning `children` directly, which is of type `React.ReactNode`.
-  // A component's return type should be a `React.ReactElement` or `null`. Wrapping `children` in a fragment
-  // (`<>...</>`) ensures a valid return type and resolves the TypeScript type inference issue causing the error in `index.tsx`.
   return <>{children}</>;
-}
+};
+
+export default RootLayout;
