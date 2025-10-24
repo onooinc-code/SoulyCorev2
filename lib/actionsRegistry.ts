@@ -9,7 +9,7 @@ import {
     ChatBubbleLeftRightIcon,
     RocketLaunchIcon,
     ToolsIcon,
-    TasksIcon,
+    ClipboardDocumentListIcon,
     CircleStackIcon,
     SearchIcon,
     PowerIcon,
@@ -39,7 +39,7 @@ export const actions: Action[] = [
     { id: 'nav-contacts-hub', name: 'Go to Contacts Hub', icon: UsersIcon, section: 'Navigation', handlerId: 'setActiveView-contacts_hub' },
     { id: 'nav-prompts-hub', name: 'Go to Prompts Hub', icon: PromptsIcon, section: 'Navigation', handlerId: 'setActiveView-prompts_hub' },
     { id: 'nav-tools-hub', name: 'Go to Tools Hub', icon: ToolsIcon, section: 'Navigation', handlerId: 'setActiveView-tools_hub' },
-    { id: 'nav-tasks-hub', name: 'Go to Tasks Hub', icon: TasksIcon, section: 'Navigation', handlerId: 'setActiveView-tasks_hub' },
+    { id: 'nav-projects-hub', name: 'Go to Projects Hub', icon: ClipboardDocumentListIcon, section: 'Navigation', handlerId: 'setActiveView-projects_hub' },
     { id: 'nav-data-hub', name: 'Go to Data Hub', icon: CircleStackIcon, section: 'Navigation', handlerId: 'setActiveView-data_hub' },
     { id: 'nav-dev-center', name: 'Go to Dev Center', icon: CodeIcon, section: 'Navigation', handlerId: 'setActiveView-dev_center' },
     
@@ -52,6 +52,6 @@ export const actions: Action[] = [
     { id: 'app-bookmarks', name: 'View Bookmarks', icon: BookmarkListIcon, section: 'Application', handlerId: 'openBookmarks' },
     { id: 'app-settings', name: 'Open Global Settings', icon: SettingsIcon, section: 'Application', handlerId: 'openGlobalSettings' },
     { id: 'app-log', name: 'Toggle Log Panel', icon: LogIcon, section: 'Application', handlerId: 'toggleLogPanel' },
-    { id: 'app-restart', name: 'Hard Refresh App', icon: RefreshIcon, section: 'Application', handlerId: 'restartApp' },
+    { id: 'app-restart', name: 'Hard Reset App', icon: RefreshIcon, section: 'Application', handlerId: 'restartApp' },
     { id: 'app-exit', name: 'Exit App', icon: PowerIcon, section: 'Application', handlerId: 'exitApp' },
 ];

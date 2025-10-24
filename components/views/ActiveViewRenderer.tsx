@@ -18,6 +18,8 @@ const componentMap = {
     dev_center: dynamic(() => import('@/components/dev_center/DevCenter')),
     comm_hub: dynamic(() => import('@/components/hubs/CommunicationHub')),
     experiences_hub: dynamic(() => import('@/components/hubs/ExperiencesHub')),
+    // FIX: Added tasks_hub to the component map.
+    tasks_hub: dynamic(() => import('@/components/TasksHub')),
 };
 
 const ActiveViewRenderer = () => {
