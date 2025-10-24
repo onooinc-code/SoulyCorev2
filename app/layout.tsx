@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import './globals.css';
@@ -10,7 +11,8 @@ export default function RootLayout({
   children: React.ReactNode;
   // FIX: Adding an explicit return type to the function signature helps TypeScript's inference engine,
   // which can resolve complex type issues like the one causing the 'children' prop error in index.tsx.
-}): React.ReactElement {
+  // FIX: Changed from React.ReactElement to JSX.Element to resolve a subtle type inference issue.
+}): JSX.Element {
   useEffect(() => {
     // These effects replicate the static parts of the original layout for a CSR app.
     document.documentElement.lang = 'en';
