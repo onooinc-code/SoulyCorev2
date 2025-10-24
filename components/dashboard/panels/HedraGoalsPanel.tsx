@@ -259,7 +259,6 @@ const HedraGoalsPanel = () => {
               className="space-y-3"
             >
               {subsystems.map((sub) => (
-                // FIX: Added the wrapping Reorder.Item here in the parent component.
                 <Reorder.Item key={sub.id} value={sub}>
                   <SubsystemCard
                     subsystem={sub}
