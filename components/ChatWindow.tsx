@@ -1,22 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-// FIX: Corrected import path for useConversation
 import { useConversation } from '@/components/providers/ConversationProvider';
 // FIX: The import path for `useUIState` was incorrect. It has been updated to use the absolute path alias `@/components/providers/UIStateProvider` to ensure correct module resolution during the build process.
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { useLog } from '@/components/providers/LogProvider';
-// FIX: Corrected import path for types.
 import type { Message as MessageType, Contact } from '@/lib/types';
 
 // Refactored Components
-import Header from '../Header';
-import MessageList from './MessageList';
-import ErrorDisplay from './ErrorDisplay';
-import ChatFooter from './ChatFooter';
-import ChatModals from './ChatModals';
-import StatusBar from '../StatusBar';
-import LogOutputPanel from '../LogOutputPanel';
+import Header from '@/components/Header';
+import MessageList from '@/components/chat/MessageList';
+import ErrorDisplay from '@/components/chat/ErrorDisplay';
+import ChatFooter from '@/components/chat/ChatFooter';
+import ChatModals from '@/components/chat/ChatModals';
+import StatusBar from '@/components/StatusBar';
+import LogOutputPanel from '@/components/LogOutputPanel';
 
 const ChatWindow = () => {
     // --- HOOKS ---
@@ -88,7 +86,6 @@ const ChatWindow = () => {
             role: 'user',
             content,
             tokenCount: Math.ceil(content.length / 4),
-            // FIX: Add missing lastUpdatedAt property to satisfy the Message type.
             lastUpdatedAt: new Date(),
         };
 
