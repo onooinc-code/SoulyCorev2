@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React from 'react';
@@ -13,7 +11,8 @@ const ChatStatus = () => {
     const { status, messages } = useConversation();
     
     // The "isLoading" state is now implicitly handled by checking the status object
-    const isLoading = typeof status.currentAction === 'object';
+    // FIX: Refined type check to explicitly exclude null, as `typeof null` is 'object'. This ensures `status.currentAction` is correctly typed as `CognitiveStatus` when passed down.
+    const isLoading = typeof status.currentAction === 'object' && status.currentAction !== null;
     
     const handleInspect = () => {
         // This is a placeholder as the inspect click is now handled in ChatFooter
@@ -23,7 +22,7 @@ const ChatStatus = () => {
 
     return (
         <AnimatePresence>
-            {isLoading && typeof status.currentAction === 'object' && (
+            {isLoading && (
                 <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
@@ -31,7 +30,7 @@ const ChatStatus = () => {
                     transition={{ duration: 0.2 }}
                 >
                     <CognitiveStatusBar 
-                        status={status.currentAction}
+                        status={status.currentAction} // This is now correctly typed as CognitiveStatus
                         onInspect={handleInspect} // Note: This is now handled in ChatFooter
                     />
                 </motion.div>
