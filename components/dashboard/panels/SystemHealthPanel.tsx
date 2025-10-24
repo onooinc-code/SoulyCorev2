@@ -38,7 +38,6 @@ const SystemHealthPanel = () => {
                  systemHealth = { label: 'Experiencing Issues', status: 'Error', details: 'A significant number of pipeline failures detected. System stability is at risk.' };
             }
             setStatus(systemHealth);
-
         } catch (error) {
             log('Error fetching system health', { error }, 'error');
             setStatus({ label: 'Status Unknown', status: 'Error', details: 'Could not fetch system health data.' });
@@ -49,65 +48,43 @@ const SystemHealthPanel = () => {
 
     useEffect(() => {
         fetchHealthData();
-        const interval = setInterval(fetchHealthData, 30000); // Refresh every 30 seconds
+        const interval = setInterval(fetchHealthData, 30000); // Re-check every 30 seconds
         return () => clearInterval(interval);
     }, [fetchHealthData]);
 
-    const statusStyles = {
-        Operational: { icon: <CheckIcon className="w-6 h-6 text-green-400" />, color: 'text-green-400' },
-        Degraded: { icon: <WarningIcon className="w-6 h-6 text-yellow-400" />, color: 'text-yellow-400' },
-        Error: { icon: <WarningIcon className="w-6 h-6 text-red-400" />, color: 'text-red-400' },
+    const statusInfo = {
+        Operational: { icon: CheckIcon, color: 'text-green-400', ring: 'ring-green-500' },
+        Degraded: { icon: WarningIcon, color: 'text-yellow-400', ring: 'ring-yellow-500' },
+        Error: { icon: WarningIcon, color: 'text-red-400', ring: 'ring-red-500' },
     };
+    
+    const Indicator = ({ icon: Icon, label, status }: { icon: React.FC<any>, label: string, status: 'Operational' | 'Degraded' | 'Error' }) => (
+        <div className="flex items-center gap-2 text-sm">
+            <Icon className={`w-4 h-4 ${statusInfo[status].color}`} />
+            <span className="text-gray-300">{label}</span>
+        </div>
+    );
 
-    const renderContent = () => {
-        if (isLoading && !status) {
-            return (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                    <p>Checking system health...</p>
-                </div>
-            );
-        }
 
-        if (!status) {
-             return (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                    <p>Could not load health data.</p>
-                </div>
-            );
-        }
-        
-        const currentStatus = statusStyles[status.status];
+    if (isLoading || !status) {
+        return <DashboardPanel title="System Health"><div className="animate-pulse p-4 text-center">Checking system status...</div></DashboardPanel>;
+    }
 
-        return (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                <div className="text-center p-2 bg-gray-900/50 rounded-lg">
-                    <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center ${currentStatus.color} bg-opacity-20`}>
-                        {currentStatus.icon}
-                    </div>
-                    <h4 className={`mt-2 font-semibold ${currentStatus.color}`}>{status.label}</h4>
-                    <p className="text-xs text-gray-400 mt-1">{status.details}</p>
-                </div>
-                <div className="space-y-2 text-sm">
-                    <div className="flex justify-between items-center p-2 bg-gray-800/50 rounded-md">
-                        <div className="flex items-center gap-2"><CpuChipIcon className="w-4 h-4 text-gray-400"/><span>API & Pipelines</span></div>
-                        <span className="font-semibold text-green-400">Healthy</span>
-                    </div>
-                    <div className="flex justify-between items-center p-2 bg-gray-800/50 rounded-md">
-                        <div className="flex items-center gap-2"><BrainIcon className="w-4 h-4 text-gray-400"/><span>Semantic Memory</span></div>
-                         <span className="font-semibold text-green-400">Connected</span>
-                    </div>
-                     <div className="flex justify-between items-center p-2 bg-gray-800/50 rounded-md">
-                        <div className="flex items-center gap-2"><ServerIcon className="w-4 h-4 text-gray-400"/><span>Database</span></div>
-                         <span className="font-semibold text-green-400">Connected</span>
-                    </div>
-                </div>
-            </motion.div>
-        )
-    };
+    const { icon: StatusIcon, color, ring } = statusInfo[status.status];
 
     return (
         <DashboardPanel title="System Health">
-           {renderContent()}
+            <div className="flex flex-col items-center justify-center h-full text-center">
+                <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className={`w-24 h-24 rounded-full flex items-center justify-center bg-gray-900/50 ring-4 ${ring}`}
+                >
+                    <StatusIcon className={`w-12 h-12 ${color}`} />
+                </motion.div>
+                <h4 className={`font-bold text-lg mt-4 ${color}`}>{status.label}</h4>
+                <p className="text-xs text-gray-400 mt-1">{status.details}</p>
+            </div>
         </DashboardPanel>
     );
 };

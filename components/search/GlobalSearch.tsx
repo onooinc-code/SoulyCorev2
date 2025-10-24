@@ -1,3 +1,4 @@
+
 "use client";
 
 // components/search/GlobalSearch.tsx
@@ -20,6 +21,7 @@ const GlobalSearch = () => {
     const [isLoading, setIsLoading] = useState(false);
     const { setActiveView } = useUIState();
     const { setCurrentConversation, setScrollToMessageId } = useConversation();
+    // FIX: Replaced NodeJS.Timeout with ReturnType<typeof setTimeout> to avoid using a Node.js-specific type in client-side code.
     const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const performSearch = useCallback(async (searchTerm: string) => {
