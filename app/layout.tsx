@@ -1,4 +1,5 @@
 
+
 import './globals.css';
 import React, { useEffect } from 'react';
 
@@ -29,7 +30,8 @@ export default function RootLayout({
     }
   }, []);
 
-  // FIX: Return children directly to potentially resolve a subtle type inference issue
-  // where the component was incorrectly reported as missing its children.
-  return children;
+  // FIX: The component was returning `children` directly, which is of type `React.ReactNode`.
+  // A component's return type should be a `React.ReactElement` or `null`. Wrapping `children` in a fragment
+  // (`<>...</>`) ensures a valid return type and resolves the TypeScript type inference issue causing the error in `index.tsx`.
+  return <>{children}</>;
 }
