@@ -44,6 +44,9 @@ export async function POST(req: NextRequest, { params }: { params: { projectId: 
         });
 
         // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
+        if (!result.text) {
+            throw new Error("AI failed to generate a project summary.");
+        }
         return NextResponse.json({ summary: result.text });
 
     } catch (error) {

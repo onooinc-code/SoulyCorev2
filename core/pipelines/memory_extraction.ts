@@ -102,6 +102,9 @@ export class MemoryExtractionPipeline {
                     }
                 });
                 // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
+                if (!response.text) {
+                    throw new Error("AI failed to extract entities and knowledge. The response was empty.");
+                }
                 return JSON.parse(response.text.trim());
             });
 

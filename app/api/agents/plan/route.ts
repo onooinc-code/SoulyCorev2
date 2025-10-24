@@ -56,6 +56,9 @@ export async function POST(req: NextRequest) {
         });
 
         // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
+        if (!response.text) {
+            throw new Error("AI failed to generate a plan. The response was empty.");
+        }
         const planData = JSON.parse(response.text.trim());
         
         return NextResponse.json(planData);
