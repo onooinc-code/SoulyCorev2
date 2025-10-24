@@ -8,13 +8,13 @@ import { useLog } from '@/components/providers/LogProvider';
 import type { Message as MessageType, Contact } from '@/lib/types';
 
 // Refactored Components
-import Header from '../Header';
-import MessageList from './MessageList';
-import ErrorDisplay from './ErrorDisplay';
-import ChatFooter from './ChatFooter';
-import ChatModals from './ChatModals';
-import StatusBar from '../StatusBar';
-import LogOutputPanel from '../LogOutputPanel';
+import Header from '@/components/Header';
+import MessageList from '@/components/chat/MessageList';
+import ErrorDisplay from '@/components/chat/ErrorDisplay';
+import ChatFooter from '@/components/chat/ChatFooter';
+import ChatModals from '@/components/chat/ChatModals';
+import StatusBar from '@/components/StatusBar';
+import LogOutputPanel from '@/components/LogOutputPanel';
 
 const ChatWindow = () => {
     // --- HOOKS ---

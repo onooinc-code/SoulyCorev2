@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from 'react';
@@ -34,12 +33,20 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
         return { messageCount, totalTokens, bookmarkedCount, wordCount, avgResponseTime };
     }, [currentConversation, messages]);
 
-    // FIX: The status.currentAction can be an object, which is not a valid React child.
-    // This ensures that if status.currentAction is an object, its `details` string property is rendered instead.
-    const currentActionText =
-        typeof status.currentAction === 'object' && status.currentAction !== null
-            ? status.currentAction.details
-            : status.currentAction || 'Ready';
+    // FIX: The status.currentAction can be a CognitiveStatus object, which is not a valid React child.
+    // This was causing a type error. The logic has been refactored to explicitly handle the different types
+    // of `status.currentAction` (object, string, or null) to ensure that only a string is ever rendered.
+    const currentActionText = useMemo(() => {
+        const action = status.currentAction;
+        if (action === null) {
+            return 'Ready';
+        }
+        if (typeof action === 'string') {
+            return action;
+        }
+        // At this point, action is known to be CognitiveStatus
+        return action.details;
+    }, [status.currentAction]);
 
     return (
         <div className="bg-gray-800/60 backdrop-blur-xl text-gray-400 text-xs p-2 border-t border-white/10 flex justify-between items-center gap-4">
