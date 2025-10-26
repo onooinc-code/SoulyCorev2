@@ -3,18 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
-import { useLog } from '@/components/providers/LogProvider';
 import type { Message as MessageType, Contact } from '@/lib/types';
 import { AnimatePresence } from 'framer-motion';
 
 // Refactored Components
-import Header from './Header';
+import Header from '@/components/Header';
 import MessageList from '@/components/chat/MessageList';
 import ErrorDisplay from '@/components/chat/ErrorDisplay';
 import ChatFooter from '@/components/chat/ChatFooter';
 import ChatModals from '@/components/chat/ChatModals';
-import StatusBar from './StatusBar';
-import LogOutputPanel from './LogOutputPanel';
+import StatusBar from '@/components/StatusBar';
+import LogOutputPanel from '@/components/LogOutputPanel';
 
 const ChatWindow = () => {
     // --- HOOKS ---
@@ -36,7 +35,6 @@ const ChatWindow = () => {
         updateCurrentConversation,
     } = useConversation();
     const { isZenMode, isLogPanelOpen } = useUIState();
-    const { log } = useLog();
     
     // --- STATE ---
     const [proactiveSuggestion, setProactiveSuggestion] = useState<string | null>(null);
@@ -59,7 +57,6 @@ const ChatWindow = () => {
 
     // --- HANDLERS ---
     const handleSummarizeMessage = async (content: string) => {
-        log('User requested message summary.');
         setSummaryModalState({ isOpen: true, text: '', isLoading: true });
         try {
             const res = await fetch('/api/summarize', {
@@ -72,7 +69,7 @@ const ChatWindow = () => {
             setSummaryModalState({ isOpen: true, text: data.summary, isLoading: false });
         } catch (error) {
             const errorText = 'Sorry, the summary could not be generated at this time.';
-            log('Error fetching message summary.', { error: (error as Error).message }, 'error');
+            console.error('Error fetching message summary.', { error: (error as Error).message });
             setSummaryModalState({ isOpen: true, text: errorText, isLoading: false });
             setStatus({ error: (error as Error).message });
         }
@@ -116,7 +113,6 @@ const ChatWindow = () => {
     
     const handleSuggestionClick = () => {
         if (!proactiveSuggestion) return;
-        log('User clicked proactive suggestion.', { suggestion: proactiveSuggestion });
         alert(`Action triggered: ${proactiveSuggestion}`);
         setProactiveSuggestion(null);
     };
@@ -130,7 +126,6 @@ const ChatWindow = () => {
     };
 
     const handleReply = (message: MessageType) => {
-        log('User is replying to a message', { messageId: message.id });
         setReplyToMessage(message);
     }
 
@@ -175,7 +170,6 @@ const ChatWindow = () => {
                 proactiveSuggestion={proactiveSuggestion}
                 onSuggestionClick={handleSuggestionClick}
                 onDismissSuggestion={() => {
-                    log('User dismissed proactive suggestion.', { suggestion: proactiveSuggestion });
                     setProactiveSuggestion(null);
                 }}
                 onSendMessage={handleSendMessage}
