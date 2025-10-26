@@ -39,7 +39,6 @@ interface MessageToolbarProps {
     onViewContext: (type: 'prompt' | 'system' | 'config') => void;
 }
 
-// FIX: Made children optional to resolve type errors on self-closing button usages.
 interface ToolbarButtonProps {
     onClick?: () => void;
     title: string;

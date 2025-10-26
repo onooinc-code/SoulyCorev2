@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { XIcon, CommandLineIcon, BrainIcon, WrenchScrewdriverIcon } from './Icons';
+import { XIcon, CommandLineIcon, BrainIcon, WrenchScrewdriverIcon } from '@/components/Icons';
 import type { PipelineRun } from '@/lib/types';
 
 interface ContextViewerModalProps {

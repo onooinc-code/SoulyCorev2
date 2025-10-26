@@ -1,22 +1,20 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
-// FIX: The import path for `useUIState` was incorrect. It has been updated to use the absolute path alias `@/components/providers/UIStateProvider` to ensure correct module resolution during the build process.
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { useLog } from '@/components/providers/LogProvider';
 import type { Message as MessageType, Contact } from '@/lib/types';
 import { AnimatePresence } from 'framer-motion';
 
 // Refactored Components
-import Header from '@/components/Header';
+import Header from './Header';
 import MessageList from '@/components/chat/MessageList';
 import ErrorDisplay from '@/components/chat/ErrorDisplay';
 import ChatFooter from '@/components/chat/ChatFooter';
 import ChatModals from '@/components/chat/ChatModals';
-import StatusBar from '@/components/StatusBar';
-import LogOutputPanel from '@/components/LogOutputPanel';
+import StatusBar from './StatusBar';
+import LogOutputPanel from './LogOutputPanel';
 
 const ChatWindow = () => {
     // --- HOOKS ---
@@ -49,7 +47,6 @@ const ChatWindow = () => {
     const [isAgentConfigModalOpen, setAgentConfigModalOpen] = useState(false);
     const [summaryModalState, setSummaryModalState] = useState<{isOpen: boolean, text: string, isLoading: boolean}>({isOpen: false, text: '', isLoading: false});
     const [inspectorModalState, setInspectorModalState] = useState<{ isOpen: boolean; messageId: string | null }>({ isOpen: false, messageId: null });
-    // FIX: Added state for the ContextViewerModal to resolve type errors.
     const [contextViewerModalState, setContextViewerModalState] = useState<{ isOpen: boolean, messageId: string | null, type: 'prompt' | 'system' | 'config' | null }>({ isOpen: false, messageId: null, type: null });
     const [htmlModalState, setHtmlModalState] = useState({ isOpen: false, content: '' });
 
@@ -128,7 +125,6 @@ const ChatWindow = () => {
         setHtmlModalState({ isOpen: true, content: htmlContent });
     };
     
-    // FIX: Added handler to open the ContextViewerModal.
     const handleViewContext = (messageId: string, type: 'prompt' | 'system' | 'config') => {
         setContextViewerModalState({ isOpen: true, messageId, type });
     };
@@ -156,7 +152,6 @@ const ChatWindow = () => {
                 onUpdateMessage={updateMessage}
                 onRegenerate={handleRegenerate}
                 onInspect={(messageId) => setInspectorModalState({ isOpen: true, messageId })}
-                // FIX: Passed the onViewContext handler to MessageList.
                 onViewContext={handleViewContext}
                 onViewHtml={handleViewHtml}
                 onSetConversationAlign={handleSetConversationAlign}
@@ -203,7 +198,6 @@ const ChatWindow = () => {
                 setSummaryModalState={setSummaryModalState}
                 inspectorModalState={inspectorModalState}
                 setInspectorModalState={setInspectorModalState}
-                // FIX: Passed the context viewer modal state and setter to ChatModals.
                 contextViewerModalState={contextViewerModalState}
                 setContextViewerModalState={setContextViewerModalState}
                 htmlModalState={htmlModalState}
