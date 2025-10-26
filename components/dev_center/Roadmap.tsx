@@ -78,7 +78,7 @@ const Roadmap = () => {
                                     <div className="mt-2 p-3 bg-gray-900 rounded-md">
                                         <h4 className="font-bold mb-2">Technical Design:</h4>
                                         <div className="prose-custom">
-                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{idea.design}</ReactMarkdown>
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{idea.design || ''}</ReactMarkdown>
                                         </div>
                                     </div>
                                 )}

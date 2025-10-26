@@ -41,7 +41,7 @@ const AiAnalysisModal = ({
           <div className="p-6">
             <h3 className="font-bold text-lg mb-4">{result.title}</h3>
             <div className="prose-custom max-h-80 overflow-y-auto text-gray-300 whitespace-pre-wrap">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.content}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.content || ''}</ReactMarkdown>
             </div>
             <button
               onClick={onClose}
@@ -227,7 +227,7 @@ const HedraGoalsPanel = () => {
         </button>
         <h4 className="font-bold text-white">{title}</h4>
         <div className="prose-custom text-sm text-gray-300 mt-1 max-h-24 overflow-y-auto">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{goal.content}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{goal.content || ''}</ReactMarkdown>
         </div>
     </div>
   );
@@ -236,9 +236,9 @@ const HedraGoalsPanel = () => {
   return (
     <DashboardPanel title="Hedra Strategic Goals">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {hedraGoals?.main_goal && <GoalCard title="المهمة الأساسية" goal={hedraGoals.main_goal} onEdit={() => handleOpenEditModal('main_goal', hedraGoals.main_goal.content)} />}
-        {hedraGoals?.ideas && <GoalCard title="المخطط الاستراتيجي" goal={hedraGoals.ideas} onEdit={() => handleOpenEditModal('ideas', hedraGoals.ideas.content)} />}
-        {hedraGoals?.status && <GoalCard title="الحالة الراهنة" goal={hedraGoals.status} onEdit={() => handleOpenEditModal('status', hedraGoals.status.content)} />}
+        {hedraGoals?.main_goal && <GoalCard title="المهمة الأساسية" goal={hedraGoals.main_goal} onEdit={() => handleOpenEditModal('main_goal', hedraGoals.main_goal.content || '')} />}
+        {hedraGoals?.ideas && <GoalCard title="المخطط الاستراتيجي" goal={hedraGoals.ideas} onEdit={() => handleOpenEditModal('ideas', hedraGoals.ideas.content || '')} />}
+        {hedraGoals?.status && <GoalCard title="الحالة الراهنة" goal={hedraGoals.status} onEdit={() => handleOpenEditModal('status', hedraGoals.status.content || '')} />}
       </div>
 
       <div className="mt-4 pt-4 border-t border-gray-700">

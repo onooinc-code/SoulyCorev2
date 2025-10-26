@@ -329,7 +329,7 @@ export interface Documentation {
 
 export interface HedraGoal {
     section_key: string;
-    content: string;
+    content: string | null;
     lastUpdatedAt: Date;
 }
 

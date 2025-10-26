@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -135,7 +136,7 @@ const TestCasePanel = ({ test, onUpdate, onClose }: { test: TestCase; onUpdate: 
                  {test.manual_steps && (
                     <div>
                         <h5 className="text-sm font-semibold text-gray-400">Manual Steps</h5>
-                        <div className="prose-custom text-sm"><ReactMarkdown remarkPlugins={[remarkGfm]}>{test.manual_steps}</ReactMarkdown></div>
+                        <div className="prose-custom text-sm"><ReactMarkdown remarkPlugins={[remarkGfm]}>{test.manual_steps || ''}</ReactMarkdown></div>
                     </div>
                  )}
                  <div>

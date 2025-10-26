@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -15,7 +16,12 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
     
     const model = useMemo(() => {
         if (!currentConversation) return 'gemini-2.5-flash';
-        return currentConversation.ui_settings?.model_for_response || currentConversation.model || 'gemini-2.5-flash';
+        const modelFromSettings = currentConversation.ui_settings?.model_for_response;
+        // FIX: Ensure model_for_response is a string before using it to prevent React error #299
+        if (typeof modelFromSettings === 'string' && modelFromSettings) {
+            return modelFromSettings;
+        }
+        return currentConversation.model || 'gemini-2.5-flash';
     }, [currentConversation]);
 
     const conversationStats = useMemo(() => {

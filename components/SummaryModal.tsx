@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -40,7 +41,7 @@ const SummaryModal = ({ onClose, summaryText, isLoading }: SummaryModalProps) =>
                     {isLoading ? (
                         <p>Generating summary...</p>
                     ) : (
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryText}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryText || ''}</ReactMarkdown>
                     )}
                 </div>
             </motion.div>
