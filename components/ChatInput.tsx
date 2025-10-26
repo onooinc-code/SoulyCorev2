@@ -8,6 +8,7 @@ import { usePrompts } from '@/lib/hooks/usePrompts';
 import FillPromptVariablesModal from './FillPromptVariablesModal';
 import { useConversation } from './providers/ConversationProvider';
 import { useUIState } from './providers/UIStateProvider';
+import { AnimatePresence } from 'framer-motion';
 
 interface ChatInputProps {
     onSendMessage: (content: string, mentionedContacts: Contact[]) => void;
@@ -156,13 +157,16 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 </button>
             </div>
             
-             <FillPromptVariablesModal
-                isOpen={isPromptModalOpen}
-                onClose={() => setIsPromptModalOpen(false)}
-                prompt={promptToFill}
-                variables={promptVariables}
-                onSubmit={handlePromptVariablesSubmit}
-            />
+            <AnimatePresence>
+                {isPromptModalOpen && (
+                    <FillPromptVariablesModal
+                        onClose={() => setIsPromptModalOpen(false)}
+                        prompt={promptToFill}
+                        variables={promptVariables}
+                        onSubmit={handlePromptVariablesSubmit}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

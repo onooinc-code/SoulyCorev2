@@ -6,6 +6,7 @@ import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { useLog } from '@/components/providers/LogProvider';
 import type { Message as MessageType, Contact } from '@/lib/types';
+import { AnimatePresence } from 'framer-motion';
 
 // Refactored Components
 import Header from '../Header';
@@ -185,8 +186,12 @@ const ChatWindow = () => {
                 onCancelReply={() => setReplyToMessage(null)}
                 onInspectClick={(messageId) => setInspectorModalState({ isOpen: true, messageId })}
             />
-
-            <LogOutputPanel isOpen={isLogPanelOpen} />
+            {/* FIX: The `LogOutputPanel` component no longer accepts an `isOpen` prop.
+                Its visibility is now controlled by conditional rendering within an `AnimatePresence`
+                wrapper to handle the enter/exit animations correctly. */}
+            <AnimatePresence>
+                {isLogPanelOpen && <LogOutputPanel />}
+            </AnimatePresence>
 
             <ChatModals 
                 isSettingsModalOpen={isSettingsModalOpen}

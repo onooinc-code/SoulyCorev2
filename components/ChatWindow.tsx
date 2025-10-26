@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -6,6 +7,7 @@ import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { useLog } from '@/components/providers/LogProvider';
 import type { Message as MessageType, Contact } from '@/lib/types';
+import { AnimatePresence } from 'framer-motion';
 
 // Refactored Components
 import Header from '@/components/Header';
@@ -187,8 +189,9 @@ const ChatWindow = () => {
                 onCancelReply={() => setReplyToMessage(null)}
                 onInspectClick={(messageId) => setInspectorModalState({ isOpen: true, messageId })}
             />
-
-            <LogOutputPanel isOpen={isLogPanelOpen} />
+            <AnimatePresence>
+                {isLogPanelOpen && <LogOutputPanel />}
+            </AnimatePresence>
 
             <ChatModals 
                 isSettingsModalOpen={isSettingsModalOpen}

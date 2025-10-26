@@ -3,6 +3,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import type { Conversation } from '@/lib/types';
+import { AnimatePresence } from 'framer-motion';
 
 // Modals
 import ConversationSettingsModal from '../ConversationSettingsModal';
@@ -58,37 +59,55 @@ const ChatModals = ({
 }: ChatModalsProps) => {
     return (
         <>
-            <ConversationSettingsModal 
-                isOpen={isSettingsModalOpen} 
-                onClose={() => setSettingsModalOpen(false)} 
-            />
-            <AgentConfigModal 
-                isOpen={isAgentConfigModalOpen} 
-                onClose={() => setAgentConfigModalOpen(false)} 
-                conversation={currentConversation}
-            />
-            <SummaryModal 
-                isOpen={summaryModalState.isOpen}
-                onClose={() => setSummaryModalState({isOpen: false, text: '', isLoading: false})}
-                summaryText={summaryModalState.text}
-                isLoading={summaryModalState.isLoading}
-            />
-            <CognitiveInspectorModal 
-                isOpen={inspectorModalState.isOpen}
-                onClose={() => setInspectorModalState({ isOpen: false, messageId: null })}
-                messageId={inspectorModalState.messageId}
-            />
-            <ContextViewerModal
-                isOpen={contextViewerModalState.isOpen}
-                onClose={() => setContextViewerModalState({ isOpen: false, messageId: null, type: null })}
-                messageId={contextViewerModalState.messageId}
-                contextType={contextViewerModalState.type}
-            />
-            <HtmlViewerModal 
-                isOpen={htmlModalState.isOpen}
-                onClose={() => setHtmlModalState({ isOpen: false, content: '' })}
-                htmlContent={htmlModalState.content}
-            />
+            <AnimatePresence>
+                {isSettingsModalOpen && currentConversation && (
+                    <ConversationSettingsModal 
+                        onClose={() => setSettingsModalOpen(false)} 
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isAgentConfigModalOpen && currentConversation && (
+                    <AgentConfigModal 
+                        onClose={() => setAgentConfigModalOpen(false)} 
+                        conversation={currentConversation}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {summaryModalState.isOpen && (
+                    <SummaryModal 
+                        onClose={() => setSummaryModalState({isOpen: false, text: '', isLoading: false})}
+                        summaryText={summaryModalState.text}
+                        isLoading={summaryModalState.isLoading}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {inspectorModalState.isOpen && (
+                    <CognitiveInspectorModal 
+                        onClose={() => setInspectorModalState({ isOpen: false, messageId: null })}
+                        messageId={inspectorModalState.messageId}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {contextViewerModalState.isOpen && (
+                     <ContextViewerModal
+                        onClose={() => setContextViewerModalState({ isOpen: false, messageId: null, type: null })}
+                        messageId={contextViewerModalState.messageId}
+                        contextType={contextViewerModalState.type}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {htmlModalState.isOpen && (
+                    <HtmlViewerModal 
+                        onClose={() => setHtmlModalState({ isOpen: false, content: '' })}
+                        htmlContent={htmlModalState.content}
+                    />
+                )}
+            </AnimatePresence>
         </>
     );
 };

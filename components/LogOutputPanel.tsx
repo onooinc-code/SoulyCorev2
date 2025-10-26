@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLog } from './providers/LogProvider';
 // FIX: Corrected a relative import path for icon components to use the absolute path alias `@`, resolving a module resolution error during the build process.
 import { InfoIcon, WarningIcon, ErrorIcon, SearchIcon, CopyIcon, CheckIcon } from '@/components/Icons';
@@ -10,7 +10,7 @@ import { LogEntry as LogEntryType } from './providers/LogProvider';
 
 
 interface LogOutputPanelProps {
-    isOpen: boolean;
+    // isOpen prop is no longer needed as presence is controlled by the parent
 }
 
 type LogLevel = 'info' | 'warn' | 'error';
@@ -62,8 +62,7 @@ const LogEntry = ({ log }: { log: LogEntryType }) => {
 };
 
 
-// FIX: Removed React.FC to fix framer-motion type inference issue.
-const LogOutputPanel = ({ isOpen }: LogOutputPanelProps) => {
+const LogOutputPanel = (props: LogOutputPanelProps) => {
     const { logs, clearLogs } = useLog();
     const [filter, setFilter] = useState<FilterLevel>('all');
     const [searchTerm, setSearchTerm] = useState('');
@@ -106,7 +105,6 @@ const LogOutputPanel = ({ isOpen }: LogOutputPanelProps) => {
         });
     }, [logs, filter, searchTerm]);
 
-    // FIX: Removed React.FC to fix framer-motion type inference issue.
     const FilterButton = ({ level, label, count }: { level: FilterLevel, label: string, count: number }) => (
         <button
             onClick={() => setFilter(level)}
@@ -118,61 +116,56 @@ const LogOutputPanel = ({ isOpen }: LogOutputPanelProps) => {
     );
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-// FIX: The framer-motion library's type inference for motion components can fail when they are used within components typed with `React.FC`. Removing the explicit `React.FC` type annotation resolves this TypeScript error.
-                <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: '250px', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    className="bg-gray-900 border-t border-gray-700 overflow-hidden flex flex-col"
-                >
-                    <div className="flex justify-between items-center p-2 bg-gray-800 text-xs font-bold text-gray-300 gap-4">
-                        <div className="flex items-center gap-4 flex-grow">
-                            <span className="flex-shrink-0">Log Output</span>
-                             <div className="relative flex-grow max-w-xs">
-                                <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search logs..."
-                                    value={searchTerm}
-                                    onChange={e => setSearchTerm(e.target.value)}
-                                    className="w-full bg-gray-700 rounded-md pl-8 pr-2 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                />
-                            </div>
-                        </div>
-                         <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <FilterButton level="all" label="All" count={logCounts.all} />
-                            <FilterButton level="info" label="Info" count={logCounts.info} />
-                            <FilterButton level="warn" label="Warn" count={logCounts.warn} />
-                            <FilterButton level="error" label="Error" count={logCounts.error} />
-                             <button
-                                onClick={() => setIsAutoScrollEnabled(prev => !prev)}
-                                className={`ml-2 px-2 py-0.5 text-xs rounded transition-colors ${isAutoScrollEnabled ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-500'}`}
-                                title="Toggle auto-scrolling to the latest log"
-                            >
-                                Auto-Scroll: {isAutoScrollEnabled ? 'ON' : 'OFF'}
-                            </button>
-                            <button onClick={clearLogs} className="px-2 py-0.5 text-xs bg-red-800 text-white rounded hover:bg-red-700">Clear</button>
-                        </div>
+        <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: '250px', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="bg-gray-900 border-t border-gray-700 overflow-hidden flex flex-col"
+        >
+            <div className="flex justify-between items-center p-2 bg-gray-800 text-xs font-bold text-gray-300 gap-4">
+                <div className="flex items-center gap-4 flex-grow">
+                    <span className="flex-shrink-0">Log Output</span>
+                     <div className="relative flex-grow max-w-xs">
+                        <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search logs..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full bg-gray-700 rounded-md pl-8 pr-2 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
                     </div>
-                    <div ref={logContainerRef} className="flex-1 p-2 overflow-y-auto text-xs font-mono">
-                        {filteredLogs.length > 0 ? (
-                             filteredLogs.map((log, index) => (
-                                // FIX: Wrap LogEntry component in a div with the key to resolve TypeScript error.
-                                // The 'key' prop is for React's reconciliation and should be on the wrapping element of a list, not passed to the component's props.
-                                <div key={`${log.id}-${index}`}>
-                                    <LogEntry log={log} />
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-gray-500 text-center pt-4">No logs to display for this filter.</p>
-                        )}
-                    </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+                </div>
+                 <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <FilterButton level="all" label="All" count={logCounts.all} />
+                    <FilterButton level="info" label="Info" count={logCounts.info} />
+                    <FilterButton level="warn" label="Warn" count={logCounts.warn} />
+                    <FilterButton level="error" label="Error" count={logCounts.error} />
+                     <button
+                        onClick={() => setIsAutoScrollEnabled(prev => !prev)}
+                        className={`ml-2 px-2 py-0.5 text-xs rounded transition-colors ${isAutoScrollEnabled ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-500'}`}
+                        title="Toggle auto-scrolling to the latest log"
+                    >
+                        Auto-Scroll: {isAutoScrollEnabled ? 'ON' : 'OFF'}
+                    </button>
+                    <button onClick={clearLogs} className="px-2 py-0.5 text-xs bg-red-800 text-white rounded hover:bg-red-700">Clear</button>
+                </div>
+            </div>
+            <div ref={logContainerRef} className="flex-1 p-2 overflow-y-auto text-xs font-mono">
+                {filteredLogs.length > 0 ? (
+                     filteredLogs.map((log, index) => (
+                        // FIX: Wrap LogEntry component in a div with the key to resolve TypeScript error.
+                        // The 'key' prop is for React's reconciliation and should be on the wrapping element of a list, not passed to the component's props.
+                        <div key={`${log.id}-${index}`}>
+                            <LogEntry log={log} />
+                        </div>
+                    ))
+                ) : (
+                    <p className="text-gray-500 text-center pt-4">No logs to display for this filter.</p>
+                )}
+            </div>
+        </motion.div>
     );
 };
 

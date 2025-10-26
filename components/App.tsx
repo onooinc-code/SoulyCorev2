@@ -1,6 +1,7 @@
+
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ChatWindow from '@/components/chat/ChatWindow';
 import Sidebar from '@/components/Sidebar';
 import { useUIState } from '@/components/providers/UIStateProvider';
@@ -25,9 +26,24 @@ export const App = () => {
     } = useUIState();
 
     const { menuItems, contextMenu, handleContextMenu, closeContextMenu } = useAppContextMenu();
-    const { currentConversation } = useConversation();
+    const { currentConversation, backgroundTaskCount } = useConversation();
+    const [isBriefingOpen, setIsBriefingOpen] = useState(false);
+
+    useEffect(() => {
+        const today = new Date().toDateString();
+        const lastVisit = localStorage.getItem('lastVisit');
+
+        if (lastVisit !== today) {
+            // Delay briefing to avoid layout shifts on load
+            const timer = setTimeout(() => {
+                setIsBriefingOpen(true);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, []);
 
     const mainContent = activeView === 'chat' && currentConversation ? <ChatWindow /> : <ActiveViewRenderer />;
+    const showProgress = backgroundTaskCount > 0;
 
     return (
         <main
@@ -35,7 +51,9 @@ export const App = () => {
             onContextMenu={handleContextMenu}
         >
             <TopProgressBar />
-            <UniversalProgressIndicator />
+            <AnimatePresence>
+                {showProgress && <UniversalProgressIndicator />}
+            </AnimatePresence>
             <NavigationRail />
             
             <AnimatePresence>
@@ -60,15 +78,22 @@ export const App = () => {
                 {mainContent}
             </div>
 
-            <ContextMenu 
-                isOpen={contextMenu.isOpen}
-                position={contextMenu.position}
-                items={menuItems}
-                onClose={closeContextMenu}
-            />
+            <AnimatePresence>
+                {contextMenu.isOpen && (
+                    <ContextMenu 
+                        position={contextMenu.position}
+                        items={menuItems}
+                        onClose={closeContextMenu}
+                    />
+                )}
+            </AnimatePresence>
 
             <GlobalModals />
-            <MorningBriefing />
+            <AnimatePresence>
+                {isBriefingOpen && (
+                    <MorningBriefing onClose={() => setIsBriefingOpen(false)} />
+                )}
+            </AnimatePresence>
             <Notifications />
             <AppStatusBar />
         </main>

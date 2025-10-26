@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 // Define the type for a menu item, which can also be a separator or a group with children.
 export interface MenuItem {
@@ -14,13 +15,12 @@ export interface MenuItem {
 }
 
 interface ContextMenuProps {
-    isOpen: boolean;
     position: { x: number; y: number };
     items: MenuItem[];
     onClose: () => void;
 }
 
-const ContextMenu = ({ isOpen, position, items, onClose }: ContextMenuProps) => {
+const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
     const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -36,16 +36,14 @@ const ContextMenu = ({ isOpen, position, items, onClose }: ContextMenuProps) => 
             }
         };
 
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-            document.addEventListener('keydown', handleKeyDown);
-        }
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [isOpen, onClose]);
+    }, [onClose]);
 
     const renderMenuItems = (menuItems: MenuItem[]) => {
         return menuItems.map((group, groupIndex) => (
@@ -77,21 +75,17 @@ const ContextMenu = ({ isOpen, position, items, onClose }: ContextMenuProps) => 
     };
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <motion.div
-                    ref={menuRef}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.1, ease: 'easeOut' }}
-                    className="fixed w-64 bg-gray-800/80 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl p-2 z-[100]"
-                    style={{ top: position.y, left: position.x }}
-                >
-                    {renderMenuItems(items)}
-                </motion.div>
-            )}
-        </AnimatePresence>
+        <motion.div
+            ref={menuRef}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.1, ease: 'easeOut' }}
+            className="fixed w-64 bg-gray-800/80 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl p-2 z-[100]"
+            style={{ top: position.y, left: position.x }}
+        >
+            {renderMenuItems(items)}
+        </motion.div>
     );
 };
 

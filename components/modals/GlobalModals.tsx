@@ -4,6 +4,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { useAppControls } from '@/lib/hooks/useAppControls';
+import { AnimatePresence } from 'framer-motion';
 
 // Dynamically import all global modals to avoid pulling them all into the initial bundle.
 const CommandPalette = dynamic(() => import('@/components/CommandPalette'));
@@ -38,46 +39,56 @@ const GlobalModals = () => {
 
     return (
         <>
-            <CommandPalette
-                isOpen={isCommandPaletteOpen}
-                onClose={() => setCommandPaletteOpen(false)}
-            />
-            {isBookmarksModalOpen && (
-                <BookmarksModal
-                    isOpen={isBookmarksModalOpen}
-                    setIsOpen={setBookmarksModalOpen}
-                />
-            )}
-             {isGlobalSettingsModalOpen && (
-                <GlobalSettingsModal
-                    setIsOpen={setGlobalSettingsModalOpen}
-                />
-            )}
-             {isShortcutsModalOpen && (
-                <ShortcutsModal
-                    isOpen={isShortcutsModalOpen}
-                    onClose={() => setShortcutsModalOpen(false)}
-                />
-            )}
-            {isAddKnowledgeModalOpen && (
-                 <AddKnowledgeModal
-                    isOpen={isAddKnowledgeModalOpen}
-                    onClose={() => setAddKnowledgeModalOpen(false)}
-                />
-            )}
-             {isHardResetModalOpen && (
-                <HardResetModal
-                    isOpen={isHardResetModalOpen}
-                    onClose={() => setHardResetModalOpen(false)}
-                    onComplete={() => window.location.reload()}
-                />
-            )}
-            {isResponseViewerModalOpen && (
-                <ResponseViewerModal
-                    isOpen={isResponseViewerModalOpen}
-                    onClose={() => setResponseViewerModalOpen(false)}
-                />
-            )}
+            <AnimatePresence>
+                {isCommandPaletteOpen && (
+                    <CommandPalette
+                        onClose={() => setCommandPaletteOpen(false)}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isBookmarksModalOpen && (
+                    <BookmarksModal
+                        onClose={() => setBookmarksModalOpen(false)}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isGlobalSettingsModalOpen && (
+                    <GlobalSettingsModal
+                        setIsOpen={setGlobalSettingsModalOpen}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                 {isShortcutsModalOpen && (
+                    <ShortcutsModal
+                        onClose={() => setShortcutsModalOpen(false)}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isAddKnowledgeModalOpen && (
+                     <AddKnowledgeModal
+                        onClose={() => setAddKnowledgeModalOpen(false)}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                 {isHardResetModalOpen && (
+                    <HardResetModal
+                        onClose={() => setHardResetModalOpen(false)}
+                        onComplete={() => window.location.reload()}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isResponseViewerModalOpen && (
+                    <ResponseViewerModal
+                        onClose={() => setResponseViewerModalOpen(false)}
+                    />
+                )}
+            </AnimatePresence>
         </>
     );
 };

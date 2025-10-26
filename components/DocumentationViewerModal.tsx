@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -101,26 +100,24 @@ const DocumentationViewerModal = ({ docKey, onClose }: DocumentationViewerModalP
     );
 
     return (
-        <AnimatePresence>
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className={`fixed bg-black bg-opacity-70 flex items-center justify-center z-[60] ${isFullscreen ? 'inset-0 p-4' : 'inset-0'}`}
+            onClick={!isFullscreen ? onClose : undefined}
+        >
             <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className={`fixed bg-black bg-opacity-70 flex items-center justify-center z-[60] ${isFullscreen ? 'inset-0 p-4' : 'inset-0'}`}
-                onClick={!isFullscreen ? onClose : undefined}
+                initial={{ scale: 0.95, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: 20 }}
+                transition={{ duration: 0.2 }}
+                className={`bg-gray-800 rounded-lg shadow-2xl flex flex-col ${isFullscreen ? 'w-full h-full' : 'w-full max-w-4xl h-full max-h-[90vh]'}`}
+                onClick={(e) => e.stopPropagation()}
             >
-                <motion.div
-                    initial={{ scale: 0.95, y: 20 }}
-                    animate={{ scale: 1, y: 0 }}
-                    exit={{ scale: 0.95, y: 20 }}
-                    transition={{ duration: 0.2 }}
-                    className={`bg-gray-800 rounded-lg shadow-2xl flex flex-col ${isFullscreen ? 'w-full h-full' : 'w-full max-w-4xl h-full max-h-[90vh]'}`}
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    {modalContent}
-                </motion.div>
+                {modalContent}
             </motion.div>
-        </AnimatePresence>
+        </motion.div>
     );
 };
 

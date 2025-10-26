@@ -12,11 +12,10 @@ import remarkGfm from 'remark-gfm';
 import { useAppContext } from './providers/AppProvider';
 
 interface BookmarksModalProps {
-    isOpen: boolean;
-    setIsOpen: (isOpen: boolean) => void;
+    onClose: () => void;
 }
 
-const BookmarksModal = ({ isOpen, setIsOpen }: BookmarksModalProps) => {
+const BookmarksModal = ({ onClose }: BookmarksModalProps) => {
     const { setStatus, clearError } = useAppContext();
     const [bookmarks, setBookmarks] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -39,17 +38,15 @@ const BookmarksModal = ({ isOpen, setIsOpen }: BookmarksModalProps) => {
     }, [clearError, setStatus]);
 
     useEffect(() => {
-        if (isOpen) {
-            fetchBookmarks();
-        }
-    }, [isOpen, fetchBookmarks]);
+        fetchBookmarks();
+    }, [fetchBookmarks]);
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-            <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl h-full max-h-[90vh] flex flex-col p-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl h-full max-h-[90vh] flex flex-col p-6" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-700">
                     <h2 className="text-xl font-bold">Bookmarked Messages</h2>
-                    <button onClick={() => setIsOpen(false)} className="p-1 rounded-full hover:bg-gray-700"><XIcon className="w-6 h-6" /></button>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-700"><XIcon className="w-6 h-6" /></button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto pr-2 space-y-4">

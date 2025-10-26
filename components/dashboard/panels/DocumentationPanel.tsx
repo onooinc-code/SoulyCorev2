@@ -7,6 +7,7 @@ import { useLog } from '../../providers/LogProvider';
 import DocumentationViewerModal from '../../DocumentationViewerModal';
 import { DocumentTextIcon } from '../../Icons';
 import DashboardPanel from '../DashboardPanel';
+import { AnimatePresence } from 'framer-motion';
 
 const DocumentationPanel = () => {
     const [docs, setDocs] = useState<Documentation[]>([]);
@@ -75,12 +76,14 @@ const DocumentationPanel = () => {
             <DashboardPanel title="Smart Documentation">
                 {renderContent()}
             </DashboardPanel>
-            {selectedDocKey && (
-                <DocumentationViewerModal 
-                    docKey={selectedDocKey}
-                    onClose={handleCloseModal}
-                />
-            )}
+            <AnimatePresence>
+                {selectedDocKey && (
+                    <DocumentationViewerModal 
+                        docKey={selectedDocKey}
+                        onClose={handleCloseModal}
+                    />
+                )}
+            </AnimatePresence>
         </>
     );
 };
