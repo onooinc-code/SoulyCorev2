@@ -21,7 +21,7 @@ export async function GET() {
 // POST a new channel
 export async function POST(req: NextRequest) {
     try {
-        const { name, type } = await req.json();
+        const { name, type, config } = await req.json();
 
         if (!name || !type) {
             return NextResponse.json({ error: 'Name and type are required' }, { status: 400 });
@@ -32,10 +32,12 @@ export async function POST(req: NextRequest) {
         if (!validTypes.includes(type)) {
             return NextResponse.json({ error: 'Invalid channel type' }, { status: 400 });
         }
+        
+        const configJson = JSON.stringify(config || {});
 
         const { rows } = await sql<CommChannel>`
             INSERT INTO comm_channels (name, type, status, config_json)
-            VALUES (${name}, ${type}, 'active', '{}')
+            VALUES (${name}, ${type}, 'active', ${configJson})
             RETURNING *;
         `;
         

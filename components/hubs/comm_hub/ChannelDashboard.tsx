@@ -17,6 +17,7 @@ const ChannelCard = ({ channel }: { channel: CommChannel }) => {
     };
 
     const currentStatus = statusMap[channel.status];
+    const webhookUrl = channel.config_json?.url;
 
     return (
         <motion.div
@@ -32,8 +33,8 @@ const ChannelCard = ({ channel }: { channel: CommChannel }) => {
                 <span>{currentStatus.text}</span>
             </div>
              {channel.type === 'webhook' && (
-                <div className="mt-2 text-xs text-gray-500 font-mono bg-gray-900 p-2 rounded-md">
-                    POST /api/webhooks/{channel.id}
+                <div className="mt-2 text-xs text-gray-500 font-mono bg-gray-900 p-2 rounded-md truncate">
+                    {webhookUrl ? `URL: ${webhookUrl}` : 'URL Not Configured'}
                 </div>
             )}
         </motion.div>

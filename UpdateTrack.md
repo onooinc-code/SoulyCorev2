@@ -95,3 +95,21 @@ Implemented the feature to send notifications to a selected webhook channel. Thi
 **Changes Made:**
 - **API `notify`**: Created a new dynamic API route that accepts a `channelId` and a message payload. It fetches the channel's configuration, constructs a POST request, and sends the notification to the external webhook URL. It also logs the outcome of the send attempt.
 - **`BroadcastManager.tsx`**: Refactored the component to fetch and display a dropdown of available webhook channels. Users can now select a target channel for their message. The component's name is now slightly misleading, as it handles both broadcasts and targeted notifications, but is kept for consistency. The "Send" logic now calls the new `/api/comm/notify/[channelId]` endpoint.
+---
+
+### Update #6: Add Webhook URL Configuration
+
+**Details:**
+Enhanced the Communication Hub by allowing users to specify a destination URL when creating a new webhook channel. This makes the "Send Notification" feature fully functional, as it now has an endpoint to send data to.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `app/api/comm/channels/route.ts`
+- `components/hubs/comm_hub/WebhookCreator.tsx`
+- `components/hubs/comm_hub/ChannelDashboard.tsx`
+
+**Changes Made:**
+- **`WebhookCreator.tsx`**: Added a "Webhook URL" input field that appears when the channel type is 'webhook'.
+- **`app/api/comm/channels/route.ts`**: The POST endpoint now accepts a `config` object in the request body and saves it to the `config_json` field in the database.
+- **`ChannelDashboard.tsx`**: The `ChannelCard` component now displays the configured URL for webhook channels, providing better visibility.
+- **`UpdateTrack.md`**: Added this entry to document the update.
