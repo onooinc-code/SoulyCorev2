@@ -77,6 +77,21 @@ Implemented the backend and frontend functionality for the Communication Hub. Th
 - `components/hubs/comm_hub/BroadcastManager.tsx` (new file)
 
 **Changes Made:**
-- **API `channels`**: Created `GET` and `POST` endpoints to manage channels in the database. The `POST` endpoint in `/api/comm/broadcast/route.ts` was already implemented.
+- **API `channels`**: Created `GET` and `POST` endpoints to manage channels in the database.
 - **Components**: Created a suite of new components to form the hub's UI: `CommunicationHub` for the main view, `ChannelDashboard` to display channels, `WebhookCreator` for adding new channels, and `BroadcastManager` for sending messages. The components are fully wired to the backend APIs and include state management, user feedback, and notifications.
 - **Integration**: The `CommunicationHub` is now a fully functional view accessible from the main navigation.
+---
+
+### Update #5: Implement Webhook Notification Sending
+
+**Details:**
+Implemented the feature to send notifications to a selected webhook channel. This enhances the Communication Hub by making the created webhooks functional. The `BroadcastManager` UI has been updated to include a channel selector, and a new API endpoint (`/api/comm/notify/[channelId]`) has been created to handle the outgoing POST request to the target webhook URL.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `app/api/comm/notify/[channelId]/route.ts` (new file)
+- `components/hubs/comm_hub/BroadcastManager.tsx`
+
+**Changes Made:**
+- **API `notify`**: Created a new dynamic API route that accepts a `channelId` and a message payload. It fetches the channel's configuration, constructs a POST request, and sends the notification to the external webhook URL. It also logs the outcome of the send attempt.
+- **`BroadcastManager.tsx`**: Refactored the component to fetch and display a dropdown of available webhook channels. Users can now select a target channel for their message. The component's name is now slightly misleading, as it handles both broadcasts and targeted notifications, but is kept for consistency. The "Send" logic now calls the new `/api/comm/notify/[channelId]` endpoint.
