@@ -5,13 +5,24 @@ import { CommChannel } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
+function getBaseUrl(req: NextRequest): string {
+    const protocol = req.headers.get('x-forwarded-proto') || 'http';
+    const host = req.headers.get('host') || 'localhost:3000';
+    return `${protocol}://${host}`;
+}
+
 // GET all channels
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
         const { rows } = await sql<CommChannel>`
             SELECT * FROM comm_channels ORDER BY "createdAt" DESC;
         `;
-        return NextResponse.json(rows);
+        const baseUrl = getBaseUrl(req);
+        const channelsWithUrls = rows.map(channel => ({
+            ...channel,
+            incomingUrl: channel.type === 'webhook' ? `${baseUrl}/api/webhooks/${channel.id}` : null
+        }));
+        return NextResponse.json(channelsWithUrls);
     } catch (error) {
         console.error('Failed to fetch channels:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -41,7 +52,14 @@ export async function POST(req: NextRequest) {
             RETURNING *;
         `;
         
-        return NextResponse.json(rows[0], { status: 201 });
+        const newChannel = rows[0];
+        const baseUrl = getBaseUrl(req);
+        const channelWithUrl = {
+            ...newChannel,
+            incomingUrl: newChannel.type === 'webhook' ? `${baseUrl}/api/webhooks/${newChannel.id}` : null
+        };
+        
+        return NextResponse.json(channelWithUrl, { status: 201 });
 
     } catch (error) {
         console.error('Failed to create channel:', error);

@@ -5,11 +5,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import type { CommChannel } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckIcon, XIcon, WarningIcon, RssIcon } from '@/components/Icons';
+import { CheckIcon, XIcon, WarningIcon, RssIcon, CopyIcon } from '@/components/Icons';
 import WebhookCreator from './WebhookCreator';
 import BroadcastManager from './BroadcastManager';
 
-const ChannelCard = ({ channel }: { channel: CommChannel }) => {
+const ChannelCard = ({ channel }: { channel: CommChannel & { incomingUrl?: string | null } }) => {
+    const [copiedOutgoing, setCopiedOutgoing] = useState(false);
+    const [copiedIncoming, setCopiedIncoming] = useState(false);
+
     const statusMap: Record<CommChannel['status'], { color: string, icon: React.ReactNode, text: string }> = {
         active: { color: 'border-green-500', icon: <CheckIcon className="w-4 h-4 text-green-400"/>, text: 'Active' },
         inactive: { color: 'border-gray-500', icon: <XIcon className="w-4 h-4 text-gray-400"/>, text: 'Inactive' },
@@ -17,7 +20,18 @@ const ChannelCard = ({ channel }: { channel: CommChannel }) => {
     };
 
     const currentStatus = statusMap[channel.status];
-    const webhookUrl = channel.config_json?.url;
+    const outgoingWebhookUrl = channel.config_json?.url;
+    
+    const handleCopy = (url: string, type: 'incoming' | 'outgoing') => {
+        navigator.clipboard.writeText(url);
+        if (type === 'incoming') {
+            setCopiedIncoming(true);
+            setTimeout(() => setCopiedIncoming(false), 2000);
+        } else {
+            setCopiedOutgoing(true);
+            setTimeout(() => setCopiedOutgoing(false), 2000);
+        }
+    };
 
     return (
         <motion.div
@@ -33,8 +47,29 @@ const ChannelCard = ({ channel }: { channel: CommChannel }) => {
                 <span>{currentStatus.text}</span>
             </div>
              {channel.type === 'webhook' && (
-                <div className="mt-2 text-xs text-gray-500 font-mono bg-gray-900 p-2 rounded-md truncate">
-                    {webhookUrl ? `URL: ${webhookUrl}` : 'URL Not Configured'}
+                <div className="mt-3 space-y-2">
+                    {channel.incomingUrl && (
+                         <div className="text-xs">
+                            <label className="font-semibold text-gray-500">INCOMING URL</label>
+                            <div className="relative bg-gray-900 p-2 rounded-md font-mono text-gray-400 truncate">
+                                {channel.incomingUrl}
+                                <button onClick={() => handleCopy(channel.incomingUrl!, 'incoming')} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-white">
+                                    {copiedIncoming ? <CheckIcon className="w-4 h-4 text-green-400" /> : <CopyIcon className="w-4 h-4" />}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    {outgoingWebhookUrl && (
+                        <div className="text-xs">
+                            <label className="font-semibold text-gray-500">OUTGOING URL</label>
+                            <div className="relative bg-gray-900 p-2 rounded-md font-mono text-gray-400 truncate">
+                                {outgoingWebhookUrl}
+                                <button onClick={() => handleCopy(outgoingWebhookUrl, 'outgoing')} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-white">
+                                    {copiedOutgoing ? <CheckIcon className="w-4 h-4 text-green-400" /> : <CopyIcon className="w-4 h-4" />}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </motion.div>
@@ -43,7 +78,7 @@ const ChannelCard = ({ channel }: { channel: CommChannel }) => {
 
 const ChannelDashboard = () => {
     const { log } = useLog();
-    const [channels, setChannels] = useState<CommChannel[]>([]);
+    const [channels, setChannels] = useState<(CommChannel & { incomingUrl?: string | null })[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchChannels = useCallback(async () => {

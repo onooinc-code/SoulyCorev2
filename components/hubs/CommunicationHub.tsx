@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import ChannelDashboard from './comm_hub/ChannelDashboard';
+import UnifiedInbox from './comm_hub/UnifiedInbox';
 
 type Tab = 'dashboard' | 'inbox' | 'templates';
 
@@ -31,7 +32,7 @@ const CommunicationHub = () => {
             case 'dashboard': 
                 return <ChannelDashboard />;
             case 'inbox':
-                return <div className="text-center p-8 text-gray-500">Unified Inbox is planned for a future update.</div>;
+                return <UnifiedInbox />;
             case 'templates':
                 return <div className="text-center p-8 text-gray-500">Message Templates are planned for a future update.</div>;
             default: return null;

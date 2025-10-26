@@ -71,13 +71,14 @@ Implemented the backend and frontend functionality for the Communication Hub. Th
 **Modified Files:**
 - `UpdateTrack.md`
 - `app/api/comm/channels/route.ts` (new file)
+- `app/api/comm/broadcast/route.ts` (new file)
 - `components/hubs/CommunicationHub.tsx` (new file)
 - `components/hubs/comm_hub/ChannelDashboard.tsx` (new file)
 - `components/hubs/comm_hub/WebhookCreator.tsx` (new file)
 - `components/hubs/comm_hub/BroadcastManager.tsx` (new file)
 
 **Changes Made:**
-- **API `channels`**: Created `GET` and `POST` endpoints to manage channels in the database.
+- **API `channels` & `broadcast`**: Created `GET` and `POST` endpoints to manage channels and send broadcast messages.
 - **Components**: Created a suite of new components to form the hub's UI: `CommunicationHub` for the main view, `ChannelDashboard` to display channels, `WebhookCreator` for adding new channels, and `BroadcastManager` for sending messages. The components are fully wired to the backend APIs and include state management, user feedback, and notifications.
 - **Integration**: The `CommunicationHub` is now a fully functional view accessible from the main navigation.
 ---
@@ -94,7 +95,7 @@ Implemented the feature to send notifications to a selected webhook channel. Thi
 
 **Changes Made:**
 - **API `notify`**: Created a new dynamic API route that accepts a `channelId` and a message payload. It fetches the channel's configuration, constructs a POST request, and sends the notification to the external webhook URL. It also logs the outcome of the send attempt.
-- **`BroadcastManager.tsx`**: Refactored the component to fetch and display a dropdown of available webhook channels. Users can now select a target channel for their message. The component's name is now slightly misleading, as it handles both broadcasts and targeted notifications, but is kept for consistency. The "Send" logic now calls the new `/api/comm/notify/[channelId]` endpoint.
+- **`BroadcastManager.tsx`**: Refactored the component to fetch and display a dropdown of available webhook channels. Users can now select a target channel for their message. The "Send" logic now calls the new `/api/comm/notify/[channelId]` endpoint.
 ---
 
 ### Update #6: Add Webhook URL Configuration
@@ -113,3 +114,37 @@ Enhanced the Communication Hub by allowing users to specify a destination URL wh
 - **`app/api/comm/channels/route.ts`**: The POST endpoint now accepts a `config` object in the request body and saves it to the `config_json` field in the database.
 - **`ChannelDashboard.tsx`**: The `ChannelCard` component now displays the configured URL for webhook channels, providing better visibility.
 - **`UpdateTrack.md`**: Added this entry to document the update.
+---
+
+### Update #7: Implement Unified Inbox
+
+**Details:**
+Implemented the "Unified Inbox" feature within the Communication Hub. This provides a centralized view of all incoming messages, currently sourced from received webhooks.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `app/api/comm/inbox/route.ts` (new file)
+- `components/hubs/comm_hub/UnifiedInbox.tsx` (new file)
+- `components/hubs/CommunicationHub.tsx`
+
+**Changes Made:**
+- **API `inbox`**: Created a new `GET` endpoint that queries the `logs` table for entries related to received webhooks, simulating an inbox data source.
+- **`UnifiedInbox.tsx`**: Created a new component that fetches data from the inbox API and displays each incoming message with its timestamp, content, and a collapsible JSON payload viewer.
+- **`CommunicationHub.tsx`**: Integrated the new `UnifiedInbox` component, which now renders when the "Unified Inbox" tab is active, replacing the previous placeholder.
+---
+
+### Update #8: Display Incoming Webhook URL
+
+**Details:**
+Enhanced the Communication Hub to display the unique incoming webhook URL after a channel is created and on the channel's information card. This provides users with the necessary URL to configure external services to send webhooks to the application's Unified Inbox.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `app/api/comm/channels/route.ts`
+- `components/hubs/comm_hub/WebhookCreator.tsx`
+- `components/hubs/comm_hub/ChannelDashboard.tsx`
+
+**Changes Made:**
+- **API `channels`**: The `GET` and `POST` endpoints now dynamically construct and include an `incomingUrl` property for each webhook channel in their responses.
+- **`WebhookCreator.tsx`**: After successfully creating a webhook channel, the component now displays a success view with the generated incoming URL and a "Copy to Clipboard" button.
+- **`ChannelDashboard.tsx`**: The `ChannelCard` component has been updated to display both the incoming and outgoing URLs for a webhook channel, each with its own convenient copy button.
