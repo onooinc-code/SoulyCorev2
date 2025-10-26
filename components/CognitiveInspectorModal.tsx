@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -133,7 +134,7 @@ const CognitiveInspectorModal = ({ onClose, messageId }: CognitiveInspectorModal
                 <div>
                     <h3 className="font-semibold text-gray-200 mb-2">Execution Steps</h3>
                     <div className="space-y-3">
-                        {pipelineSteps.map(step => <div key={step.id}><PipelineStep step={step} /></div>)}
+                        {pipelineSteps.map(step => <PipelineStep key={step.id} step={step} />)}
                     </div>
                 </div>
             </div>

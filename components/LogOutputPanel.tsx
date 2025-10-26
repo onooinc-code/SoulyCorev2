@@ -4,7 +4,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLog } from './providers/LogProvider';
-// FIX: Corrected a relative import path for icon components to use the absolute path alias `@`, resolving a module resolution error during the build process.
 import { InfoIcon, WarningIcon, ErrorIcon, SearchIcon, CopyIcon, CheckIcon } from '@/components/Icons';
 import { LogEntry as LogEntryType } from './providers/LogProvider';
 
@@ -17,7 +16,6 @@ type LogLevel = 'info' | 'warn' | 'error';
 type FilterLevel = LogLevel | 'all';
 
 // Component for rendering a single log entry
-// FIX: Removed React.FC to fix framer-motion type inference issue.
 const LogEntry = ({ log }: { log: LogEntryType }) => {
     const [copied, setCopied] = useState(false);
 
@@ -155,11 +153,7 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
             <div ref={logContainerRef} className="flex-1 p-2 overflow-y-auto text-xs font-mono">
                 {filteredLogs.length > 0 ? (
                      filteredLogs.map((log, index) => (
-                        // FIX: Wrap LogEntry component in a div with the key to resolve TypeScript error.
-                        // The 'key' prop is for React's reconciliation and should be on the wrapping element of a list, not passed to the component's props.
-                        <div key={`${log.id}-${index}`}>
-                            <LogEntry log={log} />
-                        </div>
+                        <LogEntry key={`${log.id}-${index}`} log={log} />
                     ))
                 ) : (
                     <p className="text-gray-500 text-center pt-4">No logs to display for this filter.</p>

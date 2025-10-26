@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -165,17 +166,11 @@ const TasksHub = () => {
                             <h3 className="font-semibold text-lg text-gray-300 mb-2">To-Do</h3>
                             <div className="space-y-2">
                                 <AnimatePresence>
-{/* FIX: Wrapped TaskItem in a div with a key to resolve TypeScript error regarding the 'key' prop. */}
                                     {(groupedTasks['todo'] || []).map(task => (
-                                        <div key={task.id}>
-                                            <TaskItem task={task} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
-                                        </div>
+                                        <TaskItem key={task.id} task={task} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
                                     ))}
-{/* FIX: Wrapped TaskItem in a div with a key to resolve TypeScript error regarding the 'key' prop. */}
                                     {(groupedTasks['in_progress'] || []).map(task => (
-                                        <div key={task.id}>
-                                            <TaskItem task={task} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
-                                        </div>
+                                        <TaskItem key={task.id} task={task} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
                                     ))}
                                 </AnimatePresence>
                                 {((groupedTasks['todo'] || []).length === 0 && (groupedTasks['in_progress'] || []).length === 0) && <p className="text-sm text-gray-500">No pending tasks.</p>}
@@ -185,11 +180,8 @@ const TasksHub = () => {
                             <h3 className="font-semibold text-lg text-gray-300 mb-2">Completed</h3>
                             <div className="space-y-2">
                                 <AnimatePresence>
-{/* FIX: Wrapped TaskItem in a div with a key to resolve TypeScript error regarding the 'key' prop. */}
                                 {(groupedTasks['completed'] || []).map(task => (
-                                    <div key={task.id}>
-                                        <TaskItem task={task} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
-                                    </div>
+                                    <TaskItem key={task.id} task={task} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} />
                                 ))}
                                 </AnimatePresence>
                             </div>

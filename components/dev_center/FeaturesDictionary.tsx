@@ -316,13 +316,12 @@ const FeaturesDictionary = () => {
                 <div className="flex-1 overflow-y-auto pr-2 space-y-3">
                     {features.length > 0 ? (
                         features.map(feature => (
-                           <div key={feature.id}>
-                                <FeatureItem 
-                                    feature={feature} 
-                                    onEdit={() => handleOpenForm(feature)} 
-                                    onDelete={() => handleDeleteFeature(feature.id)}
-                                />
-                            </div>
+                           <FeatureItem 
+                                key={feature.id}
+                                feature={feature} 
+                                onEdit={() => handleOpenForm(feature)} 
+                                onDelete={() => handleDeleteFeature(feature.id)}
+                            />
                         ))
                     ) : (
                         <div className="text-center py-8 text-gray-500">

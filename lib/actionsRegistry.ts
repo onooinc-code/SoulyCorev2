@@ -1,3 +1,4 @@
+// lib/actionsRegistry.ts
 // This is a placeholder for a more dynamic action registry.
 // In a real app, this might be auto-generated or built from multiple sources.
 
@@ -15,7 +16,8 @@ import {
     PowerIcon,
     RefreshIcon,
     TrashIcon,
-    KnowledgeIcon
+    KnowledgeIcon,
+    KeyboardIcon,
 } from '@/components/Icons';
 
 export interface Action {
@@ -48,10 +50,16 @@ export const actions: Action[] = [
     { id: 'convo-list', name: 'Toggle Conversation List', icon: ChatBubbleLeftRightIcon, section: 'Conversation', handlerId: 'toggleConversationPanel' },
     { id: 'convo-clear', name: 'Clear Messages', subtitle: 'Deletes all messages in the current chat', icon: TrashIcon, section: 'Conversation', handlerId: 'clearCurrentConversation' },
     
+    // Data
+    { id: 'data-add-knowledge', name: 'Add Knowledge Snippet', subtitle: 'Add a fact to semantic memory', icon: KnowledgeIcon, section: 'Data', handlerId: 'openAddKnowledge' },
+    { id: 'data-bookmarks', name: 'View Bookmarks', icon: BookmarkListIcon, section: 'Data', handlerId: 'openBookmarks' },
+
     // Application
-    { id: 'app-bookmarks', name: 'View Bookmarks', icon: BookmarkListIcon, section: 'Application', handlerId: 'openBookmarks' },
+    { id: 'app-command-palette', name: 'Open Command Palette', subtitle: 'You are here!', icon: SearchIcon, section: 'Application', handlerId: 'openCommandPalette' },
     { id: 'app-settings', name: 'Open Global Settings', icon: SettingsIcon, section: 'Application', handlerId: 'openGlobalSettings' },
+    { id: 'app-shortcuts', name: 'View Keyboard Shortcuts', icon: KeyboardIcon, section: 'Application', handlerId: 'openShortcuts' },
     { id: 'app-log', name: 'Toggle Log Panel', icon: LogIcon, section: 'Application', handlerId: 'toggleLogPanel' },
+    { id: 'app-last-report', name: 'View Last AI Report', icon: CodeIcon, section: 'Application', handlerId: 'openResponseViewer' },
     { id: 'app-restart', name: 'Hard Reset App', icon: RefreshIcon, section: 'Application', handlerId: 'restartApp' },
     { id: 'app-exit', name: 'Exit App', icon: PowerIcon, section: 'Application', handlerId: 'exitApp' },
 ];

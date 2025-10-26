@@ -234,14 +234,13 @@ const FeatureHealthDashboard = () => {
                     <p>Loading feature health data...</p>
                 ) : (
                     groupedFeatures.map(([feature, featureTests]) => (
-                       <div key={feature.id}>
-                            <FeatureRow
-                                feature={feature}
-                                tests={featureTests}
-                                onSelectTest={setSelectedTest}
-                                selectedTestId={selectedTest?.id || null}
-                            />
-                        </div>
+                       <FeatureRow
+                            key={feature.id}
+                            feature={feature}
+                            tests={featureTests}
+                            onSelectTest={setSelectedTest}
+                            selectedTestId={selectedTest?.id || null}
+                        />
                     ))
                 )}
             </div>

@@ -1,3 +1,4 @@
+
 "use client";
 
 // components/hubs/ExperiencesHub.tsx
@@ -87,9 +88,7 @@ const ExperiencesHub = () => {
                 {isLoading ? <p>Loading experiences...</p> : experiences.length > 0 ? (
                     <AnimatePresence>
                         {experiences.map(exp => (
-                            <div key={exp.id}>
-                                <ExperienceCard experience={exp} onDelete={handleDelete} />
-                            </div>
+                            <ExperienceCard key={exp.id} experience={exp} onDelete={handleDelete} />
                         ))}
                     </AnimatePresence>
                 ) : (

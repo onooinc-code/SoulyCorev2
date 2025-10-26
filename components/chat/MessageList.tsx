@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef, useEffect, useMemo } from 'react';
@@ -154,7 +155,7 @@ const MessageList = ({
                                             onViewContext={(type) => userMessageIdForInspection && onViewContext(userMessageIdForInspection, type)}
                                         />
                                     </div>
-                                    {msg.role === 'model' && index < threadedMessages.length - 1 && <ConversationTurnSeparator />}
+                                    {msg.role === 'model' && index < threadedMessages.length - 1 && <ConversationTurnSeparator key={`sep-${msg.id}`} />}
                                 </React.Fragment>
                             )
                         })}

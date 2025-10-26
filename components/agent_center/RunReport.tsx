@@ -1,3 +1,4 @@
+
 "use client";
 
 // components/agent_center/RunReport.tsx
@@ -41,9 +42,7 @@ const PhaseDisplay = ({ phase, steps }: { phase: AgentPlanPhase, steps: AgentRun
             <div className="p-3 space-y-2">
                 <AnimatePresence>
                     {steps.map(step => (
-                        <div key={step.id}>
-                            <StepDisplay step={step} />
-                        </div>
+                        <StepDisplay key={step.id} step={step} />
                     ))}
                 </AnimatePresence>
             </div>
@@ -115,9 +114,7 @@ const RunReport = ({ runId }: { runId: string }) => {
             </header>
             <div className="flex-1 overflow-y-auto pr-2 space-y-4">
                 {phases.map(phase => (
-                    <div key={phase.id}>
-                        <PhaseDisplay phase={phase} steps={steps.filter(s => s.phase_id === phase.id)} />
-                    </div>
+                    <PhaseDisplay key={phase.id} phase={phase} steps={steps.filter(s => s.phase_id === phase.id)} />
                 ))}
             </div>
             {run.status === 'completed' || run.status === 'failed' ? (

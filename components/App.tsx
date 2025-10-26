@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ChatWindow from '@/components/chat/ChatWindow';
 import Sidebar from '@/components/Sidebar';
 import { useUIState } from '@/components/providers/UIStateProvider';
@@ -17,17 +18,26 @@ import AppStatusBar from './AppStatusBar';
 import TopProgressBar from './TopProgressBar';
 import Notifications from './Notifications';
 import { useConversation } from './providers/ConversationProvider';
+import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';
 
 export const App = () => {
     const { 
         isConversationPanelOpen, 
         isConversationPanelMinimized,
-        activeView 
+        activeView,
+        setCommandPaletteOpen,
     } = useUIState();
 
     const { menuItems, contextMenu, handleContextMenu, closeContextMenu } = useAppContextMenu();
     const { currentConversation, backgroundTaskCount } = useConversation();
     const [isBriefingOpen, setIsBriefingOpen] = useState(false);
+
+    // Setup keyboard shortcuts
+    const shortcuts = useMemo(() => ({
+        'mod+k': () => setCommandPaletteOpen(prev => !prev),
+    }), [setCommandPaletteOpen]);
+    useKeyboardShortcuts(shortcuts);
+
 
     useEffect(() => {
         const today = new Date().toDateString();

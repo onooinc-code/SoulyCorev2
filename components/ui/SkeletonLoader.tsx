@@ -1,3 +1,4 @@
+
 "use client";
 
 // components/ui/SkeletonLoader.tsx
@@ -19,10 +20,7 @@ export const SkeletonList = ({ count, itemClassName, containerClassName }: Skele
     return (
         <div className={containerClassName || "space-y-3"}>
             {[...Array(count)].map((_, i) => (
-                // FIX: Wrapped SkeletonLoader in a div with the key to resolve a TypeScript error. This pattern is consistent with other list-rendering fixes in the codebase where the key prop is incorrectly type-checked.
-                <div key={i}>
-                    <SkeletonLoader className={itemClassName} />
-                </div>
+                <SkeletonLoader key={i} className={itemClassName} />
             ))}
         </div>
     );
