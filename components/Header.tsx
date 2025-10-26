@@ -100,7 +100,9 @@ const VersionCard = () => {
                     )}
                 </AnimatePresence>
             </motion.div>
-            <VersionLogModal isOpen={isLogOpen} onClose={() => setIsLogOpen(false)} />
+            <AnimatePresence>
+                {isLogOpen && <VersionLogModal onClose={() => setIsLogOpen(false)} />}
+            </AnimatePresence>
         </>
     );
 };

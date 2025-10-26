@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -12,25 +13,17 @@ type EntityFormState = Partial<EntityDefinition> & {
 };
 
 const MergeConfirmationModal = ({
-    isOpen,
     onClose,
     onConfirm,
     entitiesToMerge,
 } : {
-    isOpen: boolean;
     onClose: () => void;
     onConfirm: (targetId: string, sourceId: string) => void;
     entitiesToMerge: EntityDefinition[];
 }) => {
-    const [targetId, setTargetId] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (entitiesToMerge.length > 0) {
-            setTargetId(entitiesToMerge[0].id);
-        }
-    }, [entitiesToMerge]);
-
-    if (!isOpen || entitiesToMerge.length !== 2) return null;
+    // This component now trusts its parent to only render it with a valid `entitiesToMerge` prop.
+    // The check `if (entitiesToMerge.length < 2)` is removed to prevent returning null during exit animations.
+    const [targetId, setTargetId] = useState<string | null>(entitiesToMerge[0]?.id || null);
 
     const [entityA, entityB] = entitiesToMerge;
     const targetEntity = targetId === entityA.id ? entityA : entityB;
@@ -312,7 +305,11 @@ const EntityHub = () => {
                 </table>
                  {filteredEntities.length === 0 && <p className="text-center text-gray-500 py-8">No entities found.</p>}
             </div>
-            <MergeConfirmationModal isOpen={isMergeModalOpen} onClose={() => setIsMergeModalOpen(false)} onConfirm={handleConfirmMerge} entitiesToMerge={entitiesToMerge} />
+            <AnimatePresence>
+                {isMergeModalOpen && entitiesToMerge.length === 2 && (
+                    <MergeConfirmationModal onClose={() => setIsMergeModalOpen(false)} onConfirm={handleConfirmMerge} entitiesToMerge={entitiesToMerge} />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

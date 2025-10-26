@@ -1,3 +1,4 @@
+
 "use client";
 
 // components/hubs/RelationshipGraph.tsx
@@ -9,12 +10,10 @@ import { PlusIcon } from '@/components/Icons';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const CreateRelationshipModal = ({
-    isOpen,
     onClose,
     nodes,
     onSave
 }: {
-    isOpen: boolean,
     onClose: () => void,
     nodes: GraphNode[],
     onSave: (sourceId: string, targetId: string, predicate: string) => Promise<void>
@@ -39,30 +38,26 @@ const CreateRelationshipModal = ({
     };
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
-                    <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-gray-800 rounded-lg w-full max-w-lg p-6" onClick={e => e.stopPropagation()}>
-                        <h3 className="font-bold text-lg mb-4">Create New Relationship</h3>
-                        <div className="space-y-4">
-                            <select value={sourceId} onChange={e => setSourceId(e.target.value)} className="w-full p-2 bg-gray-700 rounded-md">
-                                {nodes.map(n => <option key={n.id} value={n.id}>{n.name} ({n.type})</option>)}
-                            </select>
-                            <input value={predicate} onChange={e => setPredicate(e.target.value)} placeholder="Predicate (e.g., 'works_for', 'is_located_in')" className="w-full p-2 bg-gray-700 rounded-md"/>
-                            <select value={targetId} onChange={e => setTargetId(e.target.value)} className="w-full p-2 bg-gray-700 rounded-md">
-                                {nodes.map(n => <option key={n.id} value={n.id}>{n.name} ({n.type})</option>)}
-                            </select>
-                        </div>
-                        <div className="flex justify-end gap-2 mt-6">
-                            <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded-md">Cancel</button>
-                            <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 bg-green-600 rounded-md disabled:opacity-50">
-                                {isSaving ? 'Saving...' : 'Save Relationship'}
-                            </button>
-                        </div>
-                    </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-gray-800 rounded-lg w-full max-w-lg p-6" onClick={e => e.stopPropagation()}>
+                <h3 className="font-bold text-lg mb-4">Create New Relationship</h3>
+                <div className="space-y-4">
+                    <select value={sourceId} onChange={e => setSourceId(e.target.value)} className="w-full p-2 bg-gray-700 rounded-md">
+                        {nodes.map(n => <option key={n.id} value={n.id}>{n.name} ({n.type})</option>)}
+                    </select>
+                    <input value={predicate} onChange={e => setPredicate(e.target.value)} placeholder="Predicate (e.g., 'works_for', 'is_located_in')" className="w-full p-2 bg-gray-700 rounded-md"/>
+                    <select value={targetId} onChange={e => setTargetId(e.target.value)} className="w-full p-2 bg-gray-700 rounded-md">
+                        {nodes.map(n => <option key={n.id} value={n.id}>{n.name} ({n.type})</option>)}
+                    </select>
+                </div>
+                <div className="flex justify-end gap-2 mt-6">
+                    <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded-md">Cancel</button>
+                    <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 bg-green-600 rounded-md disabled:opacity-50">
+                        {isSaving ? 'Saving...' : 'Save Relationship'}
+                    </button>
+                </div>
+            </motion.div>
+        </motion.div>
     );
 };
 
@@ -112,7 +107,28 @@ const RelationshipGraph = () => {
     }
 
     if (!graphData || graphData.nodes.length === 0) {
-        return <div className="p-4 text-center">No relationships to display.</div>;
+        return (
+             <div className="p-4 h-full flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-lg">Entity Relationship Graph</h3>
+                    <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-md text-sm">
+                        <PlusIcon className="w-5 h-5"/> Create Relationship
+                    </button>
+                </div>
+                <div className="flex-1 flex items-center justify-center text-gray-500">
+                    No relationships to display. Add entities and relationships to see the graph.
+                </div>
+                 <AnimatePresence>
+                    {isModalOpen && graphData?.nodes && (
+                        <CreateRelationshipModal 
+                            onClose={() => setIsModalOpen(false)}
+                            nodes={graphData.nodes}
+                            onSave={handleSaveRelationship}
+                        />
+                    )}
+                </AnimatePresence>
+            </div>
+        );
     }
 
     return (
@@ -132,12 +148,15 @@ const RelationshipGraph = () => {
              <p className="text-xs text-gray-500 mt-4 text-center">
                 A visual graph component (e.g., using D3 or react-flow) would be implemented here to render this data.
             </p>
-            <CreateRelationshipModal 
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                nodes={graphData.nodes}
-                onSave={handleSaveRelationship}
-            />
+            <AnimatePresence>
+                {isModalOpen && (
+                    <CreateRelationshipModal 
+                        onClose={() => setIsModalOpen(false)}
+                        nodes={graphData.nodes}
+                        onSave={handleSaveRelationship}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

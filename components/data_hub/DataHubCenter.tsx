@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import ServicesPanel from './ServicesPanel';
 import LogsPanel from './LogsPanel';
 import type { DataSource } from '@/lib/types';
@@ -126,12 +127,15 @@ const DataHubCenter = () => {
                 {renderContent()}
             </main>
 
-            <DataSourceSettingsModal
-                isOpen={settingsModalState.isOpen}
-                onClose={handleCloseSettings}
-                service={settingsModalState.service}
-                onSaveSuccess={handleSaveSuccess}
-            />
+            <AnimatePresence>
+                {settingsModalState.isOpen && settingsModalState.service && (
+                    <DataSourceSettingsModal
+                        onClose={handleCloseSettings}
+                        service={settingsModalState.service}
+                        onSaveSuccess={handleSaveSuccess}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

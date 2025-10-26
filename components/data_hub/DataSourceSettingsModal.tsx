@@ -1,3 +1,4 @@
+
 "use client";
 
 // components/data_hub/DataSourceSettingsModal.tsx
@@ -18,16 +19,15 @@ import {
 import { XIcon } from '../Icons';
 
 interface DataSourceSettingsModalProps {
-    isOpen: boolean;
     onClose: () => void;
-    service: DataSource | null;
+    service: DataSource;
     onSaveSuccess: () => void;
 }
 
-const DataSourceSettingsModal = ({ isOpen, onClose, service, onSaveSuccess }: DataSourceSettingsModalProps) => {
-    if (!isOpen || !service) {
-        return null;
-    }
+const DataSourceSettingsModal = ({ onClose, service, onSaveSuccess }: DataSourceSettingsModalProps) => {
+    // The conditional return `if (!service) return null` has been removed.
+    // The parent component (`DataHubCenter`) is now responsible for ensuring this component
+    // is only rendered with a valid `service` prop, even during exit animations.
 
     // A mapping from a key (like service.name or service.id) to the component.
     const componentMap: { [key: string]: React.FC<any> } = {
