@@ -55,7 +55,7 @@ const ContextViewerModal = ({ onClose, messageId, contextType }: ContextViewerMo
     }, [messageId]);
 
     const renderContent = () => {
-        if (isLoading) return <p>Loading...</p>;
+        if (isLoading) return <p>Loading context...</p>;
         if (error) return <p className="text-red-400">Error: {error}</p>;
         if (!data || !contextType) return <p>No data to display.</p>;
         
@@ -65,7 +65,7 @@ const ContextViewerModal = ({ onClose, messageId, contextType }: ContextViewerMo
         if (typeof content === 'object' && content !== null) {
             content = JSON.stringify(content, null, 2);
         } else if (!content) {
-            content = "No data recorded for this field.";
+            content = "No data recorded for this field. The pipeline may not have completed or this is an older message.";
         }
 
         return (

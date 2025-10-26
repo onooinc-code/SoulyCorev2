@@ -82,7 +82,7 @@ The missing modal components were created and integrated to resolve the compilat
 1.  **Created Core Modals**: Implemented `ConversationSettingsModal.tsx` for model settings and `ContextViewerModal.tsx` for inspecting AI context.
 2.  **Added API Endpoint**: Created `app/api/models/route.ts` to supply a list of recommended models to the settings UI.
 3.  **Centralized Modal Logic**: Developed a `ChatModals.tsx` wrapper to manage the state and rendering of all chat-related modals, cleaning up `ChatWindow.tsx`.
-4.  **Integrated Triggers**: Updated `ChatWindow.tsx` to use the new wrapper and modified `MessageToolbar.tsx` to include buttons that open the context viewer. This completes the feature and resolves the critical build failure.
+4.  **Integrated Triggers**: The existing `ChatWindow.tsx` was already set up to use the new wrapper, and `MessageToolbar.tsx` already had the buttons to open the context viewer. Creating the missing files completed the feature and resolved the critical build failure.
 
 **Modified Files:**
 - `BugTrack.md`
@@ -90,5 +90,3 @@ The missing modal components were created and integrated to resolve the compilat
 - `components/ConversationSettingsModal.tsx` (new file)
 - `components/ContextViewerModal.tsx` (new file)
 - `components/chat/ChatModals.tsx` (new file)
-- `components/ChatWindow.tsx`
-- `components/MessageToolbar.tsx`

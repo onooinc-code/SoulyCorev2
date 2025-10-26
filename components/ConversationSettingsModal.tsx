@@ -7,7 +7,7 @@ import { useConversation } from '@/components/providers/ConversationProvider';
 import { useLog } from '@/components/providers/LogProvider';
 
 const ConversationSettingsModal = ({ onClose }: { onClose: () => void; }) => {
-    const { currentConversation, updateCurrentConversation, setStatus, clearError } = useConversation();
+    const { currentConversation, updateCurrentConversation } = useConversation();
     const { log } = useLog();
     
     const [model, setModel] = useState('');
@@ -39,30 +39,15 @@ const ConversationSettingsModal = ({ onClose }: { onClose: () => void; }) => {
         }
     }, [currentConversation]);
 
-    const handleSave = async () => {
+    const handleSave = () => {
         if (!currentConversation) return;
-        clearError();
 
         const updatedData = { model, temperature, topP };
         log('User clicked "Save" in Conversation Settings Modal', { conversationId: currentConversation.id, updatedData });
         
-        // Optimistic update
+        // The provider handles both optimistic UI update and the API call.
         updateCurrentConversation(updatedData);
         onClose();
-
-        try {
-            const res = await fetch(`/api/conversations/${currentConversation.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedData)
-            });
-            if (!res.ok) throw new Error('Failed to update model settings');
-            
-        } catch(error) {
-            const errorMessage = (error as Error).message;
-            setStatus({ error: errorMessage });
-            log('Failed to save conversation model settings', { error: { message: errorMessage } }, 'error');
-        }
     };
 
     return (
@@ -89,7 +74,7 @@ const ConversationSettingsModal = ({ onClose }: { onClose: () => void; }) => {
                 </div>
                 <div>
                     <p className="text-sm text-gray-400 mb-2">
-                        These settings apply only to this conversation. Default settings for new chats can be changed in Global Settings.
+                        These settings apply only to this conversation.
                     </p>
                 </div>
                 <div>

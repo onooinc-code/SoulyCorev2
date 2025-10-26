@@ -5,26 +5,25 @@ import dynamic from 'next/dynamic';
 import type { Conversation } from '@/lib/types';
 import { AnimatePresence } from 'framer-motion';
 
-// Modals
+// Directly imported modals
 import ConversationSettingsModal from '@/components/ConversationSettingsModal';
 import AgentConfigModal from '@/components/AgentConfigModal';
 import SummaryModal from '@/components/SummaryModal';
 
-// Dynamically imported modals
+// Dynamically imported modals for performance
 const CognitiveInspectorModal = dynamic(() => import('@/components/CognitiveInspectorModal'), {
     ssr: false,
     loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><p className="text-white">Loading Inspector...</p></div>
 });
-
 const ContextViewerModal = dynamic(() => import('@/components/ContextViewerModal'), {
     ssr: false,
     loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><p className="text-white">Loading Viewer...</p></div>
 });
-
 const HtmlViewerModal = dynamic(() => import('@/components/HtmlViewerModal'), {
     ssr: false,
     loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><p className="text-white">Loading Viewer...</p></div>
 });
+
 
 interface ChatModalsProps {
     isSettingsModalOpen: boolean;
