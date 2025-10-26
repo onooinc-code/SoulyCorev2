@@ -148,3 +148,28 @@ Enhanced the Communication Hub to display the unique incoming webhook URL after 
 - **API `channels`**: The `GET` and `POST` endpoints now dynamically construct and include an `incomingUrl` property for each webhook channel in their responses.
 - **`WebhookCreator.tsx`**: After successfully creating a webhook channel, the component now displays a success view with the generated incoming URL and a "Copy to Clipboard" button.
 - **`ChannelDashboard.tsx`**: The `ChannelCard` component has been updated to display both the incoming and outgoing URLs for a webhook channel, each with its own convenient copy button.
+---
+
+### Update #9: Implement Full Projects Hub CRUD
+
+**Details:**
+Made the Projects Hub fully interactive by implementing Create, Read, Update, and Delete (CRUD) functionality for both projects and their associated tasks. Users can now manage their projects lifecycle directly from the UI.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `app/api/projects/[projectId]/tasks/[taskId]/route.ts` (new file)
+- `components/modals/CreateProjectModal.tsx` (new file)
+- `components/modals/CreateTaskModal.tsx` (new file)
+- `components/ProjectsHub.tsx`
+- `components/Icons.tsx`
+- `components/icons/PlusCircleIcon.tsx` (new file)
+- `components/SummaryModal.tsx` (deleted)
+- `components/modals/SummaryModal.tsx` (new file)
+- `components/chat/ChatModals.tsx`
+
+**Changes Made:**
+- **Backend**: Added a new API endpoint for updating and deleting individual tasks.
+- **Frontend**: Created two new modals (`CreateProjectModal` and `CreateTaskModal`) to handle creation of projects and tasks.
+- **`ProjectsHub.tsx`**: Overhauled the component to manage modal states and handle API calls for creating projects, adding tasks, toggling task completion status, and deleting tasks. The UI now includes buttons for all these actions.
+- **Icons**: Added a new `PlusCircleIcon` for use in the hub.
+- **`SummaryModal`**: Made the modal more generic by accepting a `title` prop and moved it into the `/modals` directory for better organization. Updated `ChatModals.tsx` to reflect this change.

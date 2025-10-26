@@ -8,7 +8,7 @@ import { AnimatePresence } from 'framer-motion';
 // Directly imported modals
 import ConversationSettingsModal from '@/components/ConversationSettingsModal';
 import AgentConfigModal from '@/components/AgentConfigModal';
-import SummaryModal from '@/components/SummaryModal';
+import SummaryModal from '@/components/modals/SummaryModal';
 
 // Dynamically imported modals for performance
 const CognitiveInspectorModal = dynamic(() => import('@/components/CognitiveInspectorModal'), {
@@ -79,6 +79,7 @@ const ChatModals = ({
                         onClose={() => setSummaryModalState({isOpen: false, text: '', isLoading: false})}
                         summaryText={summaryModalState.text}
                         isLoading={summaryModalState.isLoading}
+                        title="Message Summary"
                     />
                 )}
             </AnimatePresence>

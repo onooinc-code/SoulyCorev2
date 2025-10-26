@@ -43,6 +43,7 @@ export * from './icons/PaperclipIcon';
 export * from './icons/PinFilledIcon';
 export * from './icons/PinIcon';
 export * from './icons/PlusIcon';
+export * from './icons/PlusCircleIcon';
 export * from './icons/PowerIcon';
 export * from './icons/PromptsIcon';
 export * from './icons/RefreshIcon';

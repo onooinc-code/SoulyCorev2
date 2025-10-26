@@ -4,29 +4,26 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Project, ProjectTask } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';
-import { PlusIcon, SparklesIcon } from '@/components/Icons';
+import { PlusIcon, SparklesIcon, PlusCircleIcon, TrashIcon } from '@/components/Icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import dynamic from 'next/dynamic';
 
-const SummaryModal = ({ summary, onClose }: { summary: string, onClose: () => void }) => (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
-        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-gray-800 rounded-lg w-full max-w-2xl p-6" onClick={e => e.stopPropagation()}>
-            <h3 className="font-bold text-lg mb-4">AI Project Summary</h3>
-            <div className="prose-custom max-h-96 overflow-y-auto">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{summary}</ReactMarkdown>
-            </div>
-            <button onClick={onClose} className="mt-4 w-full py-2 bg-indigo-600 rounded-md">Close</button>
-        </motion.div>
-    </motion.div>
-);
+const SummaryModal = dynamic(() => import('./modals/SummaryModal'));
+const CreateProjectModal = dynamic(() => import('./modals/CreateProjectModal'));
+const CreateTaskModal = dynamic(() => import('./modals/CreateTaskModal'));
 
 const ProjectsHub = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [tasks, setTasks] = useState<Record<string, ProjectTask[]>>({});
     const [isLoading, setIsLoading] = useState(true);
-    const [summary, setSummary] = useState<string | null>(null);
-    const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+    const [summaryState, setSummaryState] = useState<{ isOpen: boolean; text: string; isLoading: boolean }>({ isOpen: false, text: '', isLoading: false });
+    
+    const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+    const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+    const [currentProjectIdForTask, setCurrentProjectIdForTask] = useState<string | null>(null);
+
     const { log } = useLog();
     const { addNotification } = useNotification();
 
@@ -56,43 +53,83 @@ const ProjectsHub = () => {
     }, [fetchProjectsAndTasks]);
 
     const handleGenerateSummary = async (projectId: string) => {
-        setIsSummaryLoading(true);
-        setSummary("Generating summary...");
+        setSummaryState({ isOpen: true, text: '', isLoading: true });
         try {
             const res = await fetch(`/api/projects/${projectId}/summarize`, { method: 'POST' });
             if (!res.ok) throw new Error("Failed to generate summary");
             const data = await res.json();
-            setSummary(data.summary);
+            setSummaryState({ isOpen: true, text: data.summary, isLoading: false });
         } catch (error) {
-            setSummary(`Error: ${(error as Error).message}`);
-        } finally {
-            setIsSummaryLoading(false);
+            setSummaryState({ isOpen: true, text: `Error: ${(error as Error).message}`, isLoading: false });
         }
     };
+    
+    const handleOpenTaskModal = (projectId: string) => {
+        setCurrentProjectIdForTask(projectId);
+        setIsTaskModalOpen(true);
+    };
+    
+    const handleTaskStatusToggle = async (task: ProjectTask) => {
+        const newStatus = task.status === 'done' ? 'todo' : 'done';
+        try {
+            const res = await fetch(`/api/projects/${task.project_id}/tasks/${task.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            if (!res.ok) throw new Error("Failed to update task status");
+            await fetchProjectsAndTasks();
+        } catch(error) {
+            addNotification({ type: 'error', title: 'Update Failed', message: (error as Error).message });
+        }
+    };
+
+    const handleDeleteTask = async (task: ProjectTask) => {
+        if (!window.confirm(`Are you sure you want to delete the task "${task.title}"?`)) return;
+        try {
+             const res = await fetch(`/api/projects/${task.project_id}/tasks/${task.id}`, { method: 'DELETE' });
+             if (!res.ok) throw new Error("Failed to delete task");
+             addNotification({ type: 'success', title: 'Task Deleted' });
+             await fetchProjectsAndTasks();
+        } catch (error) {
+            addNotification({ type: 'error', title: 'Delete Failed', message: (error as Error).message });
+        }
+    };
+
 
     return (
         <div className="w-full h-full flex flex-col p-6 bg-gray-900">
             <header className="flex justify-between items-center mb-4 pb-4 border-b border-gray-700">
                 <h2 className="text-xl font-bold">Projects Hub</h2>
-                <button className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-500 text-sm">
+                <button onClick={() => setIsProjectModalOpen(true)} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-500 text-sm">
                     <PlusIcon className="w-5 h-5" /> Add Project
                 </button>
             </header>
             <main className="flex-1 overflow-y-auto pr-2 space-y-4">
                 {isLoading ? <p>Loading projects...</p> : projects.map(project => (
                     <div key={project.id} className="bg-gray-800 p-4 rounded-lg">
-                        <div className="flex justify-between items-center">
-                            <h3 className="font-semibold text-lg">{project.name}</h3>
-                            <button onClick={() => handleGenerateSummary(project.id)} disabled={isSummaryLoading} className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-xs rounded-md hover:bg-blue-500 disabled:opacity-50">
-                                <SparklesIcon className="w-4 h-4" /> AI Summary
-                            </button>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h3 className="font-semibold text-lg">{project.name}</h3>
+                                <p className="text-sm text-gray-400">{project.description}</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => handleGenerateSummary(project.id)} disabled={summaryState.isLoading} className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-xs rounded-md hover:bg-blue-500 disabled:opacity-50">
+                                    <SparklesIcon className="w-4 h-4" /> AI Summary
+                                </button>
+                                <button onClick={() => handleOpenTaskModal(project.id)} className="flex items-center gap-1 px-2 py-1 bg-green-600 text-xs rounded-md hover:bg-green-500">
+                                    <PlusCircleIcon className="w-4 h-4" /> Add Task
+                                </button>
+                            </div>
                         </div>
-                        <p className="text-sm text-gray-400">{project.description}</p>
-                        <ul className="mt-2 text-sm">
+                        <ul className="mt-4 space-y-2 text-sm">
                             {(tasks[project.id] || []).map(task => (
-                                <li key={task.id} className="flex items-center gap-2">
-                                    <input type="checkbox" checked={task.status === 'done'} readOnly className="h-4 w-4 rounded-sm bg-gray-700 border-gray-600 text-indigo-600 focus:ring-0" />
-                                    <span>{task.title}</span>
+                                <li key={task.id} className="group flex items-center gap-2 p-1 rounded-md hover:bg-gray-700/50">
+                                    <input type="checkbox" checked={task.status === 'done'} onChange={() => handleTaskStatusToggle(task)} className="h-4 w-4 rounded-sm bg-gray-700 border-gray-600 text-indigo-600 focus:ring-0 cursor-pointer" />
+                                    <span className={`flex-1 ${task.status === 'done' ? 'line-through text-gray-500' : ''}`}>{task.title}</span>
+                                    <button onClick={() => handleDeleteTask(task)} className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400">
+                                        <TrashIcon className="w-4 h-4" />
+                                    </button>
                                 </li>
                             ))}
                         </ul>
@@ -100,7 +137,13 @@ const ProjectsHub = () => {
                 ))}
             </main>
             <AnimatePresence>
-                {summary && <SummaryModal summary={summary} onClose={() => setSummary(null)} />}
+                {summaryState.isOpen && <SummaryModal title="Project Summary" summaryText={summaryState.text} isLoading={summaryState.isLoading} onClose={() => setSummaryState({ isOpen: false, text: '', isLoading: false })} />}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isProjectModalOpen && <CreateProjectModal onClose={() => setIsProjectModalOpen(false)} onProjectCreated={fetchProjectsAndTasks} />}
+            </AnimatePresence>
+             <AnimatePresence>
+                {isTaskModalOpen && currentProjectIdForTask && <CreateTaskModal projectId={currentProjectIdForTask} onClose={() => setIsTaskModalOpen(false)} onTaskCreated={fetchProjectsAndTasks} />}
             </AnimatePresence>
         </div>
     );
