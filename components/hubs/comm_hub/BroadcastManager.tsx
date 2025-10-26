@@ -1,6 +1,6 @@
+// components/hubs/comm_hub/BroadcastManager.tsx
 "use client";
 
-// components/hubs/comm_hub/BroadcastManager.tsx
 import React, { useState } from 'react';
 import { useNotification } from '@/lib/hooks/use-notifications';
 
@@ -9,27 +9,43 @@ const BroadcastManager = () => {
     const [isSending, setIsSending] = useState(false);
     const { addNotification } = useNotification();
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!message.trim()) return;
         setIsSending(true);
-        console.log("Broadcasting message:", message);
-        // Simulate API call
-        setTimeout(() => {
+        try {
+            const res = await fetch('/api/comm/broadcast', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message }),
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Failed to send broadcast');
+            }
+            
             setIsSending(false);
             setMessage('');
             addNotification({
                 type: 'success',
                 title: 'Broadcast Sent',
-                message: `Message sent to all clients: "${message.substring(0, 30)}..."`
+                message: `Message sent to all clients and logged.`
             });
-        }, 1000);
+        } catch (error) {
+            setIsSending(false);
+            addNotification({
+                type: 'error',
+                title: 'Broadcast Failed',
+                message: (error as Error).message
+            });
+        }
     };
 
     return (
-        <div className="p-4 bg-gray-900/50 rounded-lg">
+        <div className="p-4 bg-gray-900/50 rounded-lg h-full flex flex-col">
             <h4 className="text-lg font-bold mb-4">Send App-Wide Broadcast</h4>
-            <div className="space-y-4">
-                 <div>
+            <div className="space-y-4 flex-1 flex flex-col">
+                 <div className="flex-1">
                     <label htmlFor="broadcast-message" className="block text-sm font-medium text-gray-400 mb-2">
                         Broadcast Message
                     </label>
@@ -38,8 +54,7 @@ const BroadcastManager = () => {
                         value={message}
                         onChange={e => setMessage(e.target.value)}
                         placeholder="e.g., System will be down for maintenance at 2 AM EST."
-                        className="w-full p-2 bg-gray-700 rounded-lg text-sm"
-                        rows={3}
+                        className="w-full h-full p-2 bg-gray-700 rounded-lg text-sm resize-none"
                     />
                 </div>
                 <button
