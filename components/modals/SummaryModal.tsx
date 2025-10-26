@@ -10,10 +10,10 @@ interface SummaryModalProps {
     onClose: () => void;
     summaryText: string;
     isLoading: boolean;
-    title?: string;
+    title: string;
 }
 
-const SummaryModal = ({ onClose, summaryText, isLoading, title = "AI Summary" }: SummaryModalProps) => {
+const SummaryModal = ({ onClose, summaryText, isLoading, title }: SummaryModalProps) => {
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -36,11 +36,11 @@ const SummaryModal = ({ onClose, summaryText, isLoading, title = "AI Summary" }:
                         <XIcon className="w-6 h-6" />
                     </button>
                 </div>
-                <div className="prose-custom max-h-80 overflow-y-auto">
+                <div className="prose-custom max-h-80 overflow-y-auto pr-2">
                     {isLoading ? (
                         <p>Generating summary...</p>
                     ) : (
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryText || ''}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryText || 'No summary available.'}</ReactMarkdown>
                     )}
                 </div>
             </motion.div>

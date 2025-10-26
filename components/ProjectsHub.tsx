@@ -6,8 +6,6 @@ import { useLog } from '@/components/providers/LogProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';
 import { PlusIcon, SparklesIcon, PlusCircleIcon, TrashIcon } from '@/components/Icons';
 import { AnimatePresence, motion } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import dynamic from 'next/dynamic';
 
 const SummaryModal = dynamic(() => import('./modals/SummaryModal'));
@@ -18,7 +16,7 @@ const ProjectsHub = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [tasks, setTasks] = useState<Record<string, ProjectTask[]>>({});
     const [isLoading, setIsLoading] = useState(true);
-    const [summaryState, setSummaryState] = useState<{ isOpen: boolean; text: string; isLoading: boolean }>({ isOpen: false, text: '', isLoading: false });
+    const [summaryState, setSummaryState] = useState<{ isOpen: boolean; text: string; isLoading: boolean, title: string }>({ isOpen: false, text: '', isLoading: false, title: '' });
     
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -52,15 +50,15 @@ const ProjectsHub = () => {
         fetchProjectsAndTasks();
     }, [fetchProjectsAndTasks]);
 
-    const handleGenerateSummary = async (projectId: string) => {
-        setSummaryState({ isOpen: true, text: '', isLoading: true });
+    const handleGenerateSummary = async (projectId: string, projectName: string) => {
+        setSummaryState({ isOpen: true, text: '', isLoading: true, title: `AI Summary for ${projectName}` });
         try {
             const res = await fetch(`/api/projects/${projectId}/summarize`, { method: 'POST' });
             if (!res.ok) throw new Error("Failed to generate summary");
             const data = await res.json();
-            setSummaryState({ isOpen: true, text: data.summary, isLoading: false });
+            setSummaryState(prev => ({ ...prev, text: data.summary, isLoading: false }));
         } catch (error) {
-            setSummaryState({ isOpen: true, text: `Error: ${(error as Error).message}`, isLoading: false });
+            setSummaryState(prev => ({ ...prev, text: `Error: ${(error as Error).message}`, isLoading: false }));
         }
     };
     
@@ -71,6 +69,13 @@ const ProjectsHub = () => {
     
     const handleTaskStatusToggle = async (task: ProjectTask) => {
         const newStatus = task.status === 'done' ? 'todo' : 'done';
+        
+        // Optimistic update
+        setTasks(prev => ({
+            ...prev,
+            [task.project_id]: prev[task.project_id].map(t => t.id === task.id ? {...t, status: newStatus} : t)
+        }));
+
         try {
             const res = await fetch(`/api/projects/${task.project_id}/tasks/${task.id}`, {
                 method: 'PUT',
@@ -78,21 +83,35 @@ const ProjectsHub = () => {
                 body: JSON.stringify({ status: newStatus }),
             });
             if (!res.ok) throw new Error("Failed to update task status");
-            await fetchProjectsAndTasks();
+            // No need to re-fetch on success due to optimistic update
         } catch(error) {
             addNotification({ type: 'error', title: 'Update Failed', message: (error as Error).message });
+            // Revert optimistic update
+            setTasks(prev => ({
+                ...prev,
+                [task.project_id]: prev[task.project_id].map(t => t.id === task.id ? {...t, status: task.status} : t)
+            }));
         }
     };
 
     const handleDeleteTask = async (task: ProjectTask) => {
         if (!window.confirm(`Are you sure you want to delete the task "${task.title}"?`)) return;
+        
+        const originalTasks = { ...tasks };
+        // Optimistic update
+        setTasks(prev => ({
+            ...prev,
+            [task.project_id]: prev[task.project_id].filter(t => t.id !== task.id)
+        }));
+        
         try {
              const res = await fetch(`/api/projects/${task.project_id}/tasks/${task.id}`, { method: 'DELETE' });
              if (!res.ok) throw new Error("Failed to delete task");
              addNotification({ type: 'success', title: 'Task Deleted' });
-             await fetchProjectsAndTasks();
         } catch (error) {
             addNotification({ type: 'error', title: 'Delete Failed', message: (error as Error).message });
+            // Revert
+            setTasks(originalTasks);
         }
     };
 
@@ -114,7 +133,7 @@ const ProjectsHub = () => {
                                 <p className="text-sm text-gray-400">{project.description}</p>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={() => handleGenerateSummary(project.id)} disabled={summaryState.isLoading} className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-xs rounded-md hover:bg-blue-500 disabled:opacity-50">
+                                <button onClick={() => handleGenerateSummary(project.id, project.name)} disabled={summaryState.isLoading} className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-xs rounded-md hover:bg-blue-500 disabled:opacity-50">
                                     <SparklesIcon className="w-4 h-4" /> AI Summary
                                 </button>
                                 <button onClick={() => handleOpenTaskModal(project.id)} className="flex items-center gap-1 px-2 py-1 bg-green-600 text-xs rounded-md hover:bg-green-500">
@@ -137,7 +156,7 @@ const ProjectsHub = () => {
                 ))}
             </main>
             <AnimatePresence>
-                {summaryState.isOpen && <SummaryModal title="Project Summary" summaryText={summaryState.text} isLoading={summaryState.isLoading} onClose={() => setSummaryState({ isOpen: false, text: '', isLoading: false })} />}
+                {summaryState.isOpen && <SummaryModal title={summaryState.title} summaryText={summaryState.text} isLoading={summaryState.isLoading} onClose={() => setSummaryState({ isOpen: false, text: '', isLoading: false, title: '' })} />}
             </AnimatePresence>
             <AnimatePresence>
                 {isProjectModalOpen && <CreateProjectModal onClose={() => setIsProjectModalOpen(false)} onProjectCreated={fetchProjectsAndTasks} />}

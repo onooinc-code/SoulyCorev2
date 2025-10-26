@@ -50,16 +50,16 @@ const CreateProjectModal = ({ onClose, onProjectCreated }: CreateProjectModalPro
                 <main className="p-6 space-y-4">
                     <div>
                         <label className="text-sm font-medium text-gray-400">Project Name</label>
-                        <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full mt-1 p-2 bg-gray-700 rounded-md text-sm" />
+                        <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full mt-1 p-2 bg-gray-700 rounded-md text-sm" autoFocus />
                     </div>
                     <div>
-                        <label className="text-sm font-medium text-gray-400">Description</label>
+                        <label className="text-sm font-medium text-gray-400">Description (Optional)</label>
                         <textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full mt-1 p-2 bg-gray-700 rounded-md text-sm" rows={3}></textarea>
                     </div>
                 </main>
                 <footer className="flex justify-end gap-2 p-4 bg-gray-900/50 rounded-b-lg">
                     <button onClick={onClose} className="px-4 py-2 text-sm bg-gray-600 rounded-md">Cancel</button>
-                    <button onClick={handleSubmit} disabled={isLoading} className="px-4 py-2 text-sm bg-indigo-600 rounded-md disabled:opacity-50">{isLoading ? 'Creating...' : 'Create Project'}</button>
+                    <button onClick={handleSubmit} disabled={isLoading || !name.trim()} className="px-4 py-2 text-sm bg-indigo-600 rounded-md disabled:opacity-50">{isLoading ? 'Creating...' : 'Create Project'}</button>
                 </footer>
             </motion.div>
         </motion.div>

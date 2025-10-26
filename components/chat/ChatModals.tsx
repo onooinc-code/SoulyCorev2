@@ -76,10 +76,10 @@ const ChatModals = ({
             <AnimatePresence>
                 {summaryModalState.isOpen && (
                     <SummaryModal 
+                        title="Message Summary"
                         onClose={() => setSummaryModalState({isOpen: false, text: '', isLoading: false})}
                         summaryText={summaryModalState.text}
                         isLoading={summaryModalState.isLoading}
-                        title="Message Summary"
                     />
                 )}
             </AnimatePresence>

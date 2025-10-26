@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function PUT(req: NextRequest, { params }: { params: { projectId: string, taskId: string } }) {
     try {
         const { taskId } = params;
-        const { title, description, status, order_index } = await req.json();
+        const body = await req.json();
 
         // Fetch existing task to merge undefined fields
         const { rows: existingRows } = await sql`SELECT * FROM project_tasks WHERE id = ${taskId}`;
@@ -17,6 +17,8 @@ export async function PUT(req: NextRequest, { params }: { params: { projectId: s
             return NextResponse.json({ error: 'Task not found' }, { status: 404 });
         }
         const existingTask = existingRows[0];
+        
+        const { title, description, status, order_index } = body;
 
         const { rows } = await sql<ProjectTask>`
             UPDATE project_tasks
