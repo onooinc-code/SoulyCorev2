@@ -1,3 +1,5 @@
+
+
 "use client";
 
 // components/hubs/ExperiencesHub.tsx
@@ -8,7 +10,14 @@ import { useNotification } from '@/lib/hooks/use-notifications';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BrainIcon, TrashIcon } from '@/components/Icons';
 
-const ExperienceCard = ({ experience, onDelete }: { experience: Experience, onDelete: (id: string) => void }) => {
+// FIX: Extracted props to a dedicated interface to fix type error with `key` prop.
+interface ExperienceCardProps {
+    experience: Experience;
+    onDelete: (id: string) => void;
+}
+
+// FIX: Changed the ExperienceCard component to be of type React.FC<ExperienceCardProps> to correctly type it as a React functional component.
+const ExperienceCard: React.FC<ExperienceCardProps> = ({ experience, onDelete }) => {
     return (
         <motion.div
             layout

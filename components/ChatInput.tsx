@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Contact, Prompt } from '@/lib/types';
 import { SendIcon, PaperclipIcon } from '@/components/Icons';
-import { useLog } from '@/components/providers/LogProvider';
 import { usePrompts } from '@/lib/hooks/usePrompts';
 import FillPromptVariablesModal from './FillPromptVariablesModal';
 import { useConversation } from './providers/ConversationProvider';
@@ -24,7 +23,6 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     const [promptVariables, setPromptVariables] = useState<string[]>([]);
     
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const { log } = useLog();
     const { prompts, fetchPrompts } = usePrompts();
     const { startAgentRun, startWorkflow, currentConversation } = useConversation();
     const { setActiveView } = useUIState();
@@ -89,7 +87,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
             onSendMessage(content, mentionedContacts);
             setContent('');
             setMentionedContacts([]);
-            log('User sent a message.', { contentLength: content.length });
+            console.log('User sent a message.', { contentLength: content.length });
         }
     };
 

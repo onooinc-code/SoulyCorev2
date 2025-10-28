@@ -193,6 +193,7 @@ const statements = [
     name VARCHAR(255) UNIQUE NOT NULL,
     overview TEXT,
     status VARCHAR(50) NOT NULL,
+    category VARCHAR(255),
     ui_ux_breakdown_json JSONB,
     logic_flow TEXT,
     key_files_json JSONB,

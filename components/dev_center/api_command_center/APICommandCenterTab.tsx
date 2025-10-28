@@ -6,7 +6,7 @@ import RequestPanel from './RequestPanel';
 import ResponsePanel from './ResponsePanel';
 import type { ApiEndpoint } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
-import { useAppContext } from '@/components/providers/AppProvider';
+import { useAppContext } from '@/lib/hooks/useAppContext';
 import { RefreshIcon } from '@/components/Icons';
 
 const APICommandCenterTab = () => {

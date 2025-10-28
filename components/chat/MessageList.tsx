@@ -27,7 +27,7 @@ interface MessageListProps {
     onViewContext: (messageId: string, type: 'prompt' | 'system' | 'config') => void;
 }
 
-const ConversationTurnSeparator = () => (
+const ConversationTurnSeparator: React.FC = () => (
     <motion.div 
         className="relative my-4"
         initial={{ opacity: 0, y: -10 }}

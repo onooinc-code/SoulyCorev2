@@ -38,7 +38,8 @@ const IconButton = ({ icon: Icon, title, onClick, active = false }: { icon: Reac
     </button>
 );
 
-const ServiceCard = ({ service, onSettingsClick }: ServiceCardProps) => {
+// FIX: Changed the ServiceCard component to be of type React.FC<ServiceCardProps> to correctly type it as a React functional component. This resolves the TypeScript error where the 'key' prop, used in list rendering, was being incorrectly checked against the component's own props.
+const ServiceCard: React.FC<ServiceCardProps> = ({ service, onSettingsClick }) => {
     const TypeIcon = typeInfo[service.type]?.icon || CircleStackIcon;
     const sInfo = statusInfo[service.status];
 

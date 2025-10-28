@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useLog } from '../providers/LogProvider';
-import { useAppContext } from '../providers/AppProvider';
+import { useAppContext } from '@/lib/hooks/useAppContext';
 
 type ModuleType = 'structured' | 'episodic' | 'semantic' | 'none';
 

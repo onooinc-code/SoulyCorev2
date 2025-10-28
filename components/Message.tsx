@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -29,7 +30,7 @@ interface MessageProps {
     onViewContext: (type: 'prompt' | 'system' | 'config') => void;
 }
 
-const Message = (props: MessageProps) => {
+const Message: React.FC<MessageProps> = (props) => {
     const { message, onUpdateMessage } = props;
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(message.content);

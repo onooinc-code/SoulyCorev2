@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 // FIX: Corrected import paths for types.
@@ -12,6 +13,7 @@ export async function PUT(req: NextRequest, { params }: { params: { featureId: s
             name, 
             overview, 
             status, 
+            category,
             ui_ux_breakdown_json,
             logic_flow,
             key_files_json,
@@ -38,6 +40,7 @@ export async function PUT(req: NextRequest, { params }: { params: { featureId: s
                 name = ${name}, 
                 overview = ${overview}, 
                 status = ${status as FeatureStatus}, 
+                category = ${category || 'Uncategorized'},
                 ui_ux_breakdown_json = ${JSON.stringify(parsedUiUx)}, 
                 logic_flow = ${logic_flow}, 
                 key_files_json = ${JSON.stringify(parsedKeyFiles)}, 

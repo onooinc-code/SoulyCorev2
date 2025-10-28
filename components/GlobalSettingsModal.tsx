@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -8,7 +6,6 @@ import { motion } from 'framer-motion';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import type { AppSettings } from '@/lib/types';
-import { useLog } from './providers/LogProvider';
 
 type Theme = 'theme-dark' | 'theme-light' | 'theme-solarized';
 type MessageFontSize = 'xs' | 'sm' | 'base' | 'lg';
@@ -16,7 +13,6 @@ type MessageFontSize = 'xs' | 'sm' | 'base' | 'lg';
 const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void; }) => {
     const { settings, saveSettings, setTheme, changeGlobalFontSize } = useSettings();
     const { setStatus, clearError } = useConversation();
-    const { log } = useLog();
     const [localSettings, setLocalSettings] = useState<AppSettings | null>(null);
     const [availableModels, setAvailableModels] = useState<string[]>([]);
 
@@ -34,26 +30,26 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
                 const data = await res.json();
                 setAvailableModels(data);
             } catch (error) {
-                log('Failed to fetch available models for global settings', { error }, 'error');
+                console.error('Failed to fetch available models for global settings', { error });
             }
         };
         fetchModels();
-    }, [log]);
+    }, []);
 
 
     const handleSave = async () => {
         if (!localSettings) return;
         clearError();
         setStatus({ currentAction: "Saving settings..." });
-        log('User clicked "Save" in Global Settings', { settings: localSettings });
+        console.log('User clicked "Save" in Global Settings', { settings: localSettings });
         try {
             await saveSettings(localSettings);
-            log('Global settings saved successfully.');
+            console.log('Global settings saved successfully.');
             setIsOpen(false);
         } catch (error) {
             const errorMessage = (error as Error).message;
             setStatus({ error: errorMessage });
-            log('Failed to save settings.', { error: { message: errorMessage } }, 'error');
+            console.error('Failed to save settings.', { error: { message: errorMessage } });
         } finally {
             setStatus({ currentAction: "" });
         }

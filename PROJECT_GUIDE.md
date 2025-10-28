@@ -1,4 +1,4 @@
-# HedraCore: The Definitive Developer's Guide
+# SoulyCore: The Definitive Developer's Guide
 
 **Version:** 0.4.0
 **Status:** Live (Reflects Cognitive Architecture v2.0)
@@ -19,13 +19,13 @@
 
 ## 1. Project Vision: The Total Recall Companion
 
-**HedraCore** is a next-generation, AI-powered assistant built for a single power user. Its foundational principle is a persistent, intelligent, and multi-faceted memory. It functions as a true **Total Recall Companion**, actively learning from every interaction to become an indispensable partner for managing complex information and executing sophisticated workflows through a secure, cloud-native, and highly configurable platform.
+**SoulyCore** is a next-generation, AI-powered assistant built for a single power user. Its foundational principle is a persistent, intelligent, and multi-faceted memory. It functions as a true **Total Recall Companion**, actively learning from every interaction to become an indispensable partner for managing complex information and executing sophisticated workflows through a secure, cloud-native, and highly configurable platform.
 
 ---
 
 ## 2. System Architecture
 
-HedraCore uses a modern, server-centric architecture where the frontend UI acts as a client to a powerful backend Core Engine. This ensures a clean separation of concerns and enhances security.
+SoulyCore uses a modern, server-centric architecture where the frontend UI acts as a client to a powerful backend Core Engine. This ensures a clean separation of concerns and enhances security.
 
 ```mermaid
 graph TD
@@ -35,36 +35,37 @@ graph TD
 
     subgraph "Vercel Serverless Backend"
         B[Next.js API Routes]
-        C[Core Services Layer - Cognitive Engine]
+        C[Core Engine (core/)]
     end
 
-    subgraph "Core Services Layer (core/)"
+    subgraph "Core Engine"
         subgraph C
             D[Context Assembly Pipeline]
             E[Memory Extraction Pipeline]
             F[LLM Provider Abstraction]
+            G[Autonomous Agent]
         end
     end
     
     subgraph "Data Stores & Memory Modules"
-        G[Episodic Memory - Vercel Postgres]
-        H[Semantic Memory - Pinecone]
-        I[Structured Memory - Vercel Postgres]
-        J[Working Memory - Vercel KV]
+        H[Episodic Memory - Vercel Postgres]
+        I[Semantic Memory - Pinecone]
+        J[Structured Memory - Vercel Postgres]
+        K[Working Memory - Vercel KV]
     end
 
     subgraph "External Services"
-        K[Google Gemini API]
+        L[Google Gemini API]
     end
 
     A -- HTTP Request --> B
     B -- Calls --> C
-    C -- Manages --> D & E
-    D -- "Reads from (Read Path)" --> G & H & I
-    E -- "Writes to (Write Path)" --> G & H & I
-    F -- "Communicates with" --> K
+    C -- Manages --> D, E, & G
+    D -- "Reads from (Read Path)" --> H & I & J
+    E -- "Writes to (Write Path)" --> H & I & J
+    F -- "Communicates with" --> L
     C -- "Uses" --> F
-    D -- "Caches context in" --> J
+    D -- "Caches context in" --> K
 ```
 
 ---
@@ -91,11 +92,12 @@ graph TD
   - **`/providers`**: Global state management using React Context (`ConversationProvider`, `UIStateProvider`, etc.).
   - **`/dashboard`, `/agent_center`, `/brain_center`, etc.**: Components for the major UI hubs.
 - **`/core`**: **The Cognitive Engine.** All decoupled, backend-only business logic resides here.
+  - **`/agents`**: Contains the logic for the `AutonomousAgent`.
   - **`/llm`**: The LLM Provider Abstraction Layer, which decouples the application from any specific AI SDK.
   - **`/memory`**: All Single Memory Module (SMM) implementations (Episodic, Semantic, etc.).
   - **`/pipelines`**: The high-level orchestrators (`ContextAssemblyPipeline`, `MemoryExtractionPipeline`).
-- **`/docs`**: Legacy documentation, interactive HTML reports (`/Res`), and feature proposals (`/Features-Demo`).
-- **`/DocsV2`**: The current, most up-to-date architectural documentation files.
+  - **`/tools`**: Implementations of agent-usable tools like `web_search`.
+- **`/DocsV2`**: The individual, deep-dive chapters of this guide.
 - **`/lib`**: Shared utilities, hooks, and global type definitions.
 - **`/scripts`**: Standalone Node.js scripts for database management (`create-tables.js`, `seed-*.js`).
 - **`PROJECT_GUIDE.md`**: This file. The single source of truth for all project documentation.
@@ -126,9 +128,11 @@ The central management hub for the AI's cognitive architecture.
 - **Brain Management**: A full CRUD interface for creating and configuring different "Brains" (e.g., "Work Brain", "Personal Brain").
 - **Memory Viewer**: An inspection tool to view the raw data within each memory module (Episodic, Semantic, Structured).
 
-### 5.4. Memory Center (`/components/memory_center`)
+### 5.4. Memory Center (`/components/MemoryCenter.tsx`)
 Manages the AI's **Structured Memory** (explicit facts).
 - **Entity Management**: A full CRUD interface for managing entities (people, projects, concepts) stored in the Postgres database.
+- **Relationship Graph**: A data viewer for entity relationships.
+- **Segment Hub**: A UI to manage `Segments` (like Topics or Impact levels) for categorizing messages.
 
 ### 5.5. Contacts Hub (`/components/ContactsHub.tsx`)
 A specialized part of Structured Memory for managing people and organizations.
@@ -139,24 +143,34 @@ A specialized part of Structured Memory for managing people and organizations.
 A system for creating, managing, and using reusable prompt templates.
 - **Prompt Management**: A two-panel CRUD interface for organizing prompts into folders and tags.
 - **Dynamic Variables**: Supports `{{variable}}` placeholders that trigger a modal for user input.
-- **Workflow Builder**: A drag-and-drop UI to create multi-step prompt chains where the output of one step can be the input for another.
+- **Workflow Builder**: A UI to create multi-step prompt chains where the output of one step can be the input for another.
 
 ### 5.7. Tools Hub (`/components/ToolsHub.tsx`)
 The interface for managing **Procedural Memory** (the agent's capabilities).
 - **Tool Registry**: A CRUD interface to define tools the agent can use.
-- **Schema Definition**: Each tool requires a JSON Schema that defines its inputs, which the agent uses to form correct function calls.
-- **Status**: The backend and database infrastructure is complete. The UI is fully functional.
+- **Schema Definition**: Each tool requires a Gemini-compatible JSON Schema that defines its inputs.
 
-### 5.8. Tasks Hub (`/components/TasksHub.tsx`)
-A simple task and to-do list manager.
-- **Status**: The backend infrastructure (database table, API endpoints) and a full-featured UI are complete and functional.
+### 5.8. Projects Hub (`/components/ProjectsHub.tsx`)
+A hub to manage projects and their associated tasks, replacing the simple `Tasks Hub`.
+- **Project Management**: Full CRUD for projects.
+- **Task Management**: Full CRUD for tasks within each project.
+- **AI Summarization**: On-demand AI-powered summaries of a project's status based on its tasks.
 
-### 5.9. Data Hub (`/components/data_hub`)
+### 5.9. Experiences Hub (`/components/hubs/ExperiencesHub.tsx`)
+A UI to view and manage "Experiences"—generalized plans automatically learned from successful agent runs.
+
+### 5.10. Communication Hub (`/components/hubs/CommunicationHub.tsx`)
+Manages external communication channels.
+- **Channel Dashboard**: Create and view webhook channels.
+- **Unified Inbox**: View incoming messages from all connected channels.
+- **Broadcast Manager**: Send notifications to channels.
+
+### 5.11. Data Hub (`/components/data_hub`)
 A dashboard for monitoring and managing all connected data sources and storage services.
-- **Architecture**: Consists of a main center (`DataHubCenter.tsx`) with a tabbed interface for a `ServicesPanel` and `LogsPanel`. The `ServicesPanel` displays multiple `ServiceCard` components, each representing a data source, and is summarized by a `StatsRow`. A `DataHubWidget` provides a quick-view modal.
-- **Status**: **Implemented.** The Data Hub is fully functional, fetching live data from the `data_sources` table via the `/api/data-sources` endpoints. It provides a real-time overview of all connected services, their status, and allows for configuration management through dedicated modals.
+- **Status Overview**: Displays the real-time status of all connected services (Postgres, Pinecone, KV, etc.).
+- **Configuration Management**: Provides modals to test connections and update credentials for each data source.
 
-### 5.10. SoulyDev Center (`/components/dev_center`)
+### 5.12. SoulyDev Center (`/components/dev_center`)
 An integrated control panel for developers.
 - **API Command Center**: A Postman-like interface to test all backend API endpoints directly in the app.
 - **Feature Health Dashboard**: A QA hub to display the health status of all system features based on registered test cases.
@@ -167,23 +181,12 @@ An integrated control panel for developers.
 
 ## 6. Development Workflow & Rules
 
-Adherence to these guidelines is **mandatory** for all development work.
+Adherence to these guidelines is **mandatory** for all development work. Refer to `DocsV2/09_Development_Workflow.md` for the full protocol.
 
-1.  **Onboarding (Start of Session)**: Before any task, the agent **MUST** review this file (`PROJECT_GUIDE.md`) and key implementation files like `App.tsx` and `ConversationProvider.tsx` to understand the current project state.
-
-2.  **Feature Management**:
-    - **Proposal:** The user proposes a feature. The agent discusses requirements.
-    - **Registration:** The feature **MUST** be added to the database via `scripts/seed-features.js` with a status of `⚪ Planned`.
-    - **Approval:** The agent must wait for explicit user approval before implementation.
-
-3.  **Implementation & Versioning**:
-    - **Code:** The agent writes the code.
-    - **Status Update:** The agent updates the feature's status in `scripts/seed-features.js` to `✅ Completed`.
-    - **Versioning:** The agent increments the version in `package.json` and adds a new entry to `scripts/seed-version-history.js`.
-
-4.  **Response Protocol**:
-    - **Part 1 (Code):** The first response **MUST ONLY** contain the `<changes>` XML block.
-    - **Part 2 (Report):** The agent then generates a new, sequentially numbered HTML report file (e.g., `Docs/Res/ResponseTemplate-X.html`) with a detailed explanation of the changes.
+1.  **Onboarding (Start of Session)**: Before any task, the agent **MUST** review this file (`PROJECT_GUIDE.md`) and key implementation files to understand the current project state.
+2.  **Feature Management**: Features must be formally proposed, registered in the database, and approved before implementation.
+3.  **Implementation & Versioning**: After coding, the feature status and project version must be updated in the database via the seed scripts (`scripts/seed-features.js`, `scripts/seed-version-history.js`).
+4.  **Response Protocol**: Follow the Dual-Response protocol: an XML block with code changes, followed by a detailed HTML report.
 
 ---
 
@@ -191,10 +194,9 @@ Adherence to these guidelines is **mandatory** for all development work.
 
 ### Key Unimplemented Features:
 - **Advanced Autonomous Agent (ReAct)**: The current agent executes a pre-defined plan. The next major step is to implement a true ReAct (Reason + Act) loop where the agent can choose and use tools from the **Tools Hub** to solve problems dynamically.
-- **Communication Hub**: A major planned feature to turn the application into a central point for managing external communications via Webhooks and other channels.
-- **UI/UX Enhancements**: Several planned UX improvements are pending implementation, including a `Cmd+K` Command Palette, a theming engine, and a global search function.
+- **Visual Relationship Graph**: The UI for the relationship graph is currently a JSON viewer and needs a visual component.
 
 ### Important Notes:
-- The project is designed for a **single power user**. Features related to multi-tenancy, teams, or public sharing are out of scope.
+- The project is designed for a **single power user**. Features related to multi-tenancy or public sharing are out of scope.
 - The project follows an **API-First** philosophy. All functionality should be exposed via a backend API, with the UI acting as a client.
-- The project has a custom-built UI using **Tailwind CSS**. Integrating large, external component libraries like Flowbite or Mantine is strongly discouraged to maintain design consistency and avoid complexity. Instead, inspiration can be drawn from them to build new custom components.
+- UI should remain consistent. Integrating large, external component libraries is strongly discouraged.

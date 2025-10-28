@@ -9,7 +9,7 @@ import { XIcon } from '@/components/Icons';
 import type { Message } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useAppContext } from './providers/AppProvider';
+import { useAppContext } from '@/lib/hooks/useAppContext';
 
 interface BookmarksModalProps {
     onClose: () => void;

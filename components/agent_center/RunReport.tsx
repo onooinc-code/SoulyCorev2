@@ -1,4 +1,5 @@
 
+
 "use client";
 
 // components/agent_center/RunReport.tsx
@@ -8,7 +9,13 @@ import { useLog } from '../providers/LogProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckIcon, XIcon, SparklesIcon, RefreshIcon } from '../Icons';
 
-const StepDisplay = ({ step }: { step: AgentRunStep }) => (
+// FIX: Extracted props to a dedicated interface to fix type error with `key` prop.
+interface StepDisplayProps {
+    step: AgentRunStep;
+}
+
+// FIX: Changed the StepDisplay component to be of type React.FC<StepDisplayProps> to correctly type it as a React functional component.
+const StepDisplay: React.FC<StepDisplayProps> = ({ step }) => (
     <motion.div
         layout
         initial={{ opacity: 0, y: 10 }}
@@ -21,8 +28,14 @@ const StepDisplay = ({ step }: { step: AgentRunStep }) => (
     </motion.div>
 );
 
+// FIX: Extracted props to a dedicated interface to fix type error with `key` prop.
+interface PhaseDisplayProps {
+    phase: AgentPlanPhase;
+    steps: AgentRunStep[];
+}
 
-const PhaseDisplay = ({ phase, steps }: { phase: AgentPlanPhase, steps: AgentRunStep[] }) => {
+// FIX: Changed the PhaseDisplay component to be of type React.FC<PhaseDisplayProps> to correctly type it as a React functional component.
+const PhaseDisplay: React.FC<PhaseDisplayProps> = ({ phase, steps }) => {
     const statusInfo: Record<string, { icon: React.ReactNode, color: string }> = {
         pending: { icon: <SparklesIcon className="w-4 h-4" />, color: 'text-gray-400' },
         running: { icon: <SparklesIcon className="w-4 h-4 animate-pulse" />, color: 'text-yellow-400' },

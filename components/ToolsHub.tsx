@@ -1,18 +1,17 @@
+
 "use client";
 
 // components/ToolsHub.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Tool } from '@/lib/types';
-import { useLog } from '@/components/providers/LogProvider';
-import { useAppContext } from '@/components/providers/AppProvider';
+import { useAppContext } from '@/lib/hooks/useAppContext';
 import { PlusIcon, TrashIcon, EditIcon, XIcon } from '@/components/Icons';
 
 type ToolFormState = Omit<Partial<Tool>, 'schema_json'> & { schema_json: string };
 
 const ToolsHub = () => {
-    const { log } = useLog();
-    const { setStatus, clearError } = useAppContext();
+    const { log, setStatus, clearError } = useAppContext();
     const [tools, setTools] = useState<Tool[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);

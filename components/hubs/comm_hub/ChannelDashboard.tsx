@@ -1,3 +1,5 @@
+
+
 // components/hubs/comm_hub/ChannelDashboard.tsx
 "use client";
 
@@ -9,7 +11,13 @@ import { CheckIcon, XIcon, WarningIcon, RssIcon, CopyIcon } from '@/components/I
 import WebhookCreator from './WebhookCreator';
 import BroadcastManager from './BroadcastManager';
 
-const ChannelCard = ({ channel }: { channel: CommChannel & { incomingUrl?: string | null } }) => {
+// FIX: Extracted props to a dedicated interface to fix type error with `key` prop.
+interface ChannelCardProps {
+    channel: CommChannel & { incomingUrl?: string | null };
+}
+
+// FIX: Changed the ChannelCard component to be of type React.FC<ChannelCardProps> to correctly type it as a React functional component.
+const ChannelCard: React.FC<ChannelCardProps> = ({ channel }) => {
     const [copiedOutgoing, setCopiedOutgoing] = useState(false);
     const [copiedIncoming, setCopiedIncoming] = useState(false);
 

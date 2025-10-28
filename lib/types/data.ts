@@ -195,6 +195,8 @@ export interface Feature {
     name: string;
     overview: string;
     status: FeatureStatus;
+    // FIX: Add missing category property.
+    category?: string;
     ui_ux_breakdown_json: UiUxSubFeature[] | string;
     logic_flow: string;
     key_files_json: string[] | string;

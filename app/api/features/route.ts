@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 // FIX: Corrected import paths for types.
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
             name, 
             overview, 
             status, 
+            category,
             ui_ux_breakdown_json,
             logic_flow,
             key_files_json,
@@ -47,11 +49,12 @@ export async function POST(req: NextRequest) {
 
 
         const { rows } = await sql<Feature>`
-            INSERT INTO features (name, overview, status, ui_ux_breakdown_json, logic_flow, key_files_json, notes, "lastUpdatedAt")
+            INSERT INTO features (name, overview, status, category, ui_ux_breakdown_json, logic_flow, key_files_json, notes, "lastUpdatedAt")
             VALUES (
                 ${name}, 
                 ${overview}, 
                 ${status as FeatureStatus}, 
+                ${category || 'Uncategorized'},
                 ${JSON.stringify(parsedUiUx)}, 
                 ${logic_flow}, 
                 ${JSON.stringify(parsedKeyFiles)}, 

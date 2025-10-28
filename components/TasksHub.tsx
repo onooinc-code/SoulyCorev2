@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -8,7 +9,15 @@ import { useNotification } from '@/lib/hooks/use-notifications';
 import { PlusIcon, TrashIcon } from '@/components/Icons';
 import { AnimatePresence, motion } from 'framer-motion';
 
-const TaskItem = ({ task, onUpdate, onDelete }: { task: Task; onUpdate: (task: Task, updates: Partial<Task>) => void; onDelete: (id: string) => void; }) => {
+// FIX: Extracted props to a dedicated interface to fix type error with `key` prop.
+interface TaskItemProps {
+    task: Task;
+    onUpdate: (task: Task, updates: Partial<Task>) => void;
+    onDelete: (id: string) => void;
+}
+
+// FIX: Changed the TaskItem component to be of type React.FC<TaskItemProps> to correctly type it as a React functional component.
+const TaskItem: React.FC<TaskItemProps> = ({ task, onUpdate, onDelete }) => {
     
     const handleStatusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onUpdate(task, { status: e.target.checked ? 'completed' : 'todo' });

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
@@ -15,8 +16,14 @@ interface LogOutputPanelProps {
 type LogLevel = 'info' | 'warn' | 'error';
 type FilterLevel = LogLevel | 'all';
 
+// FIX: Extracted props to a dedicated interface to fix type error with `key` prop.
+interface LogEntryProps {
+    log: LogEntryType;
+}
+
 // Component for rendering a single log entry
-const LogEntry = ({ log }: { log: LogEntryType }) => {
+// FIX: Changed the LogEntry component to be of type React.FC<LogEntryProps> to correctly type it as a React functional component. This resolves the TypeScript error where the 'key' prop, used in list rendering, was being incorrectly checked against the component's own props.
+const LogEntry: React.FC<LogEntryProps> = ({ log }) => {
     const [copied, setCopied] = useState(false);
 
     const levelIcon: Record<LogLevel, React.ReactNode> = {

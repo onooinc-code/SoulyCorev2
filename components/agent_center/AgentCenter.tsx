@@ -1,10 +1,10 @@
+
 "use client";
 
 // components/agent_center/AgentCenter.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import type { AgentRun, AgentPlanPhase } from '@/lib/types';
-import { useLog } from '../providers/LogProvider';
-import { useAppContext } from '../providers/AppProvider';
+import { useAppContext } from '@/lib/hooks/useAppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import RunReport from './RunReport';
 import PlanDisplay from './PlanDisplay';
@@ -14,8 +14,7 @@ import { RocketLaunchIcon } from '../Icons';
 type ViewState = 'idle' | 'planning' | 'review' | 'executing';
 
 const AgentCenter = () => {
-    const { log } = useLog();
-    const { setStatus, clearError } = useAppContext();
+    const { log, setStatus, clearError } = useAppContext();
     const [goal, setGoal] = useState('');
     const [runs, setRuns] = useState<AgentRun[]>([]);
     const [activeRunId, setActiveRunId] = useState<string | null>(null);

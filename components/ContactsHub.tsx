@@ -6,13 +6,11 @@ import type { Contact } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { PlusIcon, TrashIcon, EditIcon } from '@/components/Icons';
 import { useConversation } from '@/components/providers/ConversationProvider';
-import { useLog } from '@/components/providers/LogProvider';
 
 type SortKey = keyof Contact;
 
 const ContactsHub = () => {
     const { setStatus, clearError } = useConversation();
-    const { log } = useLog();
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [currentContact, setCurrentContact] = useState<Partial<Contact> | null>(null);
@@ -21,20 +19,20 @@ const ContactsHub = () => {
 
     const fetchContacts = useCallback(async () => {
         clearError();
-        log('Fetching all contacts...');
+        console.log('Fetching all contacts...');
         try {
             const res = await fetch('/api/contacts');
             if (!res.ok) throw new Error('Failed to fetch contacts');
             const { contacts } = await res.json();
             setContacts(contacts);
-            log(`Successfully fetched ${contacts.length} contacts.`);
+            console.log(`Successfully fetched ${contacts.length} contacts.`);
         } catch (error) {
             const errorMessage = 'Could not load contacts.';
             setStatus({ error: errorMessage });
-            log(errorMessage, { error: { message: (error as Error).message, stack: (error as Error).stack } }, 'error');
+            console.error(errorMessage, { error: { message: (error as Error).message, stack: (error as Error).stack } });
             console.error(error);
         }
-    }, [setStatus, clearError, log]);
+    }, [setStatus, clearError]);
 
     useEffect(() => {
         fetchContacts();
@@ -42,7 +40,7 @@ const ContactsHub = () => {
 
     const handleOpenForm = (contact: Partial<Contact> | null = null) => {
         const action = contact ? 'edit' : 'new';
-        log(`User opened contact form for ${action} contact.`, { contactId: contact?.id });
+        console.log(`User opened contact form for ${action} contact.`, { contactId: contact?.id });
         setCurrentContact(contact || {});
         setIsFormOpen(true);
     };
@@ -52,7 +50,7 @@ const ContactsHub = () => {
         clearError();
         const isUpdating = !!currentContact.id;
         const action = isUpdating ? 'Updating' : 'Creating';
-        log(`${action} contact...`, { contactData: currentContact });
+        console.log(`${action} contact...`, { contactData: currentContact });
 
         const url = isUpdating ? `/api/contacts/${currentContact.id}` : '/api/contacts';
         const method = isUpdating ? 'PUT' : 'POST';
@@ -66,14 +64,14 @@ const ContactsHub = () => {
             if (!res.ok) throw new Error(`Failed to ${isUpdating ? 'update' : 'create'} contact`);
             
             const savedContact = await res.json();
-            log(`Contact ${action.toLowerCase()}d successfully.`, { savedContact });
+            console.log(`Contact ${action.toLowerCase()}d successfully.`, { savedContact });
             await fetchContacts();
             setIsFormOpen(false);
             setCurrentContact(null);
         } catch (error) {
             const errorMessage = (error as Error).message;
             setStatus({ error: errorMessage });
-            log(`Failed to ${action.toLowerCase()} contact.`, { error: { message: errorMessage, stack: (error as Error).stack } }, 'error');
+            console.error(`Failed to ${action.toLowerCase()} contact.`, { error: { message: errorMessage, stack: (error as Error).stack } });
             console.error(error);
         }
     };
@@ -81,20 +79,20 @@ const ContactsHub = () => {
     const handleDeleteContact = async (id: string) => {
         if (window.confirm('Are you sure you want to delete this contact?')) {
             clearError();
-            log(`Attempting to delete contact with ID: ${id}`);
+            console.log(`Attempting to delete contact with ID: ${id}`);
             try {
                 const res = await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
                 if (!res.ok) throw new Error('Failed to delete contact');
-                log('Contact deleted successfully.', { id });
+                console.log('Contact deleted successfully.', { id });
                 await fetchContacts();
             } catch (error) {
                 const errorMessage = (error as Error).message;
                 setStatus({ error: errorMessage });
-                log('Failed to delete contact.', { id, error: { message: errorMessage, stack: (error as Error).stack } }, 'error');
+                console.error('Failed to delete contact.', { id, error: { message: errorMessage, stack: (error as Error).stack } });
                 console.error(error);
             }
         } else {
-            log('User cancelled contact deletion.', { id });
+            console.log('User cancelled contact deletion.', { id });
         }
     };
     
@@ -121,7 +119,7 @@ const ContactsHub = () => {
         if (sortConfig.key === key && sortConfig.direction === 'ascending') {
             direction = 'descending';
         }
-        log('User sorted contacts list', { key, direction });
+        console.log('User sorted contacts list', { key, direction });
         setSortConfig({ key, direction });
     };
 
@@ -163,7 +161,7 @@ const ContactsHub = () => {
                     <div className="flex gap-2">
                         <button onClick={handleSaveContact} className="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-500">Save Contact</button>
                         <button onClick={() => {
-                            log('User cancelled contact form.');
+                            console.log('User cancelled contact form.');
                             setIsFormOpen(false);
                         }} className="px-4 py-2 bg-gray-600 text-white rounded-md text-sm hover:bg-gray-500">Cancel</button>
                     </div>

@@ -4,11 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { XIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
 import { useConversation } from '@/components/providers/ConversationProvider';
-import { useLog } from '@/components/providers/LogProvider';
 
 const ConversationSettingsModal = ({ onClose }: { onClose: () => void; }) => {
     const { currentConversation, updateCurrentConversation } = useConversation();
-    const { log } = useLog();
     
     const [model, setModel] = useState('');
     const [temperature, setTemperature] = useState(0.7);
@@ -23,13 +21,13 @@ const ConversationSettingsModal = ({ onClose }: { onClose: () => void; }) => {
                 const data = await res.json();
                 setAvailableModels(data);
             } catch (error) {
-                log('Failed to fetch available models', { error }, 'error');
+                console.error('Failed to fetch available models', { error });
                 // Fallback to a default model if fetch fails
                 setAvailableModels(['gemini-2.5-flash']);
             }
         };
         fetchModels();
-    }, [log]);
+    }, []);
 
     useEffect(() => {
         if (currentConversation) {
@@ -43,7 +41,7 @@ const ConversationSettingsModal = ({ onClose }: { onClose: () => void; }) => {
         if (!currentConversation) return;
 
         const updatedData = { model, temperature, topP };
-        log('User clicked "Save" in Conversation Settings Modal', { conversationId: currentConversation.id, updatedData });
+        console.log('User clicked "Save" in Conversation Settings Modal', { conversationId: currentConversation.id, updatedData });
         
         // The provider handles both optimistic UI update and the API call.
         updateCurrentConversation(updatedData);

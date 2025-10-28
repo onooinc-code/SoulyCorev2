@@ -1,11 +1,12 @@
 
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Feature, FeatureTest as TestCase, TestStatus } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAppContext } from '@/components/providers/AppProvider';
+import { useAppContext } from '@/lib/hooks/useAppContext';
 import { useLog } from '@/components/providers/LogProvider';
 import { CheckIcon, XIcon, MinusIcon } from '@/components/Icons';
 import ReactMarkdown from 'react-markdown';
@@ -44,16 +45,20 @@ const calculateFeatureHealth = (tests: TestCase[]): FeatureHealth => {
 };
 
 // --- Child Components ---
-const FeatureRow = ({ 
-    feature, 
-    tests, 
-    onSelectTest,
-    selectedTestId 
-}: { 
+// FIX: Extracted inline props to a dedicated interface.
+interface FeatureRowProps {
     feature: Feature; 
     tests: TestCase[];
     onSelectTest: (test: TestCase | null) => void;
     selectedTestId: string | null;
+}
+
+// FIX: Changed the FeatureRow component to be of type React.FC<FeatureRowProps> to correctly type it as a React functional component.
+const FeatureRow: React.FC<FeatureRowProps> = ({ 
+    feature, 
+    tests, 
+    onSelectTest,
+    selectedTestId 
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const health = calculateFeatureHealth(tests);

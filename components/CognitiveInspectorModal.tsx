@@ -20,7 +20,13 @@ interface InspectionData {
     pipelineSteps: PipelineRunStep[];
 }
 
-const PipelineStep = ({ step }: { step: PipelineRunStep }) => (
+// FIX: Extracted props to a dedicated interface to fix type error with `key` prop.
+interface PipelineStepProps {
+    step: PipelineRunStep;
+}
+
+// FIX: Changed the PipelineStep component to be of type React.FC<PipelineStepProps> to correctly type it as a React functional component. This resolves the TypeScript error where the 'key' prop, used in list rendering, was being incorrectly checked against the component's own props.
+const PipelineStep: React.FC<PipelineStepProps> = ({ step }) => (
     <div className="bg-gray-900 p-3 rounded-lg">
         <div className="flex justify-between items-center">
             <h4 className="font-semibold text-gray-200">

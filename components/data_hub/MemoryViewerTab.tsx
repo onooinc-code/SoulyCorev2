@@ -1,10 +1,10 @@
 
-
 "use client";
 
 import React, { useState } from 'react';
 import { useLog } from '../providers/LogProvider';
-import { useAppContext } from '../providers/AppProvider';
+// FIX: The `useAppContext` hook was moved from `AppProvider` to its own file. Updated the import path to resolve the module not found error.
+import { useAppContext } from '@/lib/hooks/useAppContext';
 
 type ModuleType = 'structured' | 'episodic' | 'semantic' | 'none';
 

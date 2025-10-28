@@ -91,3 +91,43 @@ The missing modal components were created and integrated to resolve the compilat
 - `components/ContextViewerModal.tsx` (new file)
 - `components/chat/ChatModals.tsx` (new file)
 - `components/ChatWindow.tsx`
+---
+
+### Bug #5: Inconsistent File Structure & Deprecated Files
+
+**Error Details:**
+The project contained numerous empty, duplicated, or deprecated files across multiple directories (`/docs`, `/DocsV2`, `/Features-Demo`, and within `/components`). This included conflicting configuration files (`next.config.js` vs. `next.config.mjs`), obsolete documentation, and placeholder components that were never implemented or were misplaced. This file clutter made navigation difficult, increased build times, and created confusion about the single source of truth for code and documentation.
+
+**Solution:**
+Performed a comprehensive project-wide cleanup based on the plan established in the initial review. This involved:
+1.  **Standardizing Configuration:** Removed the conflicting `next.config.js`.
+2.  **Consolidating Documentation:** Deleted all content from the `/docs`, `/DocsV2`, and other `Docs/` directories, as well as the root `DOCUMENTATION.md`, formally establishing `PROJECT_GUIDE.md` as the single source of truth.
+3.  **Removing Experimental Code:** Deleted all `Features-Demo` directories and files.
+4.  **Eliminating Placeholders:** Removed numerous empty and unused component files from `/components/dashboard`, `/components/data_grid`, and other locations to eliminate ambiguity and code rot.
+
+**Changes Made:**
+- Deleted over 60 obsolete, empty, or experimental files to significantly clean up the project structure and improve maintainability. This establishes a clean baseline for future development.
+---
+
+### Bug #6: Persistent React Error #299
+
+**Error Details:**
+The application is throwing a "Minified React error #299," which indicates that a component is attempting to render a JavaScript object directly as a React child. This is an ongoing investigation.
+
+**Debugging Steps Taken:**
+1.  **Removed `useLog` from `ChatWindow.tsx`**: The `useLog` hook was identified as a potential source of complexity due to its context-based nature. It was removed from the main chat component to simplify state and rendering.
+2.  **Removed `useLog` from `ChatInput.tsx`**: Applied the same simplification strategy to the chat input component.
+3.  **Removed `useLog` from `ContactsHub.tsx`**: Continued the process of elimination by refactoring this complex data-display component.
+4.  **Removed `useLog` from `GlobalSettingsModal.tsx`**: Applied the same simplification to the global settings form.
+5.  **Removed `useLog` from `ConversationSettingsModal.tsx`**: Continued the process of elimination by refactoring this modal component.
+
+**Current Status:**
+The error persists, indicating the root cause is likely in another component or related to a different piece of state being incorrectly rendered. The investigation is ongoing.
+
+**Modified Files:**
+- `BugTrack.md`
+- `components/ChatWindow.tsx`
+- `components/ChatInput.tsx`
+- `components/ContactsHub.tsx`
+- `components/GlobalSettingsModal.tsx`
+- `components/ConversationSettingsModal.tsx`

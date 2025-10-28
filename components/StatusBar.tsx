@@ -16,12 +16,20 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
     
     const model = useMemo(() => {
         if (!currentConversation) return 'gemini-2.5-flash';
+        
         const modelFromSettings = currentConversation.ui_settings?.model_for_response;
         // FIX: Ensure model_for_response is a string before using it to prevent React error #299
         if (typeof modelFromSettings === 'string' && modelFromSettings) {
             return modelFromSettings;
         }
-        return currentConversation.model || 'gemini-2.5-flash';
+        
+        // FIX: Added a more robust check for the root model property to prevent rendering an object
+        const modelFromConversation = currentConversation.model;
+        if (typeof modelFromConversation === 'string' && modelFromConversation) {
+            return modelFromConversation;
+        }
+        
+        return 'gemini-2.5-flash';
     }, [currentConversation]);
 
     const conversationStats = useMemo(() => {

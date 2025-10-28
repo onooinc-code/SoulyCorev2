@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 // FIX: Corrected a relative import path for the `XIcon` component to use the absolute path alias `@`, resolving a module resolution error during the build process.
 import { XIcon } from '@/components/Icons';
-import { useAppContext } from './providers/AppProvider';
+import { useAppContext } from '@/lib/hooks/useAppContext';
 import { useLog } from './providers/LogProvider';
 
 interface AddKnowledgeModalProps {
