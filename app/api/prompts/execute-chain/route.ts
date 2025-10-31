@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         }
 
         const chainPrompt = chainPromptRows[0];
-        const chainDefinition = chainPrompt.chain_definition;
+        const chainDefinition = chainPrompt.chainDefinition;
 
         if (!chainDefinition || chainDefinition.length === 0) {
             return NextResponse.json({ error: 'Invalid or empty chain definition' }, { status: 400 });

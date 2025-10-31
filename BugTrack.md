@@ -315,3 +315,18 @@ Implemented a destructive but definitive fix by forcing a clean recreation of th
 **Modified Files:**
 - `BugTrack.md`
 - `scripts/create-tables.js`
+---
+### Bug #16: Vercel Build Fails (Stale `features` Table)
+
+**Error Details:**
+The Vercel build is failing during the `db:seed` process with the error `column "uiUxBreakdownJson" of relation "features" does not exist`. This is the same root cause as Bug #15, but affecting the `features` table. A stale, incomplete version of the table is persisting in the Vercel build cache, and the `CREATE TABLE IF NOT EXISTS` statement is not sufficient to correct its schema before the seed script attempts to insert data.
+
+**Solution:**
+Applied the same definitive fix used for the `pipeline_runs` table to the `features` table. Added `DROP TABLE IF EXISTS "features" CASCADE;` to `scripts/create-tables.js` to force a clean recreation of the table on every build, ensuring the schema is always up-to-date and consistent with the seed script. Additionally, fixed several minor but lingering `snake_case` vs `camelCase` inconsistencies in `ChatWindow.tsx`, `StatusBar.tsx`, and `app/api/prompts/execute-chain/route.ts` to prevent future runtime errors.
+
+**Modified Files:**
+- `BugTrack.md`
+- `scripts/create-tables.js`
+- `components/ChatWindow.tsx`
+- `components/StatusBar.tsx`
+- `app/api/prompts/execute-chain/route.ts`
