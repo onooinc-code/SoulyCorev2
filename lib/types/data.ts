@@ -364,6 +364,7 @@ export interface PipelinePerformanceChartData {
     pipeline: string;
     Completed: number;
     Failed: number;
+    [key: string]: string | number;
 }
 
 // For relationship graph
