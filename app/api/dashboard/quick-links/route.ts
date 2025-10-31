@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import { getKVClient } from '@/lib/kv';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +14,7 @@ export interface QuickLink {
 // GET the list of quick links
 export async function GET() {
     try {
+        const kv = getKVClient();
         const links = await kv.get<QuickLink[]>(LINKS_KEY);
         return NextResponse.json({ links: links || [] });
     } catch (error) {
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Links must be an array' }, { status: 400 });
         }
 
+        const kv = getKVClient();
         await kv.set(LINKS_KEY, links);
         
         return NextResponse.json({ success: true, message: 'Links saved successfully.' });

@@ -168,7 +168,20 @@ Refactored the initialization logic for the Pinecone client to use a lazy-initia
 - `app/api/dashboard/stats/route.ts`
 - `app/api/knowledge/add/route.ts`
 - `core/memory/modules/semantic.ts`
+---
+### Bug #9: Vercel Dashboard APIs Crashing due to Missing ENV VARS
 
-**Changes Made:**
-- **`lib/pinecone.ts`**: Replaced the direct export of `knowledgeBaseIndex` with a `getKnowledgeBaseIndex()` function that lazily initializes the Pinecone client and returns the index instance.
-- **`stats/route.ts`, `knowledge/add/route.ts`, `semantic.ts`**: Updated these files to import and call the new `getKnowledgeBaseIndex()` function instead of using the old direct export.
+**Error Details:**
+Following the fix for the Pinecone client, several dashboard-related API routes (`/api/dashboard/quick-note`, `/api/dashboard/quick-links`, and `/api/dashboard/stats`) continued to fail on Vercel deployments. The `quick-note` and `quick-links` routes were crashing due to the direct import of the `kv` client from `@vercel/kv`, which attempts initialization at the module level. This is the same root cause as the previous Pinecone bug. The `stats` route was also failing, pointing to a systemic issue with how SDK clients are initialized in a serverless environment.
+
+**Solution:**
+Implemented a comprehensive lazy-initialization strategy for the Vercel KV client to prevent module-level crashes.
+1.  **Created `lib/kv.ts`**: A new file was created to house a `getKVClient()` function. This function acts as a singleton getter, initializing the Vercel KV client using `createClient` only on its first call and after checking for the necessary environment variables. This moves initialization from import-time to run-time.
+2.  **Refactored KV Usage**: All files that previously used a direct `import { kv } from '@vercel/kv'` were updated to import and use the new `getKVClient()` function. This ensures that any errors due to missing environment variables are thrown at runtime within a `try...catch` block, allowing for graceful error handling and informative error messages instead of a serverless function crash.
+
+**Modified Files:**
+- `BugTrack.md`
+- `lib/kv.ts` (new file)
+- `core/memory/modules/working.ts`
+- `app/api/dashboard/quick-note/route.ts`
+- `app/api/dashboard/quick-links/route.ts`

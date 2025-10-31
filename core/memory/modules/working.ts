@@ -3,7 +3,7 @@
  * This module is designed for high-speed, temporary storage of in-flight data.
  */
 
-import { kv } from '@vercel/kv';
+import { getKVClient } from '@/lib/kv';
 import { ISingleMemoryModule } from '../types';
 
 /**
@@ -37,6 +37,7 @@ export class WorkingMemoryModule implements ISingleMemoryModule {
      * @returns A promise that resolves when the data has been stored.
      */
     async store(params: IWorkingMemoryStoreParams): Promise<void> {
+        const kv = getKVClient();
         if (!params.sessionId || params.data === undefined) {
             throw new Error('WorkingMemoryModule.store requires sessionId and data.');
         }
@@ -54,6 +55,7 @@ export class WorkingMemoryModule implements ISingleMemoryModule {
      * @returns A promise that resolves with the retrieved data, or null if not found.
      */
     async query(params: IWorkingMemoryQueryParams): Promise<any> {
+        const kv = getKVClient();
         if (!params.sessionId) {
             throw new Error('WorkingMemoryModule.query requires a sessionId.');
         }
@@ -69,6 +71,7 @@ export class WorkingMemoryModule implements ISingleMemoryModule {
      * @returns A promise that resolves when the data has been deleted.
      */
     async delete(sessionId: string): Promise<void> {
+        const kv = getKVClient();
          if (!sessionId) {
             throw new Error('WorkingMemoryModule.delete requires a sessionId.');
         }
