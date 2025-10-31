@@ -21,15 +21,15 @@ export async function GET() {
 // POST a new project
 export async function POST(req: NextRequest) {
     try {
-        const { name, description, due_date } = await req.json();
+        const { name, description, dueDate } = await req.json();
 
         if (!name) {
             return NextResponse.json({ error: 'Name is required' }, { status: 400 });
         }
 
         const { rows } = await sql<Project>`
-            INSERT INTO projects (name, description, due_date)
-            VALUES (${name}, ${description || null}, ${due_date || null})
+            INSERT INTO projects (name, description, "dueDate")
+            VALUES (${name}, ${description || null}, ${dueDate || null})
             RETURNING *;
         `;
         

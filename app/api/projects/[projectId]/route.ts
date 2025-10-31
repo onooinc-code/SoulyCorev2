@@ -7,7 +7,7 @@ import { Project } from '@/lib/types';
 export async function PUT(req: NextRequest, { params }: { params: { projectId: string } }) {
     try {
         const { projectId } = params;
-        const { name, description, status, due_date } = await req.json();
+        const { name, description, status, dueDate } = await req.json();
 
         // In a real app, you'd build a dynamic query based on provided fields.
         // For simplicity, we'll update all editable fields.
@@ -17,7 +17,7 @@ export async function PUT(req: NextRequest, { params }: { params: { projectId: s
                 name = ${name}, 
                 description = ${description}, 
                 status = ${status}, 
-                due_date = ${due_date},
+                "dueDate" = ${dueDate},
                 "lastUpdatedAt" = CURRENT_TIMESTAMP
             WHERE id = ${projectId}
             RETURNING *;

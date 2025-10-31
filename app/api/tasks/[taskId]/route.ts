@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function PUT(req: NextRequest, { params }: { params: { taskId: string } }) {
     try {
         const { taskId } = params;
-        const { title, description, due_date, status } = await req.json();
+        const { title, description, dueDate, status } = await req.json();
 
         const { rows: existingRows } = await sql<Task>`SELECT * FROM tasks WHERE id = ${taskId}`;
         if (existingRows.length === 0) {
@@ -21,7 +21,7 @@ export async function PUT(req: NextRequest, { params }: { params: { taskId: stri
             SET 
                 title = ${title !== undefined ? title : existingTask.title}, 
                 description = ${description !== undefined ? description : existingTask.description}, 
-                due_date = ${due_date !== undefined ? due_date : existingTask.due_date}, 
+                "dueDate" = ${dueDate !== undefined ? dueDate : existingTask.dueDate}, 
                 status = ${status !== undefined ? status : existingTask.status},
                 "lastUpdatedAt" = CURRENT_TIMESTAMP
             WHERE id = ${taskId}

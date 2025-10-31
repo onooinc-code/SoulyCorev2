@@ -356,3 +356,19 @@ A targeted fix was applied to all files related to the Communication Hub to enfo
 - `app/api/comm/channels/route.ts`
 - `app/api/comm/notify/[channelId]/route.ts`
 - `components/hubs/comm_hub/ChannelDashboard.tsx`
+---
+### Bug #19: Vercel Build Fails (`due_date` vs `dueDate`)
+
+**Error Details:**
+The Vercel build is failing with a TypeScript error: `Property 'due_date' does not exist on type 'Project'`. This indicates that the `snake_case` vs `camelCase` inconsistency persists in the Projects Hub and Tasks Hub features, which were missed during previous refactoring passes. Multiple API routes were using `due_date` and `project_id` when accessing data or in SQL queries, while the type definitions and database schema correctly use `dueDate` and `projectId`.
+
+**Solution:**
+A targeted fix was applied to all files related to the Projects Hub and Tasks Hub to enforce the `camelCase` convention. This involved correcting property access, destructuring, and column names in SQL queries across several API routes.
+
+**Modified Files:**
+- `BugTrack.md`
+- `app/api/projects/[projectId]/summarize/route.ts`
+- `app/api/projects/route.ts`
+- `app/api/projects/[projectId]/route.ts`
+- `app/api/tasks/route.ts`
+- `app/api/tasks/[taskId]/route.ts`

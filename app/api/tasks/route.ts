@@ -20,15 +20,15 @@ export async function GET() {
 // POST a new task
 export async function POST(req: NextRequest) {
     try {
-        const { title, description, due_date } = await req.json();
+        const { title, description, dueDate } = await req.json();
 
         if (!title) {
             return NextResponse.json({ error: 'Title is required' }, { status: 400 });
         }
 
         const { rows } = await sql<Task>`
-            INSERT INTO tasks (title, description, due_date, status)
-            VALUES (${title}, ${description || null}, ${due_date || null}, 'todo')
+            INSERT INTO tasks (title, description, "dueDate", status)
+            VALUES (${title}, ${description || null}, ${dueDate || null}, 'todo')
             RETURNING *;
         `;
         

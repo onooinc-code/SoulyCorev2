@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: { projectId: 
         }
         const project = projectRows[0];
 
-        const { rows: taskRows } = await sql<ProjectTask>`SELECT * FROM project_tasks WHERE project_id = ${projectId}`;
+        const { rows: taskRows } = await sql<ProjectTask>`SELECT * FROM project_tasks WHERE "projectId" = ${projectId}`;
         
         const prompt = `
             Analyze the following project data and provide a concise, professional summary of its status.
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: { projectId: 
             Project Name: ${project.name}
             Description: ${project.description}
             Status: ${project.status}
-            Due Date: ${project.due_date ? new Date(project.due_date).toLocaleDateString() : 'N/A'}
+            Due Date: ${project.dueDate ? new Date(project.dueDate).toLocaleDateString() : 'N/A'}
 
             Tasks:
             ${taskRows.length > 0 ? taskRows.map(t => `- [${t.status === 'done' ? 'x' : ' '}] ${t.title}`).join('\n') : 'No tasks defined.'}
