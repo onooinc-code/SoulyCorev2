@@ -131,7 +131,7 @@ export class AutonomousAgent {
             };
         } catch (e) {
             // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
-            console.error("Failed to parse agent's JSON response:", result.text);
+            console.error("Failed to parse agent's JSON response:", result.text ?? "Response was empty");
             return {
                 thought: "I failed to generate a valid JSON response. I will try again.",
                 action: "final_answer",

@@ -81,6 +81,10 @@ export class ExperienceConsolidationPipeline {
                 }
             });
             
+            if (!response.text) {
+                throw new Error("AI failed to generate experience data. The response was empty.");
+            }
+            
             const experienceData = JSON.parse(response.text.trim());
 
             // 4. Store the new experience in the database
