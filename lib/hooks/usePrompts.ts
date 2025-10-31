@@ -38,7 +38,8 @@ export const usePrompts = () => {
              setStatus({ error: 'Name and Content are required for a single prompt.' });
              return;
         }
-        if (promptToSave.type === 'chain' && (!promptToSave.chain_definition || promptToSave.chain_definition.length === 0)) {
+        // FIX: Corrected property name from chain_definition to chainDefinition.
+        if (promptToSave.type === 'chain' && (!promptToSave.chainDefinition || promptToSave.chainDefinition.length === 0)) {
             setStatus({ error: 'A workflow must have at least one step.' });
             return;
         }
@@ -50,7 +51,8 @@ export const usePrompts = () => {
 
         const finalPrompt = { ...promptToSave };
         if (finalPrompt.type === 'chain') {
-            finalPrompt.content = `This is a chained prompt with ${finalPrompt.chain_definition?.length || 0} step(s).`;
+            // FIX: Corrected property name from chain_definition to chainDefinition.
+            finalPrompt.content = `This is a chained prompt with ${finalPrompt.chainDefinition?.length || 0} step(s).`;
         }
 
         const url = isUpdating ? `/api/prompts/${promptToSave.id}` : '/api/prompts';

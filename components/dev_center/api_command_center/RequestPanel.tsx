@@ -18,8 +18,10 @@ const RequestPanel = ({ endpoint, onSendRequest, isLoading }: RequestPanelProps)
     
     useEffect(() => {
         if (endpoint) {
-            setParams(JSON.stringify(endpoint.default_params_json || {}, null, 2));
-            setBody(JSON.stringify(endpoint.default_body_json || {}, null, 2));
+            // FIX: Corrected property name from default_params_json to defaultParamsJson.
+            setParams(JSON.stringify(endpoint.defaultParamsJson || {}, null, 2));
+            // FIX: Corrected property name from default_body_json to defaultBodyJson.
+            setBody(JSON.stringify(endpoint.defaultBodyJson || {}, null, 2));
             setActiveTab('body'); // Default to body tab on new selection
         } else {
             setParams('{}');

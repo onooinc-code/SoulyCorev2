@@ -81,7 +81,8 @@ const PromptsHub = () => {
         }
         const action = prompt ? 'edit' : 'new';
         log(`User opened prompt form for ${action} prompt.`, { promptId: prompt?.id });
-        setCurrentPrompt(prompt || { type: 'single', name: '', content: '', chain_definition: [] });
+        // FIX: Corrected property name from chain_definition to chainDefinition.
+        setCurrentPrompt(prompt || { type: 'single', name: '', content: '', chainDefinition: [] });
     };
 
     const isLoading = isLoadingPrompts || isLoadingTools;

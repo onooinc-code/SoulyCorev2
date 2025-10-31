@@ -13,7 +13,7 @@ export interface Conversation {
     model?: string;
     temperature?: number;
     topP?: number;
-    ui_settings?: Record<string, any>;
+    uiSettings?: Record<string, any>;
     useSemanticMemory?: boolean;
     useStructuredMemory?: boolean;
     enableMemoryExtraction?: boolean;
@@ -61,9 +61,7 @@ export interface EntityDefinition {
 
 export interface EntityRelationship {
     id: string;
-    // FIX: Changed property to camelCase.
     sourceEntityId: string;
-    // FIX: Changed property to camelCase.
     targetEntityId: string;
     predicate: string; // e.g., 'is_related_to', 'works_at'
     context?: string;
@@ -103,7 +101,6 @@ export interface Tool {
     id: string;
     name: string;
     description: string;
-    // FIX: Changed property to camelCase.
     schemaJson: any; // Gemini FunctionDeclaration schema
     createdAt: Date;
     lastUpdatedAt: Date;
@@ -113,7 +110,6 @@ export interface AgentRun {
     id: string;
     goal: string;
     status: 'planning' | 'awaiting_approval' | 'running' | 'completed' | 'failed';
-    // FIX: Changed property to camelCase.
     resultSummary?: string;
     createdAt: Date;
     completedAt?: Date;
@@ -121,9 +117,7 @@ export interface AgentRun {
 
 export interface AgentPlanPhase {
     id: string;
-    // FIX: Changed property to camelCase.
     runId: string;
-    // FIX: Changed property to camelCase.
     phaseOrder: number;
     goal: string;
     status: 'pending' | 'running' | 'completed' | 'failed';
@@ -134,15 +128,11 @@ export interface AgentPlanPhase {
 
 export interface AgentRunStep {
     id: string;
-    // FIX: Changed property to camelCase.
     runId: string;
-    // FIX: Changed property to camelCase.
     phaseId: string;
-    // FIX: Changed property to camelCase.
     stepOrder: number;
     thought: string;
     action: string;
-    // FIX: Changed property to camelCase.
     actionInput: Record<string, any>;
     observation: string;
     status: 'running' | 'completed' | 'failed';
@@ -159,9 +149,7 @@ export interface DataSource {
     provider: string;
     type: DataSourceType;
     status: DataSourceStatus;
-    // FIX: Changed property to camelCase.
     configJson: Record<string, any>;
-    // FIX: Changed property to camelCase.
     statsJson: { label: string; value: string | number }[];
     createdAt: Date;
     lastUpdatedAt: Date;
@@ -173,33 +161,23 @@ export interface ApiEndpoint {
     id: string;
     method: 'GET' | 'POST' | 'PUT' | 'DELETE';
     path: string;
-    // FIX: Changed property to camelCase.
     groupName: string;
     description?: string;
-    // FIX: Changed property to camelCase.
     defaultParamsJson?: Record<string, any>;
-    // FIX: Changed property to camelCase.
     defaultBodyJson?: Record<string, any>;
-    // FIX: Changed property to camelCase.
     expectedStatusCode: number;
     lastTestAt?: Date;
-    // FIX: Changed property to camelCase.
     lastTestStatus: ApiTestStatus;
     createdAt: Date;
 }
 
 export interface EndpointTestLog {
     id: string;
-    // FIX: Changed property to camelCase.
     endpointId: string;
     status: 'Passed' | 'Failed';
-    // FIX: Changed property to camelCase.
     statusCode: number;
-    // FIX: Changed property to camelCase.
     responseBody: Record<string, any>;
-    // FIX: Changed property to camelCase.
     responseHeaders: Record<string, any>;
-    // FIX: Changed property to camelCase.
     durationMs: number;
     createdAt: Date;
 }
@@ -217,11 +195,8 @@ export interface Feature {
     overview: string;
     status: FeatureStatus;
     category?: string;
-    // FIX: Changed property to camelCase.
     uiUxBreakdownJson: UiUxSubFeature[] | string;
-    // FIX: Changed property to camelCase.
     logicFlow: string;
-    // FIX: Changed property to camelCase.
     keyFilesJson: string[] | string;
     notes?: string;
     createdAt: Date;
@@ -231,14 +206,10 @@ export interface Feature {
 export type TestStatus = 'Passed' | 'Failed' | 'Not Run';
 export interface FeatureTest {
     id: string;
-    // FIX: Changed property to camelCase.
     featureId: string;
     description: string;
-    // FIX: Changed property to camelCase.
     manualSteps?: string;
-    // FIX: Changed property to camelCase.
     expectedResult: string;
-    // FIX: Changed property to camelCase.
     lastRunStatus: TestStatus;
     lastRunAt?: Date;
     createdAt: Date;
@@ -270,12 +241,10 @@ export interface Project {
 
 export interface ProjectTask {
     id: string;
-    // FIX: Changed property to camelCase.
     projectId: string;
     title: string;
     description?: string;
     status: 'todo' | 'in_progress' | 'done';
-    // FIX: Changed property to camelCase.
     orderIndex: number;
     createdAt: Date;
     lastUpdatedAt: Date;
@@ -293,13 +262,9 @@ export interface Task {
 
 export interface Experience {
     id: string;
-    // FIX: Changed property to camelCase.
     sourceRunId: string;
-    // FIX: Changed property to camelCase.
     goalTemplate: string;
-    // FIX: Changed property to camelCase.
     triggerKeywords: string[];
-    // FIX: Changed property to camelCase.
     stepsJson: Record<string, any>;
     usageCount: number;
     lastUsedAt?: Date;
@@ -312,7 +277,6 @@ export interface CommChannel {
     name: string;
     type: 'webhook' | 'email_inbound' | 'app_broadcast';
     status: 'active' | 'inactive' | 'error';
-    // FIX: Changed property to camelCase.
     configJson: Record<string, any>;
     createdAt: Date;
     lastUpdatedAt: Date;
@@ -380,7 +344,6 @@ export interface Log {
 export interface Brain {
     id: string;
     name: string;
-    // FIX: Changed property to camelCase.
     configJson: Record<string, any>;
     createdAt: Date;
     lastUpdatedAt: Date;

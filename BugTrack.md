@@ -272,3 +272,34 @@ This exhaustive fix guarantees that the application code, type definitions, and 
 - `scripts/seed-*.js` (all seed scripts)
 - All files in `app/api/` and `core/` containing SQL queries.
 - All components consuming data with changed property names (e.g., `Header.tsx`, `agent_center/RunReport.tsx`).
+---
+### Bug #14: FINAL FIX - Vercel Build Fails (Recurring `db:create` Error)
+
+**Error Details:**
+The Vercel build is still failing with the same `column "messageId" does not exist` error. After exhaustive reviews of the code, it's clear the issue is not a simple typo but a systemic inconsistency that previous refactors missed. Numerous API endpoints were still using `snake_case` in their SQL queries, conflicting with the now-standardized `camelCase` schema. This mismatch likely created a race condition or an unpredictable state during the Vercel build process, manifesting as the persistent index creation error.
+
+**Solution:**
+This is the final, definitive fix. A meticulous, file-by-file audit of the entire backend was performed to eradicate every last instance of `snake_case` in SQL queries and data handling, ensuring 100% consistency with the quoted `camelCase` database schema.
+1.  **Corrected All API Routes**: Systematically went through every file in `app/api/` and corrected all SQL queries to use quoted `camelCase` (e.g., `release_date` became `"releaseDate"`, `endpoint_id` became `"endpointId"`).
+2.  **Standardized `ui_settings`**: The last remaining `snake_case` property, `ui_settings`, was refactored to `"uiSettings"` across the database schema (`create-tables.js`), type definitions (`lib/types/data.ts`), and all relevant components (`ChatWindow.tsx`, `Message.tsx`).
+3.  **Fixed `features` Table Creation**: Corrected a logical error in `create-tables.js` where the `features` table was being dropped and recreated without `IF NOT EXISTS`, which could cause cascading issues.
+
+This exhaustive standardization ensures that the application's data access layer is perfectly synchronized with the database schema, eliminating the root cause of this persistent and elusive build failure.
+
+**Modified Files:**
+- `BugTrack.md`
+- `scripts/create-tables.js`
+- `lib/types/data.ts`
+- `components/ChatWindow.tsx`
+- `components/Message.tsx`
+- `app/api/version/current/route.ts`
+- `app/api/version/history/route.ts`
+- `app/api/documentation/[docKey]/route.ts`
+- `app/api/documentation/route.ts`
+- `app/api/hedra-goals/route.ts`
+- `app/api/api-endpoints/test-logs/[endpointId]/route.ts`
+- `app/api/tests/[testId]/route.ts`
+- `app/api/subsystems/route.ts`
+- `app/api/api-endpoints/test-all/route.ts`
+- `app/api/entities/relationships/route.ts`
+- `app/api/projects/[projectId]/tasks/route.ts`

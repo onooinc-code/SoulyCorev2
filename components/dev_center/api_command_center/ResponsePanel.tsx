@@ -57,7 +57,7 @@ const ResponsePanel = ({ response, endpoint, requestPayload, isLoading }: Respon
 ---
 
 ## Test Result
-- **Status:** ${response.status === endpoint.expected_status_code ? 'Passed' : 'Failed'}
+- **Status:** ${response.status === endpoint.expectedStatusCode ? 'Passed' : 'Failed'}
 - **HTTP Code:** ${response.status} ${response.statusText}
 
 ---
@@ -125,7 +125,7 @@ ${JSON.stringify(response.body, null, 2)}
                     <div className="flex items-center justify-center h-full text-gray-500">Send a request to see the response.</div>
                 ) : activeTab === 'body' ? (
                     <>
-                        <div className="text-xs p-2">Status: <span className={`font-bold ${response.status === endpoint?.expected_status_code ? 'text-green-400' : 'text-red-400'}`}>{response.status} {response.statusText}</span></div>
+                        <div className="text-xs p-2">Status: <span className={`font-bold ${response.status === endpoint?.expectedStatusCode ? 'text-green-400' : 'text-red-400'}`}>{response.status} {response.statusText}</span></div>
                         <JsonEditor value={JSON.stringify(response.body, null, 2)} readOnly />
                     </>
                 ) : activeTab === 'headers' ? (
@@ -135,8 +135,8 @@ ${JSON.stringify(response.body, null, 2)}
                         {testLogs.map(log => (
                              <div key={log.id} className="p-2 bg-gray-900/50 rounded-md">
                                 <div className="flex justify-between items-center">
-                                    <span className={`font-bold ${log.status === 'Passed' ? 'text-green-400' : 'text-red-400'}`}>{log.status} - {log.status_code}</span>
-                                    <span className="text-gray-500">{log.duration_ms}ms</span>
+                                    <span className={`font-bold ${log.status === 'Passed' ? 'text-green-400' : 'text-red-400'}`}>{log.status} - {log.statusCode}</span>
+                                    <span className="text-gray-500">{log.durationMs}ms</span>
                                 </div>
                                 <span className="text-gray-500">{new Date(log.createdAt).toLocaleString()}</span>
                             </div>

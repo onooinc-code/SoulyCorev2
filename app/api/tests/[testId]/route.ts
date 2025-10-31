@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { db, sql } from '@/lib/db';
 // FIX: Corrected import paths for types.
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest, { params }: { params: { testId: stri
 export async function PUT(req: NextRequest, { params }: { params: { testId: string } }) {
     try {
         const { testId } = params;
-        const { description, manual_steps, expected_result, last_run_status } = await req.json();
+        const { description, manualSteps, expectedResult, lastRunStatus } = await req.json();
 
         // Build the update query dynamically
         const updates: string[] = [];
@@ -40,21 +41,21 @@ export async function PUT(req: NextRequest, { params }: { params: { testId: stri
         let queryIndex = 1;
 
         if (description !== undefined) {
-            updates.push(`description = $${queryIndex++}`);
+            updates.push(`"description" = $${queryIndex++}`);
             values.push(description);
         }
-        if (manual_steps !== undefined) {
-            updates.push(`manual_steps = $${queryIndex++}`);
-            values.push(manual_steps);
+        if (manualSteps !== undefined) {
+            updates.push(`"manualSteps" = $${queryIndex++}`);
+            values.push(manualSteps);
         }
-        if (expected_result !== undefined) {
-            updates.push(`expected_result = $${queryIndex++}`);
-            values.push(expected_result);
+        if (expectedResult !== undefined) {
+            updates.push(`"expectedResult" = $${queryIndex++}`);
+            values.push(expectedResult);
         }
-        if (last_run_status !== undefined) {
-            updates.push(`last_run_status = $${queryIndex++}`);
-            values.push(last_run_status as TestStatus);
-            updates.push(`"last_run_at" = CURRENT_TIMESTAMP`);
+        if (lastRunStatus !== undefined) {
+            updates.push(`"lastRunStatus" = $${queryIndex++}`);
+            values.push(lastRunStatus as TestStatus);
+            updates.push(`"lastRunAt" = CURRENT_TIMESTAMP`);
         }
 
         if (updates.length === 0) {

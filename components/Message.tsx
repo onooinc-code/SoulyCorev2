@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState } from 'react';
@@ -37,7 +38,7 @@ const Message: React.FC<MessageProps> = (props) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     const isUser = message.role === 'user';
-    const align = props.currentConversation?.ui_settings?.textAlign || 'left';
+    const align = props.currentConversation?.uiSettings?.textAlign || 'left';
 
     const handleSaveEdit = () => {
         if (editedContent.trim() && editedContent !== message.content) {

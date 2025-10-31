@@ -1,16 +1,17 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import type { ApiEndpoint } from '@/lib/types';
 
 async function logTestResult(endpointId: string, status: string, statusCode: number, duration: number) {
     await sql`
-        INSERT INTO endpoint_test_logs (endpoint_id, status, status_code, response_body, response_headers, duration_ms)
+        INSERT INTO endpoint_test_logs ("endpointId", status, "statusCode", "responseBody", "responseHeaders", "durationMs")
         VALUES (${endpointId}, ${status}, ${statusCode}, ${JSON.stringify({ message: "Batch test run." })}, ${JSON.stringify({})}, ${duration});
     `;
     await sql`
         UPDATE api_endpoints
-        SET last_test_status = ${status}, last_test_at = CURRENT_TIMESTAMP
+        SET "lastTestStatus" = ${status}, "lastTestAt" = CURRENT_TIMESTAMP
         WHERE id = ${endpointId};
     `;
 }
@@ -36,11 +37,11 @@ export async function POST(req: NextRequest) {
                 const response = await fetch(url.toString(), {
                     method: endpoint.method,
                     headers: { 'Content-Type': 'application/json' },
-                    body: (endpoint.method !== 'GET' && endpoint.default_body_json) ? JSON.stringify(endpoint.default_body_json) : null,
+                    body: (endpoint.method !== 'GET' && endpoint.defaultBodyJson) ? JSON.stringify(endpoint.defaultBodyJson) : null,
                 });
                 const duration = Date.now() - startTime;
                 
-                if (response.status === endpoint.expected_status_code) {
+                if (response.status === endpoint.expectedStatusCode) {
                     await logTestResult(endpoint.id, 'Passed', response.status, duration);
                     passed++;
                 } else {

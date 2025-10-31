@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import type { EndpointTestLog } from '@/lib/types';
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: { endpointId: 
         const { endpointId } = params;
         const { rows } = await sql<EndpointTestLog>`
             SELECT * FROM endpoint_test_logs
-            WHERE endpoint_id = ${endpointId}
+            WHERE "endpointId" = ${endpointId}
             ORDER BY "createdAt" DESC
             LIMIT 20;
         `;

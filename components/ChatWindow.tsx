@@ -57,6 +57,7 @@ const ChatWindow = () => {
 
     // --- HANDLERS ---
     const handleSummarizeMessage = async (content: string) => {
+        console.log('User requested message summary.');
         setSummaryModalState({ isOpen: true, text: '', isLoading: true });
         try {
             const res = await fetch('/api/summarize', {
@@ -96,8 +97,8 @@ const ChatWindow = () => {
     
     const handleSetConversationAlign = (align: 'left' | 'right') => {
         if (!currentConversation) return;
-        const newUiSettings = { ...(currentConversation.ui_settings || {}), textAlign: align };
-        updateCurrentConversation({ ui_settings: newUiSettings });
+        const newUiSettings = { ...(currentConversation.uiSettings || {}), textAlign: align };
+        updateCurrentConversation({ uiSettings: newUiSettings });
     };
 
     const handleRegenerate = (messageId: string) => {
@@ -113,6 +114,7 @@ const ChatWindow = () => {
     
     const handleSuggestionClick = () => {
         if (!proactiveSuggestion) return;
+        console.log('User clicked proactive suggestion.', { suggestion: proactiveSuggestion });
         alert(`Action triggered: ${proactiveSuggestion}`);
         setProactiveSuggestion(null);
     };
@@ -126,6 +128,7 @@ const ChatWindow = () => {
     };
 
     const handleReply = (message: MessageType) => {
+        console.log('User is replying to a message', { messageId: message.id });
         setReplyToMessage(message);
     }
 
@@ -170,6 +173,8 @@ const ChatWindow = () => {
                 proactiveSuggestion={proactiveSuggestion}
                 onSuggestionClick={handleSuggestionClick}
                 onDismissSuggestion={() => {
+                    // FIX: Corrected a typo from `proactiveSuggestion` to `suggestion` to align with the log event schema.
+                    console.log('User dismissed proactive suggestion.', { suggestion: proactiveSuggestion });
                     setProactiveSuggestion(null);
                 }}
                 onSendMessage={handleSendMessage}

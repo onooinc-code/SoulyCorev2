@@ -16,7 +16,8 @@ export const useWorkflowManager = ({ currentConversation, setStatus, addMessage,
     const { log } = useLog();
 
     const startWorkflow = useCallback((prompt: Prompt, userInputs: Record<string, string>) => {
-        if (prompt.type !== 'chain' || !prompt.chain_definition) {
+        // FIX: Corrected property name from chain_definition to chainDefinition.
+        if (prompt.type !== 'chain' || !prompt.chainDefinition) {
             log('Attempted to start a workflow with a non-chain prompt.', { promptId: prompt.id }, 'warn');
             return;
         }
@@ -51,7 +52,8 @@ export const useWorkflowManager = ({ currentConversation, setStatus, addMessage,
         let currentHistory = [...history];
         let currentStepIndex = 0;
         const stepOutputs: Record<number, string> = {};
-        const chain = workflowState.prompt.chain_definition!.sort((a, b) => a.step - b.step);
+        // FIX: Corrected property name from chain_definition to chainDefinition.
+        const chain = workflowState.prompt.chainDefinition!.sort((a, b) => a.step - b.step);
 
         try {
             for (const step of chain) {

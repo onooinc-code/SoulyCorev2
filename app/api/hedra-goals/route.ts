@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { HedraGoal } from '@/lib/types';
@@ -9,7 +10,7 @@ export async function GET() {
     try {
         const { rows } = await sql<HedraGoal>`SELECT * FROM hedra_goals;`;
         const goals = rows.reduce((acc, row) => {
-            acc[row.section_key] = row;
+            acc[row.sectionKey] = row;
             return acc;
         }, {} as Record<string, HedraGoal>);
         return NextResponse.json(goals);
@@ -29,7 +30,7 @@ export async function PUT(req: NextRequest) {
             await client.query('BEGIN');
             for (const [key, value] of Object.entries(goalsToUpdate)) {
                 await client.query(
-                    `UPDATE hedra_goals SET content = $1, "lastUpdatedAt" = CURRENT_TIMESTAMP WHERE section_key = $2`,
+                    `UPDATE hedra_goals SET content = $1, "lastUpdatedAt" = CURRENT_TIMESTAMP WHERE "sectionKey" = $2`,
                     [value.content, key]
                 );
             }

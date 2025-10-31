@@ -18,7 +18,7 @@ const statements = [
     "model" VARCHAR(255),
     "temperature" REAL,
     "topP" REAL,
-    "ui_settings" JSONB,
+    "uiSettings" JSONB,
     "useSemanticMemory" BOOLEAN DEFAULT true,
     "useStructuredMemory" BOOLEAN DEFAULT true,
     "enableMemoryExtraction" BOOLEAN DEFAULT true,
@@ -187,10 +187,8 @@ const statements = [
     "durationMs" INTEGER,
     "createdAt" TIMESTAMPTZ DEFAULT now()
   );`,
-  
-  `DROP TABLE IF EXISTS "features" CASCADE;`,
 
-  `CREATE TABLE "features" (
+  `CREATE TABLE IF NOT EXISTS "features" (
     "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "name" VARCHAR(255) UNIQUE NOT NULL,
     "overview" TEXT,

@@ -121,14 +121,17 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ feature, onEdit, onDelete }) 
                     >
                         <div className="p-4 border-t border-gray-700 space-y-4 text-sm text-gray-300">
                             <div><strong className="text-gray-400 block mb-1">Overview:</strong><p className="whitespace-pre-wrap">{feature.overview}</p></div>
-                            <div><strong className="text-gray-400 block mb-1">Logic & Data Flow:</strong><p className="whitespace-pre-wrap">{feature.logic_flow}</p></div>
+                            {/* FIX: Corrected property name from logic_flow to logicFlow */}
+                            <div><strong className="text-gray-400 block mb-1">Logic & Data Flow:</strong><p className="whitespace-pre-wrap">{feature.logicFlow}</p></div>
                              <div>
                                 <strong className="text-gray-400 block mb-2">UI/UX Breakdown:</strong>
-                                <SafeJsonRenderer jsonData={feature.ui_ux_breakdown_json} type="ux" />
+                                {/* FIX: Corrected property name from ui_ux_breakdown_json to uiUxBreakdownJson */}
+                                <SafeJsonRenderer jsonData={feature.uiUxBreakdownJson} type="ux" />
                             </div>
                             <div>
                                 <strong className="text-gray-400 block mb-2">Key Files:</strong>
-                                <SafeJsonRenderer jsonData={feature.key_files_json} type="files" />
+                                {/* FIX: Corrected property name from key_files_json to keyFilesJson */}
+                                <SafeJsonRenderer jsonData={feature.keyFilesJson} type="files" />
                             </div>
                             {feature.notes && <div><strong className="text-gray-400 block mb-1">Notes:</strong><p className="whitespace-pre-wrap">{feature.notes}</p></div>}
                         </div>
@@ -181,11 +184,15 @@ const FeaturesDictionary = () => {
         let featureForForm: Partial<Feature>;
         if (feature) {
             featureForForm = { ...feature };
-            if (typeof featureForForm.ui_ux_breakdown_json === 'object' && featureForForm.ui_ux_breakdown_json !== null) {
-                featureForForm.ui_ux_breakdown_json = JSON.stringify(featureForForm.ui_ux_breakdown_json, null, 2);
+            // FIX: Correct property name from ui_ux_breakdown_json to uiUxBreakdownJson
+            if (typeof featureForForm.uiUxBreakdownJson === 'object' && featureForForm.uiUxBreakdownJson !== null) {
+                // FIX: Correct property name from ui_ux_breakdown_json to uiUxBreakdownJson
+                featureForForm.uiUxBreakdownJson = JSON.stringify(featureForForm.uiUxBreakdownJson, null, 2);
             }
-            if (typeof featureForForm.key_files_json === 'object' && featureForForm.key_files_json !== null) {
-                featureForForm.key_files_json = JSON.stringify(featureForForm.key_files_json, null, 2);
+            // FIX: Correct property name from key_files_json to keyFilesJson
+            if (typeof featureForForm.keyFilesJson === 'object' && featureForForm.keyFilesJson !== null) {
+                // FIX: Correct property name from key_files_json to keyFilesJson
+                featureForForm.keyFilesJson = JSON.stringify(featureForForm.keyFilesJson, null, 2);
             }
         } else {
             featureForForm = {
@@ -193,9 +200,10 @@ const FeaturesDictionary = () => {
                 overview: '',
                 status: '⚪ Planned',
                 category: 'Uncategorized',
-                ui_ux_breakdown_json: '[\n  {\n    "subFeature": "",\n    "description": "",\n    "status": "⚪ Planned"\n  }\n]',
-                logic_flow: '',
-                key_files_json: '[\n  ""\n]',
+                // FIX: Corrected property name from ui_ux_breakdown_json to uiUxBreakdownJson.
+                uiUxBreakdownJson: '[\n  {\n    "subFeature": "",\n    "description": "",\n    "status": "⚪ Planned"\n  }\n]',
+                logicFlow: '',
+                keyFilesJson: '[\n  ""\n]',
                 notes: '',
             };
         }
@@ -207,8 +215,10 @@ const FeaturesDictionary = () => {
         if (!currentFeature || !currentFeature.name) return;
         
         try {
-            if (currentFeature.ui_ux_breakdown_json) JSON.parse(currentFeature.ui_ux_breakdown_json as string);
-            if (currentFeature.key_files_json) JSON.parse(currentFeature.key_files_json as string);
+            // FIX: Correct property name from ui_ux_breakdown_json to uiUxBreakdownJson
+            if (currentFeature.uiUxBreakdownJson) JSON.parse(currentFeature.uiUxBreakdownJson as string);
+            // FIX: Correct property name from key_files_json to keyFilesJson
+            if (currentFeature.keyFilesJson) JSON.parse(currentFeature.keyFilesJson as string);
         } catch (e) {
             const errorMessage = "Invalid JSON format in one of the fields. Please check and try again.";
             setStatus({ error: errorMessage});
@@ -289,7 +299,7 @@ const FeaturesDictionary = () => {
             const searchMatch = !searchTerm || 
                 feature.name.toLowerCase().includes(lowerSearch) || 
                 feature.overview?.toLowerCase().includes(lowerSearch) ||
-                feature.logic_flow?.toLowerCase().includes(lowerSearch);
+                feature.logicFlow?.toLowerCase().includes(lowerSearch);
             return categoryMatch && statusMatch && searchMatch;
         });
     }, [features, searchTerm, activeFilters]);
@@ -310,9 +320,12 @@ const FeaturesDictionary = () => {
                     </div>
                      <input value={currentFeature?.category || ''} onChange={e => setCurrentFeature(f => f ? {...f, category: e.target.value} : null)} placeholder="Category (e.g., Core Engine)" className="w-full p-2 bg-gray-700 rounded-lg text-sm"/>
                     <textarea value={currentFeature?.overview || ''} onChange={e => setCurrentFeature(f => f ? {...f, overview: e.target.value} : null)} placeholder="Overview" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={3}></textarea>
-                    <textarea value={currentFeature?.logic_flow || ''} onChange={e => setCurrentFeature(f => f ? {...f, logic_flow: e.target.value} : null)} placeholder="Logic & Data Flow" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={4}></textarea>
-                    <div><label className="text-xs text-gray-400">UI/UX Breakdown (JSON Array)</label><textarea value={currentFeature?.ui_ux_breakdown_json as string || '[]'} onChange={e => setCurrentFeature(f => f ? {...f, ui_ux_breakdown_json: e.target.value} : null)} className="w-full p-2 bg-gray-700 rounded-lg text-sm font-mono" rows={4}></textarea></div>
-                    <div><label className="text-xs text-gray-400">Key Files (JSON Array)</label><textarea value={currentFeature?.key_files_json as string || '[]'} onChange={e => setCurrentFeature(f => f ? {...f, key_files_json: e.target.value} : null)} className="w-full p-2 bg-gray-700 rounded-lg text-sm font-mono" rows={3}></textarea></div>
+                    {/* FIX: Corrected property name from logic_flow to logicFlow */}
+                    <textarea value={currentFeature?.logicFlow || ''} onChange={e => setCurrentFeature(f => f ? {...f, logicFlow: e.target.value} : null)} placeholder="Logic & Data Flow" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={4}></textarea>
+                    {/* FIX: Corrected property name from ui_ux_breakdown_json to uiUxBreakdownJson */}
+                    <div><label className="text-xs text-gray-400">UI/UX Breakdown (JSON Array)</label><textarea value={currentFeature?.uiUxBreakdownJson as string || '[]'} onChange={e => setCurrentFeature(f => f ? {...f, uiUxBreakdownJson: e.target.value} : null)} className="w-full p-2 bg-gray-700 rounded-lg text-sm font-mono" rows={4}></textarea></div>
+                    {/* FIX: Corrected property name from key_files_json to keyFilesJson */}
+                    <div><label className="text-xs text-gray-400">Key Files (JSON Array)</label><textarea value={currentFeature?.keyFilesJson as string || '[]'} onChange={e => setCurrentFeature(f => f ? {...f, keyFilesJson: e.target.value} : null)} className="w-full p-2 bg-gray-700 rounded-lg text-sm font-mono" rows={3}></textarea></div>
                     <textarea value={currentFeature?.notes || ''} onChange={e => setCurrentFeature(f => f ? {...f, notes: e.target.value} : null)} placeholder="Notes & Improvements" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={3}></textarea>
                 </div>
                 <div className="flex gap-2 p-4 border-t border-gray-700 flex-shrink-0">

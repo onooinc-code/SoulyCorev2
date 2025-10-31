@@ -19,11 +19,13 @@ const EndpointNavigatorPanel = ({ endpoints, onSelectEndpoint, selectedEndpointI
     const groupedEndpoints = useMemo(() => {
         const filtered = endpoints.filter(e => 
             e.path.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            e.group_name.toLowerCase().includes(searchTerm.toLowerCase())
+            // FIX: Corrected property name from group_name to groupName.
+            e.groupName.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
         const groups = filtered.reduce((acc, endpoint) => {
-            (acc[endpoint.group_name] = acc[endpoint.group_name] || []).push(endpoint);
+            // FIX: Corrected property name from group_name to groupName.
+            (acc[endpoint.groupName] = acc[endpoint.groupName] || []).push(endpoint);
             return acc;
         }, {} as Record<string, ApiEndpoint[]>);
 
@@ -78,7 +80,7 @@ const EndpointNavigatorPanel = ({ endpoints, onSelectEndpoint, selectedEndpointI
                                                 onClick={() => onSelectEndpoint(endpoint)}
                                                 className={`w-full text-left p-2 my-0.5 rounded-md flex items-center gap-2 text-sm ${selectedEndpointId === endpoint.id ? 'bg-indigo-600/30' : 'hover:bg-gray-700/50'}`}
                                             >
-                                                <StatusIndicator status={endpoint.last_test_status} />
+                                                <StatusIndicator status={endpoint.lastTestStatus} />
                                                 <span className={`font-mono font-semibold w-12 text-right ${methodColorMap[endpoint.method] || 'text-gray-400'}`}>{endpoint.method}</span>
                                                 <span className="truncate">{endpoint.path}</span>
                                             </button>

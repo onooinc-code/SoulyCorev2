@@ -18,8 +18,8 @@ export async function GET() {
         const nodes: GraphNode[] = entities.map(e => ({ id: e.id, name: e.name, type: e.type }));
         const edges: GraphEdge[] = relationships.map(r => ({
             id: r.id,
-            source: r.source_entity_id,
-            target: r.target_entity_id,
+            source: r.sourceEntityId,
+            target: r.targetEntityId,
             label: r.predicate,
             context: r.context
         }));
@@ -37,16 +37,16 @@ export async function GET() {
 // POST a new relationship
 export async function POST(req: NextRequest) {
     try {
-        const { source_entity_id, target_entity_id, predicate, context } = await req.json();
+        const { sourceEntityId, targetEntityId, predicate, context } = await req.json();
 
-        if (!source_entity_id || !target_entity_id || !predicate) {
+        if (!sourceEntityId || !targetEntityId || !predicate) {
             return NextResponse.json({ error: 'source, target, and predicate are required' }, { status: 400 });
         }
 
         const { rows } = await sql<EntityRelationship>`
-            INSERT INTO entity_relationships (source_entity_id, target_entity_id, predicate, context)
-            VALUES (${source_entity_id}, ${target_entity_id}, ${predicate}, ${context || null})
-            ON CONFLICT (source_entity_id, target_entity_id, predicate) DO NOTHING
+            INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", predicate, context)
+            VALUES (${sourceEntityId}, ${targetEntityId}, ${predicate}, ${context || null})
+            ON CONFLICT ("sourceEntityId", "targetEntityId", predicate) DO NOTHING
             RETURNING *;
         `;
         

@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Subsystem } from '@/lib/types';
@@ -11,9 +12,9 @@ export async function GET(req: NextRequest) {
             SELECT 
                 id, name, description, progress, "healthScore",
                 dependencies, resources, milestones, "githubStats", tasks,
-                order_index as "orderIndex"
+                "orderIndex"
             FROM subsystems 
-            ORDER BY order_index ASC;
+            ORDER BY "orderIndex" ASC;
         `;
         return NextResponse.json(rows);
     } catch (error) {

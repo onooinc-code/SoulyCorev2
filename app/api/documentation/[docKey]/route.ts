@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Documentation } from '@/lib/types';
@@ -9,7 +10,7 @@ export async function GET(req: NextRequest, { params }: { params: { docKey: stri
     try {
         const { docKey } = params;
         const { rows } = await sql<Documentation>`
-            SELECT * FROM documentations WHERE doc_key = ${docKey};
+            SELECT * FROM documentations WHERE "docKey" = ${docKey};
         `;
 
         if (rows.length === 0) {
@@ -35,7 +36,7 @@ export async function PUT(req: NextRequest, { params }: { params: { docKey: stri
         const { rows } = await sql<Documentation>`
             UPDATE documentations
             SET content = ${content}, "lastUpdatedAt" = CURRENT_TIMESTAMP
-            WHERE doc_key = ${docKey}
+            WHERE "docKey" = ${docKey}
             RETURNING *;
         `;
 

@@ -24,13 +24,15 @@ const WorkflowStepCard = ({ step, onUpdate, onRemove, singlePrompts, tools, avai
     
     const getToolArguments = (toolId: string): string[] => {
         const tool = tools.find(t => t.id === toolId);
-        if (!tool || !tool.schema_json) return [];
+        // FIX: Corrected property name from schema_json to schemaJson.
+        if (!tool || !tool.schemaJson) return [];
         try {
             // FIX: The tool schema can be either a JSON string or a pre-parsed object.
             // This check handles both cases to prevent an error when calling JSON.parse on an object.
-            const schema = typeof tool.schema_json === 'string'
-                ? JSON.parse(tool.schema_json)
-                : tool.schema_json;
+            // FIX: Corrected property name from schema_json to schemaJson.
+            const schema = typeof tool.schemaJson === 'string'
+                ? JSON.parse(tool.schemaJson)
+                : tool.schemaJson;
             return Object.keys(schema.properties || {});
         } catch (e) {
             return [];
