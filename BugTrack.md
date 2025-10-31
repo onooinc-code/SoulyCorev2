@@ -342,3 +342,17 @@ Implemented a comprehensive fix by adding `DROP TABLE IF EXISTS ... CASCADE` sta
 **Modified Files:**
 - `BugTrack.md`
 - `scripts/create-tables.js`
+---
+### Bug #18: Vercel Build Fails (`config_json` vs `configJson`)
+
+**Error Details:**
+The Vercel build is failing with a TypeScript error: `Property 'config_json' does not exist on type 'CommChannel'`. This indicates that the `snake_case` vs `camelCase` inconsistency persists in the Communication Hub feature, which was missed during previous refactoring passes. The code is attempting to access `config_json` on an object of type `CommChannel`, but the type definition and the database schema correctly use `configJson`.
+
+**Solution:**
+A targeted fix was applied to all files related to the Communication Hub to enforce the `camelCase` convention for the `configJson` property. This involved correcting property access in a component and a column name in an API route's SQL query.
+
+**Modified Files:**
+- `BugTrack.md`
+- `app/api/comm/channels/route.ts`
+- `app/api/comm/notify/[channelId]/route.ts`
+- `components/hubs/comm_hub/ChannelDashboard.tsx`

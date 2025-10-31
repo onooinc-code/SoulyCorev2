@@ -1,5 +1,3 @@
-
-
 // components/hubs/comm_hub/ChannelDashboard.tsx
 "use client";
 
@@ -28,7 +26,7 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel }) => {
     };
 
     const currentStatus = statusMap[channel.status];
-    const outgoingWebhookUrl = channel.config_json?.url;
+    const outgoingWebhookUrl = channel.configJson?.url;
     
     const handleCopy = (url: string, type: 'incoming' | 'outgoing') => {
         navigator.clipboard.writeText(url);

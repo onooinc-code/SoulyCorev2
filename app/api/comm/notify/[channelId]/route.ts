@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: { channelId: 
         }
 
         const channel = rows[0];
-        const webhookUrl = channel.config_json?.url;
+        const webhookUrl = channel.configJson?.url;
 
         if (!webhookUrl) {
             // Log this as an error for the channel

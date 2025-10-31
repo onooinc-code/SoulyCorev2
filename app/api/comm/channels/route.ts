@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         const configJson = JSON.stringify(config || {});
 
         const { rows } = await sql<CommChannel>`
-            INSERT INTO comm_channels (name, type, status, config_json)
+            INSERT INTO comm_channels (name, type, status, "configJson")
             VALUES (${name}, ${type}, 'active', ${configJson})
             RETURNING *;
         `;
