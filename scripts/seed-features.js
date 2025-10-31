@@ -190,9 +190,9 @@ async function seedFeatures() {
                     overview, 
                     status, 
                     category,
-                    ui_ux_breakdown_json,
-                    logic_flow,
-                    key_files_json,
+                    "uiUxBreakdownJson",
+                    "logicFlow",
+                    "keyFilesJson",
                     notes,
                     "lastUpdatedAt"
                 )

@@ -229,3 +229,24 @@ Standardized the database schema by refactoring the `pipeline_runs` and `pipelin
 - `core/pipelines/memory_extraction.ts`
 - `app/api/inspect/[messageId]/route.ts`
 - `components/CognitiveInspectorModal.tsx`
+---
+### Bug #12: Vercel Build Fails on `db:create`
+
+**Error Details:**
+The Vercel deployment was failing during the `postinstall` script, specifically on the `npm run db:create` step. The error log showed a PostgreSQL error: `column "messageId" does not exist`, which occurred during an index creation process. This was a symptom of a much larger problem: a massive inconsistency in column naming conventions (`snake_case` vs. `camelCase`) across almost all tables in `scripts/create-tables.js`. This inconsistency made the database schema fragile and prone to errors during creation and querying.
+
+**Solution:**
+A comprehensive refactoring of the entire database schema was performed to enforce a single, consistent naming convention: **quoted camelCase** (e.g., `"lastUpdatedAt"`).
+1.  **Standardized `create-tables.js`**: Every table definition in `scripts/create-tables.js` was reviewed and modified. All column names previously using `snake_case` or unquoted `camelCase` were converted to quoted `camelCase`. This included updating `PRIMARY KEY`, `REFERENCES`, and `CREATE INDEX` statements to use the new standardized names.
+2.  **Updated All Seed Scripts**: To ensure the `npm run db:seed` command would succeed after the schema change, all seed scripts (`seed-features.js`, `seed-api-endpoints.js`, etc.) were updated. Their `INSERT` statements were modified to use the new quoted camelCase column names.
+
+This large-scale standardization resolves the immediate build error and hardens the database layer against a whole class of future bugs related to naming ambiguity.
+
+**Modified Files:**
+- `BugTrack.md`
+- `scripts/create-tables.js`
+- `scripts/seed-api-endpoints.js`
+- `scripts/seed-docs-and-goals.js`
+- `scripts/seed-features.js`
+- `scripts/seed-subsystems.js`
+- `scripts/seed-version-history.js`

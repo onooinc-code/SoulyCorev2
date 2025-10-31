@@ -78,7 +78,7 @@ async function seedSubsystems() {
             await sql`
                 INSERT INTO subsystems (
                     id, name, description, progress, "healthScore", 
-                    dependencies, resources, milestones, "githubStats", tasks, order_index
+                    dependencies, resources, milestones, "githubStats", tasks, "orderIndex"
                 ) VALUES (
                     ${sub.id}, ${sub.name}, ${sub.description}, ${sub.progress}, ${sub.healthScore},
                     ${JSON.stringify(sub.dependencies)}, ${JSON.stringify(sub.resources)}, 

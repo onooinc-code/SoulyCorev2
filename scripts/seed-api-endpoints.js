@@ -52,10 +52,10 @@ async function seedApiEndpoints() {
                 INSERT INTO api_endpoints (
                     method, 
                     path, 
-                    group_name, 
+                    "groupName", 
                     description, 
-                    default_body_json,
-                    expected_status_code
+                    "defaultBodyJson",
+                    "expectedStatusCode"
                 )
                 VALUES (
                     ${endpoint.method}, 

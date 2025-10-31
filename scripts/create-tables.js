@@ -18,7 +18,7 @@ const statements = [
     model VARCHAR(255),
     temperature REAL,
     "topP" REAL,
-    ui_settings JSONB,
+    "ui_settings" JSONB,
     "useSemanticMemory" BOOLEAN DEFAULT true,
     "useStructuredMemory" BOOLEAN DEFAULT true,
     "enableMemoryExtraction" BOOLEAN DEFAULT true,
@@ -34,9 +34,9 @@ const statements = [
     "tokenCount" INTEGER,
     "responseTime" INTEGER,
     "isBookmarked" BOOLEAN DEFAULT false,
-    parent_message_id UUID REFERENCES messages(id) ON DELETE SET NULL,
+    "parentMessageId" UUID REFERENCES messages(id) ON DELETE SET NULL,
     tags TEXT[],
-    content_summary TEXT,
+    "contentSummary" TEXT,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
@@ -67,18 +67,18 @@ const statements = [
   
   `CREATE TABLE IF NOT EXISTS entity_relationships (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    source_entity_id UUID NOT NULL REFERENCES entity_definitions(id) ON DELETE CASCADE,
-    target_entity_id UUID NOT NULL REFERENCES entity_definitions(id) ON DELETE CASCADE,
+    "sourceEntityId" UUID NOT NULL REFERENCES entity_definitions(id) ON DELETE CASCADE,
+    "targetEntityId" UUID NOT NULL REFERENCES entity_definitions(id) ON DELETE CASCADE,
     predicate VARCHAR(255) NOT NULL,
     context TEXT,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
-    UNIQUE(source_entity_id, target_entity_id, predicate)
+    UNIQUE("sourceEntityId", "targetEntityId", predicate)
   );`,
 
   `CREATE TABLE IF NOT EXISTS message_entities (
-    message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
-    entity_id UUID NOT NULL REFERENCES entity_definitions(id) ON DELETE CASCADE,
-    PRIMARY KEY (message_id, entity_id)
+    "messageId" UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+    "entityId" UUID NOT NULL REFERENCES entity_definitions(id) ON DELETE CASCADE,
+    PRIMARY KEY ("messageId", "entityId")
   );`,
 
   `CREATE TABLE IF NOT EXISTS segments (
@@ -91,9 +91,9 @@ const statements = [
   );`,
 
   `CREATE TABLE IF NOT EXISTS message_segments (
-    message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
-    segment_id UUID NOT NULL REFERENCES segments(id) ON DELETE CASCADE,
-    PRIMARY KEY (message_id, segment_id)
+    "messageId" UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+    "segmentId" UUID NOT NULL REFERENCES segments(id) ON DELETE CASCADE,
+    PRIMARY KEY ("messageId", "segmentId")
   );`,
   
   `CREATE TABLE IF NOT EXISTS prompts (
@@ -103,7 +103,7 @@ const statements = [
     folder VARCHAR(255),
     tags TEXT[],
     type VARCHAR(50) DEFAULT 'single',
-    chain_definition JSONB,
+    "chainDefinition" JSONB,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
@@ -112,7 +112,7 @@ const statements = [
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
-    schema_json JSONB,
+    "schemaJson" JSONB,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
@@ -121,34 +121,34 @@ const statements = [
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       goal TEXT NOT NULL,
       status VARCHAR(50) NOT NULL,
-      result_summary TEXT,
+      "resultSummary" TEXT,
       "createdAt" TIMESTAMPTZ DEFAULT now(),
       "completedAt" TIMESTAMPTZ
   );`,
 
   `CREATE TABLE IF NOT EXISTS agent_run_phases (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      run_id UUID NOT NULL REFERENCES agent_runs(id) ON DELETE CASCADE,
-      phase_order INT NOT NULL,
+      "runId" UUID NOT NULL REFERENCES agent_runs(id) ON DELETE CASCADE,
+      "phaseOrder" INT NOT NULL,
       goal TEXT NOT NULL,
       status VARCHAR(50) NOT NULL,
       result TEXT,
-      started_at TIMESTAMPTZ,
-      completed_at TIMESTAMPTZ
+      "startedAt" TIMESTAMPTZ,
+      "completedAt" TIMESTAMPTZ
   );`,
 
   `CREATE TABLE IF NOT EXISTS agent_run_steps (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      run_id UUID NOT NULL REFERENCES agent_runs(id) ON DELETE CASCADE,
-      phase_id UUID NOT NULL REFERENCES agent_run_phases(id) ON DELETE CASCADE,
-      step_order INT NOT NULL,
+      "runId" UUID NOT NULL REFERENCES agent_runs(id) ON DELETE CASCADE,
+      "phaseId" UUID NOT NULL REFERENCES agent_run_phases(id) ON DELETE CASCADE,
+      "stepOrder" INT NOT NULL,
       thought TEXT,
       action VARCHAR(255),
-      action_input JSONB,
+      "actionInput" JSONB,
       observation TEXT,
       status VARCHAR(50),
-      started_at TIMESTAMPTZ,
-      completed_at TIMESTAMPTZ
+      "startedAt" TIMESTAMPTZ,
+      "completedAt" TIMESTAMPTZ
   );`,
   
   `CREATE TABLE IF NOT EXISTS data_sources (
@@ -157,8 +157,8 @@ const statements = [
     provider VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL,
     status VARCHAR(50) NOT NULL,
-    config_json JSONB,
-    stats_json JSONB,
+    "configJson" JSONB,
+    "statsJson" JSONB,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
@@ -167,24 +167,24 @@ const statements = [
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     method VARCHAR(10) NOT NULL,
     path VARCHAR(255) UNIQUE NOT NULL,
-    group_name VARCHAR(255),
+    "groupName" VARCHAR(255),
     description TEXT,
-    default_params_json JSONB,
-    default_body_json JSONB,
-    expected_status_code INTEGER DEFAULT 200,
-    last_test_at TIMESTAMPTZ,
-    last_test_status VARCHAR(50) DEFAULT 'Not Run',
+    "defaultParamsJson" JSONB,
+    "defaultBodyJson" JSONB,
+    "expectedStatusCode" INTEGER DEFAULT 200,
+    "lastTestAt" TIMESTAMPTZ,
+    "lastTestStatus" VARCHAR(50) DEFAULT 'Not Run',
     "createdAt" TIMESTAMPTZ DEFAULT now()
   );`,
 
   `CREATE TABLE IF NOT EXISTS endpoint_test_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    endpoint_id UUID REFERENCES api_endpoints(id) ON DELETE CASCADE,
+    "endpointId" UUID REFERENCES api_endpoints(id) ON DELETE CASCADE,
     status VARCHAR(50) NOT NULL,
-    status_code INTEGER NOT NULL,
-    response_body JSONB,
-    response_headers JSONB,
-    duration_ms INTEGER,
+    "statusCode" INTEGER NOT NULL,
+    "responseBody" JSONB,
+    "responseHeaders" JSONB,
+    "durationMs" INTEGER,
     "createdAt" TIMESTAMPTZ DEFAULT now()
   );`,
   
@@ -196,9 +196,9 @@ const statements = [
     overview TEXT,
     status VARCHAR(50) NOT NULL,
     category VARCHAR(255),
-    ui_ux_breakdown_json JSONB,
-    logic_flow TEXT,
-    key_files_json JSONB,
+    "uiUxBreakdownJson" JSONB,
+    "logicFlow" TEXT,
+    "keyFilesJson" JSONB,
     notes TEXT,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
@@ -208,10 +208,10 @@ const statements = [
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "featureId" UUID REFERENCES features(id) ON DELETE CASCADE,
     description TEXT NOT NULL,
-    manual_steps TEXT,
-    expected_result TEXT NOT NULL,
-    last_run_status VARCHAR(50) DEFAULT 'Not Run',
-    last_run_at TIMESTAMPTZ,
+    "manualSteps" TEXT,
+    "expectedResult" TEXT NOT NULL,
+    "lastRunStatus" VARCHAR(50) DEFAULT 'Not Run',
+    "lastRunAt" TIMESTAMPTZ,
     "createdAt" TIMESTAMPTZ DEFAULT now()
   );`,
 
@@ -226,7 +226,7 @@ const statements = [
     milestones JSONB,
     "githubStats" JSONB,
     tasks JSONB,
-    order_index INTEGER
+    "orderIndex" INTEGER
   );`,
 
   `CREATE TABLE IF NOT EXISTS projects (
@@ -234,18 +234,18 @@ const statements = [
       name VARCHAR(255) NOT NULL,
       description TEXT,
       status VARCHAR(50) DEFAULT 'Not Started',
-      due_date DATE,
+      "dueDate" DATE,
       "createdAt" TIMESTAMPTZ DEFAULT now(),
       "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
 
   `CREATE TABLE IF NOT EXISTS project_tasks (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+      "projectId" UUID REFERENCES projects(id) ON DELETE CASCADE,
       title VARCHAR(255) NOT NULL,
       description TEXT,
       status VARCHAR(50) DEFAULT 'todo',
-      order_index INTEGER DEFAULT 0,
+      "orderIndex" INTEGER DEFAULT 0,
       "createdAt" TIMESTAMPTZ DEFAULT now(),
       "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
@@ -254,7 +254,7 @@ const statements = [
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       title VARCHAR(255) NOT NULL,
       description TEXT,
-      due_date DATE,
+      "dueDate" DATE,
       status VARCHAR(50) DEFAULT 'todo',
       "createdAt" TIMESTAMPTZ DEFAULT now(),
       "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
@@ -262,12 +262,12 @@ const statements = [
 
   `CREATE TABLE IF NOT EXISTS experiences (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      source_run_id UUID REFERENCES agent_runs(id) ON DELETE SET NULL,
-      goal_template TEXT NOT NULL,
-      trigger_keywords TEXT[],
-      steps_json JSONB NOT NULL,
-      usage_count INTEGER DEFAULT 0,
-      last_used_at TIMESTAMPTZ,
+      "sourceRunId" UUID REFERENCES agent_runs(id) ON DELETE SET NULL,
+      "goalTemplate" TEXT NOT NULL,
+      "triggerKeywords" TEXT[],
+      "stepsJson" JSONB NOT NULL,
+      "usageCount" INTEGER DEFAULT 0,
+      "lastUsedAt" TIMESTAMPTZ,
       "createdAt" TIMESTAMPTZ DEFAULT now(),
       "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
@@ -277,7 +277,7 @@ const statements = [
       name VARCHAR(255) NOT NULL,
       type VARCHAR(50) NOT NULL,
       status VARCHAR(50) NOT NULL,
-      config_json JSONB,
+      "configJson" JSONB,
       "createdAt" TIMESTAMPTZ DEFAULT now(),
       "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
@@ -314,21 +314,21 @@ const statements = [
   `CREATE TABLE IF NOT EXISTS version_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     version VARCHAR(50) UNIQUE NOT NULL,
-    release_date TIMESTAMPTZ NOT NULL,
+    "releaseDate" TIMESTAMPTZ NOT NULL,
     changes TEXT NOT NULL,
     "createdAt" TIMESTAMPTZ DEFAULT now()
   );`,
 
   `CREATE TABLE IF NOT EXISTS documentations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    doc_key VARCHAR(255) UNIQUE NOT NULL,
+    "docKey" VARCHAR(255) UNIQUE NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT,
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
 
   `CREATE TABLE IF NOT EXISTS hedra_goals (
-    section_key VARCHAR(255) PRIMARY KEY,
+    "sectionKey" VARCHAR(255) PRIMARY KEY,
     content TEXT,
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
@@ -344,7 +344,7 @@ const statements = [
   `CREATE TABLE IF NOT EXISTS brains (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
-    config_json JSONB,
+    "configJson" JSONB,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
@@ -352,9 +352,9 @@ const statements = [
   `CREATE TABLE IF NOT EXISTS documents (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       filename VARCHAR(255),
-      mime_type VARCHAR(255),
-      storage_url VARCHAR(1024),
-      size_bytes BIGINT,
+      "mimeType" VARCHAR(255),
+      "storageUrl" VARCHAR(1024),
+      "sizeBytes" BIGINT,
       "createdAt" TIMESTAMPTZ DEFAULT now()
   );`,
 

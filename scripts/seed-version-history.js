@@ -76,10 +76,10 @@ async function seedVersionHistory() {
     try {
         for (const version of versionData) {
             await sql`
-                INSERT INTO version_history (version, release_date, changes)
+                INSERT INTO version_history (version, "releaseDate", changes)
                 VALUES (${version.version}, ${version.release_date}, ${version.changes})
                 ON CONFLICT (version) DO UPDATE SET
-                    release_date = EXCLUDED.release_date,
+                    "releaseDate" = EXCLUDED."releaseDate",
                     changes = EXCLUDED.changes;
             `;
         }
