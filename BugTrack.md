@@ -384,3 +384,15 @@ Corrected the `handleSetConversationAlign` function in `ChatWindow.tsx` to use t
 **Modified Files:**
 - `BugTrack.md`
 - `components/chat/ChatWindow.tsx`
+---
+### Bug #21: Vercel Build Fails (`doc_key` vs `docKey`)
+
+**Error Details:**
+The Vercel build is failing with a TypeScript error: `Property 'doc_key' does not exist on type 'Documentation'`. This is another instance of `snake_case` vs `camelCase` inconsistency, specifically in the `DocumentationPanel.tsx` component, which was missed during previous refactoring passes.
+
+**Solution:**
+Corrected the `onClick` handler in `DocumentationPanel.tsx` to use the correct `camelCase` property `docKey` when accessing the documentation object, aligning it with the type definition and database schema.
+
+**Modified Files:**
+- `BugTrack.md`
+- `components/dashboard/panels/DocumentationPanel.tsx`

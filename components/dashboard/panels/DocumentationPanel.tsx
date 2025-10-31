@@ -55,7 +55,7 @@ const DocumentationPanel = () => {
                 {docs.map(doc => ( 
                     <button 
                         key={doc.id}
-                        onClick={() => handleSelectDoc(doc.doc_key)}
+                        onClick={() => handleSelectDoc(doc.docKey)}
                         className="w-full text-left p-4 bg-gray-900/50 rounded-lg hover:bg-gray-900 transition-colors flex flex-col justify-between h-36 border border-transparent hover:border-indigo-500"
                     >
                         <div>
