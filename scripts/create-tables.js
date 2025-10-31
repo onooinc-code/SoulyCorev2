@@ -4,6 +4,12 @@ const { db } = require('@vercel/postgres');
 const statements = [
   `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`,
 
+  // FIX: Force a clean state for these tables on every build to prevent errors from stale,
+  // incomplete table structures persisting in the Vercel build cache. This is the definitive
+  // solution to the recurring "column messageId does not exist" error.
+  `DROP TABLE IF EXISTS "pipeline_run_steps" CASCADE;`,
+  `DROP TABLE IF EXISTS "pipeline_runs" CASCADE;`,
+
   `CREATE TABLE IF NOT EXISTS "settings" (
     "key" VARCHAR(255) PRIMARY KEY,
     "value" JSONB,

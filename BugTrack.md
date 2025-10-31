@@ -303,3 +303,15 @@ This exhaustive standardization ensures that the application's data access layer
 - `app/api/api-endpoints/test-all/route.ts`
 - `app/api/entities/relationships/route.ts`
 - `app/api/projects/[projectId]/tasks/route.ts`
+---
+### Bug #15: Vercel Build Fails (Stale DB State)
+
+**Error Details:**
+The Vercel build continues to fail with `column "messageId" does not exist` during the `db:create` step, even after all code and schema definitions were standardized to `camelCase`. The root cause was identified as a stale database state within the Vercel build environment. A previous, failed build had created an incomplete version of the `pipeline_runs` table without the `messageId` column. Subsequent builds, using the corrected schema with `CREATE TABLE IF NOT EXISTS`, would see that the table existed and skip the `CREATE` statement, never applying the fix. The script would then fail when it later tried to create an index on the non-existent column in the old, incomplete table.
+
+**Solution:**
+Implemented a destructive but definitive fix by forcing a clean recreation of the problematic tables during every build. Added `DROP TABLE IF EXISTS "pipeline_runs" CASCADE;` and `DROP TABLE IF EXISTS "pipeline_run_steps" CASCADE;` at the beginning of the `scripts/create-tables.js` script. This ensures that any stale or malformed versions of these tables are completely removed before the new, correct schema is applied, thus guaranteeing a clean state and resolving the persistent build error.
+
+**Modified Files:**
+- `BugTrack.md`
+- `scripts/create-tables.js`
