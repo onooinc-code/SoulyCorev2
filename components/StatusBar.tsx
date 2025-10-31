@@ -1,10 +1,12 @@
 
+
 "use client";
 
 import React, { useMemo } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { CogIcon, UserCircleIcon, BookmarkIcon, CpuChipIcon, ClockIcon, DocumentTextIcon } from '@/components/Icons';
 import { ChatBubbleLeftRightIcon } from '@/components/Icons';
+import type { CognitiveStatus } from '@/lib/types';
 
 interface StatusBarProps {
     onSettingsClick: () => void;
@@ -52,14 +54,17 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
     // of `status.currentAction` (object, string, or null) to ensure that only a string is ever rendered.
     const currentActionText = useMemo(() => {
         const action = status.currentAction;
-        if (action === null) {
+        if (!action) {
             return 'Ready';
         }
         if (typeof action === 'string') {
             return action;
         }
-        // At this point, action is known to be CognitiveStatus
-        return action.details;
+        if (typeof action === 'object' && 'details' in action && typeof (action as CognitiveStatus).details === 'string') {
+            return (action as CognitiveStatus).details;
+        }
+        // Fallback for any other unexpected object shape
+        return 'Processing...';
     }, [status.currentAction]);
 
     return (

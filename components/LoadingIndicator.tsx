@@ -19,7 +19,7 @@ const LoadingIndicator = () => {
 
     // Type guard to ensure status.currentAction is a CognitiveStatus object
     const isCognitiveStatus = (action: any): action is CognitiveStatus => {
-        return typeof action === 'object' && action !== null && 'phase' in action;
+        return typeof action === 'object' && action !== null && 'phase' in action && typeof action.details === 'string';
     };
 
 

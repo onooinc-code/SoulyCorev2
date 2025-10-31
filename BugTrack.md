@@ -135,3 +135,21 @@ The error persists, indicating the root cause is likely in another component or 
 - `components/ConversationSettingsModal.tsx`
 - `components/dev_center/FeaturesDictionary.tsx`
 - `components/agent_center/RunReport.tsx`
+---
+### Bug #7: SOLVED - React Error #299
+
+**Error Details:**
+The application was throwing "Minified React error #299", indicating a component was trying to render a JavaScript object. The investigation pointed towards the `status.currentAction` state, which can be a string, null, or a `CognitiveStatus` object (`{ phase: string, details: string }`).
+
+**Solution:**
+The root cause was that multiple components were rendering `status.currentAction` without being fully defensive against all possible object shapes it might take during state transitions. While some checks were in place, they weren't robust enough. The fix involved strengthening the type guards in all components that render this piece of state.
+
+1.  **`StatusBar.tsx`**: The `useMemo` hook for `currentActionText` was updated to explicitly check if `action` is an object and has a string `details` property before attempting to return it. A fallback string is now returned for any other unexpected object shape, preventing the error.
+2.  **`LoadingIndicator.tsx`**: The `isCognitiveStatus` type guard was improved to also check that `action.details` is a string, ensuring that the `CognitiveStatusBar` component only receives a correctly-formed object.
+
+This two-pronged fix ensures that the application never attempts to render a non-string value from the `status.currentAction` state, definitively resolving the error.
+
+**Modified Files:**
+- `BugTrack.md`
+- `components/StatusBar.tsx`
+- `components/LoadingIndicator.tsx`

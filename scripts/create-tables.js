@@ -188,7 +188,9 @@ const statements = [
     "createdAt" TIMESTAMPTZ DEFAULT now()
   );`,
   
-  `CREATE TABLE IF NOT EXISTS features (
+  `DROP TABLE IF EXISTS features CASCADE;`,
+
+  `CREATE TABLE features (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     overview TEXT,
