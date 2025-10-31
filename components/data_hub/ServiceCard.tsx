@@ -43,7 +43,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, onSettingsClick }) =
     const TypeIcon = typeInfo[service.type]?.icon || CircleStackIcon;
     const sInfo = statusInfo[service.status];
 
-    const displayStats = service.stats_json || [];
+    const displayStats = service.statsJson || [];
     const paddedStats = [...displayStats, ...Array(Math.max(0, 4 - displayStats.length)).fill({ label: '-', value: '-' })].slice(0, 4);
 
     return (

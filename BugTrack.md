@@ -396,3 +396,15 @@ Corrected the `onClick` handler in `DocumentationPanel.tsx` to use the correct `
 **Modified Files:**
 - `BugTrack.md`
 - `components/dashboard/panels/DocumentationPanel.tsx`
+---
+### Bug #22: Vercel Build Fails (`stats_json` vs `statsJson`)
+
+**Error Details:**
+The Vercel build is failing with a TypeScript error: `Property 'stats_json' does not exist on type 'DataSource'`. This is another instance of `snake_case` vs `camelCase` inconsistency, specifically in the `ServiceCard.tsx` component within the Data Hub, which was missed during previous refactoring passes.
+
+**Solution:**
+Corrected the property access in `ServiceCard.tsx` to use the correct `camelCase` property `statsJson` when accessing the data source object, aligning it with the `DataSource` type definition and database schema.
+
+**Modified Files:**
+- `BugTrack.md`
+- `components/data_hub/ServiceCard.tsx`
