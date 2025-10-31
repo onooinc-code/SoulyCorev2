@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 // FIX: Corrected import path for type.
@@ -27,7 +28,8 @@ export async function GET(req: NextRequest, { params }: { params: { promptId: st
 export async function PUT(req: NextRequest, { params }: { params: { promptId: string } }) {
     try {
         const { promptId } = params;
-        const { name, content, folder, tags, type, chain_definition } = await req.json() as Partial<Prompt>;
+        // FIX: Corrected property name from snake_case to camelCase to match type definition.
+        const { name, content, folder, tags, type, chainDefinition } = await req.json() as Partial<Prompt>;
 
         if (!name || !content) {
             return NextResponse.json({ error: 'Name and content are required' }, { status: 400 });
@@ -41,7 +43,7 @@ export async function PUT(req: NextRequest, { params }: { params: { promptId: st
                 folder = ${folder}, 
                 tags = ${tags ? (tags as any) : null},
                 type = ${type || 'single'},
-                chain_definition = ${chain_definition ? JSON.stringify(chain_definition) : null},
+                "chainDefinition" = ${chainDefinition ? JSON.stringify(chainDefinition) : null},
                 "lastUpdatedAt" = CURRENT_TIMESTAMP
             WHERE id = ${promptId}
             RETURNING *;

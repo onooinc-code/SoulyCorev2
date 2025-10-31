@@ -1,6 +1,5 @@
 
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -34,8 +33,8 @@ const calculateFeatureHealth = (tests: TestCase[]): FeatureHealth => {
         return 'Untested';
     }
     const totalTests = tests.length;
-    const passedCount = tests.filter(t => t.last_run_status === 'Passed').length;
-    const failedCount = tests.filter(t => t.last_run_status === 'Failed').length;
+    const passedCount = tests.filter(t => t.lastRunStatus === 'Passed').length;
+    const failedCount = tests.filter(t => t.lastRunStatus === 'Failed').length;
 
     if (failedCount > 0) return 'Failing';
     if (passedCount === totalTests) return 'Healthy';
@@ -94,9 +93,9 @@ const FeatureRow: React.FC<FeatureRowProps> = ({
                                         onClick={() => onSelectTest(test)}
                                         className={`w-full text-left p-2 rounded-md text-sm transition-colors flex items-center gap-3 ${selectedTestId === test.id ? 'bg-indigo-600/50' : 'hover:bg-gray-700/50'}`}
                                     >
-                                        <div className={`w-2 h-2 rounded-full ${test.last_run_status === 'Passed' ? 'bg-green-500' : test.last_run_status === 'Failed' ? 'bg-red-500' : 'bg-gray-500'}`}></div>
+                                        <div className={`w-2 h-2 rounded-full ${test.lastRunStatus === 'Passed' ? 'bg-green-500' : test.lastRunStatus === 'Failed' ? 'bg-red-500' : 'bg-gray-500'}`}></div>
                                         <span className="flex-1">{test.description}</span>
-                                        <span className="text-xs text-gray-400">{test.last_run_status}</span>
+                                        <span className="text-xs text-gray-400">{test.lastRunStatus}</span>
                                     </button>
                                 ))
                             ) : (
@@ -112,7 +111,7 @@ const FeatureRow: React.FC<FeatureRowProps> = ({
 
 
 const TestCasePanel = ({ test, onUpdate, onClose }: { test: TestCase; onUpdate: (testId: string, status: TestStatus) => void; onClose: () => void; }) => {
-    const [status, setStatus] = useState<TestStatus>(test.last_run_status);
+    const [status, setStatus] = useState<TestStatus>(test.lastRunStatus);
     const [isSaving, setIsSaving] = useState(false);
 
     const handleUpdate = async () => {
@@ -138,15 +137,15 @@ const TestCasePanel = ({ test, onUpdate, onClose }: { test: TestCase; onUpdate: 
                     <h5 className="text-sm font-semibold text-gray-400">Description</h5>
                     <p>{test.description}</p>
                 </div>
-                 {test.manual_steps && (
+                 {test.manualSteps && (
                     <div>
                         <h5 className="text-sm font-semibold text-gray-400">Manual Steps</h5>
-                        <div className="prose-custom text-sm"><ReactMarkdown remarkPlugins={[remarkGfm]}>{test.manual_steps || ''}</ReactMarkdown></div>
+                        <div className="prose-custom text-sm"><ReactMarkdown remarkPlugins={[remarkGfm]}>{test.manualSteps || ''}</ReactMarkdown></div>
                     </div>
                  )}
                  <div>
                     <h5 className="text-sm font-semibold text-gray-400">Expected Result</h5>
-                    <p className="italic">{test.expected_result}</p>
+                    <p className="italic">{test.expectedResult}</p>
                 </div>
                  <div className="pt-4 border-t border-gray-700">
                      <h5 className="text-sm font-semibold text-gray-400 mb-2">Record Test Result</h5>
@@ -206,7 +205,7 @@ const FeatureHealthDashboard = () => {
             const res = await fetch(`/api/tests/${testId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ last_run_status: status }),
+                body: JSON.stringify({ lastRunStatus: status }),
             });
             if (!res.ok) throw new Error("Failed to update test status");
             await fetchData(); // Refresh all data

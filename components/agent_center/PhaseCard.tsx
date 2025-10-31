@@ -34,7 +34,8 @@ const PhaseCard = ({ phase, isActive }: PhaseCardProps) => {
                     {status.icon}
                 </div>
                 <div className="flex-1">
-                    <p className="font-semibold text-gray-300">Phase {phase.phase_order}</p>
+                    {/* FIX: Corrected a property name from `phase_order` to `phaseOrder` to match the `AgentPlanPhase` type. */}
+                    <p className="font-semibold text-gray-300">Phase {phase.phaseOrder}</p>
                     <p className="text-sm text-gray-400">{phase.goal}</p>
                 </div>
             </div>

@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 // FIX: Corrected import path for type.
@@ -23,21 +24,22 @@ export async function GET() {
 // POST a new prompt
 export async function POST(req: NextRequest) {
     try {
-        const { name, content, folder, tags, type, chain_definition } = await req.json() as Partial<Prompt>;
+        // FIX: Corrected property name from snake_case to camelCase to match type definition.
+        const { name, content, folder, tags, type, chainDefinition } = await req.json() as Partial<Prompt>;
 
         if (!name || !content) {
             return NextResponse.json({ error: 'Name and content are required' }, { status: 400 });
         }
 
         const { rows } = await sql`
-            INSERT INTO prompts (name, content, folder, tags, type, chain_definition)
+            INSERT INTO prompts (name, content, folder, tags, type, "chainDefinition")
             VALUES (
                 ${name}, 
                 ${content}, 
                 ${folder}, 
                 ${tags ? (tags as any) : null}, 
                 ${type || 'single'}, 
-                ${chain_definition ? JSON.stringify(chain_definition) : null}
+                ${chainDefinition ? JSON.stringify(chainDefinition) : null}
             )
             RETURNING *;
         `;

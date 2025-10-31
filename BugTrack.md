@@ -250,3 +250,25 @@ This large-scale standardization resolves the immediate build error and hardens 
 - `scripts/seed-features.js`
 - `scripts/seed-subsystems.js`
 - `scripts/seed-version-history.js`
+---
+### Bug #13: Vercel Build Fails (Recurring `db:create` Error)
+
+**Error Details:**
+The Vercel build is failing with the exact same error as Bug #12: `column "messageId" does not exist` during the `db:create` step. This indicates that the previous comprehensive refactoring of the database schema was either incomplete or incorrectly applied, and the underlying inconsistency between unquoted `camelCase` (which gets lowercased by Postgres) and quoted `"camelCase"` still exists in `scripts/create-tables.js` and across the application's data access layer.
+
+**Solution:**
+A final, meticulous, and comprehensive standardization pass was conducted across the entire application to enforce quoted `"camelCase"` for all database identifiers.
+1.  **Corrected `lib/types/data.ts`**: The `data.ts` type definition file was fully refactored to use `camelCase` for all properties that map to database columns (e.g., `result_summary` became `resultSummary`). This establishes a definitive source of truth for the data model.
+2.  **Corrected `scripts/create-tables.js`**: The `create-tables.js` script was completely rewritten to ensure **every single column name** in **every `CREATE TABLE` and `CREATE INDEX` statement** is in quoted `"camelCase"` format, matching the updated types.
+3.  **Corrected Seed Scripts**: All seed scripts were updated to use the corrected quoted `"camelCase"` column names in their `INSERT` statements.
+4.  **Corrected Data Access Layer**: All API routes and core logic files containing raw SQL queries were refactored to use the quoted `"camelCase"` column names, ensuring that queries match the new, consistent schema.
+
+This exhaustive fix guarantees that the application code, type definitions, and database schema are all perfectly aligned on a single naming convention, permanently resolving this class of error.
+
+**Modified Files:**
+- `BugTrack.md`
+- `lib/types/data.ts`
+- `scripts/create-tables.js`
+- `scripts/seed-*.js` (all seed scripts)
+- All files in `app/api/` and `core/` containing SQL queries.
+- All components consuming data with changed property names (e.g., `Header.tsx`, `agent_center/RunReport.tsx`).

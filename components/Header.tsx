@@ -60,7 +60,7 @@ const VersionCard = () => {
 
     if (!currentVersion) return null;
 
-    const isToday = new Date(currentVersion.release_date).toDateString() === new Date().toDateString();
+    const isToday = new Date(currentVersion.releaseDate).toDateString() === new Date().toDateString();
 
     return (
         <>
@@ -91,7 +91,7 @@ const VersionCard = () => {
                             className="absolute top-full right-0 mt-2 w-72 bg-gray-900/80 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl p-4 z-20"
                         >
                             <h4 className="font-bold text-white">Version {currentVersion.version}</h4>
-                            <p className="text-xs text-gray-400 mb-2">Released: {new Date(currentVersion.release_date).toLocaleDateString()}</p>
+                            <p className="text-xs text-gray-400 mb-2">Released: {new Date(currentVersion.releaseDate).toLocaleDateString()}</p>
                             <div className="prose-custom text-xs max-h-40 overflow-y-auto pr-2">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentVersion.changes}</ReactMarkdown>
                             </div>

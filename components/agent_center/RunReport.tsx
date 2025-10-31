@@ -1,5 +1,4 @@
 
-
 "use client";
 
 // components/agent_center/RunReport.tsx
@@ -22,7 +21,7 @@ const StepDisplay: React.FC<StepDisplayProps> = ({ step }) => (
         className="bg-gray-900/50 p-3 rounded-lg text-xs font-mono"
     >
         <p><strong className="text-purple-400">Thought:</strong> {step.thought}</p>
-        <p className="mt-2"><strong className="text-cyan-400">Action:</strong> {step.action}({JSON.stringify(step.action_input)})</p>
+        <p className="mt-2"><strong className="text-cyan-400">Action:</strong> {step.action}({JSON.stringify(step.actionInput)})</p>
         <p className="mt-2"><strong className="text-green-400">Observation:</strong> {step.observation}</p>
     </motion.div>
 );
@@ -48,7 +47,7 @@ const PhaseDisplay: React.FC<PhaseDisplayProps> = ({ phase, steps }) => {
         <div className="border border-gray-700 rounded-lg">
             <header className={`flex items-center gap-3 p-3 border-b border-gray-700 ${sInfo.color}`}>
                 {sInfo.icon}
-                <h4 className="font-semibold text-sm">Phase {phase.phase_order}: {phase.goal}</h4>
+                <h4 className="font-semibold text-sm">Phase {phase.phaseOrder}: {phase.goal}</h4>
                 <span className="ml-auto text-xs capitalize">{phase.status}</span>
             </header>
             <div className="p-3 space-y-2">
@@ -125,14 +124,14 @@ const RunReport = ({ runId }: { runId: string }) => {
             </header>
             <div className="flex-1 overflow-y-auto pr-2 space-y-4">
                 {phases.map(phase => (
-                    <PhaseDisplay key={phase.id} phase={phase} steps={steps.filter(s => s.phase_id === phase.id)} />
+                    <PhaseDisplay key={phase.id} phase={phase} steps={steps.filter(s => s.phaseId === phase.id)} />
                 ))}
             </div>
             {run.status === 'completed' || run.status === 'failed' ? (
                 <footer className="mt-4 pt-4 border-t border-gray-700">
                     <h4 className="font-semibold">Final Result</h4>
                     <p className={`text-sm mt-1 p-2 rounded-md ${run.status === 'completed' ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'}`}>
-                        {run.result_summary}
+                        {run.resultSummary}
                     </p>
                 </footer>
             ) : null}

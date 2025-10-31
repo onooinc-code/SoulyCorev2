@@ -5,11 +5,12 @@ import { IDataSourceRepository } from './IDataSourceRepository';
 export class PostgresDataSourceRepository implements IDataSourceRepository {
 
     private mapRowToDataSource(row: any): DataSource {
-        const { stats_json, config_json, ...rest } = row;
+        // FIX: The database returns camelCase column names as defined in the schema.
+        const { statsJson, configJson, ...rest } = row;
         return {
             ...rest,
-            stats_json: stats_json || [],
-            config_json: config_json || {},
+            statsJson: statsJson || [],
+            configJson: configJson || {},
             createdAt: new Date(row.createdAt),
             lastUpdatedAt: new Date(row.lastUpdatedAt),
         } as DataSource;
@@ -57,8 +58,8 @@ export class PostgresDataSourceRepository implements IDataSourceRepository {
                     provider = ${toUpdate.provider},
                     type = ${toUpdate.type},
                     status = ${toUpdate.status},
-                    config_json = ${JSON.stringify(toUpdate.config_json || {})},
-                    stats_json = ${JSON.stringify(toUpdate.stats_json || [])},
+                    "configJson" = ${JSON.stringify(toUpdate.configJson || {})},
+                    "statsJson" = ${JSON.stringify(toUpdate.statsJson || [])},
                     "lastUpdatedAt" = CURRENT_TIMESTAMP
                 WHERE id = ${source.id}
                 RETURNING *;
@@ -66,13 +67,14 @@ export class PostgresDataSourceRepository implements IDataSourceRepository {
             return this.mapRowToDataSource(rows[0]);
         } else {
             // Create logic
-            const { name, provider, type, status, config_json, stats_json } = source;
+            // FIX: Use camelCase properties to match the 'DataSource' type.
+            const { name, provider, type, status, configJson, statsJson } = source;
             if (!name || !provider || !type) {
                  throw new Error('Name, provider, and type are required to create a new DataSource.');
             }
              const { rows } = await sql`
-                INSERT INTO data_sources (name, provider, type, status, config_json, stats_json, "lastUpdatedAt")
-                VALUES (${name}, ${provider}, ${type}, ${status || 'needs_config'}, ${JSON.stringify(config_json || {})}, ${JSON.stringify(stats_json || [])}, CURRENT_TIMESTAMP)
+                INSERT INTO data_sources (name, provider, type, status, "configJson", "statsJson", "lastUpdatedAt")
+                VALUES (${name}, ${provider}, ${type}, ${status || 'needs_config'}, ${JSON.stringify(configJson || {})}, ${JSON.stringify(statsJson || [])}, CURRENT_TIMESTAMP)
                 RETURNING *;
             `;
             return this.mapRowToDataSource(rows[0]);

@@ -39,13 +39,13 @@ export class EpisodicMemoryModule implements ISingleMemoryModule {
         const { rows } = await sql<Message>`
             INSERT INTO messages (
                 "conversationId", 
-                role, 
-                content, 
+                "role", 
+                "content", 
                 "tokenCount", 
                 "responseTime", 
                 "isBookmarked", 
-                parent_message_id,
-                tags
+                "parentMessageId",
+                "tags"
             )
             VALUES (
                 ${conversationId}, 

@@ -72,12 +72,12 @@ export class StructuredMemoryModule implements ISingleMemoryModule {
             }
              case 'relationship': {
                 const { data } = params;
-                if (!data.source_entity_id || !data.target_entity_id || !data.predicate) {
+                if (!data.sourceEntityId || !data.targetEntityId || !data.predicate) {
                     throw new Error('StructuredMemoryModule.store (relationship) requires source, target, and predicate.');
                 }
                 const { rows } = await sql<EntityRelationship>`
-                    INSERT INTO entity_relationships (source_entity_id, target_entity_id, predicate, context)
-                    VALUES (${data.source_entity_id}, ${data.target_entity_id}, ${data.predicate}, ${data.context || null})
+                    INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", "predicate", "context")
+                    VALUES (${data.sourceEntityId}, ${data.targetEntityId}, ${data.predicate}, ${data.context || null})
                     RETURNING *;
                 `;
                 return rows[0] || null;

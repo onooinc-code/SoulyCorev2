@@ -23,9 +23,9 @@ export class ExperienceConsolidationPipeline {
             const goal = runRows[0].goal;
 
             const { rows: stepRows } = await sql<AgentRunStep>`
-                SELECT step_order, thought, action, observation FROM agent_run_steps 
-                WHERE run_id = ${runId} AND status = 'completed'
-                ORDER BY step_order ASC;
+                SELECT "stepOrder", thought, action, observation FROM agent_run_steps 
+                WHERE "runId" = ${runId} AND status = 'completed'
+                ORDER BY "stepOrder" ASC;
             `;
             if (stepRows.length === 0) {
                 console.log(`[ExperienceConsolidation] No completed steps found for run ${runId}. Aborting.`);
@@ -34,7 +34,7 @@ export class ExperienceConsolidationPipeline {
 
             // 2. Format data for LLM analysis
             const formattedSteps = stepRows.map(s => 
-                `Step ${s.step_order}:\n- Thought: ${s.thought}\n- Action: ${s.action}\n- Observation: ${s.observation}`
+                `Step ${s.stepOrder}:\n- Thought: ${s.thought}\n- Action: ${s.action}\n- Observation: ${s.observation}`
             ).join('\n\n');
 
             const prompt = `
@@ -89,7 +89,7 @@ export class ExperienceConsolidationPipeline {
 
             // 4. Store the new experience in the database
             await sql`
-                INSERT INTO experiences (source_run_id, goal_template, trigger_keywords, steps_json)
+                INSERT INTO experiences ("sourceRunId", "goalTemplate", "triggerKeywords", "stepsJson")
                 VALUES (${runId}, ${experienceData.goal_template}, ${experienceData.trigger_keywords as any}, ${JSON.stringify(experienceData.steps_json)});
             `;
             console.log(`[ExperienceConsolidation] Successfully created and stored new experience from run ${runId}.`);

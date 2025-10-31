@@ -17,8 +17,8 @@ export async function GET(req: NextRequest) {
                 SELECT DISTINCT c.* 
                 FROM conversations c
                 JOIN messages m ON c.id = m."conversationId"
-                JOIN message_segments ms ON m.id = ms.message_id
-                WHERE ms.segment_id = ${segmentId}
+                JOIN message_segments ms ON m.id = ms."messageId"
+                WHERE ms."segmentId" = ${segmentId}
                 ORDER BY c."lastUpdatedAt" DESC;
             `;
             rows = result.rows;

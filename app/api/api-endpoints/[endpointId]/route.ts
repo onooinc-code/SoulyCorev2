@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import type { ApiEndpoint } from '@/lib/types';
@@ -8,21 +9,22 @@ export async function PUT(req: NextRequest, { params }: { params: { endpointId: 
         const { endpointId } = params;
         const endpoint = await req.json() as Partial<Omit<ApiEndpoint, 'id'>>;
 
-        const { method, path, group_name, description, default_params_json, default_body_json, expected_status_code } = endpoint;
+        // FIX: Corrected snake_case property names to camelCase to match type definition.
+        const { method, path, groupName, description, defaultParamsJson, defaultBodyJson, expectedStatusCode } = endpoint;
 
-        if (!method || !path || !group_name) {
-            return NextResponse.json({ error: 'Method, path, and group_name are required for an update' }, { status: 400 });
+        if (!method || !path || !groupName) {
+            return NextResponse.json({ error: 'Method, path, and groupName are required for an update' }, { status: 400 });
         }
 
         const { rows } = await sql<ApiEndpoint>`
             UPDATE api_endpoints
             SET method = ${method}, 
                 path = ${path}, 
-                group_name = ${group_name}, 
+                "groupName" = ${groupName}, 
                 description = ${description}, 
-                default_params_json = ${default_params_json ? JSON.stringify(default_params_json) : null}, 
-                default_body_json = ${default_body_json ? JSON.stringify(default_body_json) : null}, 
-                expected_status_code = ${expected_status_code || 200}
+                "defaultParamsJson" = ${defaultParamsJson ? JSON.stringify(defaultParamsJson) : null}, 
+                "defaultBodyJson" = ${defaultBodyJson ? JSON.stringify(defaultBodyJson) : null}, 
+                "expectedStatusCode" = ${expectedStatusCode || 200}
             WHERE id = ${endpointId}
             RETURNING *;
         `;

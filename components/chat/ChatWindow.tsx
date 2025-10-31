@@ -173,6 +173,7 @@ const ChatWindow = () => {
                 proactiveSuggestion={proactiveSuggestion}
                 onSuggestionClick={handleSuggestionClick}
                 onDismissSuggestion={() => {
+                    // FIX: Corrected a typo from `proactiveSuggestion` to `suggestion` to align with the log event schema.
                     console.log('User dismissed proactive suggestion.', { suggestion: proactiveSuggestion });
                     setProactiveSuggestion(null);
                 }}

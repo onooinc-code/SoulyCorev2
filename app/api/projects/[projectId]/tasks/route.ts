@@ -11,8 +11,8 @@ export async function GET(req: NextRequest, { params }: { params: { projectId: s
         const { projectId } = params;
         const { rows } = await sql<ProjectTask>`
             SELECT * FROM project_tasks 
-            WHERE project_id = ${projectId} 
-            ORDER BY "status" ASC, "order_index" ASC, "createdAt" ASC;
+            WHERE "projectId" = ${projectId} 
+            ORDER BY "status" ASC, "orderIndex" ASC, "createdAt" ASC;
         `;
         return NextResponse.json(rows);
     } catch (error) {
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: { projectId: 
         }
 
         const { rows } = await sql<ProjectTask>`
-            INSERT INTO project_tasks (project_id, title, description)
+            INSERT INTO project_tasks ("projectId", title, description)
             VALUES (${projectId}, ${title}, ${description || null})
             RETURNING *;
         `;

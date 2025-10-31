@@ -4,7 +4,7 @@ const { sql } = require('@vercel/postgres');
 const versionData = [
     {
         version: '0.1.0',
-        release_date: '2024-07-20T10:00:00Z',
+        releaseDate: '2024-07-20T10:00:00Z',
         changes: `
 - **Initial Release:** Deployed the foundational SoulyCore application.
 - **Core Features:** Implemented conversation management, chat UI, and the initial memory system.
@@ -12,7 +12,7 @@ const versionData = [
     },
     {
         version: '0.2.0',
-        release_date: '2024-07-22T10:00:00Z',
+        releaseDate: '2024-07-22T10:00:00Z',
         changes: `
 - **New: Versioning System!**
   - Added a version card to the header to display the current version.
@@ -26,7 +26,7 @@ const versionData = [
     },
     {
         version: '0.3.0',
-        release_date: '2024-07-23T10:00:00Z',
+        releaseDate: '2024-07-23T10:00:00Z',
         changes: `
 - **Bug Fix & Stability:** Fixed a critical layout 'jumping' bug in the chat window by implementing a more robust scrolling mechanism. This ensures the chat view remains stable when new messages are added.
 - **Code Health:** Resolved multiple TypeScript type errors, most notably in the Context Menu component, improving overall code quality and maintainability.
@@ -34,14 +34,14 @@ const versionData = [
     },
     {
         version: '0.3.1',
-        release_date: '2024-07-24T10:00:00Z',
+        releaseDate: '2024-07-24T10:00:00Z',
         changes: `
 - **Bug Fix: Keyboard Shortcuts:** Resolved a critical bug where keyboard shortcuts would not work until the user interacted with the app. The app now automatically focuses itself when entering fullscreen mode, ensuring shortcuts are always responsive.
 - **Improvement: Fullscreen Mode:** Enhanced the fullscreen experience by removing mobile view constraints, allowing the application to utilize the entire screen space as intended.`
     },
     {
         version: '0.4.0',
-        release_date: '2024-07-25T10:00:00Z',
+        releaseDate: '2024-07-25T10:00:00Z',
         changes: `
 - **Major UI Overhaul:** Implemented a new 'glassmorphism' and 'metal' visual theme across the application for a more modern and professional look.
 - **New: Progress & Status System:**
@@ -61,7 +61,7 @@ const versionData = [
     },
     {
         version: '0.4.1',
-        release_date: new Date().toISOString(),
+        releaseDate: new Date().toISOString(),
         changes: `
 - **Critical Bug Fix: 500 Errors:** Resolved multiple 500 Internal Server Errors on Vercel deployments.
   - Fixed a bug in the conversation update API that caused all settings changes (e.g., Agent Instructions, Model selection) to fail.
@@ -77,7 +77,7 @@ async function seedVersionHistory() {
         for (const version of versionData) {
             await sql`
                 INSERT INTO "version_history" ("version", "releaseDate", "changes")
-                VALUES (${version.version}, ${version.release_date}, ${version.changes})
+                VALUES (${version.version}, ${version.releaseDate}, ${version.changes})
                 ON CONFLICT ("version") DO UPDATE SET
                     "releaseDate" = EXCLUDED."releaseDate",
                     "changes" = EXCLUDED."changes";

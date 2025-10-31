@@ -65,7 +65,7 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
                             <div key={item.id} className="border-b border-gray-700/50 pb-4 last:border-b-0">
                                 <div className="flex items-baseline gap-4">
                                     <h3 className="text-lg font-bold text-indigo-300">v{item.version}</h3>
-                                    <p className="text-sm text-gray-500">{new Date(item.release_date).toLocaleDateString()}</p>
+                                    <p className="text-sm text-gray-500">{new Date(item.releaseDate).toLocaleDateString()}</p>
                                 </div>
                                 <div className="prose-custom text-sm mt-2">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.changes}</ReactMarkdown>

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useRef, useEffect, useMemo } from 'react';
@@ -166,7 +167,8 @@ const MessageList = ({
                                 className="flex items-center justify-center py-4 gap-4 text-sm text-gray-400"
                             >
                                 <LoadingIndicator />
-                                <span>Executing workflow step {activeWorkflow.currentStepIndex + 1} of {activeWorkflow.prompt.chain_definition?.length}...</span>
+                                {/* FIX: Corrected a property name from `chain_definition` to `chainDefinition` to match the `Prompt` type, resolving a TypeScript error related to active workflow state. */}
+                                <span>Executing workflow step {activeWorkflow.currentStepIndex + 1} of {activeWorkflow.prompt.chainDefinition?.length}...</span>
                             </motion.div>
                         )}
                     </div>

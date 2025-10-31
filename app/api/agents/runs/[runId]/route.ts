@@ -18,11 +18,11 @@ export async function GET(req: NextRequest, { params }: { params: { runId: strin
         }
         
         const { rows: phaseRows } = await sql<AgentPlanPhase>`
-            SELECT * FROM agent_run_phases WHERE run_id = ${runId} ORDER BY phase_order ASC;
+            SELECT * FROM agent_run_phases WHERE "runId" = ${runId} ORDER BY "phaseOrder" ASC;
         `;
         
         const { rows: stepRows } = await sql<AgentRunStep>`
-            SELECT * FROM agent_run_steps WHERE run_id = ${runId} ORDER BY step_order ASC;
+            SELECT * FROM agent_run_steps WHERE "runId" = ${runId} ORDER BY "stepOrder" ASC;
         `;
 
         return NextResponse.json({

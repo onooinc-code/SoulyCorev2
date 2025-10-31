@@ -15,7 +15,7 @@ const BrainManagementTab = () => {
     const { log } = useLog();
     const [brains, setBrains] = useState<Brain[]>([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [currentBrain, setCurrentBrain] = useState<(Omit<Partial<Brain>, 'config_json'> & { config_json: string }) | null>(null);
+    const [currentBrain, setCurrentBrain] = useState<(Omit<Partial<Brain>, 'configJson'> & { configJson: string }) | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [jsonError, setJsonError] = useState<string | null>(null);
 
@@ -46,16 +46,17 @@ const BrainManagementTab = () => {
         const action = brain ? 'edit' : 'new';
         log(`User opened brain form for ${action} brain.`, { brainId: brain?.id });
         
-        let brainForForm: Omit<Partial<Brain>, 'config_json'> & { config_json: string };
+        let brainForForm: Omit<Partial<Brain>, 'configJson'> & { configJson: string };
         if (brain) {
             brainForForm = {
                 ...brain,
-                config_json: JSON.stringify(brain.config_json, null, 2)
+                // FIX: Corrected a property name from `config_json` to `configJson` to match the `Brain` type definition.
+                configJson: JSON.stringify(brain.configJson, null, 2)
             };
         } else {
             brainForForm = {
                 name: '',
-                config_json: JSON.stringify({
+                configJson: JSON.stringify({
                     "episodic": "default_episodic",
                     "semantic": "default_semantic",
                     "structured": "default_structured"
@@ -72,7 +73,7 @@ const BrainManagementTab = () => {
         
         let parsedConfig;
         try {
-            parsedConfig = JSON.parse(currentBrain.config_json);
+            parsedConfig = JSON.parse(currentBrain.configJson);
             setJsonError(null);
         } catch (e) {
             setJsonError('Invalid JSON format in configuration.');
@@ -83,7 +84,7 @@ const BrainManagementTab = () => {
         clearError();
         const isUpdating = !!currentBrain.id;
         const action = isUpdating ? 'Updating' : 'Creating';
-        log(`${action} brain...`, { brainData: { ...currentBrain, config_json: 'OMITTED' } });
+        log(`${action} brain...`, { brainData: { ...currentBrain, configJson: 'OMITTED' } });
 
         const url = isUpdating ? `/api/brains/${currentBrain.id}` : '/api/brains';
         const method = isUpdating ? 'PUT' : 'POST';
@@ -92,7 +93,7 @@ const BrainManagementTab = () => {
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: currentBrain.name, config_json: parsedConfig }),
+                body: JSON.stringify({ name: currentBrain.name, configJson: parsedConfig }),
             });
             if (!res.ok) {
                  const errorData = await res.json();
@@ -144,8 +145,8 @@ const BrainManagementTab = () => {
                  <p className="text-xs text-gray-500 mb-2">Defines the namespaces for each memory module to ensure data isolation.</p>
                  <textarea 
                     id="brainConfig"
-                    value={currentBrain?.config_json || ''} 
-                    onChange={e => setCurrentBrain(b => b ? {...b, config_json: e.target.value} : null)}
+                    value={currentBrain?.configJson || ''} 
+                    onChange={e => setCurrentBrain(b => b ? {...b, configJson: e.target.value} : null)}
                     placeholder='{ "episodic": "work_episodes", "semantic": "work_knowledge" }' 
                     className={`w-full p-2 bg-gray-700 rounded-lg text-sm font-mono ${jsonError ? 'border border-red-500' : ''}`}
                     rows={6}
@@ -200,7 +201,7 @@ const BrainManagementTab = () => {
                                     <td className="p-3">
                                         <details className="text-xs">
                                             <summary className="cursor-pointer">View JSON</summary>
-                                            <pre className="mt-2 p-2 bg-gray-800 rounded-md"><code>{JSON.stringify(brain.config_json, null, 2)}</code></pre>
+                                            <pre className="mt-2 p-2 bg-gray-800 rounded-md"><code>{JSON.stringify(brain.configJson, null, 2)}</code></pre>
                                         </details>
                                     </td>
                                     <td className="p-3">{new Date(brain.createdAt).toLocaleString()}</td>

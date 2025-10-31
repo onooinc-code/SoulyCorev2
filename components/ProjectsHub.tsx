@@ -73,11 +73,13 @@ const ProjectsHub = () => {
         // Optimistic update
         setTasks(prev => ({
             ...prev,
-            [task.project_id]: prev[task.project_id].map(t => t.id === task.id ? {...t, status: newStatus} : t)
+            // FIX: Corrected property name from `project_id` to `projectId`.
+            [task.projectId]: prev[task.projectId].map(t => t.id === task.id ? {...t, status: newStatus} : t)
         }));
 
         try {
-            const res = await fetch(`/api/projects/${task.project_id}/tasks/${task.id}`, {
+            // FIX: Corrected property name from `project_id` to `projectId`.
+            const res = await fetch(`/api/projects/${task.projectId}/tasks/${task.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus }),
@@ -89,7 +91,8 @@ const ProjectsHub = () => {
             // Revert optimistic update
             setTasks(prev => ({
                 ...prev,
-                [task.project_id]: prev[task.project_id].map(t => t.id === task.id ? {...t, status: task.status} : t)
+                // FIX: Corrected property name from `project_id` to `projectId`.
+                [task.projectId]: prev[task.projectId].map(t => t.id === task.id ? {...t, status: task.status} : t)
             }));
         }
     };
@@ -101,11 +104,13 @@ const ProjectsHub = () => {
         // Optimistic update
         setTasks(prev => ({
             ...prev,
-            [task.project_id]: prev[task.project_id].filter(t => t.id !== task.id)
+            // FIX: Corrected property name from `project_id` to `projectId`.
+            [task.projectId]: prev[task.projectId].filter(t => t.id !== task.id)
         }));
         
         try {
-             const res = await fetch(`/api/projects/${task.project_id}/tasks/${task.id}`, { method: 'DELETE' });
+             // FIX: Corrected property name from `project_id` to `projectId`.
+             const res = await fetch(`/api/projects/${task.projectId}/tasks/${task.id}`, { method: 'DELETE' });
              if (!res.ok) throw new Error("Failed to delete task");
              addNotification({ type: 'success', title: 'Task Deleted' });
         } catch (error) {

@@ -47,12 +47,12 @@ export class AutonomousAgent {
     private async executePhase(phaseDef: Omit<AgentPlanPhase, 'id' | 'run_id' | 'steps' | 'result' | 'started_at' | 'completed_at'>) {
         // 1. Create phase record in DB
         const { rows: phaseRows } = await sql<AgentPlanPhase>`
-            INSERT INTO agent_run_phases (run_id, phase_order, goal, status, started_at)
-            VALUES (${this.runId}, ${phaseDef.phase_order}, ${phaseDef.goal}, 'running', NOW())
+            INSERT INTO agent_run_phases ("runId", "phaseOrder", goal, status, "startedAt")
+            VALUES (${this.runId}, ${phaseDef.phaseOrder}, ${phaseDef.goal}, 'running', NOW())
             RETURNING id;
         `;
         const phaseId = phaseRows[0].id;
-        console.log(`[AgentRun ${this.runId}] Starting Phase ${phaseDef.phase_order}: ${phaseDef.goal}`);
+        console.log(`[AgentRun ${this.runId}] Starting Phase ${phaseDef.phaseOrder}: ${phaseDef.goal}`);
 
         let stepCount = 0;
         let lastObservation = "No observation yet. Begin by thinking about the first step to achieve your goal.";
@@ -65,7 +65,7 @@ export class AutonomousAgent {
 
             // 3. Log the step (thought process)
             const { rows: stepRows } = await sql`
-                INSERT INTO agent_run_steps (run_id, phase_id, step_order, thought, action, action_input, observation, status, started_at)
+                INSERT INTO agent_run_steps ("runId", "phaseId", "stepOrder", thought, action, "actionInput", observation, status, "startedAt")
                 VALUES (${this.runId}, ${phaseId}, ${stepCount}, ${thought}, ${action}, ${JSON.stringify(action_input)}, '', 'running', NOW())
                 RETURNING id;
             `;
@@ -83,12 +83,13 @@ export class AutonomousAgent {
             // 5. Update step with observation
             await sql`
                 UPDATE agent_run_steps 
-                SET observation = ${observation}, status = 'completed', completed_at = NOW()
+                SET observation = ${observation}, status = 'completed', "completedAt" = NOW()
                 WHERE id = ${stepId};
             `;
         }
 
-        throw new Error(`Phase ${phaseDef.phase_order} exceeded max steps.`);
+        // FIX: Use camelCase property to match type definition.
+        throw new Error(`Phase ${phaseDef.phaseOrder} exceeded max steps.`);
     }
 
     private async generateNextStep(phaseGoal: string, lastObservation: string): Promise<{ thought: string, action: string, action_input: any, is_final_answer: boolean }> {
@@ -144,7 +145,7 @@ export class AutonomousAgent {
     private async finalizePhase(phaseId: string, status: 'completed' | 'failed', result: string) {
         await sql`
             UPDATE agent_run_phases
-            SET status = ${status}, result = ${result}, completed_at = NOW()
+            SET status = ${status}, result = ${result}, "completedAt" = NOW()
             WHERE id = ${phaseId};
         `;
         if (status === 'completed') {

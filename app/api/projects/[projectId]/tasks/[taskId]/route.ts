@@ -18,7 +18,8 @@ export async function PUT(req: NextRequest, { params }: { params: { projectId: s
         }
         const existingTask = existingRows[0];
         
-        const { title, description, status, order_index } = body;
+        // FIX: Corrected property name from snake_case to camelCase.
+        const { title, description, status, orderIndex } = body;
 
         const { rows } = await sql<ProjectTask>`
             UPDATE project_tasks
@@ -26,7 +27,7 @@ export async function PUT(req: NextRequest, { params }: { params: { projectId: s
                 title = ${title !== undefined ? title : existingTask.title},
                 description = ${description !== undefined ? description : existingTask.description},
                 status = ${status !== undefined ? status : existingTask.status},
-                order_index = ${order_index !== undefined ? order_index : existingTask.order_index},
+                "orderIndex" = ${orderIndex !== undefined ? orderIndex : existingTask.orderIndex},
                 "lastUpdatedAt" = CURRENT_TIMESTAMP
             WHERE id = ${taskId}
             RETURNING *;

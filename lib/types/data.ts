@@ -31,7 +31,7 @@ export interface Message {
     isBookmarked?: boolean;
     parentMessageId?: string | null;
     tags?: string[];
-    content_summary?: string;
+    contentSummary?: string;
     createdAt: Date;
     lastUpdatedAt: Date;
     threadMessages?: Message[];
@@ -61,12 +61,13 @@ export interface EntityDefinition {
 
 export interface EntityRelationship {
     id: string;
-    source_entity_id: string;
-    target_entity_id: string;
+    // FIX: Changed property to camelCase.
+    sourceEntityId: string;
+    // FIX: Changed property to camelCase.
+    targetEntityId: string;
     predicate: string; // e.g., 'is_related_to', 'works_at'
     context?: string;
     createdAt: Date;
-    lastUpdatedAt: Date;
 }
 
 export interface Segment {
@@ -93,7 +94,7 @@ export interface Prompt {
     folder?: string;
     tags?: string[];
     type: 'single' | 'chain';
-    chain_definition?: PromptChainStep[];
+    chainDefinition?: PromptChainStep[];
     createdAt: Date;
     lastUpdatedAt: Date;
 }
@@ -102,7 +103,8 @@ export interface Tool {
     id: string;
     name: string;
     description: string;
-    schema_json: any; // Gemini FunctionDeclaration schema
+    // FIX: Changed property to camelCase.
+    schemaJson: any; // Gemini FunctionDeclaration schema
     createdAt: Date;
     lastUpdatedAt: Date;
 }
@@ -111,34 +113,41 @@ export interface AgentRun {
     id: string;
     goal: string;
     status: 'planning' | 'awaiting_approval' | 'running' | 'completed' | 'failed';
-    result_summary?: string;
+    // FIX: Changed property to camelCase.
+    resultSummary?: string;
     createdAt: Date;
     completedAt?: Date;
 }
 
 export interface AgentPlanPhase {
     id: string;
-    run_id: string;
-    phase_order: number;
+    // FIX: Changed property to camelCase.
+    runId: string;
+    // FIX: Changed property to camelCase.
+    phaseOrder: number;
     goal: string;
     status: 'pending' | 'running' | 'completed' | 'failed';
     result?: string;
-    started_at?: Date;
-    completed_at?: Date;
+    startedAt?: Date;
+    completedAt?: Date;
 }
 
 export interface AgentRunStep {
     id: string;
-    run_id: string;
-    phase_id: string;
-    step_order: number;
+    // FIX: Changed property to camelCase.
+    runId: string;
+    // FIX: Changed property to camelCase.
+    phaseId: string;
+    // FIX: Changed property to camelCase.
+    stepOrder: number;
     thought: string;
     action: string;
-    action_input: Record<string, any>;
+    // FIX: Changed property to camelCase.
+    actionInput: Record<string, any>;
     observation: string;
     status: 'running' | 'completed' | 'failed';
-    started_at: Date;
-    completed_at?: Date;
+    startedAt: Date;
+    completedAt?: Date;
 }
 
 export type DataSourceType = 'relational_db' | 'vector' | 'blob' | 'cache' | 'document_db' | 'file_system' | 'graph' | 'key_value' | 'object_storage';
@@ -150,8 +159,10 @@ export interface DataSource {
     provider: string;
     type: DataSourceType;
     status: DataSourceStatus;
-    config_json: Record<string, any>;
-    stats_json: { label: string; value: string | number }[];
+    // FIX: Changed property to camelCase.
+    configJson: Record<string, any>;
+    // FIX: Changed property to camelCase.
+    statsJson: { label: string; value: string | number }[];
     createdAt: Date;
     lastUpdatedAt: Date;
 }
@@ -162,24 +173,34 @@ export interface ApiEndpoint {
     id: string;
     method: 'GET' | 'POST' | 'PUT' | 'DELETE';
     path: string;
-    group_name: string;
+    // FIX: Changed property to camelCase.
+    groupName: string;
     description?: string;
-    default_params_json?: Record<string, any>;
-    default_body_json?: Record<string, any>;
-    expected_status_code: number;
-    last_test_at?: Date;
-    last_test_status: ApiTestStatus;
+    // FIX: Changed property to camelCase.
+    defaultParamsJson?: Record<string, any>;
+    // FIX: Changed property to camelCase.
+    defaultBodyJson?: Record<string, any>;
+    // FIX: Changed property to camelCase.
+    expectedStatusCode: number;
+    lastTestAt?: Date;
+    // FIX: Changed property to camelCase.
+    lastTestStatus: ApiTestStatus;
     createdAt: Date;
 }
 
 export interface EndpointTestLog {
     id: string;
-    endpoint_id: string;
+    // FIX: Changed property to camelCase.
+    endpointId: string;
     status: 'Passed' | 'Failed';
-    status_code: number;
-    response_body: Record<string, any>;
-    response_headers: Record<string, any>;
-    duration_ms: number;
+    // FIX: Changed property to camelCase.
+    statusCode: number;
+    // FIX: Changed property to camelCase.
+    responseBody: Record<string, any>;
+    // FIX: Changed property to camelCase.
+    responseHeaders: Record<string, any>;
+    // FIX: Changed property to camelCase.
+    durationMs: number;
     createdAt: Date;
 }
 
@@ -195,11 +216,13 @@ export interface Feature {
     name: string;
     overview: string;
     status: FeatureStatus;
-    // FIX: Add missing category property.
     category?: string;
-    ui_ux_breakdown_json: UiUxSubFeature[] | string;
-    logic_flow: string;
-    key_files_json: string[] | string;
+    // FIX: Changed property to camelCase.
+    uiUxBreakdownJson: UiUxSubFeature[] | string;
+    // FIX: Changed property to camelCase.
+    logicFlow: string;
+    // FIX: Changed property to camelCase.
+    keyFilesJson: string[] | string;
     notes?: string;
     createdAt: Date;
     lastUpdatedAt: Date;
@@ -208,12 +231,16 @@ export interface Feature {
 export type TestStatus = 'Passed' | 'Failed' | 'Not Run';
 export interface FeatureTest {
     id: string;
+    // FIX: Changed property to camelCase.
     featureId: string;
     description: string;
-    manual_steps?: string;
-    expected_result: string;
-    last_run_status: TestStatus;
-    last_run_at?: Date;
+    // FIX: Changed property to camelCase.
+    manualSteps?: string;
+    // FIX: Changed property to camelCase.
+    expectedResult: string;
+    // FIX: Changed property to camelCase.
+    lastRunStatus: TestStatus;
+    lastRunAt?: Date;
     createdAt: Date;
 }
 
@@ -236,18 +263,20 @@ export interface Project {
     name: string;
     description?: string;
     status: 'Not Started' | 'In Progress' | 'Completed' | 'On Hold';
-    due_date?: Date;
+    dueDate?: Date;
     createdAt: Date;
     lastUpdatedAt: Date;
 }
 
 export interface ProjectTask {
     id: string;
-    project_id: string;
+    // FIX: Changed property to camelCase.
+    projectId: string;
     title: string;
     description?: string;
     status: 'todo' | 'in_progress' | 'done';
-    order_index: number;
+    // FIX: Changed property to camelCase.
+    orderIndex: number;
     createdAt: Date;
     lastUpdatedAt: Date;
 }
@@ -256,7 +285,7 @@ export interface Task {
     id: string;
     title: string;
     description?: string;
-    due_date?: Date;
+    dueDate?: Date;
     status: 'todo' | 'in_progress' | 'completed';
     createdAt: Date;
     lastUpdatedAt: Date;
@@ -264,12 +293,16 @@ export interface Task {
 
 export interface Experience {
     id: string;
-    source_run_id: string;
-    goal_template: string;
-    trigger_keywords: string[];
-    steps_json: Record<string, any>;
-    usage_count: number;
-    last_used_at?: Date;
+    // FIX: Changed property to camelCase.
+    sourceRunId: string;
+    // FIX: Changed property to camelCase.
+    goalTemplate: string;
+    // FIX: Changed property to camelCase.
+    triggerKeywords: string[];
+    // FIX: Changed property to camelCase.
+    stepsJson: Record<string, any>;
+    usageCount: number;
+    lastUsedAt?: Date;
     createdAt: Date;
     lastUpdatedAt: Date;
 }
@@ -279,58 +312,59 @@ export interface CommChannel {
     name: string;
     type: 'webhook' | 'email_inbound' | 'app_broadcast';
     status: 'active' | 'inactive' | 'error';
-    config_json: Record<string, any>;
+    // FIX: Changed property to camelCase.
+    configJson: Record<string, any>;
     createdAt: Date;
     lastUpdatedAt: Date;
 }
 
 export interface PipelineRun {
     id: string;
-    message_id: string;
-    pipeline_type: 'ContextAssembly' | 'MemoryExtraction';
+    messageId: string;
+    pipelineType: 'ContextAssembly' | 'MemoryExtraction';
     status: 'running' | 'completed' | 'failed' | 'not_found';
-    duration_ms: number;
-    final_output: string;
-    final_llm_prompt: string;
-    final_system_instruction: string;
-    model_config_json: Record<string, any>;
+    durationMs: number;
+    finalOutput: string;
+    finalLlmPrompt: string;
+    finalSystemInstruction: string;
+    modelConfigJson: Record<string, any>;
     createdAt: Date;
 }
 
 export interface PipelineRunStep {
     id: string;
-    run_id: string;
-    step_order: number;
-    step_name: string;
-    input_payload: Record<string, any>;
-    output_payload?: Record<string, any>;
-    duration_ms: number;
+    runId: string;
+    stepOrder: number;
+    stepName: string;
+    inputPayload: Record<string, any>;
+    outputPayload?: Record<string, any>;
+    durationMs: number;
     status: 'completed' | 'failed';
-    error_message?: string;
-    model_used?: string;
-    prompt_used?: string;
-    config_used?: Record<string, any>;
+    errorMessage?: string;
+    modelUsed?: string;
+    promptUsed?: string;
+    configUsed?: Record<string, any>;
     timestamp: Date;
 }
 
 export interface VersionHistory {
     id: string;
     version: string;
-    release_date: Date;
+    releaseDate: Date;
     changes: string;
     createdAt: Date;
 }
 
 export interface Documentation {
     id: string;
-    doc_key: string;
+    docKey: string;
     title: string;
     content: string;
     lastUpdatedAt: Date;
 }
 
 export interface HedraGoal {
-    section_key: string;
+    sectionKey: string;
     content: string | null;
     lastUpdatedAt: Date;
 }
@@ -346,7 +380,8 @@ export interface Log {
 export interface Brain {
     id: string;
     name: string;
-    config_json: Record<string, any>;
+    // FIX: Changed property to camelCase.
+    configJson: Record<string, any>;
     createdAt: Date;
     lastUpdatedAt: Date;
 }

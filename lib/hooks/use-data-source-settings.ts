@@ -36,7 +36,8 @@ export const useDataSourceSettings = (
         log(`Fetching settings for ${service.name}`);
         // In a real app, this would be a fetch call, but since the service object is passed with config,
         // we can use it directly.
-        const serviceConfig = service.config_json || {};
+        // FIX: Corrected property name from `config_json` to `configJson`.
+        const serviceConfig = service.configJson || {};
         setConfig(serviceConfig);
         setInitialState(serviceConfig);
         setIsModified(false);
@@ -100,7 +101,7 @@ export const useDataSourceSettings = (
         log(`Saving settings for ${service.name}`, { serviceId: service.id });
         try {
             const payload = { 
-                config_json: config,
+                configJson: config,
                 // If the connection test was successful, update the status to connected.
                 status: connectionStatus === 'success' ? 'connected' : service.status
             };
@@ -140,4 +141,4 @@ export const useDataSourceSettings = (
         connectionLog,
         addLogEntry,
     };
-};
+}

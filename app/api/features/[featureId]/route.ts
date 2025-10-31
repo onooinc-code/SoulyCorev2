@@ -14,9 +14,10 @@ export async function PUT(req: NextRequest, { params }: { params: { featureId: s
             overview, 
             status, 
             category,
-            ui_ux_breakdown_json,
-            logic_flow,
-            key_files_json,
+            // FIX: Use camelCase properties to match the 'Feature' type definition.
+            uiUxBreakdownJson,
+            logicFlow,
+            keyFilesJson,
             notes
         } = feature;
 
@@ -27,8 +28,9 @@ export async function PUT(req: NextRequest, { params }: { params: { featureId: s
         // Validate and parse JSON fields before updating
         let parsedUiUx, parsedKeyFiles;
         try {
-            parsedUiUx = ui_ux_breakdown_json ? (typeof ui_ux_breakdown_json === 'string' ? JSON.parse(ui_ux_breakdown_json) : ui_ux_breakdown_json) : null;
-            parsedKeyFiles = key_files_json ? (typeof key_files_json === 'string' ? JSON.parse(key_files_json) : key_files_json) : null;
+            // FIX: Use camelCase properties to match the 'Feature' type definition.
+            parsedUiUx = uiUxBreakdownJson ? (typeof uiUxBreakdownJson === 'string' ? JSON.parse(uiUxBreakdownJson) : uiUxBreakdownJson) : null;
+            parsedKeyFiles = keyFilesJson ? (typeof keyFilesJson === 'string' ? JSON.parse(keyFilesJson) : keyFilesJson) : null;
         } catch (e) {
             return NextResponse.json({ error: "Invalid JSON format for UI Breakdown or Key Files.", details: { message: (e as Error).message } }, { status: 400 });
         }
@@ -41,9 +43,9 @@ export async function PUT(req: NextRequest, { params }: { params: { featureId: s
                 overview = ${overview}, 
                 status = ${status as FeatureStatus}, 
                 category = ${category || 'Uncategorized'},
-                ui_ux_breakdown_json = ${JSON.stringify(parsedUiUx)}, 
-                logic_flow = ${logic_flow}, 
-                key_files_json = ${JSON.stringify(parsedKeyFiles)}, 
+                "uiUxBreakdownJson" = ${JSON.stringify(parsedUiUx)}, 
+                "logicFlow" = ${logicFlow}, 
+                "keyFilesJson" = ${JSON.stringify(parsedKeyFiles)}, 
                 notes = ${notes},
                 "lastUpdatedAt" = CURRENT_TIMESTAMP
             WHERE id = ${featureId}

@@ -28,9 +28,10 @@ export async function POST(req: NextRequest) {
             overview, 
             status, 
             category,
-            ui_ux_breakdown_json,
-            logic_flow,
-            key_files_json,
+            // FIX: Use camelCase properties to match the 'Feature' type definition.
+            uiUxBreakdownJson,
+            logicFlow,
+            keyFilesJson,
             notes
         } = feature;
         
@@ -41,22 +42,23 @@ export async function POST(req: NextRequest) {
         // Validate and parse JSON fields before inserting
         let parsedUiUx, parsedKeyFiles;
         try {
-            parsedUiUx = ui_ux_breakdown_json ? JSON.parse(ui_ux_breakdown_json as string) : null;
-            parsedKeyFiles = key_files_json ? JSON.parse(key_files_json as string) : null;
+            // FIX: Use camelCase properties to match the 'Feature' type definition.
+            parsedUiUx = uiUxBreakdownJson ? JSON.parse(uiUxBreakdownJson as string) : null;
+            parsedKeyFiles = keyFilesJson ? JSON.parse(keyFilesJson as string) : null;
         } catch (e) {
             return NextResponse.json({ error: "Invalid JSON format for UI Breakdown or Key Files.", details: { message: (e as Error).message } }, { status: 400 });
         }
 
 
         const { rows } = await sql<Feature>`
-            INSERT INTO features (name, overview, status, category, ui_ux_breakdown_json, logic_flow, key_files_json, notes, "lastUpdatedAt")
+            INSERT INTO features (name, overview, status, category, "uiUxBreakdownJson", "logicFlow", "keyFilesJson", notes, "lastUpdatedAt")
             VALUES (
                 ${name}, 
                 ${overview}, 
                 ${status as FeatureStatus}, 
                 ${category || 'Uncategorized'},
                 ${JSON.stringify(parsedUiUx)}, 
-                ${logic_flow}, 
+                ${logicFlow}, 
                 ${JSON.stringify(parsedKeyFiles)}, 
                 ${notes},
                 CURRENT_TIMESTAMP

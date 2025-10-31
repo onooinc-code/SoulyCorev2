@@ -18,7 +18,8 @@ export const PromptForm = ({ currentPrompt, setCurrentPrompt, onSave, singleProm
     const { setStatus } = useConversation();
 
     const handleChainDefinitionChange = (newChain: PromptChainStep[]) => {
-        setCurrentPrompt({ ...currentPrompt, chain_definition: newChain });
+        // FIX: Corrected property name from `chain_definition` to `chainDefinition`.
+        setCurrentPrompt({ ...currentPrompt, chainDefinition: newChain });
     };
 
     const handleSavePrompt = () => {
@@ -46,7 +47,8 @@ export const PromptForm = ({ currentPrompt, setCurrentPrompt, onSave, singleProm
                         Single
                     </label>
                     <label className="flex items-center gap-2">
-                        <input type="radio" value="chain" checked={currentPrompt.type === 'chain'} onChange={() => setCurrentPrompt({ ...currentPrompt, type: 'chain', chain_definition: currentPrompt.chain_definition || [] })} />
+                        {/* FIX: Corrected property name from `chain_definition` to `chainDefinition`. */}
+                        <input type="radio" value="chain" checked={currentPrompt.type === 'chain'} onChange={() => setCurrentPrompt({ ...currentPrompt, type: 'chain', chainDefinition: currentPrompt.chainDefinition || [] })} />
                         Workflow (Chain)
                     </label>
                 </div>
@@ -56,7 +58,8 @@ export const PromptForm = ({ currentPrompt, setCurrentPrompt, onSave, singleProm
                     <textarea value={currentPrompt.content || ''} onChange={e => setCurrentPrompt({ ...currentPrompt, content: e.target.value })} placeholder="Prompt Content..." className="w-full p-2 bg-gray-700 rounded-lg text-sm font-mono" rows={5}></textarea>
                 ) : (
                     <WorkflowBuilder 
-                        chainDefinition={currentPrompt.chain_definition || []}
+                        // FIX: Corrected property name from `chain_definition` to `chainDefinition`.
+                        chainDefinition={currentPrompt.chainDefinition || []}
                         onChainChange={handleChainDefinitionChange}
                         singlePrompts={singlePrompts}
                         tools={tools}

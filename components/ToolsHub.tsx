@@ -1,4 +1,5 @@
 
+
 "use client";
 
 // components/ToolsHub.tsx
@@ -8,7 +9,7 @@ import type { Tool } from '@/lib/types';
 import { useAppContext } from '@/lib/hooks/useAppContext';
 import { PlusIcon, TrashIcon, EditIcon, XIcon } from '@/components/Icons';
 
-type ToolFormState = Omit<Partial<Tool>, 'schema_json'> & { schema_json: string };
+type ToolFormState = Omit<Partial<Tool>, 'schemaJson'> & { schemaJson: string };
 
 const ToolsHub = () => {
     const { log, setStatus, clearError } = useAppContext();
@@ -45,13 +46,14 @@ const ToolsHub = () => {
         if (tool) {
             toolForForm = { 
                 ...tool,
-                schema_json: JSON.stringify(tool.schema_json, null, 2)
+                // FIX: Corrected property name from `schema_json` to `schemaJson`.
+                schemaJson: JSON.stringify(tool.schemaJson, null, 2)
             };
         } else {
             toolForForm = {
                 name: '',
                 description: '',
-                schema_json: JSON.stringify({
+                schemaJson: JSON.stringify({
                     "type": "OBJECT",
                     "properties": {
                         "query": { "type": "STRING", "description": "The search query." }
@@ -69,7 +71,7 @@ const ToolsHub = () => {
         if (!currentTool || !currentTool.name) return;
 
         try {
-            if (currentTool.schema_json) JSON.parse(currentTool.schema_json);
+            if (currentTool.schemaJson) JSON.parse(currentTool.schemaJson);
             setJsonError(null);
         } catch (e) {
             setJsonError('Invalid JSON format in schema.');
@@ -136,8 +138,8 @@ const ToolsHub = () => {
                      <div>
                         <label className="text-xs text-gray-400">Tool Schema (Gemini Function Calling format)</label>
                         <textarea 
-                            value={currentTool?.schema_json || ''} 
-                            onChange={e => setCurrentTool(t => t ? {...t, schema_json: e.target.value} : null)} 
+                            value={currentTool?.schemaJson || ''} 
+                            onChange={e => setCurrentTool(t => t ? {...t, schemaJson: e.target.value} : null)} 
                             className={`w-full p-2 bg-gray-700 rounded-lg text-sm font-mono ${jsonError ? 'border border-red-500' : ''}`}
                             rows={8}
                         ></textarea>
