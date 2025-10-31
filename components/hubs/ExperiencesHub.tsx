@@ -27,8 +27,8 @@ const ExperienceCard: React.FC<ExperienceCardProps> = ({ experience, onDelete })
         >
             <div className="flex justify-between items-start">
                 <div>
-                    <h4 className="font-semibold text-indigo-300">{experience.goal_template}</h4>
-                    <p className="text-xs text-gray-500 mt-1">Source Run ID: {experience.source_run_id}</p>
+                    <h4 className="font-semibold text-indigo-300">{experience.goalTemplate}</h4>
+                    <p className="text-xs text-gray-500 mt-1">Source Run ID: {experience.sourceRunId}</p>
                 </div>
                 <button onClick={() => onDelete(experience.id)} className="p-1 text-gray-500 hover:text-red-400">
                     <TrashIcon className="w-4 h-4" />
@@ -37,12 +37,12 @@ const ExperienceCard: React.FC<ExperienceCardProps> = ({ experience, onDelete })
             <div className="mt-3">
                 <p className="text-xs font-semibold text-gray-400 mb-1">Trigger Keywords:</p>
                 <div className="flex flex-wrap gap-1">
-                    {experience.trigger_keywords.map(kw => <span key={kw} className="text-xs bg-gray-700 px-2 py-0.5 rounded-full">{kw}</span>)}
+                    {experience.triggerKeywords.map(kw => <span key={kw} className="text-xs bg-gray-700 px-2 py-0.5 rounded-full">{kw}</span>)}
                 </div>
             </div>
             <details className="mt-3 text-xs">
                 <summary className="cursor-pointer text-gray-400">View Abstract Plan</summary>
-                <pre className="text-xs mt-2 p-2 bg-gray-900/50 rounded-md"><code>{JSON.stringify(experience.steps_json, null, 2)}</code></pre>
+                <pre className="text-xs mt-2 p-2 bg-gray-900/50 rounded-md"><code>{JSON.stringify(experience.stepsJson, null, 2)}</code></pre>
             </details>
         </motion.div>
     )

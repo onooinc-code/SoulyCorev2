@@ -49,9 +49,9 @@ export class ExperienceConsolidationPipeline {
 
                 **Your Task:**
                 Based on the original goal and the steps taken, generate a JSON object representing a generalized experience.
-                1.  **goal_template**: Create a generic version of the original goal, using placeholders like "{topic}" or "{entity_name}".
-                2.  **trigger_keywords**: Provide an array of 5-7 lowercase keywords that would help find this experience for similar future goals.
-                3.  **steps_json**: Create an abstract, simplified plan as a JSON array of objects. Each object should have a "step_goal" key describing the high-level objective of that step in the original run.
+                1.  **goalTemplate**: Create a generic version of the original goal, using placeholders like "{topic}" or "{entity_name}".
+                2.  **triggerKeywords**: Provide an array of 5-7 lowercase keywords that would help find this experience for similar future goals.
+                3.  **stepsJson**: Create an abstract, simplified plan as a JSON array of objects. Each object should have a "step_goal" key describing the high-level objective of that step in the original run.
 
                 The final output must be ONLY the valid JSON object.
             `;
@@ -65,9 +65,9 @@ export class ExperienceConsolidationPipeline {
                     responseSchema: {
                         type: Type.OBJECT,
                         properties: {
-                            goal_template: { type: Type.STRING },
-                            trigger_keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            steps_json: {
+                            goalTemplate: { type: Type.STRING },
+                            triggerKeywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            stepsJson: {
                                 type: Type.ARRAY,
                                 items: {
                                     type: Type.OBJECT,
@@ -76,7 +76,7 @@ export class ExperienceConsolidationPipeline {
                                 }
                             }
                         },
-                        required: ['goal_template', 'trigger_keywords', 'steps_json']
+                        required: ['goalTemplate', 'triggerKeywords', 'stepsJson']
                     }
                 }
             });
@@ -90,7 +90,7 @@ export class ExperienceConsolidationPipeline {
             // 4. Store the new experience in the database
             await sql`
                 INSERT INTO experiences ("sourceRunId", "goalTemplate", "triggerKeywords", "stepsJson")
-                VALUES (${runId}, ${experienceData.goal_template}, ${experienceData.trigger_keywords as any}, ${JSON.stringify(experienceData.steps_json)});
+                VALUES (${runId}, ${experienceData.goalTemplate}, ${experienceData.triggerKeywords as any}, ${JSON.stringify(experienceData.stepsJson)});
             `;
             console.log(`[ExperienceConsolidation] Successfully created and stored new experience from run ${runId}.`);
 

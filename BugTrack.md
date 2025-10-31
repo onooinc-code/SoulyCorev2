@@ -408,3 +408,18 @@ Corrected the property access in `ServiceCard.tsx` to use the correct `camelCase
 **Modified Files:**
 - `BugTrack.md`
 - `components/data_hub/ServiceCard.tsx`
+---
+### Bug #23: Vercel Build Fails (`goal_template` vs `goalTemplate`)
+
+**Error Details:**
+The Vercel build is failing with a TypeScript error: `Property 'goal_template' does not exist on type 'Experience'`. This is another instance of `snake_case` vs `camelCase` inconsistency, specifically in the `ExperiencesHub.tsx` component. The error extends to the backend pipeline `experience_consolidation.ts`, which was instructing the AI to generate `snake_case` properties and then attempting to insert them into `camelCase` database columns.
+
+**Solution:**
+A two-part fix was applied to standardize the `Experience` data model across the application:
+1.  **Corrected `ExperiencesHub.tsx`**: Refactored the `ExperienceCard` component to use the correct `camelCase` properties (`goalTemplate`, `sourceRunId`, `triggerKeywords`, `stepsJson`) when accessing data from the `Experience` object, aligning it with the type definition.
+2.  **Corrected `experience_consolidation.ts`**: Updated the AI prompt and the `responseSchema` to instruct the Gemini model to generate `camelCase` properties (`goalTemplate`, `triggerKeywords`, `stepsJson`). The subsequent database `INSERT` statement was also corrected to use these `camelCase` properties, ensuring consistency from AI generation to database storage.
+
+**Modified Files:**
+- `BugTrack.md`
+- `components/hubs/ExperiencesHub.tsx`
+- `core/pipelines/experience_consolidation.ts`
