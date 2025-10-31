@@ -1,5 +1,6 @@
 
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -30,7 +31,7 @@ const PipelineStep: React.FC<PipelineStepProps> = ({ step }) => (
     <div className="bg-gray-900 p-3 rounded-lg">
         <div className="flex justify-between items-center">
             <h4 className="font-semibold text-gray-200">
-                Step {step.step_order}: {step.step_name}
+                Step {step.stepOrder}: {step.stepName}
             </h4>
             <span className={`text-xs px-2 py-0.5 rounded-full ${step.status === 'completed' ? 'bg-green-600/50 text-green-300' : 'bg-red-600/50 text-red-300'}`}>
                 {step.status}
@@ -39,44 +40,44 @@ const PipelineStep: React.FC<PipelineStepProps> = ({ step }) => (
         <details className="mt-2 text-xs text-gray-400">
             <summary className="cursor-pointer focus:outline-none">Show Details</summary>
             <div className="mt-2 space-y-2 pl-2 border-l border-gray-700">
-                {step.input_payload && (
+                {step.inputPayload && (
                     <div>
                         <h5 className="font-semibold">Input:</h5>
                         <pre className="text-xs whitespace-pre-wrap font-mono bg-gray-800 p-2 rounded-md overflow-auto">
-                            <code>{JSON.stringify(step.input_payload, null, 2)}</code>
+                            <code>{JSON.stringify(step.inputPayload, null, 2)}</code>
                         </pre>
                     </div>
                 )}
-                 {step.output_payload && (
+                 {step.outputPayload && (
                     <div>
                         <h5 className="font-semibold">Output:</h5>
                         <pre className="text-xs whitespace-pre-wrap font-mono bg-gray-800 p-2 rounded-md overflow-auto">
-                            <code>{JSON.stringify(step.output_payload, null, 2)}</code>
+                            <code>{JSON.stringify(step.outputPayload, null, 2)}</code>
                         </pre>
                     </div>
                 )}
-                {step.model_used && (
+                {step.modelUsed && (
                      <div>
                         <h5 className="font-semibold">AI Call Details:</h5>
                         <div className="font-mono bg-gray-800 p-2 rounded-md overflow-auto">
-                           <p><strong>Model:</strong> {step.model_used}</p>
-                           {step.config_used && <p><strong>Config:</strong> {JSON.stringify(step.config_used)}</p>}
+                           <p><strong>Model:</strong> {step.modelUsed}</p>
+                           {step.configUsed && <p><strong>Config:</strong> {JSON.stringify(step.configUsed)}</p>}
                            <details className="mt-1">
                                 <summary className="cursor-pointer">View Prompt</summary>
-                                <pre className="text-xs whitespace-pre-wrap mt-1"><code>{step.prompt_used}</code></pre>
+                                <pre className="text-xs whitespace-pre-wrap mt-1"><code>{step.promptUsed}</code></pre>
                            </details>
                         </div>
                     </div>
                 )}
-                {step.error_message && (
+                {step.errorMessage && (
                     <div>
                         <h5 className="font-semibold text-red-400">Error:</h5>
                         <pre className="text-xs whitespace-pre-wrap font-mono bg-red-900/50 p-2 rounded-md overflow-auto">
-                            <code>{step.error_message}</code>
+                            <code>{step.errorMessage}</code>
                         </pre>
                     </div>
                 )}
-                <p>Duration: {step.duration_ms}ms</p>
+                <p>Duration: {step.durationMs}ms</p>
             </div>
         </details>
     </div>
@@ -133,9 +134,9 @@ const CognitiveInspectorModal = ({ onClose, messageId }: CognitiveInspectorModal
                 <div className="bg-gray-900 p-3 rounded-lg">
                     <h3 className="font-semibold text-gray-200 mb-2">Pipeline Summary</h3>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                        <span><strong>Pipeline:</strong> {pipelineRun.pipeline_type}</span>
+                        <span><strong>Pipeline:</strong> {pipelineRun.pipelineType}</span>
                         <span><strong>Status:</strong> <span className={pipelineRun.status === 'completed' ? 'text-green-400' : 'text-red-400'}>{pipelineRun.status}</span></span>
-                        <span><strong>Duration:</strong> {pipelineRun.duration_ms}ms</span>
+                        <span><strong>Duration:</strong> {pipelineRun.durationMs}ms</span>
                     </div>
                 </div>
                 <div>

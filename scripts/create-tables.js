@@ -284,30 +284,30 @@ const statements = [
 
   `CREATE TABLE IF NOT EXISTS pipeline_runs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
-    pipeline_type VARCHAR(50) NOT NULL,
+    "messageId" UUID REFERENCES messages(id) ON DELETE CASCADE,
+    "pipelineType" VARCHAR(50) NOT NULL,
     status VARCHAR(50) NOT NULL,
-    duration_ms INTEGER,
-    final_output TEXT,
-    final_llm_prompt TEXT,
-    final_system_instruction TEXT,
-    model_config_json JSONB,
+    "durationMs" INTEGER,
+    "finalOutput" TEXT,
+    "finalLlmPrompt" TEXT,
+    "finalSystemInstruction" TEXT,
+    "modelConfigJson" JSONB,
     "createdAt" TIMESTAMPTZ DEFAULT now()
   );`,
 
   `CREATE TABLE IF NOT EXISTS pipeline_run_steps (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    run_id UUID REFERENCES pipeline_runs(id) ON DELETE CASCADE,
-    step_order INTEGER NOT NULL,
-    step_name VARCHAR(255) NOT NULL,
-    input_payload JSONB,
-    output_payload JSONB,
-    duration_ms INTEGER,
+    "runId" UUID REFERENCES pipeline_runs(id) ON DELETE CASCADE,
+    "stepOrder" INTEGER NOT NULL,
+    "stepName" VARCHAR(255) NOT NULL,
+    "inputPayload" JSONB,
+    "outputPayload" JSONB,
+    "durationMs" INTEGER,
     status VARCHAR(50) NOT NULL,
-    error_message TEXT,
-    model_used VARCHAR(255),
-    prompt_used TEXT,
-    config_used JSONB,
+    "errorMessage" TEXT,
+    "modelUsed" VARCHAR(255),
+    "promptUsed" TEXT,
+    "configUsed" JSONB,
     timestamp TIMESTAMPTZ DEFAULT now()
   );`,
   
@@ -361,7 +361,7 @@ const statements = [
   // Create indexes for faster queries
   `CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages("conversationId");`,
   `CREATE INDEX IF NOT EXISTS idx_conversations_lastupdatedat ON conversations("lastUpdatedAt");`,
-  `CREATE INDEX IF NOT EXISTS idx_pipeline_runs_message_id ON pipeline_runs(message_id);`,
+  `CREATE INDEX IF NOT EXISTS idx_pipeline_runs_message_id ON pipeline_runs("messageId");`,
 ];
 
 async function createTables() {

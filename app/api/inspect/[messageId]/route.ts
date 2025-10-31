@@ -9,14 +9,14 @@ export async function GET(req: NextRequest, { params }: { params: { messageId: s
 
         // 1. Find the pipeline run associated with this message
         const { rows: runRows } = await sql`
-            SELECT * FROM pipeline_runs WHERE message_id = ${messageId} LIMIT 1;
+            SELECT * FROM pipeline_runs WHERE "messageId" = ${messageId} LIMIT 1;
         `;
 
         if (runRows.length === 0) {
             return NextResponse.json({
                 pipelineRun: { 
-                    final_output: 'No pipeline run found for this message. This may be an older message, a message generated from a regeneration, or the pipeline is still running.',
-                    pipeline_type: 'N/A',
+                    finalOutput: 'No pipeline run found for this message. This may be an older message, a message generated from a regeneration, or the pipeline is still running.',
+                    pipelineType: 'N/A',
                     status: 'not_found'
                 },
                 pipelineSteps: [],
@@ -27,18 +27,18 @@ export async function GET(req: NextRequest, { params }: { params: { messageId: s
 
         // 2. Find the steps for that run
         const { rows: stepRows } = await sql`
-            SELECT * FROM pipeline_run_steps WHERE run_id = ${pipelineRun.id} ORDER BY step_order ASC;
+            SELECT * FROM pipeline_run_steps WHERE "runId" = ${pipelineRun.id} ORDER BY "stepOrder" ASC;
         `;
         
         // Sanitize sensitive info if needed in the future
-        const { final_llm_prompt, final_system_instruction, model_config_json, ...restOfRun } = pipelineRun;
+        const { finalLlmPrompt, finalSystemInstruction, modelConfigJson, ...restOfRun } = pipelineRun;
 
         return NextResponse.json({
             pipelineRun: {
                 ...restOfRun,
-                final_llm_prompt,
-                final_system_instruction,
-                model_config_json,
+                finalLlmPrompt,
+                finalSystemInstruction,
+                modelConfigJson,
             },
             pipelineSteps: stepRows,
         });

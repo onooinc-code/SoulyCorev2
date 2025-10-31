@@ -35,7 +35,7 @@ export class MemoryExtractionPipeline {
             const output = await execution();
             const duration = Date.now() - startTime;
             await sql`
-                INSERT INTO pipeline_run_steps (run_id, step_order, step_name, input_payload, output_payload, duration_ms, status)
+                INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status)
                 VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
             `;
             return output;
@@ -43,7 +43,7 @@ export class MemoryExtractionPipeline {
             const duration = Date.now() - startTime;
             const errorMessage = (error as Error).message;
             await sql`
-                INSERT INTO pipeline_run_steps (run_id, step_order, step_name, input_payload, duration_ms, status, error_message)
+                INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "durationMs", status, "errorMessage")
                 VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${duration}, 'failed', ${errorMessage});
             `;
             throw error;
@@ -54,7 +54,7 @@ export class MemoryExtractionPipeline {
         const { text, messageId, conversationId, config } = params;
         
         const { rows: runRows } = await sql<PipelineRun>`
-            INSERT INTO pipeline_runs (message_id, pipeline_type, status)
+            INSERT INTO pipeline_runs ("messageId", "pipelineType", status)
             VALUES (${messageId}, 'MemoryExtraction', 'running') RETURNING id;
         `;
         const runId = runRows[0].id;
@@ -135,13 +135,13 @@ export class MemoryExtractionPipeline {
 
             const totalDuration = Date.now() - startTime;
             await sql`
-                UPDATE pipeline_runs SET status = 'completed', duration_ms = ${totalDuration}, final_output = ${'Extraction successful.'} WHERE id = ${runId};
+                UPDATE pipeline_runs SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${'Extraction successful.'} WHERE id = ${runId};
             `;
             
         } catch (error) {
              const totalDuration = Date.now() - startTime;
             await sql`
-                UPDATE pipeline_runs SET status = 'failed', duration_ms = ${totalDuration}, final_output = ${(error as Error).message} WHERE id = ${runId};
+                UPDATE pipeline_runs SET status = 'failed', "durationMs" = ${totalDuration}, "finalOutput" = ${(error as Error).message} WHERE id = ${runId};
             `;
             console.error("MemoryExtractionPipeline failed:", error);
             throw error;

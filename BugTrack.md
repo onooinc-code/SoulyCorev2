@@ -210,3 +210,22 @@ A multi-part fix was implemented to address all reported issues:
 - `components/VersionLogModal.tsx`
 - `package.json`
 - `scripts/seed-version-history.js`
+---
+### Bug #11: Chat API Fails Due to Database Schema Mismatch
+
+**Error Details:**
+The `/api/chat` endpoint was failing with a 500 Internal Server Error: `column "final_llm_prompt" of relation "pipeline_runs" does not exist`. This was caused by a fundamental inconsistency in the database schema definitions. The `pipeline_runs` and `pipeline_run_steps` tables were defined using `snake_case` column names (e.g., `final_llm_prompt`), while the majority of other tables in the project used quoted `camelCase` (e.g., `"systemPrompt"`). The application code, however, was attempting to write to the `snake_case` column names, which did not exist because the schema on Vercel was likely out of date or the inconsistency caused a resolution failure.
+
+**Solution:**
+Standardized the database schema by refactoring the `pipeline_runs` and `pipeline_run_steps` tables to use quoted `camelCase` for all column names, matching the convention used throughout the rest of the application. This provides a consistent and predictable data model.
+1.  **Updated Schema:** Modified `scripts/create-tables.js` to redefine all columns in the `pipeline_runs` and `pipeline_run_steps` tables with quoted camelCase (e.g., `"finalLlmPrompt"`).
+2.  **Updated Pipeline Code:** Refactored the SQL queries in `core/pipelines/context_assembly.ts` and `core/pipelines/memory_extraction.ts` to insert and update records using the new camelCase column names.
+3.  **Updated API & UI:** Corrected the API endpoint (`/api/inspect/[messageId]`) and the UI component (`CognitiveInspectorModal.tsx`) that read from these tables to expect camelCase properties, ensuring data is displayed correctly.
+
+**Modified Files:**
+- `BugTrack.md`
+- `scripts/create-tables.js`
+- `core/pipelines/context_assembly.ts`
+- `core/pipelines/memory_extraction.ts`
+- `app/api/inspect/[messageId]/route.ts`
+- `components/CognitiveInspectorModal.tsx`

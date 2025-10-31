@@ -32,7 +32,7 @@ export class ContextAssemblyPipeline {
             const output = await execution();
             const duration = Date.now() - startTime;
             await sql`
-                INSERT INTO pipeline_run_steps (run_id, step_order, step_name, input_payload, output_payload, duration_ms, status, model_used, prompt_used, config_used)
+                INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status, "modelUsed", "promptUsed", "configUsed")
                 VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed', ${modelUsed || null}, ${promptUsed || null}, ${configUsed ? JSON.stringify(configUsed) : null});
             `;
             return output;
@@ -40,7 +40,7 @@ export class ContextAssemblyPipeline {
             const duration = Date.now() - startTime;
             const errorMessage = (error as Error).message;
             await sql`
-                INSERT INTO pipeline_run_steps (run_id, step_order, step_name, input_payload, duration_ms, status, error_message)
+                INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "durationMs", status, "errorMessage")
                 VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${duration}, 'failed', ${errorMessage});
             `;
             throw error;
@@ -51,7 +51,7 @@ export class ContextAssemblyPipeline {
         const { conversation, userQuery, mentionedContacts, userMessageId, config } = params;
 
         const { rows: runRows } = await sql<PipelineRun>`
-            INSERT INTO pipeline_runs (message_id, pipeline_type, status)
+            INSERT INTO pipeline_runs ("messageId", "pipelineType", status)
             VALUES (${userMessageId}, 'ContextAssembly', 'running') RETURNING id;
         `;
         const runId = runRows[0].id;
@@ -130,11 +130,11 @@ export class ContextAssemblyPipeline {
                 UPDATE pipeline_runs 
                 SET 
                     status = 'completed', 
-                    duration_ms = ${llmResponseTime}, 
-                    final_output = ${llmResponse},
-                    final_llm_prompt = ${history[history.length - 1].parts[0].text},
-                    final_system_instruction = ${systemInstruction},
-                    model_config_json = ${JSON.stringify(modelConfig)}
+                    "durationMs" = ${llmResponseTime}, 
+                    "finalOutput" = ${llmResponse},
+                    "finalLlmPrompt" = ${history[history.length - 1].parts[0].text},
+                    "finalSystemInstruction" = ${systemInstruction},
+                    "modelConfigJson" = ${JSON.stringify(modelConfig)}
                 WHERE id = ${runId};
             `;
             
@@ -143,7 +143,7 @@ export class ContextAssemblyPipeline {
         } catch (error) {
             const totalDuration = Date.now() - startTime;
             await sql`
-                UPDATE pipeline_runs SET status = 'failed', duration_ms = ${totalDuration}, final_output = ${(error as Error).message} WHERE id = ${runId};
+                UPDATE pipeline_runs SET status = 'failed', "durationMs" = ${totalDuration}, "finalOutput" = ${(error as Error).message} WHERE id = ${runId};
             `;
             console.error("ContextAssemblyPipeline failed:", error);
             throw error;
