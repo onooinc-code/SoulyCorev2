@@ -97,8 +97,8 @@ const ChatWindow = () => {
     
     const handleSetConversationAlign = (align: 'left' | 'right') => {
         if (!currentConversation) return;
-        const newUiSettings = { ...(currentConversation.ui_settings || {}), textAlign: align };
-        updateCurrentConversation({ ui_settings: newUiSettings });
+        const newUiSettings = { ...(currentConversation.uiSettings || {}), textAlign: align };
+        updateCurrentConversation({ uiSettings: newUiSettings });
     };
 
     const handleRegenerate = (messageId: string) => {

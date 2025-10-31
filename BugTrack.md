@@ -372,3 +372,15 @@ A targeted fix was applied to all files related to the Projects Hub and Tasks Hu
 - `app/api/projects/[projectId]/route.ts`
 - `app/api/tasks/route.ts`
 - `app/api/tasks/[taskId]/route.ts`
+---
+### Bug #20: Vercel Build Fails (`ui_settings` vs `uiSettings`)
+
+**Error Details:**
+The Vercel build is failing with a TypeScript error: `Property 'ui_settings' does not exist on type 'Conversation'`. This is another instance of `snake_case` vs `camelCase` inconsistency, specifically in the `ChatWindow.tsx` component, which was missed during previous refactoring passes.
+
+**Solution:**
+Corrected the `handleSetConversationAlign` function in `ChatWindow.tsx` to use the correct `camelCase` property `uiSettings` when reading from and updating the conversation's UI settings, aligning it with the type definition and database schema.
+
+**Modified Files:**
+- `BugTrack.md`
+- `components/chat/ChatWindow.tsx`
