@@ -1,34 +1,22 @@
-"use client";
-
 import './globals.css';
-import React, { useEffect } from 'react';
+import React from 'react';
 
-// FIX: Refactored to use React.FC which provides better type inference for components with children,
-// resolving the TypeScript error in index.tsx where the 'children' prop was not being correctly inferred.
-const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  useEffect(() => {
-    // These effects replicate the static parts of the original layout for a CSR app.
-    document.documentElement.lang = 'en';
-    document.body.className = "bg-gray-800 text-gray-100 font-sans";
-    
-    // Ensure theme-color meta tag exists
-    let themeMeta = document.querySelector('meta[name="theme-color"]');
-    if (!themeMeta) {
-        const meta = document.createElement('meta');
-        meta.name = 'theme-color';
-        meta.content = '#1f2937';
-        document.head.appendChild(meta);
-    } else {
-        (themeMeta as HTMLMetaElement).content = '#1f2937';
-    }
-
-    // Clean up on unmount
-    return () => {
-      document.body.className = '';
-    }
-  }, []);
-
-  return <>{children}</>;
-};
-
-export default RootLayout;
+// FIX: A root layout in Next.js App Router MUST return <html> and <body> tags.
+// The previous implementation was missing them, causing critical hydration errors and a blank page.
+// This has been corrected to provide the proper document structure.
+// The 'use client' directive and useEffect hook were removed as they are no longer needed.
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      {/* The body class was previously applied via a useEffect hook. 
+          Applying it directly is the correct pattern in Next.js. */}
+      <body className="bg-gray-800 text-gray-100 font-sans">
+        {children}
+      </body>
+    </html>
+  );
+}
