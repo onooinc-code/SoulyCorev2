@@ -5,7 +5,6 @@
 // components/agent_center/RunReport.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import type { AgentRun, AgentRunStep, AgentPlanPhase } from '@/lib/types';
-import { useLog } from '../providers/LogProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckIcon, XIcon, SparklesIcon, RefreshIcon } from '../Icons';
 
@@ -75,7 +74,6 @@ interface RunData {
 }
 
 const RunReport = ({ runId }: { runId: string }) => {
-    const { log } = useLog();
     const [runData, setRunData] = useState<RunData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -89,11 +87,11 @@ const RunReport = ({ runId }: { runId: string }) => {
             const data = await res.json();
             setRunData(data);
         } catch (error) {
-            log('Error fetching run details', { error, runId }, 'error');
+            console.error('Error fetching run details', { error, runId });
         } finally {
             setIsLoading(false);
         }
-    }, [runId, log, runData?.run.status]);
+    }, [runId, runData?.run.status]);
 
     useEffect(() => {
         fetchRunDetails();

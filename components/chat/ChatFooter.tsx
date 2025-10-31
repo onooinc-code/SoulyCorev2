@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChatInput from '@/components/ChatInput';
-import type { Contact, Message } from '@/lib/types';
+import type { Contact, Message, CognitiveStatus } from '@/lib/types';
 import { XIcon } from '../Icons';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import CognitiveStatusBar from './CognitiveStatusBar';
@@ -36,6 +36,11 @@ const ChatFooter = ({
         if (lastUserMessage) {
             onInspectClick(lastUserMessage.id);
         }
+    };
+
+    // Type guard to ensure status.currentAction is a CognitiveStatus object
+    const isCognitiveStatus = (action: any): action is CognitiveStatus => {
+        return typeof action === 'object' && action !== null && 'phase' in action;
     };
 
     return (
@@ -73,7 +78,7 @@ const ChatFooter = ({
             )}
             
             <AnimatePresence>
-                {isLoading && typeof status.currentAction === 'object' && status.currentAction !== null && (
+                {isLoading && isCognitiveStatus(status.currentAction) && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}

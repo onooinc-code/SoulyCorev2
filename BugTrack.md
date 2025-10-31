@@ -120,6 +120,8 @@ The application is throwing a "Minified React error #299," which indicates that 
 3.  **Removed `useLog` from `ContactsHub.tsx`**: Continued the process of elimination by refactoring this complex data-display component.
 4.  **Removed `useLog` from `GlobalSettingsModal.tsx`**: Applied the same simplification to the global settings form.
 5.  **Removed `useLog` from `ConversationSettingsModal.tsx`**: Continued the process of elimination by refactoring this modal component.
+6.  **Removed `useLog` from `FeaturesDictionary.tsx`**: Refactored the features dictionary component.
+7.  **Removed `useLog` from `agent_center/RunReport.tsx`**: Refactored the agent run report component, which frequently polls for data.
 
 **Current Status:**
 The error persists, indicating the root cause is likely in another component or related to a different piece of state being incorrectly rendered. The investigation is ongoing.
@@ -131,3 +133,5 @@ The error persists, indicating the root cause is likely in another component or 
 - `components/ContactsHub.tsx`
 - `components/GlobalSettingsModal.tsx`
 - `components/ConversationSettingsModal.tsx`
+- `components/dev_center/FeaturesDictionary.tsx`
+- `components/agent_center/RunReport.tsx`
