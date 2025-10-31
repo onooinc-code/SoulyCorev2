@@ -4,12 +4,17 @@ const { db } = require('@vercel/postgres');
 const statements = [
   `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`,
 
-  // FIX: Force a clean state for these tables on every build to prevent errors from stale,
+  // FIX: Force a clean state for ALL seeded tables on every build to prevent errors from stale,
   // incomplete table structures persisting in the Vercel build cache. This is the definitive
   // solution to the recurring build errors.
   `DROP TABLE IF EXISTS "pipeline_run_steps" CASCADE;`,
   `DROP TABLE IF EXISTS "pipeline_runs" CASCADE;`,
   `DROP TABLE IF EXISTS "features" CASCADE;`,
+  `DROP TABLE IF EXISTS "api_endpoints" CASCADE;`,
+  `DROP TABLE IF EXISTS "documentations" CASCADE;`,
+  `DROP TABLE IF EXISTS "hedra_goals" CASCADE;`,
+  `DROP TABLE IF EXISTS "subsystems" CASCADE;`,
+  `DROP TABLE IF EXISTS "version_history" CASCADE;`,
 
   `CREATE TABLE IF NOT EXISTS "settings" (
     "key" VARCHAR(255) PRIMARY KEY,

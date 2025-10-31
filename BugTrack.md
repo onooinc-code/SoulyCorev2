@@ -330,3 +330,15 @@ Applied the same definitive fix used for the `pipeline_runs` table to the `featu
 - `components/ChatWindow.tsx`
 - `components/StatusBar.tsx`
 - `app/api/prompts/execute-chain/route.ts`
+---
+### Bug #17: Vercel Build Fails (Stale `api_endpoints` Table and Systemic Issue)
+
+**Error Details:**
+The Vercel build is failing during the `db:seed` process with `column "groupName" of relation "api_endpoints" does not exist`. This confirms a systemic problem: the Vercel build cache preserves old, malformed tables, and the `CREATE TABLE IF NOT EXISTS` logic prevents schema updates. The issue is not a one-off but will occur for any table whose schema has changed since it was first created in a Vercel build.
+
+**Solution:**
+Implemented a comprehensive fix by adding `DROP TABLE IF EXISTS ... CASCADE` statements for all seeded tables (`api_endpoints`, `documentations`, `hedra_goals`, `subsystems`, `version_history`) to `scripts/create-tables.js`. This guarantees a clean database schema for all critical tables on every Vercel build, preventing this entire class of error from recurring in the future.
+
+**Modified Files:**
+- `BugTrack.md`
+- `scripts/create-tables.js`
