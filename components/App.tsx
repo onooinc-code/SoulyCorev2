@@ -19,6 +19,8 @@ import TopProgressBar from './TopProgressBar';
 import Notifications from './Notifications';
 import { useConversation } from './providers/ConversationProvider';
 import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';
+import EmptyState from './ui/EmptyState';
+import { ChatBubbleLeftRightIcon } from './Icons';
 
 export const App = () => {
     const { 
@@ -29,7 +31,7 @@ export const App = () => {
     } = useUIState();
 
     const { menuItems, contextMenu, handleContextMenu, closeContextMenu } = useAppContextMenu();
-    const { currentConversation, backgroundTaskCount } = useConversation();
+    const { currentConversation, backgroundTaskCount, createNewConversation } = useConversation();
     const [isBriefingOpen, setIsBriefingOpen] = useState(false);
 
     // Setup keyboard shortcuts
@@ -52,7 +54,32 @@ export const App = () => {
         }
     }, []);
 
-    const mainContent = activeView === 'chat' && currentConversation ? <ChatWindow /> : <ActiveViewRenderer />;
+    const renderMainContent = () => {
+        if (activeView === 'chat') {
+            if (currentConversation) {
+                return <ChatWindow />;
+            }
+            // FIX: Instead of showing a cryptic error from ActiveViewRenderer, display a helpful EmptyState
+            // when the chat view is active but no conversation is selected. This improves UX and handles a
+            // potential race condition on initial load.
+            return (
+                <div className="w-full h-full flex items-center justify-center p-8">
+                    <EmptyState
+                        icon={ChatBubbleLeftRightIcon}
+                        title="No Conversation Selected"
+                        description="Select a conversation from the sidebar or create a new one to begin chatting."
+                        action={{
+                            label: 'Start New Conversation',
+                            onClick: createNewConversation,
+                        }}
+                    />
+                </div>
+            );
+        }
+        return <ActiveViewRenderer />;
+    };
+
+    const mainContent = renderMainContent();
     const showProgress = backgroundTaskCount > 0;
 
     return (

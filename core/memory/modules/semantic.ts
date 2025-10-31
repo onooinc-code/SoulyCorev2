@@ -5,7 +5,7 @@
 
 import { ISingleMemoryModule } from '../types';
 import llmProvider from '@/core/llm';
-import { knowledgeBaseIndex } from '@/lib/pinecone';
+import { getKnowledgeBaseIndex } from '@/lib/pinecone';
 import { v4 as uuidv4 } from 'uuid';
 import type { ScoredPineconeRecord } from '@pinecone-database/pinecone';
 
@@ -71,7 +71,7 @@ export class SemanticMemoryModule implements ISingleMemoryModule {
             },
         };
 
-        await knowledgeBaseIndex.upsert([vectorToUpsert]);
+        await getKnowledgeBaseIndex().upsert([vectorToUpsert]);
     }
 
     /**
@@ -88,7 +88,7 @@ export class SemanticMemoryModule implements ISingleMemoryModule {
         const queryEmbedding = await llmProvider.generateEmbedding(params.queryText);
         const topK = params.topK || 3;
 
-        const queryResponse = await knowledgeBaseIndex.query({
+        const queryResponse = await getKnowledgeBaseIndex().query({
             vector: queryEmbedding,
             topK,
             includeMetadata: true,

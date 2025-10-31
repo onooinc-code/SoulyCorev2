@@ -153,3 +153,22 @@ This two-pronged fix ensures that the application never attempts to render a non
 - `BugTrack.md`
 - `components/StatusBar.tsx`
 - `components/LoadingIndicator.tsx`
+---
+### Bug #8: Vercel Deployment Failing with 500 Errors on Dashboard
+
+**Error Details:**
+After deployment to Vercel, several API endpoints, particularly those on the dashboard (`/api/dashboard/stats`, `/api/dashboard/quick-note`, etc.), were consistently failing with a `500 Internal Server Error`. The client-side logs showed generic "Fetch failed" messages, indicating a server-side crash. The root cause was traced to SDK clients (like Pinecone) attempting to initialize at the module level (on file import). If the necessary environment variables (e.g., `PINECONE_API_KEY`) were missing in the Vercel project settings, the entire serverless function would crash on startup before it could even execute, resulting in a non-descriptive 500 error.
+
+**Solution:**
+Refactored the initialization logic for the Pinecone client to use a lazy-initialization pattern. Instead of creating the client instance at the module level, a getter function (`getKnowledgeBaseIndex`) was implemented. This function is only called when the Pinecone index is first needed, moving the initialization (and any potential environment variable errors) from import time to runtime. This ensures that if an error occurs, it happens within the `try...catch` block of the API route, allowing a specific and helpful error message (e.g., "PINECONE_API_KEY is not set") to be returned to the client, guiding the user on how to fix their Vercel environment configuration.
+
+**Modified Files:**
+- `BugTrack.md`
+- `lib/pinecone.ts`
+- `app/api/dashboard/stats/route.ts`
+- `app/api/knowledge/add/route.ts`
+- `core/memory/modules/semantic.ts`
+
+**Changes Made:**
+- **`lib/pinecone.ts`**: Replaced the direct export of `knowledgeBaseIndex` with a `getKnowledgeBaseIndex()` function that lazily initializes the Pinecone client and returns the index instance.
+- **`stats/route.ts`, `knowledge/add/route.ts`, `semantic.ts`**: Updated these files to import and call the new `getKnowledgeBaseIndex()` function instead of using the old direct export.

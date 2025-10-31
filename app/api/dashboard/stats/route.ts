@@ -1,7 +1,8 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import { knowledgeBaseIndex } from '@/lib/pinecone';
+import { getKnowledgeBaseIndex } from '@/lib/pinecone';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,8 +30,8 @@ export async function GET(req: NextRequest) {
                 AVG(duration_ms)::float as avg_duration
              FROM pipeline_runs 
              GROUP BY pipeline_type, status;`,
-            knowledgeBaseIndex.describeIndexStats(),
-            sql`SELECT COUNT(*) FROM entities;`,
+            getKnowledgeBaseIndex().describeIndexStats(),
+            sql`SELECT COUNT(*) FROM entity_definitions;`,
             sql`SELECT COUNT(*) FROM contacts;`,
             sql`SELECT status, COUNT(*)::int as count FROM features GROUP BY status;`,
             sql`SELECT COUNT(*) FROM logs;`,

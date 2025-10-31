@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateEmbedding } from '@/lib/gemini-server';
-import { knowledgeBaseIndex } from '@/lib/pinecone';
+import { getKnowledgeBaseIndex } from '@/lib/pinecone';
 import { v4 as uuidv4 } from 'uuid';
 import { sql } from '@/lib/db';
 
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
             metadata: { text: content },
         };
 
-        await knowledgeBaseIndex.upsert([vectorToUpsert]);
+        await getKnowledgeBaseIndex().upsert([vectorToUpsert]);
 
         await serverLog('Successfully upserted knowledge snippet to Pinecone.', { id: vectorToUpsert.id });
 
