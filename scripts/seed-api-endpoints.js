@@ -49,11 +49,11 @@ async function seedApiEndpoints() {
     try {
         for (const endpoint of endpoints) {
             await sql`
-                INSERT INTO api_endpoints (
-                    method, 
-                    path, 
+                INSERT INTO "api_endpoints" (
+                    "method", 
+                    "path", 
                     "groupName", 
-                    description, 
+                    "description", 
                     "defaultBodyJson",
                     "expectedStatusCode"
                 )
@@ -65,7 +65,7 @@ async function seedApiEndpoints() {
                     ${endpoint.default_body_json ? JSON.stringify(endpoint.default_body_json) : null},
                     ${endpoint.expected_status_code || 200}
                 )
-                ON CONFLICT (path) DO NOTHING;
+                ON CONFLICT ("path") DO NOTHING;
             `;
         }
         console.log(`Seeded or verified ${endpoints.length} API endpoints.`);

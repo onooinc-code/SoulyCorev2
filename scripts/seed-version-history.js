@@ -76,11 +76,11 @@ async function seedVersionHistory() {
     try {
         for (const version of versionData) {
             await sql`
-                INSERT INTO version_history (version, "releaseDate", changes)
+                INSERT INTO "version_history" ("version", "releaseDate", "changes")
                 VALUES (${version.version}, ${version.release_date}, ${version.changes})
-                ON CONFLICT (version) DO UPDATE SET
+                ON CONFLICT ("version") DO UPDATE SET
                     "releaseDate" = EXCLUDED."releaseDate",
-                    changes = EXCLUDED.changes;
+                    "changes" = EXCLUDED."changes";
             `;
         }
         console.log(`Successfully seeded ${versionData.length} version history entries.`);

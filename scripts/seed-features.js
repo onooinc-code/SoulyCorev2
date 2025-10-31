@@ -180,20 +180,20 @@ async function seedFeatures() {
         // has a foreign key constraint that references the `features` table. TRUNCATE...CASCADE will
         // automatically truncate both `features` and any tables that depend on it, resolving the
         // foreign key violation error during the database seeding process.
-        await sql`TRUNCATE TABLE features RESTART IDENTITY CASCADE;`;
+        await sql`TRUNCATE TABLE "features" RESTART IDENTITY CASCADE;`;
         console.log("Cleared existing features and related test data.");
 
         for (const feature of features) {
             await sql`
-                INSERT INTO features (
-                    name, 
-                    overview, 
-                    status, 
-                    category,
+                INSERT INTO "features" (
+                    "name", 
+                    "overview", 
+                    "status", 
+                    "category",
                     "uiUxBreakdownJson",
                     "logicFlow",
                     "keyFilesJson",
-                    notes,
+                    "notes",
                     "lastUpdatedAt"
                 )
                 VALUES (

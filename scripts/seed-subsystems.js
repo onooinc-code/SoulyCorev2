@@ -72,13 +72,13 @@ const subsystemsData = [
 async function seedSubsystems() {
     console.log("Seeding subsystems...");
     try {
-        await sql`TRUNCATE TABLE subsystems RESTART IDENTITY;`; // Clear existing data
+        await sql`TRUNCATE TABLE "subsystems" RESTART IDENTITY;`; // Clear existing data
 
         for (const [index, sub] of subsystemsData.entries()) {
             await sql`
-                INSERT INTO subsystems (
-                    id, name, description, progress, "healthScore", 
-                    dependencies, resources, milestones, "githubStats", tasks, "orderIndex"
+                INSERT INTO "subsystems" (
+                    "id", "name", "description", "progress", "healthScore", 
+                    "dependencies", "resources", "milestones", "githubStats", "tasks", "orderIndex"
                 ) VALUES (
                     ${sub.id}, ${sub.name}, ${sub.description}, ${sub.progress}, ${sub.healthScore},
                     ${JSON.stringify(sub.dependencies)}, ${JSON.stringify(sub.resources)}, 

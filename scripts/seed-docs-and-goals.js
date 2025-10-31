@@ -37,11 +37,11 @@ async function seedDocumentations() {
             }
             
             await sql`
-                INSERT INTO documentations ("docKey", title, content)
+                INSERT INTO "documentations" ("docKey", "title", "content")
                 VALUES (${doc.key}, ${doc.title}, ${content})
                 ON CONFLICT ("docKey") DO UPDATE SET
-                    title = EXCLUDED.title,
-                    content = EXCLUDED.content,
+                    "title" = EXCLUDED."title",
+                    "content" = EXCLUDED."content",
                     "lastUpdatedAt" = CURRENT_TIMESTAMP;
             `;
         }
@@ -57,10 +57,10 @@ async function seedHedraGoals() {
     try {
         for (const [key, content] of Object.entries(goalsToSeed)) {
              await sql`
-                INSERT INTO hedra_goals ("sectionKey", content)
+                INSERT INTO "hedra_goals" ("sectionKey", "content")
                 VALUES (${key}, ${content})
                 ON CONFLICT ("sectionKey") DO UPDATE SET
-                    content = EXCLUDED.content,
+                    "content" = EXCLUDED."content",
                     "lastUpdatedAt" = CURRENT_TIMESTAMP;
             `;
         }
