@@ -118,6 +118,9 @@ export class AutonomousAgent {
 
         try {
             // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
+            if (!result.text) {
+                throw new Error("AI response text is empty.");
+            }
             const responseJson = JSON.parse(result.text.trim().replace(/```json|```/g, ''));
             const isFinal = responseJson.action === 'final_answer';
             return {
