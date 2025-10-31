@@ -264,7 +264,7 @@ const FeaturesDictionary = () => {
         }
     };
     
-    const categories = useMemo(() => ['all', ...Array.from(new Set(features.map(f => f.category).filter(Boolean)))], [features]);
+    const categories = useMemo(() => ['all', ...Array.from(new Set(features.map(f => f.category).filter((c): c is string => !!c)))], [features]);
     const statusCounts = useMemo(() => {
         return features.reduce((acc, feature) => {
             acc[feature.status] = (acc[feature.status] || 0) + 1;
