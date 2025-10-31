@@ -16,8 +16,9 @@ export async function PUT(req: NextRequest, { params }: { params: { conversation
         let queryIndex = 1;
 
         Object.keys(body).forEach(key => {
-            // A simple mapping for snake_case columns
-            const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+            // FIX: Removed incorrect camelCase to snake_case conversion.
+            // The keys from the client already match the camelCase column names in the DB schema.
+            const dbKey = key;
             updates.push(`"${dbKey}" = $${queryIndex++}`);
             values.push(body[key]);
         });

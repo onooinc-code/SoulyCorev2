@@ -48,7 +48,7 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
                 transition={{ duration: 0.2 }}
-                className="glass-panel rounded-lg shadow-2xl w-full max-w-2xl h-full max-h-[80vh] flex flex-col"
+                className="bg-gray-800 border border-gray-700 rounded-lg shadow-2xl w-full max-w-2xl h-full max-h-[80vh] flex flex-col"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center p-4 border-b border-gray-700/50 flex-shrink-0">

@@ -185,3 +185,28 @@ Implemented a comprehensive lazy-initialization strategy for the Vercel KV clien
 - `core/memory/modules/working.ts`
 - `app/api/dashboard/quick-note/route.ts`
 - `app/api/dashboard/quick-links/route.ts`
+---
+### Bug #10: Vercel Deployment Errors and UI Glitches
+
+**Error Details:**
+Multiple 500 errors on Vercel deployment and several UI/versioning issues were reported.
+1.  **500 Error on Settings Update:** Updating conversation settings (Agent Instructions, Model) resulted in a 500 error. This was caused by backend logic incorrectly converting `camelCase` field names to `snake_case`, which did not match the database schema.
+2.  **Unclear Dashboard Errors:** Dashboard panels (`Quick Note`, `Quick Links`) failed with a generic 500 error message, making it difficult to diagnose missing environment variables on Vercel.
+3.  **Unreadable Version Modal:** The `VersionLogModal` had a transparent background (`glass-panel`), which made its text content difficult to read against the underlying UI.
+4.  **Stale Version Number:** The application version was not updated to reflect recent changes and fixes.
+
+**Solution:**
+A multi-part fix was implemented to address all reported issues:
+1.  **Conversation API Fix:** The `PUT` handler in `app/api/conversations/[conversationId]/route.ts` was corrected. The faulty logic that converted `camelCase` keys to `snake_case` was removed, ensuring that the update query uses the correct column names as defined in the database schema.
+2.  **Improved API Error Reporting:** The `catch` blocks in the `quick-note` and `quick-links` API routes were modified. They now return the specific, detailed error message from the KV client, which will guide the user to correctly configure their Vercel environment variables if they are missing.
+3.  **Modal UI Fix:** The styling for the `VersionLogModal` was changed. The `glass-panel` class was replaced with a solid `bg-gray-800` background and a `border` to ensure the modal's content is fully opaque and readable.
+4.  **Version Update:** The application version was incremented to `0.4.1` in `package.json`, and a new entry detailing these fixes was added to `scripts/seed-version-history.js`.
+
+**Modified Files:**
+- `BugTrack.md`
+- `app/api/conversations/[conversationId]/route.ts`
+- `app/api/dashboard/quick-note/route.ts`
+- `app/api/dashboard/quick-links/route.ts`
+- `components/VersionLogModal.tsx`
+- `package.json`
+- `scripts/seed-version-history.js`

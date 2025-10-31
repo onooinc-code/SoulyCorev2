@@ -14,7 +14,7 @@ export async function GET() {
         return NextResponse.json({ note: note || '' });
     } catch (error) {
         console.error('Failed to fetch quick note:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 
@@ -34,6 +34,6 @@ export async function PUT(req: NextRequest) {
 
     } catch (error) {
         console.error('Failed to save quick note:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

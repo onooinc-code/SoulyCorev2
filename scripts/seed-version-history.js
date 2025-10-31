@@ -41,7 +41,7 @@ const versionData = [
     },
     {
         version: '0.4.0',
-        release_date: new Date().toISOString(),
+        release_date: '2024-07-25T10:00:00Z',
         changes: `
 - **Major UI Overhaul:** Implemented a new 'glassmorphism' and 'metal' visual theme across the application for a more modern and professional look.
 - **New: Progress & Status System:**
@@ -58,6 +58,16 @@ const versionData = [
 - **UX Improvements:**
   - Message bubbles are now full-width for better space utilization.
   - The Version History modal is now functional and redesigned.`
+    },
+    {
+        version: '0.4.1',
+        release_date: new Date().toISOString(),
+        changes: `
+- **Critical Bug Fix: 500 Errors:** Resolved multiple 500 Internal Server Errors on Vercel deployments.
+  - Fixed a bug in the conversation update API that caused all settings changes (e.g., Agent Instructions, Model selection) to fail.
+  - Improved error reporting for dashboard APIs to provide clear guidance on missing environment variables.
+- **UI Fix: Version Log Modal:** Corrected the styling of the Version Log modal, replacing the transparent background with a solid one to ensure readability.
+- **Stability:** These changes significantly improve the stability and usability of the deployed application.`
     }
 ];
 

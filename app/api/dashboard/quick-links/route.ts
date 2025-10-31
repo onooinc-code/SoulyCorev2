@@ -19,7 +19,7 @@ export async function GET() {
         return NextResponse.json({ links: links || [] });
     } catch (error) {
         console.error('Failed to fetch quick links:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 
@@ -39,6 +39,6 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error('Failed to save quick links:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
