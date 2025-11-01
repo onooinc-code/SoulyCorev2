@@ -7,7 +7,7 @@ import { useDisplayModeManager } from '@/lib/hooks/useDisplayModeManager';
 import { usePanelManager } from '@/lib/hooks/usePanelManager';
 
 // FIX: Added 'tasks_hub' to the ActiveView type to support the new Tasks Hub view.
-type ActiveView = 'chat' | 'dashboard' | 'search' | 'agent_center' | 'brain_center' | 'memory_center' | 'contacts_hub' | 'prompts_hub' | 'tools_hub' | 'projects_hub' | 'data_hub' | 'dev_center' | 'comm_hub' | 'experiences_hub' | 'tasks_hub';
+type ActiveView = 'chat' | 'dashboard' | 'search' | 'agent_center' | 'brain_center' | 'memory_center' | 'contacts_hub' | 'prompts_hub' | 'tools_hub' | 'projects_hub' | 'data_hub' | 'dev_center' | 'comm_hub' | 'experiences_hub' | 'tasks_hub' | 'memory_extraction_hub';
 
 interface UIStateContextType {
     activeView: ActiveView;

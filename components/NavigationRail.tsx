@@ -17,7 +17,8 @@ import {
     SearchIcon,
     ClipboardDocumentListIcon, // Changed from TasksIcon
     RssIcon,
-    LightbulbIcon
+    LightbulbIcon,
+    ScissorsIcon
 } from '@/components/Icons';
 
 const NavigationRail = () => {
@@ -29,6 +30,7 @@ const NavigationRail = () => {
         { view: 'search', icon: SearchIcon, label: 'Global Search' },
         { view: 'agent_center', icon: RocketLaunchIcon, label: 'Agent Center' },
         { view: 'brain_center', icon: BrainIcon, label: 'Brain Center' },
+        { view: 'memory_extraction_hub', icon: ScissorsIcon, label: 'Memory Extraction' },
         { view: 'memory_center', icon: MemoryIcon, label: 'Memory Center' },
         { view: 'contacts_hub', icon: UsersIcon, label: 'Contacts Hub' },
         { view: 'prompts_hub', icon: PromptsIcon, label: 'Prompts Hub' },

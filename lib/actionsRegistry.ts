@@ -18,6 +18,7 @@ import {
     TrashIcon,
     KnowledgeIcon,
     KeyboardIcon,
+    ScissorsIcon,
 } from '@/components/Icons';
 
 export interface Action {
@@ -37,6 +38,7 @@ export const actions: Action[] = [
     { id: 'nav-search', name: 'Go to Global Search', icon: SearchIcon, section: 'Navigation', handlerId: 'setActiveView-search' },
     { id: 'nav-agent-center', name: 'Go to Agent Center', icon: RocketLaunchIcon, section: 'Navigation', handlerId: 'setActiveView-agent_center' },
     { id: 'nav-brain-center', name: 'Go to Brain Center', icon: BrainIcon, section: 'Navigation', handlerId: 'setActiveView-brain_center' },
+    { id: 'nav-memory-extraction-hub', name: 'Go to Memory Extraction', icon: ScissorsIcon, section: 'Navigation', handlerId: 'setActiveView-memory_extraction_hub' },
     { id: 'nav-memory-center', name: 'Go to Memory Center', icon: MemoryIcon, section: 'Navigation', handlerId: 'setActiveView-memory_center' },
     { id: 'nav-contacts-hub', name: 'Go to Contacts Hub', icon: UsersIcon, section: 'Navigation', handlerId: 'setActiveView-contacts_hub' },
     { id: 'nav-prompts-hub', name: 'Go to Prompts Hub', icon: PromptsIcon, section: 'Navigation', handlerId: 'setActiveView-prompts_hub' },

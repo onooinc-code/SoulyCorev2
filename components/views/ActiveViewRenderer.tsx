@@ -9,6 +9,7 @@ const componentMap = {
     search: dynamic(() => import('@/components/search/GlobalSearch')),
     agent_center: dynamic(() => import('@/components/agent_center/AgentCenter')),
     brain_center: dynamic(() => import('@/components/brain_center/BrainCenter')),
+    memory_extraction_hub: dynamic(() => import('@/components/hubs/MemoryExtractionHub')),
     memory_center: dynamic(() => import('@/components/MemoryCenter')),
     contacts_hub: dynamic(() => import('@/components/ContactsHub')),
     prompts_hub: dynamic(() => import('@/components/PromptsHub')),
