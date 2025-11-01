@@ -22,23 +22,23 @@ export async function GET() {
 /**
  * @handler POST
  * @description Creates a new Brain configuration in the database.
- * @param {NextRequest} req - The incoming request, expecting a JSON body with 'name' and 'config_json'.
+ * @param {NextRequest} req - The incoming request, expecting a JSON body with 'name' and 'configJson'.
  * @returns {Promise<NextResponse>} A JSON response with the newly created brain object.
  */
 export async function POST(req: NextRequest) {
     try {
-        const { name, config_json } = await req.json();
+        const { name, configJson } = await req.json();
 
-        if (!name || !config_json) {
-            return NextResponse.json({ error: 'Name and config_json are required' }, { status: 400 });
+        if (!name || !configJson) {
+            return NextResponse.json({ error: 'Name and configJson are required' }, { status: 400 });
         }
         
-        // Ensure config_json is a valid JSON object before inserting
-        const parsedConfig = typeof config_json === 'string' ? JSON.parse(config_json) : config_json;
+        // Ensure configJson is a valid JSON object before inserting
+        const parsedConfig = typeof configJson === 'string' ? JSON.parse(configJson) : configJson;
 
         const { rows } = await sql`
-            INSERT INTO brains (name, config_json)
-            VALUES (${name}, ${parsedConfig})
+            INSERT INTO brains (name, "configJson")
+            VALUES (${name}, ${JSON.stringify(parsedConfig)})
             RETURNING *;
         `;
         

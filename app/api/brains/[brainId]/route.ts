@@ -30,17 +30,17 @@ export async function GET(req: NextRequest, { params }: { params: { brainId: str
 export async function PUT(req: NextRequest, { params }: { params: { brainId: string } }) {
     try {
         const { brainId } = params;
-        const { name, config_json } = await req.json();
+        const { name, configJson } = await req.json();
 
-        if (!name || !config_json) {
-            return NextResponse.json({ error: 'Name and config_json are required' }, { status: 400 });
+        if (!name || !configJson) {
+            return NextResponse.json({ error: 'Name and configJson are required' }, { status: 400 });
         }
         
-        const parsedConfig = typeof config_json === 'string' ? JSON.parse(config_json) : config_json;
+        const parsedConfig = typeof configJson === 'string' ? JSON.parse(configJson) : configJson;
 
         const { rows } = await sql`
             UPDATE brains
-            SET name = ${name}, config_json = ${parsedConfig}
+            SET name = ${name}, "configJson" = ${JSON.stringify(parsedConfig)}
             WHERE id = ${brainId}
             RETURNING *;
         `;

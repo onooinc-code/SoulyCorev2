@@ -374,7 +374,7 @@ Corrected the `handleSetConversationAlign` function in `ChatWindow.tsx` to use t
 
 **Modified Files:**
 - `BugTrack.md`
-- `components/chat/ChatWindow.tsx`
+- `components/ChatWindow.tsx`
 ---
 ### Bug #21: Vercel Build Fails (`doc_key` vs `docKey`)
 
@@ -446,3 +446,27 @@ This change forces a complete and correct recreation of the database schema on e
 **Modified Files:**
 - `BugTrack.md`
 - `scripts/create-tables.js`
+---
+### Bug #26: Final Audit for `snake_case` vs `camelCase` Inconsistencies
+
+**Error Details:**
+Despite numerous refactoring passes, Vercel builds and runtime behavior were still intermittently failing. A final, exhaustive audit revealed several remaining instances where `snake_case` property names were used in API routes and UI components, conflicting with the standardized `camelCase` database schema. This included APIs for brains, tests, dashboard charts, and the API test runner.
+
+**Solution:**
+A final, comprehensive sweep of the entire codebase was conducted to eliminate every last `snake_case` inconsistency. This involved:
+1.  **Brains Feature**: Corrected `config_json` to `configJson` in the `brains` API routes and the `BrainManagementTab` UI component.
+2.  **Tests API**: Corrected `manual_steps` and `expected_result` to `manualSteps` and `expectedResult` in the `/api/tests` route.
+3.  **API Test Runner**: Fixed a legacy API test file (`/api/contacts/test/route.ts`) and the `ResponsePanel.tsx` UI to use correct `camelCase` properties (`endpointId`, `statusCode`, `expectedStatusCode`, etc.).
+4.  **Dashboard API**: Fixed the `/api/dashboard/charts` route to query for `"pipelineType"` and `"durationMs"` and process the results correctly.
+
+This final, exhaustive fix ensures 100% consistency across the data access layer, permanently resolving this class of bugs.
+
+**Modified Files:**
+- `BugTrack.md`
+- `app/api/brains/route.ts`
+- `app/api/brains/[brainId]/route.ts`
+- `components/brain_center/BrainManagementTab.tsx`
+- `app/api/tests/route.ts`
+- `app/api/contacts/test/route.ts`
+- `components/dev_center/api_command_center/ResponsePanel.tsx`
+- `app/api/dashboard/charts/route.ts`

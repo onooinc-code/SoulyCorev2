@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 // FIX: Corrected import path for type.
@@ -43,15 +44,15 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
     try {
-        const { featureId, description, manual_steps, expected_result } = await req.json();
+        const { featureId, description, manualSteps, expectedResult } = await req.json();
 
-        if (!featureId || !description || !expected_result) {
-            return NextResponse.json({ error: 'featureId, description, and expected_result are required' }, { status: 400 });
+        if (!featureId || !description || !expectedResult) {
+            return NextResponse.json({ error: 'featureId, description, and expectedResult are required' }, { status: 400 });
         }
         
         const { rows } = await sql<FeatureTest>`
-            INSERT INTO feature_tests ("featureId", description, manual_steps, expected_result)
-            VALUES (${featureId}, ${description}, ${manual_steps}, ${expected_result})
+            INSERT INTO feature_tests ("featureId", description, "manualSteps", "expectedResult")
+            VALUES (${featureId}, ${description}, ${manualSteps}, ${expectedResult})
             RETURNING *;
         `;
         

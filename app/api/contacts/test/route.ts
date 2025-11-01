@@ -4,12 +4,12 @@ import { sql } from '@/lib/db';
 
 async function logTestResult(endpointId: string, status: string, statusCode: number, responseBody: any, responseHeaders: any, duration: number) {
     await sql`
-        INSERT INTO endpoint_test_logs (endpoint_id, status, status_code, response_body, response_headers, duration_ms)
+        INSERT INTO endpoint_test_logs ("endpointId", status, "statusCode", "responseBody", "responseHeaders", "durationMs")
         VALUES (${endpointId}, ${status}, ${statusCode}, ${JSON.stringify(responseBody)}, ${JSON.stringify(responseHeaders)}, ${duration});
     `;
     await sql`
         UPDATE api_endpoints
-        SET last_test_status = ${status}, last_test_at = CURRENT_TIMESTAMP
+        SET "lastTestStatus" = ${status}, "lastTestAt" = CURRENT_TIMESTAMP
         WHERE id = ${endpointId};
     `;
 }
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
             responseHeaders[key] = value;
         });
         
-        const status = response.status === endpoint.expected_status_code ? 'Passed' : 'Failed';
+        const status = response.status === endpoint.expectedStatusCode ? 'Passed' : 'Failed';
         await logTestResult(endpoint.id, status, response.status, responseBody, responseHeaders, duration);
         
         return NextResponse.json({
