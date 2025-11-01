@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
     try {
         await client.query('BEGIN');
 
-        // 1. Fetch both entities to get their data
         const { rows: entities } = await client.query<EntityDefinition>(`
             SELECT * FROM entity_definitions WHERE id = ANY($1::uuid[])
         `, [[targetId, sourceId]]);
@@ -32,45 +31,54 @@ export async function POST(req: NextRequest) {
             throw new Error('One or both entities not found.');
         }
 
-        // 2. Merge aliases and update target entity
+        // Merge aliases
         const newAliases = [...new Set([
             ...(Array.isArray(targetEntity.aliases) ? targetEntity.aliases : []),
             ...(Array.isArray(sourceEntity.aliases) ? sourceEntity.aliases : []),
-            sourceEntity.name // Add the source's canonical name as an alias
+            sourceEntity.name
         ])];
 
         await client.query(`
             UPDATE entity_definitions SET aliases = $1, "lastUpdatedAt" = CURRENT_TIMESTAMP WHERE id = $2
         `, [JSON.stringify(newAliases), targetId]);
 
-        // 3. Re-point relationships
-        await client.query(`UPDATE entity_relationships SET source_entity_id = $1 WHERE source_entity_id = $2`, [targetId, sourceId]);
-        await client.query(`UPDATE entity_relationships SET target_entity_id = $1 WHERE target_entity_id = $2`, [targetId, sourceId]);
+        // Re-point relationships (source)
+        const { rows: sourceRels } = await client.query(`SELECT * FROM entity_relationships WHERE "sourceEntityId" = $1`, [sourceId]);
+        for (const rel of sourceRels) {
+            await client.query(`
+                INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", predicate, context)
+                VALUES ($1, $2, $3, $4)
+                ON CONFLICT ("sourceEntityId", "targetEntityId", predicate) DO NOTHING
+            `, [targetId, rel.targetEntityId, rel.predicate, rel.context]);
+        }
 
-        // 4. Clean up any potential self-referencing loops created by the merge
-        await client.query(`DELETE FROM entity_relationships WHERE source_entity_id = target_entity_id`);
-
-        // 5. Handle message_entities associations
-        // First, delete any source links that would conflict with existing target links
-        await client.query(`
-            DELETE FROM message_entities 
-            WHERE entity_id = $1 
-            AND message_id IN (SELECT message_id FROM message_entities WHERE entity_id = $2)
-        `, [sourceId, targetId]);
-
-        // Then, update the remaining source links to point to the target
-        await client.query(`UPDATE message_entities SET entity_id = $1 WHERE entity_id = $2`, [targetId, sourceId]);
+        // Re-point relationships (target)
+        const { rows: targetRels } = await client.query(`SELECT * FROM entity_relationships WHERE "targetEntityId" = $1`, [sourceId]);
+        for (const rel of targetRels) {
+             await client.query(`
+                INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", predicate, context)
+                VALUES ($1, $2, $3, $4)
+                ON CONFLICT ("sourceEntityId", "targetEntityId", predicate) DO NOTHING
+            `, [rel.sourceEntityId, targetId, rel.predicate, rel.context]);
+        }
         
-        // 6. Finally, delete the source entity. CASCADE will NOT be used as we've moved links.
+        // Associations with messages
+        const { rows: messageEntities } = await client.query(`SELECT "messageId" FROM message_entities WHERE "entityId" = $1`, [sourceId]);
+        for(const me of messageEntities) {
+            await client.query(`
+                INSERT INTO message_entities ("messageId", "entityId") VALUES ($1, $2) ON CONFLICT DO NOTHING
+            `, [me.messageId, targetId]);
+        }
+
+        // Now, delete the old entity, which will cascade delete its direct relationships and message associations
         await client.query(`DELETE FROM entity_definitions WHERE id = $1`, [sourceId]);
 
         await client.query('COMMIT');
 
-        // 7. After the transaction, delete the vector from Upstash (fire-and-forget is acceptable here)
+        // After the transaction, delete the vector from Upstash
         const vectorMemory = new EntityVectorMemoryModule();
         vectorMemory.delete(sourceId).catch(err => {
             console.error(`Failed to delete vector for merged entity ${sourceId}:`, err);
-            // Optionally log this failure to a separate monitoring system
         });
         
         return NextResponse.json({ success: true, message: 'Entities merged successfully.' });

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -173,13 +172,17 @@ const EntityHub = () => {
 
     const handleConfirmMerge = async (targetId: string, sourceId: string) => {
         log('Confirming merge', { targetId, sourceId });
+        setStatus({ currentAction: 'Merging entities...' });
         try {
             const res = await fetch('/api/entities/merge', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ targetId, sourceId }),
             });
-            if (!res.ok) throw new Error('Failed to merge entities');
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Failed to merge entities');
+            }
             
             await fetchEntities();
             setSelectedIds(new Set());
@@ -187,6 +190,8 @@ const EntityHub = () => {
 
         } catch(error) {
              setStatus({ error: (error as Error).message });
+        } finally {
+            setStatus({ currentAction: null });
         }
     };
 

@@ -6,10 +6,9 @@
 import { Index } from "@upstash/vector";
 import { ISingleMemoryModule } from '../types';
 import llmProvider from '@/core/llm';
-import { v4 as uuidv4 } from 'uuid';
 
 interface IVectorMemoryStoreParams {
-    id?: string;
+    id: string; // Postgres UUID, required to link
     text: string;
     metadata?: Record<string, any>;
 }
@@ -20,7 +19,7 @@ interface IVectorMemoryQueryParams {
 }
 
 export interface IVectorQueryResult {
-    id: string;
+    id: string; // This will be the entity's UUID from Postgres
     text: string;
     score: number;
 }
@@ -43,15 +42,14 @@ export class EntityVectorMemoryModule implements ISingleMemoryModule {
     }
 
     async store(params: IVectorMemoryStoreParams): Promise<void> {
-        if (!params.text) {
-            throw new Error('EntityVectorMemoryModule.store requires text to be provided.');
+        if (!params.text || !params.id) {
+            throw new Error('EntityVectorMemoryModule.store requires text and a linking id to be provided.');
         }
 
         const embedding = await llmProvider.generateEmbedding(params.text);
-        const vectorId = params.id || uuidv4();
 
         await this.index.upsert({
-            id: vectorId,
+            id: params.id, // Use the postgres UUID as the vector ID
             vector: embedding,
             metadata: {
                 ...params.metadata,
@@ -62,7 +60,7 @@ export class EntityVectorMemoryModule implements ISingleMemoryModule {
 
     async query(params: IVectorMemoryQueryParams): Promise<IVectorQueryResult[]> {
         if (!params.queryText) {
-            throw new Error('EntityVectorMemoryModule.query requires queryText to be provided.');
+            return [];
         }
 
         const queryEmbedding = await llmProvider.generateEmbedding(params.queryText);

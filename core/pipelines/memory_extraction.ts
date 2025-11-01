@@ -1,8 +1,9 @@
 import { SemanticMemoryModule } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
+import { EntityVectorMemoryModule } from '../memory/modules/entity_vector';
 import { sql } from '@/lib/db';
 // FIX: Corrected import path for type.
-import type { PipelineRun } from '@/lib/types';
+import type { PipelineRun, EntityDefinition } from '@/lib/types';
 import { IMemoryExtractionConfig } from '../memory/types';
 import { GoogleGenAI, Type } from "@google/genai";
 
@@ -16,11 +17,13 @@ interface IMemoryExtractionParams {
 export class MemoryExtractionPipeline {
     private semanticMemory: SemanticMemoryModule;
     private structuredMemory: StructuredMemoryModule;
+    private entityVectorMemory: EntityVectorMemoryModule;
     private ai: GoogleGenAI;
 
     constructor() {
         this.semanticMemory = new SemanticMemoryModule();
         this.structuredMemory = new StructuredMemoryModule();
+        this.entityVectorMemory = new EntityVectorMemoryModule();
         const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
         if (!apiKey) {
             throw new Error("API key not found for MemoryExtractionPipeline.");
@@ -61,19 +64,19 @@ export class MemoryExtractionPipeline {
         const startTime = Date.now();
 
         try {
-            const extractionResult = await this.logStep(runId, 1, 'Extract Entities and Knowledge', { text }, async () => {
-                const prompt = `Analyze the following text and extract key information. The text is a conversation between a user and an AI.
-                
+            const extractionResult = await this.logStep(runId, 1, 'Extract Entities, Knowledge, and Relationships', { text }, async () => {
+                const prompt = `Analyze the following text from a conversation between a user and an AI. Your task is to extract key information and structure it as a JSON object.
+
                 Text to analyze:
                 "${text}"
 
-                Respond with a JSON object containing two keys: "entities" and "knowledge".
-                - "entities" should be an array of objects, where each object represents a person, place, project, or concept with "name" and "type" keys.
-                - "knowledge" should be an array of strings, where each string is a self-contained, factual statement or piece of information worth remembering.
+                Respond with a JSON object containing three keys: "entities", "knowledge", and "relationships".
+                - "entities": An array of objects. Each object should represent a distinct person, place, project, company, or important concept. Include a "name", a "type", and a concise "description" summarizing all relevant details from the text.
+                - "knowledge": An array of strings. Each string must be a self-contained, factual statement or piece of information worth remembering.
+                - "relationships": An array of objects representing the connections between the entities found in the text. Each object must have "source" (the name of the source entity), "predicate" (the verb or connecting phrase, e.g., 'works_for', 'is_located_in'), and "target" (the name of the target entity).
                 `;
                 
                 const response = await this.ai.models.generateContent({
-                    // @google/genai-api-guideline-fix: Use 'gemini-2.5-flash' for this task.
                     model: 'gemini-2.5-flash',
                     contents: prompt,
                     config: {
@@ -87,47 +90,92 @@ export class MemoryExtractionPipeline {
                                         type: Type.OBJECT,
                                         properties: {
                                             name: { type: Type.STRING },
-                                            type: { type: Type.STRING }
+                                            type: { type: Type.STRING },
+                                            description: { type: Type.STRING }
                                         },
-                                        required: ['name', 'type']
+                                        required: ['name', 'type', 'description']
                                     }
                                 },
                                 knowledge: {
                                     type: Type.ARRAY,
                                     items: { type: Type.STRING }
+                                },
+                                relationships: {
+                                    type: Type.ARRAY,
+                                    items: {
+                                        type: Type.OBJECT,
+                                        properties: {
+                                            source: { type: Type.STRING },
+                                            predicate: { type: Type.STRING },
+                                            target: { type: Type.STRING }
+                                        },
+                                        required: ['source', 'predicate', 'target']
+                                    }
                                 }
                             },
-                             required: ['entities', 'knowledge'],
+                             required: ['entities', 'knowledge', 'relationships'],
                         }
                     }
                 });
-                // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
                 if (!response.text) {
-                    throw new Error("AI failed to extract entities and knowledge. The response was empty.");
+                    throw new Error("AI failed to extract information. The response was empty.");
                 }
                 return JSON.parse(response.text.trim());
             });
 
-            if (config.enableEntityExtraction && extractionResult.entities) {
-                await this.logStep(runId, 2, 'Store Entities', { count: extractionResult.entities.length }, () =>
-                    Promise.all(extractionResult.entities.map((entity: any) =>
+            if (config.enableEntityExtraction && extractionResult.entities && extractionResult.entities.length > 0) {
+                const storedEntities = await this.logStep(runId, 2, 'Store Entities & Embeddings', { count: extractionResult.entities.length }, async () => {
+                    const stored = await Promise.all(extractionResult.entities.map((entity: any) =>
                         this.structuredMemory.store({ type: 'entity', data: entity })
-                    ))
-                );
+                    ));
+
+                    // Now store embeddings for the successfully stored entities
+                    await Promise.all(stored.map((entity: EntityDefinition) => {
+                        if (entity && entity.id) {
+                            const embeddingText = `${entity.name} (${entity.type}): ${entity.description}`;
+                            return this.entityVectorMemory.store({ id: entity.id, text: embeddingText, metadata: { entity_id: entity.id, name: entity.name, type: entity.type, is_entity: true } });
+                        }
+                    }));
+                    
+                    return stored;
+                });
+
+                // After storing entities, process relationships
+                if (extractionResult.relationships && extractionResult.relationships.length > 0) {
+                    await this.logStep(runId, 3, 'Store Relationships', { count: extractionResult.relationships.length }, async () => {
+                         // Create a map of entity names to IDs for quick lookup
+                        const allEntities = [...storedEntities, ...(await this.structuredMemory.query({type: 'entity'}))];
+                        const entityMap = new Map(allEntities.map(e => [e.name.toLowerCase(), e.id]));
+
+                        for (const rel of extractionResult.relationships) {
+                            const sourceId = entityMap.get(rel.source.toLowerCase());
+                            const targetId = entityMap.get(rel.target.toLowerCase());
+
+                            if (sourceId && targetId) {
+                                await this.structuredMemory.store({
+                                    type: 'relationship',
+                                    data: {
+                                        sourceEntityId: sourceId,
+                                        targetEntityId: targetId,
+                                        predicate: rel.predicate,
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
             }
 
             if (config.enableKnowledgeExtraction && extractionResult.knowledge) {
-                 await this.logStep(runId, 3, 'Store Knowledge', { count: extractionResult.knowledge.length }, () =>
+                 await this.logStep(runId, 4, 'Store Knowledge', { count: extractionResult.knowledge.length }, () =>
                     Promise.all(extractionResult.knowledge.map((k: string) =>
                         this.semanticMemory.store({ text: k })
                     ))
                 );
             }
             
-            // Segment extraction logic is a placeholder for now
             if (config.enableSegmentExtraction) {
-                await this.logStep(runId, 4, 'Extract Segments', { text }, async () => {
-                    // In a real implementation, this would be another LLM call to categorize the conversation.
+                await this.logStep(runId, 5, 'Extract Segments', { text }, async () => {
                     return { segments: ['Project Alpha', 'Q3 Planning'] }; // Mock result
                 });
             }

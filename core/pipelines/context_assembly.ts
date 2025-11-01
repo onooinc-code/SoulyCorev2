@@ -1,10 +1,11 @@
 import { EpisodicMemoryModule } from '../memory/modules/episodic';
 import { SemanticMemoryModule, ISemanticQueryResult } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
+import { EntityVectorMemoryModule, IVectorQueryResult } from '../memory/modules/entity_vector';
 import llmProvider from '@/core/llm';
 import { sql } from '@/lib/db';
 // FIX: Corrected import paths for types.
-import type { Conversation, Contact, PipelineRun, Message } from '@/lib/types';
+import type { Conversation, Contact, PipelineRun, Message, EntityDefinition } from '@/lib/types';
 import { IContextAssemblyConfig } from '../memory/types';
 
 interface IContextAssemblyParams {
@@ -19,11 +20,13 @@ export class ContextAssemblyPipeline {
     private episodicMemory: EpisodicMemoryModule;
     private semanticMemory: SemanticMemoryModule;
     private structuredMemory: StructuredMemoryModule;
+    private entityVectorMemory: EntityVectorMemoryModule;
 
     constructor() {
         this.episodicMemory = new EpisodicMemoryModule();
         this.semanticMemory = new SemanticMemoryModule();
         this.structuredMemory = new StructuredMemoryModule();
+        this.entityVectorMemory = new EntityVectorMemoryModule();
     }
 
     private async logStep(runId: string, order: number, name: string, input: any, execution: () => Promise<any>, modelUsed?: string, promptUsed?: string, configUsed?: any) {
@@ -63,26 +66,45 @@ export class ContextAssemblyPipeline {
                 this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth })
             ) as Message[];
 
-            // Step 2: Retrieve Semantic Memory (Relevant Knowledge)
-            const semanticResults = await this.logStep(runId, 2, 'Retrieve Semantic Memory', { userQuery, topK: config.semanticMemoryTopK }, () =>
+            // Step 2: Proactive Entity Retrieval (Semantic Search for Entities)
+            const proactiveEntities = await this.logStep(runId, 2, 'Proactive Entity Retrieval', { userQuery, topK: 3 }, async () => {
+                if (!conversation.useStructuredMemory) return [];
+                const entityResults: IVectorQueryResult[] = await this.entityVectorMemory.query({ queryText: userQuery, topK: 3 });
+                if (entityResults.length === 0) return [];
+
+                const entityIds = entityResults.map(e => e.id);
+                // Fetch full entity details from Postgres
+                const { rows } = await sql<EntityDefinition>`SELECT * FROM entity_definitions WHERE id = ANY(${entityIds}::uuid[])`;
+                return rows;
+            }) as EntityDefinition[];
+
+            // Step 3: Retrieve Semantic Memory (Relevant Knowledge)
+            const semanticResults = await this.logStep(runId, 3, 'Retrieve Semantic Memory', { userQuery, topK: config.semanticMemoryTopK }, () =>
                 conversation.useSemanticMemory
                     ? this.semanticMemory.query({ queryText: userQuery, topK: config.semanticMemoryTopK })
                     : Promise.resolve([])
             ) as ISemanticQueryResult[];
 
-            // Step 3: Retrieve Structured Memory (Mentioned Contacts)
-            // The mentionedContacts are already passed in, so this is about formatting.
-            // FIX: The execution function passed to logStep was returning a 'string | Promise' instead of a 'Promise'. Wrapped the string result in Promise.resolve to ensure a consistent return type and fix the TypeScript error.
-            const structuredContext = await this.logStep(runId, 3, 'Format Structured Memory', { mentionedContacts }, () =>
-                Promise.resolve(
-                    (conversation.useStructuredMemory && mentionedContacts.length > 0)
-                        ? mentionedContacts.map(c => `Contact: ${c.name} - ${c.notes || c.email || 'No details'}`).join('\n')
-                        : ""
-                )
-            ) as string;
+            // Step 4: Format Structured Memory (Mentioned Contacts & Proactive Entities)
+            const structuredContext = await this.logStep(runId, 4, 'Format Structured Memory', { mentionedContacts, proactiveEntities }, () => {
+                 let context = "";
+                 if (conversation.useStructuredMemory) {
+                    if (mentionedContacts.length > 0) {
+                        context += "--- Mentioned Contacts ---\n";
+                        context += mentionedContacts.map(c => `Contact: ${c.name} - ${c.notes || c.email || 'No details'}`).join('\n');
+                        context += "\n";
+                    }
+                    if (proactiveEntities.length > 0) {
+                        context += "--- Relevant Entities from Memory ---\n";
+                        context += proactiveEntities.map(e => `Entity: ${e.name} (${e.type}) - ${e.description}`).join('\n');
+                        context += "\n";
+                    }
+                 }
+                return Promise.resolve(context);
+            }) as string;
 
-            // Step 4: Assemble the final prompt components
-            const { systemInstruction, history } = await this.logStep(runId, 4, 'Assemble Context', { semanticResults, structuredContext, recentMessages }, () => {
+            // Step 5: Assemble the final prompt components
+            const { systemInstruction, history } = await this.logStep(runId, 5, 'Assemble Context', { semanticResults, structuredContext, recentMessages }, () => {
                 let contextBlock = "";
                 if (semanticResults.length > 0) {
                     contextBlock += "--- Relevant Knowledge ---\n";
@@ -90,9 +112,8 @@ export class ContextAssemblyPipeline {
                     contextBlock += "\n--------------------------\n";
                 }
                 if (structuredContext) {
-                    contextBlock += "--- Mentioned Contacts ---\n";
-                    contextBlock += structuredContext;
-                    contextBlock += "\n--------------------------\n";
+                    contextBlock += structuredContext; // Already has headers
+                    contextBlock += "--------------------------\n";
                 }
 
                 const finalSystemInstruction = `${conversation.systemPrompt || 'You are a helpful AI assistant.'}\n\n${contextBlock}`;
@@ -101,7 +122,6 @@ export class ContextAssemblyPipeline {
                     role: m.role,
                     parts: [{ text: m.content }]
                 }));
-                // Add the current user query to the history for the LLM call
                 formattedHistory.push({ role: 'user', parts: [{ text: userQuery }] });
 
                 return Promise.resolve({ systemInstruction: finalSystemInstruction, history: formattedHistory });
@@ -112,10 +132,10 @@ export class ContextAssemblyPipeline {
                 topP: conversation.topP || 0.95,
             };
 
-            // Step 5: Call the LLM
+            // Step 6: Call the LLM
             const llmResponse = await this.logStep(
                 runId,
-                5,
+                6,
                 'Generate LLM Response',
                 { historyLength: history.length },
                 () => llmProvider.generateContent(history, systemInstruction, modelConfig, conversation.model || undefined),
