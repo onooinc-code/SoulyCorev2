@@ -1,3 +1,4 @@
+
 "use client";
 
 // components/dashboard/panels/QuickNotesPanel.tsx
@@ -24,11 +25,12 @@ const QuickNotesPanel = () => {
                 setNote(serverNote);
                 localStorage.setItem(LOCAL_STORAGE_KEY, serverNote);
             } else {
-                 throw new Error('Failed to fetch note from server');
+                 const errorData = await res.json().catch(() => ({error: 'Failed to fetch note from server'}));
+                 throw new Error(errorData.error || 'Failed to fetch note from server');
             }
         } catch (error) {
             log('Error fetching quick note', { error }, 'error');
-            addNotification({ type: 'warning', title: 'Could not sync note', message: 'Using local version.' });
+            addNotification({ type: 'warning', title: 'Could not sync note', message: (error as Error).message });
             const localNote = localStorage.getItem(LOCAL_STORAGE_KEY);
             setNote(localNote || '');
         } finally {

@@ -1,10 +1,11 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardPanel from '../DashboardPanel';
 import { useLog } from '../../providers/LogProvider';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PlusIcon, TrashIcon, XIcon } from '../../Icons';
+import { PlusIcon, XIcon } from '../../Icons';
 
 interface QuickLink {
     id: string;
@@ -18,20 +19,23 @@ const QuickLinksPanel = () => {
     const [isAdding, setIsAdding] = useState(false);
     const [newTitle, setNewTitle] = useState('');
     const [newUrl, setNewUrl] = useState('');
+    const [error, setError] = useState<string | null>(null);
     const { log } = useLog();
 
     const fetchLinks = useCallback(async () => {
         setIsLoading(true);
+        setError(null);
         try {
             const res = await fetch('/api/dashboard/quick-links');
-            if (res.ok) {
-                const data = await res.json();
-                setLinks(data.links || []);
-            } else {
-                throw new Error('Failed to fetch links');
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({ error: 'Failed to fetch links' }));
+                throw new Error(errorData.error || 'Failed to fetch links');
             }
-        } catch (error) {
-            log('Error fetching quick links', { error }, 'error');
+            const data = await res.json();
+            setLinks(data.links || []);
+        } catch (err) {
+            log('Error fetching quick links', { error: err }, 'error');
+            setError((err as Error).message);
         } finally {
             setIsLoading(false);
         }
@@ -50,25 +54,19 @@ const QuickLinksPanel = () => {
             });
         } catch (error) {
             log('Error saving quick links', { error }, 'error');
-            // Optionally, revert state or show an error notification
         }
     };
 
     const handleAddLink = () => {
         if (!newTitle.trim() || !newUrl.trim()) return;
-
-        // Basic URL validation
         let urlToAdd = newUrl;
         if (!/^https?:\/\//i.test(urlToAdd)) {
             urlToAdd = 'https://' + urlToAdd;
         }
-
         const newLink: QuickLink = { id: crypto.randomUUID(), title: newTitle, url: urlToAdd };
         const updatedLinks = [...links, newLink];
         setLinks(updatedLinks);
         saveLinks(updatedLinks);
-
-        // Reset form
         setNewTitle('');
         setNewUrl('');
         setIsAdding(false);
@@ -112,32 +110,43 @@ const QuickLinksPanel = () => {
         <DashboardPanel title="Quick Links">
             <div className="flex flex-col h-full">
                 <div className="space-y-2 flex-1 overflow-y-auto pr-1">
-                    <AnimatePresence>
-                        {links.map(link => (
-                            <motion.div
-                                key={link.id}
-                                layout
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="group flex items-center gap-3 p-2 bg-gray-800/50 rounded-md"
-                            >
-                                <img
-                                    src={`https://www.google.com/s2/favicons?domain=${new URL(link.url).hostname}&sz=32`}
-                                    alt=""
-                                    className="w-5 h-5 flex-shrink-0"
-                                    onError={(e) => (e.currentTarget.style.display = 'none')}
-                                />
-                                <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-300 hover:text-indigo-300 truncate flex-1">
-                                    {link.title}
-                                </a>
-                                <button onClick={() => handleRemoveLink(link.id)} className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400">
-                                    <XIcon className="w-4 h-4" />
-                                </button>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
-                    {isLoading && <p className="text-xs text-center text-gray-500">Loading links...</p>}
+                    {isLoading ? (
+                        <p className="text-xs text-center text-gray-500">Loading links...</p>
+                    ) : error ? (
+                        <div className="text-center text-red-400 p-4 bg-red-900/20 rounded-md">
+                            <p className="font-semibold">Error</p>
+                            <p className="text-xs mt-1">{error}</p>
+                        </div>
+                    ) : (
+                        <>
+                            <AnimatePresence>
+                                {links.map(link => (
+                                    <motion.div
+                                        key={link.id}
+                                        layout
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        className="group flex items-center gap-3 p-2 bg-gray-800/50 rounded-md"
+                                    >
+                                        <img
+                                            src={`https://www.google.com/s2/favicons?domain=${new URL(link.url).hostname}&sz=32`}
+                                            alt=""
+                                            className="w-5 h-5 flex-shrink-0"
+                                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                                        />
+                                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-300 hover:text-indigo-300 truncate flex-1">
+                                            {link.title}
+                                        </a>
+                                        <button onClick={() => handleRemoveLink(link.id)} className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400">
+                                            <XIcon className="w-4 h-4" />
+                                        </button>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                            {!isAdding && links.length === 0 && <p className="text-xs text-center text-gray-500 py-4">No links added yet.</p>}
+                        </>
+                    )}
                 </div>
                 <div className="mt-2">
                     <AnimatePresence>
