@@ -498,3 +498,19 @@ Saving global settings was causing a 500 Internal Server Error on Vercel deploym
 - `BugTrack.md`
 - `scripts/create-tables.js`
 - `app/api/settings/route.ts`
+---
+### Bug #29: Vercel 500 Error on Chat API (Missing Upstash ENV VARS)
+
+**Error Details:**
+The `/api/chat` endpoint crashes with a 500 Internal Server Error on Vercel deployments if the Upstash Vector environment variables (`UPSTASH_VECTOR_REST_URL`, `UPSTASH_VECTOR_REST_TOKEN`) are not set. The `EntityVectorMemoryModule`, a dependency of the chat pipeline, was throwing an error during initialization because its client was being instantiated at the module level (on import). This is the same root cause as previously fixed bugs with the Pinecone and Vercel KV clients.
+
+**Solution:**
+Refactored the Upstash Vector client initialization to use a lazy-loading pattern, preventing the serverless function from crashing at startup.
+1.  **Lazy-Loaded Client**: Modified `core/memory/modules/entity_vector.ts` and `upstash_vector.ts`. The `Index` client is no longer created in the constructor. Instead, a `getClient()` method now handles initialization on the first call, after checking for environment variables.
+2.  **Graceful Degradation**: The `getClient()` method was updated to return `null` instead of throwing an error if the environment variables are missing.
+3.  **Updated Core Methods**: The `query` and `store` methods in the vector memory modules were updated to check if the client is `null`. If it is, they now gracefully do nothing (e.g., `query` returns an empty array), effectively disabling the feature without crashing the application. This ensures the chat functionality remains operational even without Upstash configured.
+
+**Modified Files:**
+- `BugTrack.md`
+- `core/memory/modules/entity_vector.ts`
+- `core/memory/modules/upstash_vector.ts`
