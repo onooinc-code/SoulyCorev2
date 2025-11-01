@@ -15,7 +15,13 @@ export interface QuickLink {
 export async function GET() {
     try {
         const kv = getKVClient();
-        const links = await kv.get<QuickLink[]>(LINKS_KEY);
+        // If KV is not configured, return a default empty state successfully
+        if (!kv) {
+            return NextResponse.json({ links: [] });
+        }
+        // FIX: The `get` method from the KV client was being treated as untyped, causing a TypeScript error with generic arguments.
+        // Changed to cast the result instead, which resolves the error while maintaining type safety.
+        const links = (await kv.get(LINKS_KEY)) as QuickLink[] | null;
         return NextResponse.json({ links: links || [] });
     } catch (error) {
         console.error('Failed to fetch quick links:', error);
@@ -33,6 +39,11 @@ export async function POST(req: NextRequest) {
         }
 
         const kv = getKVClient();
+        // If KV is not configured, return success with an info message
+        if (!kv) {
+            return NextResponse.json({ success: true, message: 'KV not configured. Links not saved to server.' });
+        }
+        
         await kv.set(LINKS_KEY, links);
         
         return NextResponse.json({ success: true, message: 'Links saved successfully.' });

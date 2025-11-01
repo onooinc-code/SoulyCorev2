@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardPanel from '../DashboardPanel';
 import { useLog } from '../../providers/LogProvider';
+import { useNotification } from '@/lib/hooks/use-notifications';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlusIcon, XIcon } from '../../Icons';
 
@@ -13,6 +14,8 @@ interface QuickLink {
     url: string;
 }
 
+const LINKS_LOCAL_STORAGE_KEY = 'dashboard:quick-links:backup';
+
 const QuickLinksPanel = () => {
     const [links, setLinks] = useState<QuickLink[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -21,6 +24,7 @@ const QuickLinksPanel = () => {
     const [newUrl, setNewUrl] = useState('');
     const [error, setError] = useState<string | null>(null);
     const { log } = useLog();
+    const { addNotification } = useNotification();
 
     const fetchLinks = useCallback(async () => {
         setIsLoading(true);
@@ -32,10 +36,24 @@ const QuickLinksPanel = () => {
                 throw new Error(errorData.error || 'Failed to fetch links');
             }
             const data = await res.json();
-            setLinks(data.links || []);
+            
+            if (data.links && data.links.length > 0) {
+                setLinks(data.links);
+                localStorage.setItem(LINKS_LOCAL_STORAGE_KEY, JSON.stringify(data.links));
+            } else {
+                const localLinks = localStorage.getItem(LINKS_LOCAL_STORAGE_KEY);
+                setLinks(localLinks ? JSON.parse(localLinks) : []);
+            }
         } catch (err) {
-            log('Error fetching quick links', { error: err }, 'error');
+            log('Error fetching quick links, falling back to local storage', { error: err }, 'error');
             setError((err as Error).message);
+            try {
+                const localLinks = localStorage.getItem(LINKS_LOCAL_STORAGE_KEY);
+                setLinks(localLinks ? JSON.parse(localLinks) : []);
+            } catch (localError) {
+                log('Error reading from local storage', { error: localError }, 'error');
+                setError("Failed to load links from server and local storage.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -46,14 +64,27 @@ const QuickLinksPanel = () => {
     }, [fetchLinks]);
 
     const saveLinks = async (updatedLinks: QuickLink[]) => {
+        // Optimistic UI update and local save
+        setLinks(updatedLinks);
+        localStorage.setItem(LINKS_LOCAL_STORAGE_KEY, JSON.stringify(updatedLinks));
+    
         try {
-            await fetch('/api/dashboard/quick-links', {
+            const res = await fetch('/api/dashboard/quick-links', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ links: updatedLinks }),
             });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to save links to server");
+            
+            if (data.message && data.message.includes('not configured')) {
+                // This is an info state, not an error. Don't notify unless it's the first time.
+            } else {
+                addNotification({ type: 'success', title: 'Links Synced' });
+            }
         } catch (error) {
             log('Error saving quick links', { error }, 'error');
+            addNotification({ type: 'error', title: 'Sync Failed', message: 'Links saved locally but failed to sync.' });
         }
     };
 
@@ -65,7 +96,6 @@ const QuickLinksPanel = () => {
         }
         const newLink: QuickLink = { id: crypto.randomUUID(), title: newTitle, url: urlToAdd };
         const updatedLinks = [...links, newLink];
-        setLinks(updatedLinks);
         saveLinks(updatedLinks);
         setNewTitle('');
         setNewUrl('');
@@ -74,7 +104,6 @@ const QuickLinksPanel = () => {
 
     const handleRemoveLink = (id: string) => {
         const updatedLinks = links.filter(link => link.id !== id);
-        setLinks(updatedLinks);
         saveLinks(updatedLinks);
     };
 

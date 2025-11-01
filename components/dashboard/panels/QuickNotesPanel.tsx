@@ -23,14 +23,15 @@ const QuickNotesPanel = () => {
                 const data = await res.json();
                 const serverNote = data.note || '';
                 setNote(serverNote);
+                // Sync server state to local backup
                 localStorage.setItem(LOCAL_STORAGE_KEY, serverNote);
             } else {
                  const errorData = await res.json().catch(() => ({error: 'Failed to fetch note from server'}));
                  throw new Error(errorData.error || 'Failed to fetch note from server');
             }
         } catch (error) {
-            log('Error fetching quick note', { error }, 'error');
-            addNotification({ type: 'warning', title: 'Could not sync note', message: (error as Error).message });
+            log('Error fetching quick note, using local fallback', { error }, 'error');
+            addNotification({ type: 'warning', title: 'Could not sync note', message: 'Using local version.' });
             const localNote = localStorage.getItem(LOCAL_STORAGE_KEY);
             setNote(localNote || '');
         } finally {
@@ -58,12 +59,18 @@ const QuickNotesPanel = () => {
                 body: JSON.stringify({ note }),
             });
             if (!res.ok) throw new Error('Failed to save note');
+            const data = await res.json();
+
+            if (data.message && data.message.includes('not configured')) {
+                addNotification({ type: 'info', title: 'Note Saved Locally', message: 'Enable Vercel KV to sync across devices.' });
+            } else {
+                addNotification({ type: 'success', title: 'Note Saved & Synced' });
+            }
             setStatus('saved');
-            addNotification({ type: 'success', title: 'Note Saved & Synced' });
             setTimeout(() => setStatus('idle'), 2000);
         } catch (error) {
             log('Error saving quick note', { error }, 'error');
-            addNotification({ type: 'error', title: 'Save Failed', message: 'Note saved locally but failed to sync.' });
+            addNotification({ type: 'error', title: 'Sync Failed', message: 'Note saved locally but failed to sync.' });
             setStatus('idle');
         }
     };
@@ -88,7 +95,7 @@ const QuickNotesPanel = () => {
                 />
                 <button 
                     onClick={handleSave}
-                    disabled={status !== 'idle' || !note.trim()}
+                    disabled={status !== 'idle'}
                     className={`mt-2 w-full text-center py-2 text-xs rounded-md font-semibold transition-colors disabled:opacity-50
                         ${status === 'saved' 
                             ? 'bg-green-600' 
