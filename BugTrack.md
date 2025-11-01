@@ -126,15 +126,6 @@ The application is throwing a "Minified React error #299," which indicates that 
 **Current Status:**
 The error persists, indicating the root cause is likely in another component or related to a different piece of state being incorrectly rendered. The investigation is ongoing.
 
-**Modified Files:**
-- `BugTrack.md`
-- `components/ChatWindow.tsx`
-- `components/ChatInput.tsx`
-- `components/ContactsHub.tsx`
-- `components/GlobalSettingsModal.tsx`
-- `components/ConversationSettingsModal.tsx`
-- `components/dev_center/FeaturesDictionary.tsx`
-- `components/agent_center/RunReport.tsx`
 ---
 ### Bug #7: SOLVED - React Error #299
 
@@ -423,3 +414,19 @@ A two-part fix was applied to standardize the `Experience` data model across the
 - `BugTrack.md`
 - `components/hubs/ExperiencesHub.tsx`
 - `core/pipelines/experience_consolidation.ts`
+---
+### Bug #24: Vercel 500 Errors on KV Routes due to Postgres Client Initialization
+
+**Error Details:**
+Despite implementing lazy-loading for the Vercel KV client, API routes like `/api/dashboard/quick-note` are still crashing with a 500 Internal Server Error on Vercel deployments. This indicates a serverless function crash, typically due to a client SDK initializing at the module level without the necessary environment variables. Investigation revealed that while the KV-specific routes were protected, the `@vercel/postgres` client (`db`) was being imported and initialized directly in `lib/db.ts`. In a serverless environment, dependencies can be bundled in unexpected ways, meaning a route that doesn't use Postgres could still crash if the Postgres client fails to initialize during the module loading phase.
+
+**Solution:**
+Applied the same lazy-loading singleton pattern to the Vercel Postgres client to make the entire data layer robust against missing environment variables.
+1.  **Refactored `lib/db.ts`**: The file was modified to no longer export a directly initialized `db` client. Instead, it now exports a proxy `db` object with `query` and `connect` methods. These methods call a `getDbPool()` getter function which initializes the `VercelPool` using `createPool` only on the first database access.
+2.  **Ensured Compatibility**: The new proxy `db` object maintains the same method signatures (`query`, `connect`) used by the rest of the application, ensuring no further code changes are needed in the API routes that consume it.
+
+This change prevents any part of the application from crashing due to a missing `POSTGRES_URL` at startup, resolving the 500 errors and making the application more resilient and easier to debug on Vercel.
+
+**Modified Files:**
+- `BugTrack.md`
+- `lib/db.ts`

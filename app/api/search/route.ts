@@ -1,6 +1,6 @@
 // app/api/search/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { sql } from '@/lib/db';
 import { Conversation, Message, Contact } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -25,25 +25,25 @@ export async function GET(req: NextRequest) {
 
         const searchTerm = `%${query}%`;
 
-        const conversationsPromise = db.query<Conversation>(
-            `SELECT id, title FROM conversations WHERE title ILIKE $1 LIMIT 10`,
-            [searchTerm]
-        );
+        // FIX: The db.query helper is not generic. Switched to the `sql` template tag from @vercel/postgres, which supports type arguments for better type safety.
+        const conversationsPromise = sql<Conversation>`
+            SELECT id, title FROM conversations WHERE title ILIKE ${searchTerm} LIMIT 10
+        `;
 
-        const messagesPromise = db.query<Message & { conversation_title: string }>(
-            `SELECT m.id, m.content, m."conversationId", c.title as conversation_title 
+        // FIX: The db.query helper is not generic. Switched to the `sql` template tag from @vercel/postgres, which supports type arguments for better type safety.
+        const messagesPromise = sql<(Message & { conversation_title: string })>`
+            SELECT m.id, m.content, m."conversationId", c.title as conversation_title 
              FROM messages m
              JOIN conversations c ON m."conversationId" = c.id
-             WHERE m.content ILIKE $1 
+             WHERE m.content ILIKE ${searchTerm} 
              ORDER BY m."createdAt" DESC
-             LIMIT 10`,
-            [searchTerm]
-        );
+             LIMIT 10
+        `;
 
-        const contactsPromise = db.query<Contact>(
-            `SELECT id, name, email FROM contacts WHERE name ILIKE $1 OR email ILIKE $1 LIMIT 10`,
-            [searchTerm]
-        );
+        // FIX: The db.query helper is not generic. Switched to the `sql` template tag from @vercel/postgres, which supports type arguments for better type safety.
+        const contactsPromise = sql<Contact>`
+            SELECT id, name, email FROM contacts WHERE name ILIKE ${searchTerm} OR email ILIKE ${searchTerm} LIMIT 10
+        `;
 
         const [convResult, msgResult, contactResult] = await Promise.all([
             conversationsPromise,
