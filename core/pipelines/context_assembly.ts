@@ -77,7 +77,8 @@ export class ContextAssemblyPipeline {
                 // FIX: Switched from `sql` template literal to `db.query` to resolve a persistent
                 // TypeScript error with array parameters (`Type 'string[]' is not assignable to type 'Primitive'`).
                 // This uses a standard parameterized query, which is more robust for array values.
-                const { rows } = await db.query<EntityDefinition>('SELECT * FROM entity_definitions WHERE id = ANY($1::uuid[])', [entityIds]);
+                // FIX: Removed the generic type argument from `db.query` as the wrapper function in `lib/db.ts` does not support it. The return type of this step is already correctly cast to `EntityDefinition[]`.
+                const { rows } = await db.query('SELECT * FROM entity_definitions WHERE id = ANY($1::uuid[])', [entityIds]);
                 return rows;
             }) as EntityDefinition[];
 
