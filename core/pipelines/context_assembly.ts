@@ -74,7 +74,7 @@ export class ContextAssemblyPipeline {
 
                 const entityIds = entityResults.map(e => e.id);
                 // Fetch full entity details from Postgres
-                const { rows } = await sql<EntityDefinition>`SELECT * FROM entity_definitions WHERE id = ANY(${entityIds}::uuid[])`;
+                const { rows } = await sql<EntityDefinition>`SELECT * FROM entity_definitions WHERE id = ANY(${entityIds})`;
                 return rows;
             }) as EntityDefinition[];
 
