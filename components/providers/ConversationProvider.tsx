@@ -31,7 +31,7 @@ interface ExtendedConversationContextType extends Omit<ConversationContextType, 
     loadConversations: (segmentId?: string | null) => Promise<void>;
     updateCurrentConversation: (updates: Partial<Conversation>) => void;
     
-    addMessage: (message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, mentionedContacts?: Contact[], historyOverride?: Message[], parentMessageId?: string | null) => Promise<{ aiResponse: string | null, suggestion: string | null }>;
+    addMessage: (message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, mentionedContacts?: Contact[], historyOverride?: Message[], parentMessageId?: string | null) => Promise<{ aiResponse: string | null, suggestion: string | null, memoryProposal: any | null }>;
     toggleBookmark: (messageId: string) => Promise<void>;
     deleteMessage: (messageId: string) => Promise<void>;
     updateMessage: (messageId: string, newContent: string) => Promise<void>;

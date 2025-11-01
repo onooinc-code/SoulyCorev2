@@ -56,6 +56,10 @@ interface UIStateContextType {
 
     isContextMenuEnabled: boolean;
     toggleContextMenu: () => void;
+
+    // For proactive memory extraction
+    extractionTarget: { type: string; id: string } | null;
+    setExtractionTarget: React.Dispatch<React.SetStateAction<{ type: string; id: string } | null>>;
 }
 
 const UIStateContext = React.createContext<UIStateContextType | undefined>(undefined);
@@ -64,6 +68,7 @@ export const UIStateProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [activeView, rawSetActiveView] = React.useState<ActiveView>('dashboard');
     const [isNavigating, setIsNavigating] = React.useState(false);
     const [isContextMenuEnabled, setIsContextMenuEnabled] = React.useState(true);
+    const [extractionTarget, setExtractionTarget] = React.useState<{ type: string; id: string } | null>(null);
 
     // Global Modals State
     const [isBookmarksModalOpen, setBookmarksModalOpen] = React.useState(false);
@@ -110,6 +115,8 @@ export const UIStateProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setHardResetModalOpen,
         isResponseViewerModalOpen,
         setResponseViewerModalOpen,
+        extractionTarget,
+        setExtractionTarget,
     };
 
     return (

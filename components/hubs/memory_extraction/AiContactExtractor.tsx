@@ -1,19 +1,23 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';
 import ExtractionResults from './ExtractionResults';
+import { useUIState } from '@/components/providers/UIStateProvider';
 
 const AiContactExtractor = () => {
     const { conversations } = useConversation();
     const { addNotification } = useNotification();
+    const { extractionTarget, setExtractionTarget } = useUIState();
+
     const [selectedConversationId, setSelectedConversationId] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
     const [results, setResults] = useState<any | null>(null);
 
-    const handleExtract = async () => {
-        if (!selectedConversationId) {
+    const handleExtract = async (conversationIdToExtract?: string) => {
+        const conversationId = conversationIdToExtract || selectedConversationId;
+        if (!conversationId) {
             addNotification({ type: 'warning', title: 'Please select a conversation.' });
             return;
         }
@@ -23,7 +27,7 @@ const AiContactExtractor = () => {
         addNotification({ type: 'info', title: 'Starting Extraction...', message: 'The AI is analyzing the conversation. This may take a moment.' });
         
         try {
-            const res = await fetch(`/api/memory/extract-from-conversation/${selectedConversationId}`);
+            const res = await fetch(`/api/memory/extract-from-conversation/${conversationId}`);
             if (!res.ok) {
                 const errorData = await res.json();
                 throw new Error(errorData.error || 'Failed to extract memory from conversation.');
@@ -37,6 +41,16 @@ const AiContactExtractor = () => {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (extractionTarget && extractionTarget.type === 'conversation') {
+            const conversationId = extractionTarget.id;
+            setSelectedConversationId(conversationId);
+            handleExtract(conversationId);
+            setExtractionTarget(null); // Clear the target to prevent re-triggering
+        }
+    }, [extractionTarget, setExtractionTarget, addNotification]);
+
 
     return (
         <div className="p-4 h-full flex flex-col">
@@ -53,7 +67,7 @@ const AiContactExtractor = () => {
                     ))}
                 </select>
                 <button
-                    onClick={handleExtract}
+                    onClick={() => handleExtract()}
                     disabled={isLoading || !selectedConversationId}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-500 disabled:opacity-50"
                 >

@@ -100,3 +100,14 @@ export async function generateConversationSummary(history: Content[]): Promise<s
     const response = await generateChatResponse(history, systemInstruction);
     return response.text?.trim() || null;
 }
+
+export async function shouldExtractMemory(history: Content[]): Promise<boolean> {
+    const systemInstruction = `Analyze the last user message and the AI's response. Does this exchange contain significant new information, facts, entities, or relationships that are worth remembering for the long term? Answer with only 'yes' or 'no'.`;
+    try {
+        const response = await generateChatResponse(history, systemInstruction);
+        return response.text?.toLowerCase().includes('yes') || false;
+    } catch (error) {
+        console.error("Error in shouldExtractMemory check:", error);
+        return false;
+    }
+}

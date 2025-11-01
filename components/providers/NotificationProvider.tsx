@@ -9,6 +9,10 @@ export interface Notification {
   type: 'success' | 'error' | 'info' | 'warning';
   title: string;
   message?: string;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 interface NotificationContextType {
@@ -39,7 +43,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
       setTimeout(() => {
         removeNotification(id);
-      }, 5000); // Auto-remove after 5 seconds
+      }, 8000); // Increased to 8 seconds for actionable notifications
     },
     [removeNotification]
   );

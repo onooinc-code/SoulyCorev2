@@ -53,7 +53,7 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
     const addMessage = useCallback(async (message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, mentionedContacts?: Contact[], historyOverride?: Message[], parentMessageId?: string | null) => {
         if (!currentConversation) {
             setStatus({ error: "Cannot send a message. No active conversation selected." });
-            return { aiResponse: null, suggestion: null };
+            return { aiResponse: null, suggestion: null, memoryProposal: null };
         }
 
         setIsLoading(true);
@@ -93,30 +93,25 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
                 const errorData = await chatRes.json().catch(() => ({ error: "Failed to get AI response and could not parse error response." }));
                 throw new Error(errorData.details?.message || errorData.error || 'Failed to get AI response');
             }
-            const { response: aiResponse, suggestion } = await chatRes.json();
+            const { response: aiResponse, suggestion, memoryProposal } = await chatRes.json();
             
-            if (aiResponse) {
-                // The AI message is saved to the DB on the backend, so we just need to re-fetch the list.
-                const updatedMessages = await fetchMessages(currentConversation.id);
-                if (!isVisibleRef.current) {
-                    onNewMessageWhileHidden(currentConversation.id);
-                }
+            // Re-fetch messages to get the new AI response that was saved on the backend
+            await fetchMessages(currentConversation.id);
 
-                if (currentConversation.enableMemoryExtraction) {
-                    startBackgroundTask();
-                    const aiMessage = updatedMessages[updatedMessages.length - 1];
-                    fetch('/api/memory/pipeline', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ textToAnalyze: `${message.content}\n${aiResponse}`, aiMessageId: aiMessage?.id, conversationId: currentConversation.id }) })
-                        .catch(err => console.error("Memory pipeline trigger failed.", err))
-                        .finally(endBackgroundTask);
-                }
+            if (!isVisibleRef.current) {
+                onNewMessageWhileHidden(currentConversation.id);
             }
-            return { aiResponse, suggestion };
+            
+            // Note: The old memory extraction pipeline logic that was here has been replaced
+            // by the new proactive "intelligent trigger" system on the backend.
+
+            return { aiResponse, suggestion, memoryProposal };
         } catch (error) {
             const errorMessage = (error as Error).message;
             setStatus({ error: errorMessage, currentAction: "Error" });
             log('Failed to add message.', { error: errorMessage, stack: (error as Error).stack }, 'error');
             setMessages(prev => prev.filter(m => m.id !== optimisticUserMessage.id)); // Revert optimistic update
-            return { aiResponse: null, suggestion: null };
+            return { aiResponse: null, suggestion: null, memoryProposal: null };
         } finally {
             setIsLoading(false);
             setStatus({ currentAction: "" });

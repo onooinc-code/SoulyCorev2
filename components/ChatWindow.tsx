@@ -5,6 +5,7 @@ import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
 import type { Message as MessageType, Contact } from '@/lib/types';
 import { AnimatePresence } from 'framer-motion';
+import { useNotification } from '@/lib/hooks/use-notifications';
 
 // Refactored Components
 import Header from '@/components/Header';
@@ -34,7 +35,8 @@ const ChatWindow = () => {
         activeWorkflow,
         updateCurrentConversation,
     } = useConversation();
-    const { isZenMode, isLogPanelOpen } = useUIState();
+    const { isZenMode, isLogPanelOpen, setExtractionTarget, setActiveView } = useUIState();
+    const { addNotification } = useNotification();
     
     // --- STATE ---
     const [proactiveSuggestion, setProactiveSuggestion] = useState<string | null>(null);
@@ -86,12 +88,27 @@ const ChatWindow = () => {
             lastUpdatedAt: new Date(),
         };
 
-        const { aiResponse, suggestion } = await addMessage(userMessage, mentionedContacts, undefined, replyToMessage?.id);
+        const { aiResponse, suggestion, memoryProposal } = await addMessage(userMessage, mentionedContacts, undefined, replyToMessage?.id);
 
         setReplyToMessage(null); // Clear reply state after sending
 
         if (aiResponse) {
             setProactiveSuggestion(suggestion);
+        }
+        
+        if (memoryProposal) {
+          addNotification({
+            type: 'info',
+            title: 'New Learning Opportunity',
+            message: "I've learned something new from our conversation. Would you like to review and save it to my long-term memory?",
+            action: {
+              label: 'Review & Save',
+              onClick: () => {
+                setExtractionTarget({ type: 'conversation', id: memoryProposal.conversationId });
+                setActiveView('memory_extraction_hub');
+              }
+            }
+          });
         }
     };
     

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // FIX: Corrected import path for types.
 import { Conversation, Message, Contact } from '@/lib/types';
 import { ContextAssemblyPipeline } from '@/core/pipelines/context_assembly';
-import { generateProactiveSuggestion } from '@/lib/gemini-server';
+import { generateProactiveSuggestion, shouldExtractMemory } from '@/lib/gemini-server';
 import { sql } from '@/lib/db';
 import { EpisodicMemoryModule } from '@/core/memory/modules/episodic';
 
@@ -51,21 +51,35 @@ export async function POST(req: NextRequest) {
             // FIX: Add missing lastUpdatedAt property to satisfy the Message type.
             lastUpdatedAt: new Date(),
         };
-        await episodicMemory.store({
+        const savedAiMessage = await episodicMemory.store({
             conversationId: conversation.id,
             message: aiMessageData,
         });
 
         let suggestion = null;
         if (featureFlags.enableProactiveSuggestions && llmResponse) {
-             const historyForSuggestion = messages.slice(-2).map(m => ({role: m.role, parts: [{text: m.content}]}));
-             if(historyForSuggestion.length === 1){
-                historyForSuggestion.push({role: 'model', parts: [{text: llmResponse}]});
-             }
+             const historyForSuggestion = messages.slice(-1).map(m => ({role: m.role, parts: [{text: m.content}]}));
+             historyForSuggestion.push({role: 'model', parts: [{text: llmResponse}]});
             suggestion = await generateProactiveSuggestion(historyForSuggestion);
         }
         
-        return NextResponse.json({ response: llmResponse, suggestion });
+        let memoryProposal = null;
+        if (featureFlags.enableMemoryExtraction && llmResponse) {
+            const historyForMemoryCheck = [
+                { role: 'user' as 'user', parts: [{ text: userQuery }] },
+                { role: 'model' as 'model', parts: [{ text: llmResponse }] },
+            ];
+            const shouldExtract = await shouldExtractMemory(historyForMemoryCheck);
+            if (shouldExtract) {
+                memoryProposal = {
+                    conversationId: conversation.id,
+                    userMessageId: userMessageId,
+                    aiMessageId: savedAiMessage.id,
+                };
+            }
+        }
+        
+        return NextResponse.json({ response: llmResponse, suggestion, memoryProposal });
 
     } catch (error) {
         console.error('Error in chat API route:', error);
