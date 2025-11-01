@@ -29,16 +29,24 @@ export interface IVectorQueryResult {
  * specifically for handling structured entities.
  */
 export class EntityVectorMemoryModule implements ISingleMemoryModule {
-    private index: Index;
+    private index: Index | null = null;
 
-    constructor() {
+    private getClient(): Index {
+        if (this.index) {
+            return this.index;
+        }
         if (!process.env.UPSTASH_VECTOR_REST_URL || !process.env.UPSTASH_VECTOR_REST_TOKEN) {
-            throw new Error("Upstash Vector environment variables (URL and Token) are not set.");
+            throw new Error("Upstash Vector environment variables (URL and Token) are not set. Please add them to your Vercel project settings.");
         }
         this.index = new Index({
             url: process.env.UPSTASH_VECTOR_REST_URL,
             token: process.env.UPSTASH_VECTOR_REST_TOKEN,
         });
+        return this.index;
+    }
+
+    constructor() {
+        // The client is now lazily initialized in getClient() to prevent Vercel build errors.
     }
 
     async store(params: IVectorMemoryStoreParams): Promise<void> {
@@ -46,9 +54,10 @@ export class EntityVectorMemoryModule implements ISingleMemoryModule {
             throw new Error('EntityVectorMemoryModule.store requires text and a linking id to be provided.');
         }
 
+        const client = this.getClient();
         const embedding = await llmProvider.generateEmbedding(params.text);
 
-        await this.index.upsert({
+        await client.upsert({
             id: params.id, // Use the postgres UUID as the vector ID
             vector: embedding,
             metadata: {
@@ -62,11 +71,12 @@ export class EntityVectorMemoryModule implements ISingleMemoryModule {
         if (!params.queryText) {
             return [];
         }
-
+        
+        const client = this.getClient();
         const queryEmbedding = await llmProvider.generateEmbedding(params.queryText);
         const topK = params.topK || 3;
 
-        const results = await this.index.query({
+        const results = await client.query({
             vector: queryEmbedding,
             topK,
             includeMetadata: true,
@@ -84,6 +94,7 @@ export class EntityVectorMemoryModule implements ISingleMemoryModule {
      * @param ids - A single ID or an array of IDs to delete.
      */
     async delete(ids: string | string[]): Promise<void> {
-        await this.index.delete(ids);
+        const client = this.getClient();
+        await client.delete(ids);
     }
 }

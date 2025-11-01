@@ -46,16 +46,24 @@ export interface IVectorQueryResult {
  * This is the unified module for all semantic search operations.
  */
 export class UpstashVectorMemoryModule implements ISingleMemoryModule {
-    private index: Index;
+    private index: Index | null = null;
 
-    constructor() {
+    private getClient(): Index {
+        if (this.index) {
+            return this.index;
+        }
         if (!process.env.UPSTASH_VECTOR_REST_URL || !process.env.UPSTASH_VECTOR_REST_TOKEN) {
-            throw new Error("Upstash Vector environment variables (URL and Token) are not set.");
+            throw new Error("Upstash Vector environment variables (URL and Token) are not set. Please add them to your Vercel project settings.");
         }
         this.index = new Index({
             url: process.env.UPSTASH_VECTOR_REST_URL,
             token: process.env.UPSTASH_VECTOR_REST_TOKEN,
         });
+        return this.index;
+    }
+
+    constructor() {
+        // The client is now lazily initialized in getClient() to prevent Vercel build errors.
     }
 
     /**
@@ -68,10 +76,11 @@ export class UpstashVectorMemoryModule implements ISingleMemoryModule {
             throw new Error('UpstashVectorMemoryModule.store requires text to be provided.');
         }
 
+        const client = this.getClient();
         const embedding = await llmProvider.generateEmbedding(params.text);
         const vectorId = params.id || uuidv4();
 
-        await this.index.upsert({
+        await client.upsert({
             id: vectorId,
             vector: embedding,
             metadata: {
@@ -90,10 +99,11 @@ export class UpstashVectorMemoryModule implements ISingleMemoryModule {
             throw new Error('UpstashVectorMemoryModule.query requires queryText to be provided.');
         }
 
+        const client = this.getClient();
         const queryEmbedding = await llmProvider.generateEmbedding(params.queryText);
         const topK = params.topK || 3;
 
-        const results = await this.index.query({
+        const results = await client.query({
             vector: queryEmbedding,
             topK,
             includeMetadata: true,
