@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { XIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
-import { useConversation } from '@/components/providers/ConversationProvider';
+import { useAppContext } from '@/lib/hooks/useAppContext';
 import { Conversation } from '@/lib/types';
 
 interface AgentConfigModalProps {
@@ -12,7 +12,7 @@ interface AgentConfigModalProps {
 }
 
 const AgentConfigModal = ({ onClose, conversation }: AgentConfigModalProps) => {
-    const { updateCurrentConversation, setStatus } = useConversation();
+    const { updateCurrentConversation, addNotification } = useAppContext();
     const [systemPrompt, setSystemPrompt] = useState('');
     const [useSemantic, setUseSemantic] = useState(true);
     const [useStructured, setUseStructured] = useState(true);
@@ -32,7 +32,7 @@ const AgentConfigModal = ({ onClose, conversation }: AgentConfigModalProps) => {
             useSemanticMemory: useSemantic,
             useStructuredMemory: useStructured,
         });
-        setStatus({ currentAction: "Agent config saved." });
+        addNotification({ type: 'success', title: 'تم الحفظ بنجاح', message: 'Agent configuration has been updated.' });
         onClose();
     };
 

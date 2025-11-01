@@ -19,7 +19,7 @@ import remarkGfm from 'remark-gfm';
 import dynamic from 'next/dynamic';
 import { useNotification } from '@/lib/hooks/use-notifications';
 
-const VersionLogModal = dynamic(() => import('./VersionLogModal'), {
+const VersionLogModal = dynamic(() => import('@/components/VersionLogModal'), {
     ssr: false,
     loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><p className="text-white">Loading Version History...</p></div>
 });

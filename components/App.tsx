@@ -111,7 +111,7 @@ export const App = () => {
                 )}
             </AnimatePresence>
 
-            <div className="flex-1 flex flex-col min-w-0 h-full relative">
+            <div className="flex-1 flex flex-col min-w-0 h-full relative pb-6">
                 {mainContent}
             </div>
 

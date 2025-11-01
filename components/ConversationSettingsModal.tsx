@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { XIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
-import { useConversation } from '@/components/providers/ConversationProvider';
+import { useAppContext } from '@/lib/hooks/useAppContext';
 
 const ConversationSettingsModal = ({ onClose }: { onClose: () => void; }) => {
-    const { currentConversation, updateCurrentConversation } = useConversation();
+    const { currentConversation, updateCurrentConversation, addNotification } = useAppContext();
     
     const [model, setModel] = useState('');
     const [temperature, setTemperature] = useState(0.7);
@@ -45,6 +45,7 @@ const ConversationSettingsModal = ({ onClose }: { onClose: () => void; }) => {
         
         // The provider handles both optimistic UI update and the API call.
         updateCurrentConversation(updatedData);
+        addNotification({ type: 'success', title: 'تم الحفظ بنجاح', message: 'Model settings have been updated.' });
         onClose();
     };
 
