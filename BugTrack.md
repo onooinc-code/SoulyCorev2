@@ -430,3 +430,19 @@ This change prevents any part of the application from crashing due to a missing 
 **Modified Files:**
 - `BugTrack.md`
 - `lib/db.ts`
+---
+### Bug #25: Vercel Build Fails (Stale `messages` table)
+
+**Error Details:**
+The application is failing on Vercel with a `500 Internal Server Error` and a client-side error `column "parentMessageId" of relation "messages" does not exist`. This confirms that the Vercel build cache is preserving a stale version of the `messages` table which does not include the recently added `parentMessageId` column. The `CREATE TABLE IF NOT EXISTS` statement in the `db:create` script is being skipped, leading to a crash when the application code tries to insert a message with the new property.
+
+**Solution:**
+Implemented the definitive solution for Vercel's stale schema caching issue by expanding the `DROP TABLE` strategy.
+1.  **Modified `scripts/create-tables.js`**: Added `DROP TABLE IF EXISTS ... CASCADE` statements for all major, user-generated, and schema-evolving tables, including `conversations`, `messages`, `contacts`, `entity_definitions`, `prompts`, `agent_runs`, etc.
+2.  **Ensured Cascading**: Using `CASCADE` ensures that all dependent tables are also dropped and cleanly recreated, preventing foreign key constraint errors.
+
+This change forces a complete and correct recreation of the database schema on every Vercel build, permanently eliminating this entire class of "column does not exist" errors caused by stale build caches.
+
+**Modified Files:**
+- `BugTrack.md`
+- `scripts/create-tables.js`

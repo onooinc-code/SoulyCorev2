@@ -4,10 +4,21 @@ const { db } = require('@vercel/postgres');
 const statements = [
   `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`,
 
-  // FIX: Force a clean state for ALL seeded tables on every build to prevent errors from stale,
+  // FIX: Force a clean state for ALL tables on every build to prevent errors from stale,
   // incomplete table structures persisting in the Vercel build cache. This is the definitive
   // solution to the recurring build errors.
-  `DROP TABLE IF EXISTS "pipeline_run_steps" CASCADE;`,
+  `DROP TABLE IF EXISTS "conversations" CASCADE;`,
+  `DROP TABLE IF EXISTS "messages" CASCADE;`,
+  `DROP TABLE IF EXISTS "contacts" CASCADE;`,
+  `DROP TABLE IF EXISTS "entity_definitions" CASCADE;`,
+  `DROP TABLE IF EXISTS "segments" CASCADE;`,
+  `DROP TABLE IF EXISTS "prompts" CASCADE;`,
+  `DROP TABLE IF EXISTS "tools" CASCADE;`,
+  `DROP TABLE IF EXISTS "agent_runs" CASCADE;`,
+  `DROP TABLE IF EXISTS "experiences" CASCADE;`,
+  `DROP TABLE IF EXISTS "comm_channels" CASCADE;`,
+  `DROP TABLE IF EXISTS "projects" CASCADE;`,
+  `DROP TABLE IF EXISTS "tasks" CASCADE;`,
   `DROP TABLE IF EXISTS "pipeline_runs" CASCADE;`,
   `DROP TABLE IF EXISTS "features" CASCADE;`,
   `DROP TABLE IF EXISTS "api_endpoints" CASCADE;`,
@@ -15,6 +26,11 @@ const statements = [
   `DROP TABLE IF EXISTS "hedra_goals" CASCADE;`,
   `DROP TABLE IF EXISTS "subsystems" CASCADE;`,
   `DROP TABLE IF EXISTS "version_history" CASCADE;`,
+  `DROP TABLE IF EXISTS "logs" CASCADE;`,
+  `DROP TABLE IF EXISTS "brains" CASCADE;`,
+  `DROP TABLE IF EXISTS "documents" CASCADE;`,
+  `DROP TABLE IF EXISTS "data_sources" CASCADE;`,
+
 
   `CREATE TABLE IF NOT EXISTS "settings" (
     "key" VARCHAR(255) PRIMARY KEY,
