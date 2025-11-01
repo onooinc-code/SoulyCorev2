@@ -94,7 +94,7 @@ async function seedDataSources() {
         for (const source of dataSources) {
             await sql`
                 INSERT INTO data_sources (
-                    name, provider, type, status, stats_json, "lastUpdatedAt"
+                    name, provider, type, status, "statsJson", "lastUpdatedAt"
                 ) VALUES (
                     ${source.name}, ${source.provider}, ${source.type}, ${source.status},
                     ${JSON.stringify(source.stats)}, CURRENT_TIMESTAMP
@@ -103,7 +103,7 @@ async function seedDataSources() {
                     provider = EXCLUDED.provider,
                     type = EXCLUDED.type,
                     status = EXCLUDED.status,
-                    stats_json = EXCLUDED.stats_json,
+                    "statsJson" = EXCLUDED."statsJson",
                     "lastUpdatedAt" = CURRENT_TIMESTAMP;
             `;
         }

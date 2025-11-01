@@ -470,3 +470,15 @@ This final, exhaustive fix ensures 100% consistency across the data access layer
 - `app/api/contacts/test/route.ts`
 - `components/dev_center/api_command_center/ResponsePanel.tsx`
 - `app/api/dashboard/charts/route.ts`
+---
+### Bug #27: Vercel Build Fails (`stats_json` vs `statsJson` in Seed Script)
+
+**Error Details:**
+The Vercel build is failing during the `db:seed` step with the error: `column "stats_json" of relation "data_sources" does not exist`. This is caused by an inconsistency in `scripts/seed-data-sources.js`, where the SQL `INSERT` statement is using the `snake_case` column name `stats_json`, while the database schema defined in `create-tables.js` correctly uses the quoted `camelCase` name `"statsJson"`.
+
+**Solution:**
+Corrected the SQL query in `scripts/seed-data-sources.js` to use the standardized, quoted `camelCase` column name `"statsJson"` for both the `INSERT` and `ON CONFLICT DO UPDATE` portions of the query. This aligns the seed script with the database schema and resolves the build failure.
+
+**Modified Files:**
+- `BugTrack.md`
+- `scripts/seed-data-sources.js`
