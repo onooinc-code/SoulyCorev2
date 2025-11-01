@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -15,17 +16,17 @@ const modalConfig = {
     prompt: {
         title: "Final Prompt Sent to Model",
         icon: CommandLineIcon,
-        key: 'final_llm_prompt',
+        key: 'finalLlmPrompt',
     },
     system: {
         title: "System Instructions",
         icon: BrainIcon,
-        key: 'final_system_instruction',
+        key: 'finalSystemInstruction',
     },
     config: {
         title: "Model Configuration",
         icon: WrenchScrewdriverIcon,
-        key: 'model_config_json',
+        key: 'modelConfigJson',
     }
 };
 
