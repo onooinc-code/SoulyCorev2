@@ -3,7 +3,7 @@ import { SemanticMemoryModule, ISemanticQueryResult } from '../memory/modules/se
 import { StructuredMemoryModule } from '../memory/modules/structured';
 import { EntityVectorMemoryModule, IVectorQueryResult } from '../memory/modules/entity_vector';
 import llmProvider from '@/core/llm';
-import { sql } from '@/lib/db';
+import { db, sql } from '@/lib/db';
 // FIX: Corrected import paths for types.
 import type { Conversation, Contact, PipelineRun, Message, EntityDefinition } from '@/lib/types';
 import { IContextAssemblyConfig } from '../memory/types';
@@ -74,7 +74,10 @@ export class ContextAssemblyPipeline {
 
                 const entityIds = entityResults.map(e => e.id);
                 // Fetch full entity details from Postgres
-                const { rows } = await sql<EntityDefinition>`SELECT * FROM entity_definitions WHERE id = ANY(${entityIds})`;
+                // FIX: Switched from `sql` template literal to `db.query` to resolve a persistent
+                // TypeScript error with array parameters (`Type 'string[]' is not assignable to type 'Primitive'`).
+                // This uses a standard parameterized query, which is more robust for array values.
+                const { rows } = await db.query<EntityDefinition>('SELECT * FROM entity_definitions WHERE id = ANY($1::uuid[])', [entityIds]);
                 return rows;
             }) as EntityDefinition[];
 
