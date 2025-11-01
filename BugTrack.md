@@ -482,3 +482,19 @@ Corrected the SQL query in `scripts/seed-data-sources.js` to use the standardize
 **Modified Files:**
 - `BugTrack.md`
 - `scripts/seed-data-sources.js`
+---
+### Bug #28: Vercel 500 Error on Save Settings (`/api/settings`)
+
+**Error Details:**
+Saving global settings was causing a 500 Internal Server Error on Vercel deployments. The root cause was twofold:
+1.  **Stale DB Schema**: A stale version of the `settings` table was likely present in the Vercel build cache. The `scripts/create-tables.js` file was missing a `DROP TABLE IF EXISTS "settings"` command, so the `CREATE TABLE` statement was never re-run to apply the correct schema.
+2.  **Unquoted Identifiers**: The API route for settings (`app/api/settings/route.ts`) was using unquoted identifiers (`key`, `value`) in its SQL queries, which is inconsistent with the project's standard of using quoted identifiers.
+
+**Solution:**
+1.  **Forced Schema Refresh**: Added `DROP TABLE IF EXISTS "settings" CASCADE;` to `scripts/create-tables.js` to ensure the `settings` table is always cleanly recreated on every Vercel build.
+2.  **Standardized Queries**: Refactored the `GET` and `PUT` handlers in `app/api/settings/route.ts` to use quoted identifiers (`"key"`, `"value"`) in all SQL queries, enforcing consistency with the database schema.
+
+**Modified Files:**
+- `BugTrack.md`
+- `scripts/create-tables.js`
+- `app/api/settings/route.ts`

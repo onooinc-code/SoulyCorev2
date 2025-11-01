@@ -35,7 +35,7 @@ const defaultSettings: AppSettings = {
 export async function GET() {
     try {
         const { rows } = await sql`
-            SELECT value FROM settings WHERE key = ${SETTINGS_KEY};
+            SELECT value FROM settings WHERE "key" = ${SETTINGS_KEY};
         `;
         if (rows.length > 0) {
             // Merge with defaults to ensure all keys are present
@@ -68,9 +68,9 @@ export async function PUT(req: NextRequest) {
         const newSettings = await req.json() as AppSettings;
 
         const { rows } = await sql`
-            INSERT INTO settings (key, value, "lastUpdatedAt")
+            INSERT INTO settings ("key", "value", "lastUpdatedAt")
             VALUES (${SETTINGS_KEY}, ${JSON.stringify(newSettings)}::jsonb, CURRENT_TIMESTAMP)
-            ON CONFLICT (key) DO UPDATE SET
+            ON CONFLICT ("key") DO UPDATE SET
                 value = EXCLUDED.value,
                 "lastUpdatedAt" = CURRENT_TIMESTAMP
             RETURNING value;

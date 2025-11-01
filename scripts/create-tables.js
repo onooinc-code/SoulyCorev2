@@ -30,6 +30,7 @@ const statements = [
   `DROP TABLE IF EXISTS "brains" CASCADE;`,
   `DROP TABLE IF EXISTS "documents" CASCADE;`,
   `DROP TABLE IF EXISTS "data_sources" CASCADE;`,
+  `DROP TABLE IF EXISTS "settings" CASCADE;`,
 
 
   `CREATE TABLE IF NOT EXISTS "settings" (
