@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React from 'react';
@@ -48,7 +49,10 @@ const Notifications = () => {
             {notification.action && (
                 <button 
                     onClick={() => {
-                        notification.action.onClick();
+                        // FIX: Added a null check for `notification.action` inside the `onClick` handler to resolve a TypeScript error where the compiler could not infer that `action` would be defined within the closure, even though the parent element checks for its existence. This resolves the Vercel build failure.
+                        if (notification.action) {
+                            notification.action.onClick();
+                        }
                         removeNotification(notification.id);
                     }}
                     className="w-full text-center mt-2 px-3 py-1.5 text-sm bg-indigo-600/80 hover:bg-indigo-600 rounded-md font-semibold"
