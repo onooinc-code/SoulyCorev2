@@ -80,11 +80,19 @@ const ExtractionResults = ({ data }: ExtractionResultsProps) => {
         });
     };
     
-    const handleUpdateItem = <T extends keyof ExtractedData>(type: T, index: number, field: keyof ExtractedData[T][number], value: any) => {
+    const handleUpdateItem = <T extends keyof ExtractedData>(type: T, index: number, field: keyof ExtractedData[T][number] | null, value: any) => {
         setEditableData(prev => {
             if (!prev) return null;
             const newData = { ...prev };
-            (newData[type][index] as any)[field] = value;
+            
+            // Handle primitive arrays like string[] for 'knowledge'
+            if (field === null) {
+                (newData[type] as any[])[index] = value;
+            } else {
+                // Handle object arrays for 'entities' and 'relationships'
+                (newData[type][index] as any)[field] = value;
+            }
+            
             return newData;
         });
     };
