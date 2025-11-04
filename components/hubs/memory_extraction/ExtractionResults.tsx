@@ -97,7 +97,9 @@ const ExtractionResults = ({ data }: ExtractionResultsProps) => {
         });
     };
     
-    const selectedEntitiesForMerge = editableData?.entities.filter((_, index) => selection.entities.has(index)) || [];
+    const selectedEntitiesForMerge = editableData?.entities
+        .map((entity, index) => ({ ...entity, originalIndex: index }))
+        .filter((_, index) => selection.entities.has(index)) || [];
     
     const handleConfirmMerge = (targetEntityIndex: number, sourceEntityIndex: number) => {
         if (!editableData) return;
@@ -263,7 +265,7 @@ const ExtractionResults = ({ data }: ExtractionResultsProps) => {
                                 <input type="checkbox" checked={selection.relationships.has(i)} onChange={(ev) => handleSelectionChange('relationships', i, ev.target.checked)}/>
                                 <div className="flex-1">
                                     <span className="text-blue-400"><EditableText value={r.source} onSave={val => handleUpdateItem('relationships', i, 'source', val)} /></span>
-                                    <span className="text-gray-400"> --[<EditableText value={r.predicate} onSave={val => handleUpdateItem('relationships', i, 'predicate', val)} />]--> </span>
+                                    <span className="text-gray-400">{' --['}<EditableText value={r.predicate} onSave={val => handleUpdateItem('relationships', i, 'predicate', val)} />{']--> '}</span>
                                     <span className="text-green-400"><EditableText value={r.target} onSave={val => handleUpdateItem('relationships', i, 'target', val)} /></span>
                                 </div>
                             </div>
@@ -285,7 +287,7 @@ const ExtractionResults = ({ data }: ExtractionResultsProps) => {
 };
 
 const MergeConfirmationModal = ({ entitiesToMerge, onClose, onConfirm }: {
-    entitiesToMerge: any[],
+    entitiesToMerge: (any & { originalIndex: number })[],
     onClose: () => void,
     onConfirm: (targetIndex: number, sourceIndex: number) => void
 }) => {
@@ -300,11 +302,8 @@ const MergeConfirmationModal = ({ entitiesToMerge, onClose, onConfirm }: {
     const mergedAliases = [...new Set([...(targetEntity.aliases || []), ...(sourceEntity.aliases || []), sourceEntity.name])];
 
     const handleConfirm = () => {
-        const targetIndex = editableData.findIndex(e => e.name === targetName);
-        const sourceIndex = editableData.findIndex(e => e.name !== targetName);
-        onConfirm(targetIndex, sourceIndex);
-    }
-    const editableData = entitiesToMerge; // for context
+        onConfirm(targetEntity.originalIndex, sourceEntity.originalIndex);
+    };
 
     return (
          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
