@@ -1,11 +1,15 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { RelationshipGraphData, GraphNode, GraphEdge } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
+import { SearchIcon, XIcon, TrashIcon } from '@/components/Icons';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const RelationshipGraph = () => {
-    const [graphData, setGraphData] = useState<RelationshipGraphData | null>(null);
+    const [fullGraphData, setFullGraphData] = useState<RelationshipGraphData | null>(null);
+    const [displayGraphData, setDisplayGraphData] = useState<RelationshipGraphData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const { log } = useLog();
 
@@ -18,6 +22,12 @@ const RelationshipGraph = () => {
     const [hoveredEdge, setHoveredEdge] = useState<{ edge: GraphEdge; pos: { x: number; y: number } } | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
 
+    // State for new features
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+    const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; edgeId: string | null }>({ visible: false, x: 0, y: 0, edgeId: null });
+    const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+
 
     const fetchGraphData = useCallback(async () => {
         setIsLoading(true);
@@ -25,9 +35,9 @@ const RelationshipGraph = () => {
             const res = await fetch('/api/entities/relationships');
             if (!res.ok) throw new Error("Failed to fetch relationship data");
             const data = await res.json();
-            setGraphData(data);
+            setFullGraphData(data);
+            setDisplayGraphData(data);
 
-            // Set initial positions
             if (data?.nodes) {
                 const initialPositions = new Map<string, { x: number, y: number }>();
                 const count = data.nodes.length;
@@ -56,6 +66,8 @@ const RelationshipGraph = () => {
         fetchGraphData();
     }, [fetchGraphData]);
 
+    // --- Interactivity Handlers ---
+
     const getSVGPoint = (clientX: number, clientY: number) => {
         const svg = svgRef.current;
         if (!svg) return { x: 0, y: 0 };
@@ -71,6 +83,7 @@ const RelationshipGraph = () => {
             setIsPanning(true);
             setPanStart({ x: e.clientX, y: e.clientY });
         }
+        setContextMenu({ visible: false, x: 0, y: 0, edgeId: null });
     };
 
     const handleNodeMouseDown = (e: React.MouseEvent, nodeId: string) => {
@@ -127,6 +140,74 @@ const RelationshipGraph = () => {
             height: newHeight,
         });
     };
+    
+    const handleEdgeContextMenu = (e: React.MouseEvent, edgeId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setContextMenu({ visible: true, x: e.clientX, y: e.clientY, edgeId });
+    };
+
+    // --- New Feature Handlers ---
+
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) {
+            setDisplayGraphData(fullGraphData);
+            return;
+        }
+        setIsSearching(true);
+        try {
+            const res = await fetch('/api/entities/relationships/query', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: searchQuery }),
+            });
+            if (!res.ok) throw new Error('Search failed');
+            const data = await res.json();
+            setDisplayGraphData(data);
+        } catch (error) {
+            log('Natural language query failed', { error }, 'error');
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleResetSearch = () => {
+        setSearchQuery('');
+        setDisplayGraphData(fullGraphData);
+    };
+
+    const handleDeleteEdge = async () => {
+        if (!contextMenu.edgeId) return;
+        try {
+            const res = await fetch(`/api/entities/relationships/${contextMenu.edgeId}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed to delete relationship');
+            setContextMenu({ visible: false, x: 0, y: 0, edgeId: null });
+            await fetchGraphData(); // Refresh data
+        } catch (error) {
+            log('Error deleting relationship', { error }, 'error');
+        }
+    };
+    
+    const handleUpdateNodeName = async (e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>, nodeId: string) => {
+        const newName = e.currentTarget.value;
+        setEditingNodeId(null);
+
+        const originalNode = fullGraphData?.nodes.find(n => n.id === nodeId);
+        if (!originalNode || originalNode.name === newName) return;
+
+        try {
+            const res = await fetch(`/api/entities/${nodeId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...originalNode, name: newName }),
+            });
+            if (!res.ok) throw new Error('Failed to update entity name');
+            await fetchGraphData();
+        } catch (error) {
+            log('Error updating entity name', { error }, 'error');
+        }
+    };
 
     const formatDate = (date: Date | string | null | undefined): string => {
         if (!date) return '';
@@ -137,151 +218,128 @@ const RelationshipGraph = () => {
         return <div className="p-4 text-center">Loading relationship data...</div>;
     }
 
-    if (!graphData || graphData.nodes.length === 0) {
+    if (!displayGraphData || displayGraphData.nodes.length === 0) {
         return (
-            <div className="p-4 h-full flex items-center justify-center text-gray-500">
-                No entities or relationships to display.
+            <div className="p-4 h-full flex flex-col items-center justify-center text-gray-500">
+                No entities or relationships to display for this query.
+                 <button onClick={handleResetSearch} className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm">Reset View</button>
             </div>
         );
     }
     
     return (
-        <div className="w-full h-full overflow-hidden" style={{ cursor: isPanning ? 'grabbing' : 'grab' }}>
-            <svg
-                ref={svgRef}
-                viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
-                className="min-w-full min-h-full"
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onWheel={handleWheel}
-            >
-                <defs>
-                    <marker
-                        id="arrowhead"
-                        viewBox="0 0 10 10"
-                        refX="20"
-                        refY="5"
-                        markerWidth="6"
-                        markerHeight="6"
-                        orient="auto-start-reverse">
-                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#4a5568" />
-                    </marker>
-                </defs>
-                
-                {/* Edges */}
-                {graphData.edges.map(edge => {
-                    const sourcePos = positions.get(edge.source);
-                    const targetPos = positions.get(edge.target);
-                    if (!sourcePos || !targetPos) return null;
+        <div className="w-full h-full flex flex-col relative overflow-hidden">
+             {contextMenu.visible && (
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    style={{ top: contextMenu.y, left: contextMenu.x }}
+                    className="absolute z-10 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-1"
+                >
+                    <button onClick={handleDeleteEdge} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/20 rounded">
+                        <TrashIcon className="w-4 h-4" /> Delete Relationship
+                    </button>
+                </motion.div>
+            )}
+             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-full max-w-lg">
+                <form onSubmit={handleSearch} className="relative">
+                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Ask a question about the graph (e.g., 'who works for Google?')"
+                        className="w-full pl-10 pr-20 py-2 bg-gray-800/80 backdrop-blur-md border border-gray-700 rounded-full text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                    <button type="button" onClick={handleResetSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white">Reset</button>
+                </form>
+            </div>
+            <div className="w-full h-full" style={{ cursor: isPanning ? 'grabbing' : 'grab' }}>
+                <svg
+                    ref={svgRef}
+                    viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
+                    className="min-w-full min-h-full"
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                    onWheel={handleWheel}
+                >
+                    <defs>
+                        <marker
+                            id="arrowhead"
+                            viewBox="0 0 10 10"
+                            refX="20"
+                            refY="5"
+                            markerWidth="6"
+                            markerHeight="6"
+                            orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#4a5568" />
+                        </marker>
+                    </defs>
+                    
+                    {displayGraphData.edges.map(edge => {
+                        const sourcePos = positions.get(edge.source);
+                        const targetPos = positions.get(edge.target);
+                        if (!sourcePos || !targetPos) return null;
 
-                    const midX = (sourcePos.x + targetPos.x) / 2;
-                    const midY = (sourcePos.y + targetPos.y) / 2;
-                    const confidence = edge.confidenceScore ?? 0.5;
+                        const midX = (sourcePos.x + targetPos.x) / 2;
+                        const midY = (sourcePos.y + targetPos.y) / 2;
+                        const confidence = edge.confidenceScore ?? 0.5;
 
-                    let dateLabel = '';
-                    if (edge.startDate && edge.endDate) {
-                        dateLabel = `(${formatDate(edge.startDate)} - ${formatDate(edge.endDate)})`;
-                    } else if (edge.startDate) {
-                        dateLabel = `(since ${formatDate(edge.startDate)})`;
-                    } else if (edge.endDate) {
-                        dateLabel = `(until ${formatDate(edge.endDate)})`;
-                    }
-
-                    return (
-                        <g 
-                            key={edge.id}
-                            opacity={0.3 + confidence * 0.7}
-                            onMouseEnter={() => {
-                                if (edge.metadata && Object.keys(edge.metadata).length > 0) {
-                                    setHoveredEdge({ edge, pos: { x: midX + 10, y: midY + 10 } });
-                                }
-                            }}
-                            onMouseLeave={() => setHoveredEdge(null)}
-                        >
-                            <line
-                                x1={sourcePos.x}
-                                y1={sourcePos.y}
-                                x2={targetPos.x}
-                                y2={targetPos.y}
-                                stroke="#4a5568"
-                                strokeWidth="1.5"
-                                markerEnd="url(#arrowhead)"
-                                className="pointer-events-auto"
-                            />
-                            <text
-                                x={midX}
-                                y={midY - 5}
-                                fill="#a0aec0"
-                                fontSize="10"
-                                textAnchor="middle"
-                                className="font-mono pointer-events-none"
+                        return (
+                            <g 
+                                key={edge.id}
+                                opacity={0.3 + confidence * 0.7}
+                                onMouseEnter={() => { if (edge.metadata && Object.keys(edge.metadata).length > 0) { setHoveredEdge({ edge, pos: { x: midX + 10, y: midY + 10 } }); } }}
+                                onMouseLeave={() => setHoveredEdge(null)}
+                                onContextMenu={(e) => handleEdgeContextMenu(e, edge.id)}
                             >
-                                {edge.label} ({Math.round(confidence * 100)}%)
-                            </text>
-                            {dateLabel && (
-                                <text
-                                    x={midX}
-                                    y={midY + 5}
-                                    fill="#718096"
-                                    fontSize="8"
-                                    textAnchor="middle"
-                                     className="pointer-events-none"
-                                >
-                                    {dateLabel}
-                                </text>
-                            )}
-                        </g>
-                    );
-                })}
-                
-                {/* Nodes */}
-                {graphData.nodes.map(node => {
-                    const pos = positions.get(node.id);
-                    if (!pos) return null;
+                                <line x1={sourcePos.x} y1={sourcePos.y} x2={targetPos.x} y2={targetPos.y} stroke="#4a5568" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
+                                <text x={midX} y={midY - 5} fill="#a0aec0" fontSize="10" textAnchor="middle" className="font-mono pointer-events-none">{edge.label}</text>
+                            </g>
+                        );
+                    })}
+                    
+                    {displayGraphData.nodes.map(node => {
+                        const pos = positions.get(node.id);
+                        if (!pos) return null;
 
-                    return (
-                        <g 
-                            key={node.id} 
-                            transform={`translate(${pos.x}, ${pos.y})`}
-                            onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
-                            style={{ cursor: draggedNode?.id === node.id ? 'grabbing' : 'grab' }}
-                        >
-                            <circle r="12" fill="#4f46e5" stroke="#818cf8" strokeWidth="2" />
-                            <text
-                                y="-20"
-                                fill="#d1d5db"
-                                fontSize="12"
-                                fontWeight="bold"
-                                textAnchor="middle"
-                                className="pointer-events-none select-none"
+                        return (
+                            <g 
+                                key={node.id} 
+                                transform={`translate(${pos.x}, ${pos.y})`}
+                                onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+                                onDoubleClick={() => setEditingNodeId(node.id)}
+                                style={{ cursor: draggedNode?.id === node.id ? 'grabbing' : 'grab' }}
                             >
-                                {node.name}
-                            </text>
-                            <text
-                                y="25"
-                                fill="#9ca3af"
-                                fontSize="10"
-                                textAnchor="middle"
-                                className="font-mono pointer-events-none select-none"
-                            >
-                                ({node.type})
-                            </text>
-                        </g>
-                    );
-                })}
+                                <circle r="12" fill="#4f46e5" stroke="#818cf8" strokeWidth="2" />
+                                {editingNodeId === node.id ? (
+                                    <foreignObject x="-50" y="-12" width="100" height="24">
+                                        <input
+                                            type="text"
+                                            defaultValue={node.name}
+                                            onBlur={(e) => handleUpdateNodeName(e, node.id)}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateNodeName(e, node.id); }}
+                                            className="w-full text-center bg-gray-900 border border-indigo-500 rounded text-xs p-1"
+                                            autoFocus
+                                        />
+                                    </foreignObject>
+                                ) : (
+                                     <text y="-20" fill="#d1d5db" fontSize="12" fontWeight="bold" textAnchor="middle" className="pointer-events-none select-none">{node.name}</text>
+                                )}
+                                <text y="25" fill="#9ca3af" fontSize="10" textAnchor="middle" className="font-mono pointer-events-none select-none">({node.type})</text>
+                            </g>
+                        );
+                    })}
 
-                {/* Tooltip for N-ary relationships */}
-                {hoveredEdge && (
-                    <foreignObject x={hoveredEdge.pos.x} y={hoveredEdge.pos.y} width="200" height="150" className="pointer-events-none">
-                        <div className="bg-gray-900/80 p-2 rounded text-xs border border-gray-600 shadow-lg">
-                            <h4 className="font-bold text-gray-200 mb-1">Additional Data</h4>
-                            <pre className="whitespace-pre-wrap text-gray-300"><code>{JSON.stringify(hoveredEdge.edge.metadata, null, 2)}</code></pre>
-                        </div>
-                    </foreignObject>
-                )}
-            </svg>
+                    {hoveredEdge && (
+                        <foreignObject x={hoveredEdge.pos.x} y={hoveredEdge.pos.y} width="200" height="150" className="pointer-events-none">
+                            <div className="bg-gray-900/80 p-2 rounded text-xs border border-gray-600 shadow-lg"><h4 className="font-bold text-gray-200 mb-1">Additional Data</h4><pre className="whitespace-pre-wrap text-gray-300"><code>{JSON.stringify(hoveredEdge.edge.metadata, null, 2)}</code></pre></div>
+                        </foreignObject>
+                    )}
+                </svg>
+            </div>
         </div>
     );
 };
