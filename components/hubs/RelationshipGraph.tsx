@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { RelationshipGraphData, GraphNode, GraphEdge, Brain } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 import { SearchIcon, XIcon, TrashIcon } from '@/components/Icons';
@@ -29,6 +29,10 @@ const RelationshipGraph = () => {
     const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; edgeId: string | null }>({ visible: false, x: 0, y: 0, edgeId: null });
     const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
     const [isAutoRefreshEnabled, setIsAutoRefreshEnabled] = useState(true);
+
+    // State for semantic search
+    const [semanticQuery, setSemanticQuery] = useState('');
+    const [highlightedEdgeIds, setHighlightedEdgeIds] = useState<Set<string>>(new Set());
 
 
     useEffect(() => {
@@ -204,7 +208,30 @@ const RelationshipGraph = () => {
 
     const handleResetSearch = () => {
         setSearchQuery('');
-        fetchGraphData(activeBrainId);
+        setDisplayGraphData(fullGraphData);
+    };
+
+    const handleSemanticSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!semanticQuery.trim()) return;
+
+        try {
+            const res = await fetch('/api/entities/relationships/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: semanticQuery }),
+            });
+            if (!res.ok) throw new Error('Semantic search failed');
+            const data = await res.json();
+            setHighlightedEdgeIds(new Set(data.map((r: any) => r.id)));
+        } catch (error) {
+             log('Semantic search failed', { error }, 'error');
+        }
+    };
+
+    const handleResetSemanticSearch = () => {
+        setSemanticQuery('');
+        setHighlightedEdgeIds(new Set());
     };
 
     const handleDeleteEdge = async () => {
@@ -239,10 +266,17 @@ const RelationshipGraph = () => {
         }
     };
 
-    const formatDate = (date: Date | string | null | undefined): string => {
-        if (!date) return '';
-        return new Date(date).toLocaleDateString(undefined, { year: 'numeric', month: 'short' });
-    };
+    const highlightedNodeIds = useMemo(() => {
+        if (highlightedEdgeIds.size === 0 || !displayGraphData) return new Set<string>();
+        const ids = new Set<string>();
+        displayGraphData.edges.forEach(edge => {
+            if (highlightedEdgeIds.has(edge.id)) {
+                ids.add(edge.source);
+                ids.add(edge.target);
+            }
+        });
+        return ids;
+    }, [highlightedEdgeIds, displayGraphData]);
 
     if (isLoading) {
         return <div className="p-4 text-center">Loading relationship data...</div>;
@@ -285,16 +319,25 @@ const RelationshipGraph = () => {
                     {brains.map(brain => <option key={brain.id} value={brain.id}>{brain.name}</option>)}
                     <option value="all">All Brains</option>
                 </select>
-                <form onSubmit={handleSearch} className="relative flex-1 max-w-lg">
-                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <form onSubmit={handleSearch} className="relative flex-1 max-w-sm">
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Ask a question about the graph..."
-                        className="w-full pl-10 pr-20 py-2 bg-gray-800/80 backdrop-blur-md border border-gray-700 rounded-full text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        placeholder="Natural language query..."
+                        className="w-full pl-4 pr-16 py-2 bg-gray-800/80 backdrop-blur-md border border-gray-700 rounded-full text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     />
                     <button type="button" onClick={handleResetSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white">Reset</button>
+                </form>
+                 <form onSubmit={handleSemanticSearch} className="relative flex-1 max-w-sm">
+                    <input
+                        type="text"
+                        value={semanticQuery}
+                        onChange={(e) => setSemanticQuery(e.target.value)}
+                        placeholder="Semantic relationship search..."
+                        className="w-full pl-4 pr-16 py-2 bg-gray-800/80 backdrop-blur-md border border-gray-700 rounded-full text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                    <button type="button" onClick={handleResetSemanticSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white">Reset</button>
                 </form>
             </div>
             <div className="w-full h-full" style={{ cursor: isPanning ? 'grabbing' : 'grab' }}>
@@ -329,11 +372,16 @@ const RelationshipGraph = () => {
                         const midX = (sourcePos.x + targetPos.x) / 2;
                         const midY = (sourcePos.y + targetPos.y) / 2;
                         const confidence = edge.confidenceScore ?? 0.5;
+                        
+                        const isHighlighted = highlightedEdgeIds.has(edge.id);
+                        const hasHighlights = highlightedEdgeIds.size > 0;
+                        const opacity = hasHighlights ? (isHighlighted ? 1.0 : 0.1) : (0.3 + confidence * 0.7);
+
 
                         return (
                             <g 
                                 key={edge.id}
-                                opacity={0.3 + confidence * 0.7}
+                                opacity={opacity}
                                 onMouseEnter={() => { if (edge.metadata && Object.keys(edge.metadata).length > 0) { setHoveredEdge({ edge, pos: { x: midX + 10, y: midY + 10 } }); } }}
                                 onMouseLeave={() => setHoveredEdge(null)}
                                 onContextMenu={(e) => handleEdgeContextMenu(e, edge.id)}
@@ -348,6 +396,10 @@ const RelationshipGraph = () => {
                         const pos = positions.get(node.id);
                         if (!pos) return null;
 
+                        const hasHighlights = highlightedEdgeIds.size > 0;
+                        const isNodeHighlighted = highlightedNodeIds.has(node.id);
+                        const opacity = hasHighlights ? (isNodeHighlighted ? 1.0 : 0.2) : 1.0;
+
                         return (
                             <g 
                                 key={node.id} 
@@ -355,6 +407,7 @@ const RelationshipGraph = () => {
                                 onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
                                 onDoubleClick={() => setEditingNodeId(node.id)}
                                 style={{ cursor: draggedNode?.id === node.id ? 'grabbing' : 'grab' }}
+                                opacity={opacity}
                             >
                                 <circle r="12" fill="#4f46e5" stroke="#818cf8" strokeWidth="2" />
                                 {editingNodeId === node.id ? (

@@ -2,6 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import type { EntityRelationship, GraphNode, GraphEdge, RelationshipGraphData } from '@/lib/types';
+import { generateEmbedding } from '@/lib/gemini-server';
+import { getKnowledgeBaseIndex } from '@/lib/pinecone';
+import { v4 as uuidv4 } from 'uuid';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -101,8 +105,42 @@ export async function POST(req: NextRequest) {
             RETURNING *;
         `;
         
-        if (rows.length === 0) {
-            // Check if it exists to return it
+        if (rows.length > 0) {
+            // New relationship was created, so we can index it.
+            const newRelationship = rows[0];
+            try {
+                // Fetch names to create a descriptive sentence
+                const { rows: entityRows } = await sql`
+                    SELECT id, name FROM entity_definitions WHERE id IN (${sourceEntityId}, ${targetEntityId});
+                `;
+                const sourceName = entityRows.find(e => e.id === sourceEntityId)?.name;
+                const targetName = entityRows.find(e => e.id === targetEntityId)?.name;
+
+                if (sourceName && targetName) {
+                    const sentence = `${sourceName} ${predicateName.replace(/_/g, ' ')} ${targetName}.`;
+                    const embedding = await generateEmbedding(sentence);
+                    const vectorId = uuidv4();
+                    
+                    const index = getKnowledgeBaseIndex();
+                    if (index) {
+                        await index.upsert([{
+                            id: vectorId,
+                            values: embedding,
+                            metadata: { text: sentence, type: 'relationship', relationshipId: newRelationship.id }
+                        }]);
+
+                        await sql`
+                            UPDATE entity_relationships SET "vectorId" = ${vectorId} WHERE id = ${newRelationship.id};
+                        `;
+                    }
+                }
+            } catch (indexingError) {
+                // Log the indexing error but don't fail the entire request.
+                console.error("Semantic indexing for new relationship failed:", indexingError);
+            }
+            return NextResponse.json(newRelationship, { status: 201 });
+        } else {
+             // Relationship already existed
             const { rows: existingRows } = await sql<EntityRelationship>`
                 SELECT * FROM entity_relationships 
                 WHERE "sourceEntityId" = ${sourceEntityId} 
@@ -112,8 +150,6 @@ export async function POST(req: NextRequest) {
             `;
              return NextResponse.json(existingRows[0] || { message: "Relationship already exists." }, { status: 200 });
         }
-        
-        return NextResponse.json(rows[0], { status: 201 });
 
     } catch (error) {
         console.error('Failed to create relationship:', error);

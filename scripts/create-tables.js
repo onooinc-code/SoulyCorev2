@@ -139,6 +139,7 @@ const statements = [
     "confidenceScore" REAL DEFAULT 0.5,
     "metadata" JSONB,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
+    "vectorId" VARCHAR(255),
     UNIQUE("sourceEntityId", "targetEntityId", "predicateId", "brainId")
   );`,
 
