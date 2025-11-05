@@ -1,4 +1,3 @@
-
 import { EpisodicMemoryModule } from '../memory/modules/episodic';
 import { SemanticMemoryModule, ISemanticQueryResult } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
@@ -51,6 +50,35 @@ export class ContextAssemblyPipeline {
         }
     }
 
+    private async extractPotentialNames(query: string): Promise<string[]> {
+        try {
+            const prompt = `From the following text, extract all proper nouns or terms that could be named entities (people, places, projects). Return them as a valid JSON array of strings. Do not include common words. If no entities are found, return an empty array [].
+
+Text: "${query}"
+
+Respond with ONLY the JSON array.`;
+
+            const responseJson = await llmProvider.generateContent(
+                [{ role: 'user', parts: [{ text: prompt }] }],
+                "You are a JSON-outputting named entity recognizer."
+            );
+            
+            if (!responseJson) return [];
+
+            // Clean up markdown code blocks if the model adds them
+            const cleanedJson = responseJson.replace(/```json|```/g, '').trim();
+            const names = JSON.parse(cleanedJson);
+            if (Array.isArray(names)) {
+                return names.filter(name => typeof name === 'string' && name.length > 1);
+            }
+            return [];
+        } catch (error) {
+            console.error("Failed to extract potential names:", error);
+            return []; // Gracefully fail
+        }
+    }
+
+
     async run(params: IContextAssemblyParams) {
         const { conversation, userQuery, mentionedContacts, userMessageId, config } = params;
 
@@ -66,9 +94,37 @@ export class ContextAssemblyPipeline {
             const recentMessages = await this.logStep(runId, 1, 'Retrieve Episodic Memory', { conversationId: conversation.id, depth: config.episodicMemoryDepth }, () =>
                 this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth })
             ) as Message[];
+            
+            // Step 2: Disambiguate Entities
+            const disambiguationInstruction = await this.logStep(runId, 2, 'Disambiguate Entities', { userQuery, brainId: conversation.brainId }, async () => {
+                const potentialNames = await this.extractPotentialNames(userQuery);
+                if (potentialNames.length === 0) return '';
 
-            // Step 2: Proactive Entity Retrieval (Semantic Search for Entities)
-            const proactiveEntities = await this.logStep(runId, 2, 'Proactive Entity Retrieval', { userQuery, topK: 3 }, async () => {
+                for (const name of potentialNames) {
+                    let matchingEntitiesRows;
+                    if (conversation.brainId) {
+                        ({ rows: matchingEntitiesRows } = await sql<EntityDefinition>`
+                            SELECT id, name, type FROM entity_definitions 
+                            WHERE name ILIKE ${name} AND "brainId" = ${conversation.brainId}
+                        `);
+                    } else {
+                        ({ rows: matchingEntitiesRows } = await sql<EntityDefinition>`
+                            SELECT id, name, type FROM entity_definitions 
+                            WHERE name ILIKE ${name} AND "brainId" IS NULL
+                        `);
+                    }
+
+                    if (matchingEntitiesRows.length > 1) {
+                        const options = matchingEntitiesRows.map(e => `'${e.name} (${e.type})'`).join(' or ');
+                        return `CRITICAL INSTRUCTION: Before answering the user's query, you MUST first ask a clarifying question. The term '${name}' is ambiguous. Ask the user to clarify which of these they mean: ${options}. Your entire response must ONLY be this clarification question. Do not answer the original query yet.`;
+                    }
+                }
+                return '';
+            });
+
+
+            // Step 3: Proactive Entity Retrieval (Semantic Search for Entities)
+            const proactiveEntities = await this.logStep(runId, 3, 'Proactive Entity Retrieval', { userQuery, topK: 3 }, async () => {
                 if (!conversation.useStructuredMemory) return [];
                 const entityResults: IVectorQueryResult[] = await this.entityVectorMemory.query({ queryText: userQuery, topK: 3 });
                 if (entityResults.length === 0) return [];
@@ -83,15 +139,15 @@ export class ContextAssemblyPipeline {
                 return rows;
             }) as EntityDefinition[];
 
-            // Step 3: Retrieve Semantic Memory (Relevant Knowledge)
-            const semanticResults = await this.logStep(runId, 3, 'Retrieve Semantic Memory', { userQuery, topK: config.semanticMemoryTopK }, () =>
+            // Step 4: Retrieve Semantic Memory (Relevant Knowledge)
+            const semanticResults = await this.logStep(runId, 4, 'Retrieve Semantic Memory', { userQuery, topK: config.semanticMemoryTopK }, () =>
                 conversation.useSemanticMemory
                     ? this.semanticMemory.query({ queryText: userQuery, topK: config.semanticMemoryTopK })
                     : Promise.resolve([])
             ) as ISemanticQueryResult[];
 
-            // Step 4: Format Structured Memory (Mentioned Contacts & Proactive Entities)
-            const structuredContext = await this.logStep(runId, 4, 'Format Structured Memory', { mentionedContacts, proactiveEntities }, () => {
+            // Step 5: Format Structured Memory (Mentioned Contacts & Proactive Entities)
+            const structuredContext = await this.logStep(runId, 5, 'Format Structured Memory', { mentionedContacts, proactiveEntities }, () => {
                  let context = "";
                  if (conversation.useStructuredMemory) {
                     if (mentionedContacts.length > 0) {
@@ -108,8 +164,8 @@ export class ContextAssemblyPipeline {
                 return Promise.resolve(context);
             }) as string;
 
-            // Step 5: Assemble the final prompt components
-            const { systemInstruction, history } = await this.logStep(runId, 5, 'Assemble Context', { semanticResults, structuredContext, recentMessages }, () => {
+            // Step 6: Assemble the final prompt components
+            const { systemInstruction, history } = await this.logStep(runId, 6, 'Assemble Context', { semanticResults, structuredContext, recentMessages }, () => {
                 let contextBlock = "";
                 if (semanticResults.length > 0) {
                     contextBlock += "--- Relevant Knowledge ---\n";
@@ -121,7 +177,7 @@ export class ContextAssemblyPipeline {
                     contextBlock += "--------------------------\n";
                 }
 
-                const finalSystemInstruction = `${conversation.systemPrompt || 'You are a helpful AI assistant.'}\n\n${contextBlock}`;
+                const finalSystemInstruction = `${disambiguationInstruction ? disambiguationInstruction + '\n\n' : ''}${conversation.systemPrompt || 'You are a helpful AI assistant.'}\n\n${contextBlock}`;
                 
                 const formattedHistory = recentMessages.map(m => ({
                     role: m.role,
@@ -137,10 +193,11 @@ export class ContextAssemblyPipeline {
                 topP: conversation.topP || 0.95,
             };
 
-            // Step 6: Call the LLM
+            // Step 7: Call the LLM
+            const llmStartTime = Date.now();
             const llmResponse = await this.logStep(
                 runId,
-                6,
+                7,
                 'Generate LLM Response',
                 { historyLength: history.length },
                 () => llmProvider.generateContent(history, systemInstruction, modelConfig, conversation.model || undefined),
@@ -148,14 +205,15 @@ export class ContextAssemblyPipeline {
                 "History provided in payload",
                 modelConfig
             );
+            const llmResponseTime = Date.now() - llmStartTime;
 
-            const llmResponseTime = Date.now() - startTime;
+            const totalDuration = Date.now() - startTime;
             
             await sql`
                 UPDATE pipeline_runs 
                 SET 
                     status = 'completed', 
-                    "durationMs" = ${llmResponseTime}, 
+                    "durationMs" = ${totalDuration}, 
                     "finalOutput" = ${llmResponse},
                     "finalLlmPrompt" = ${history[history.length - 1].parts[0].text},
                     "finalSystemInstruction" = ${systemInstruction},
@@ -175,4 +233,3 @@ export class ContextAssemblyPipeline {
         }
     }
 }
-      
