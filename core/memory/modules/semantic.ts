@@ -52,9 +52,15 @@ export class SemanticMemoryModule implements ISingleMemoryModule {
      * Stores a piece of text in the Pinecone vector database.
      * It generates an embedding for the text and upserts it.
      * @param params - An object containing the text and optional metadata to store.
-     * @returns A promise that resolves when the data has been stored.
+     * @returns A promise that resolves with the UUID of the stored vector.
      */
-    async store(params: ISemanticMemoryStoreParams): Promise<void> {
+    async store(params: ISemanticMemoryStoreParams): Promise<string> {
+        const index = getKnowledgeBaseIndex();
+        if (!index) {
+            console.warn("Pinecone not configured, skipping semantic memory store.");
+            return '';
+        }
+
         if (!params.text) {
             throw new Error('SemanticMemoryModule.store requires text to be provided.');
         }
@@ -71,7 +77,8 @@ export class SemanticMemoryModule implements ISingleMemoryModule {
             },
         };
 
-        await getKnowledgeBaseIndex().upsert([vectorToUpsert]);
+        await index.upsert([vectorToUpsert]);
+        return vectorId;
     }
 
     /**
@@ -81,6 +88,12 @@ export class SemanticMemoryModule implements ISingleMemoryModule {
      * @returns A promise that resolves to an array of the most relevant knowledge chunks.
      */
     async query(params: ISemanticMemoryQueryParams): Promise<ISemanticQueryResult[]> {
+        const index = getKnowledgeBaseIndex();
+        if (!index) {
+            console.warn("Pinecone not configured, skipping semantic memory query.");
+            return [];
+        }
+
         if (!params.queryText) {
             throw new Error('SemanticMemoryModule.query requires queryText to be provided.');
         }
@@ -88,7 +101,7 @@ export class SemanticMemoryModule implements ISingleMemoryModule {
         const queryEmbedding = await llmProvider.generateEmbedding(params.queryText);
         const topK = params.topK || 3;
 
-        const queryResponse = await getKnowledgeBaseIndex().query({
+        const queryResponse = await index.query({
             vector: queryEmbedding,
             topK,
             includeMetadata: true,

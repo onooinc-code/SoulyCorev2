@@ -42,11 +42,13 @@ export class StructuredMemoryModule implements ISingleMemoryModule {
                     throw new Error('StructuredMemoryModule.store (entity) requires name and type.');
                 }
                 const { rows } = await sql<EntityDefinition>`
-                    INSERT INTO entity_definitions (id, name, type, description, aliases, "lastUpdatedAt")
-                    VALUES (${data.id || uuidv4()}, ${data.name as string}, ${data.type as string}, ${data.description || null}, ${data.aliases ? JSON.stringify(data.aliases) : '[]'}, CURRENT_TIMESTAMP)
-                    ON CONFLICT (name, type) DO UPDATE SET 
+                    INSERT INTO entity_definitions (id, name, type, description, aliases, provenance, "vectorId", "brainId", "lastUpdatedAt")
+                    VALUES (${data.id || uuidv4()}, ${data.name as string}, ${data.type as string}, ${data.description || null}, ${data.aliases ? JSON.stringify(data.aliases) : '[]'}, ${data.provenance ? JSON.stringify(data.provenance) : null}, ${data.vectorId || null}, ${data.brainId || null}, CURRENT_TIMESTAMP)
+                    ON CONFLICT (name, type, "brainId") DO UPDATE SET 
                         description = EXCLUDED.description,
                         aliases = EXCLUDED.aliases,
+                        provenance = EXCLUDED.provenance,
+                        "vectorId" = EXCLUDED."vectorId",
                         "lastUpdatedAt" = CURRENT_TIMESTAMP
                     RETURNING *;
                 `;
@@ -77,9 +79,9 @@ export class StructuredMemoryModule implements ISingleMemoryModule {
                     throw new Error('StructuredMemoryModule.store (relationship) requires source, target, and predicateId.');
                 }
                 const { rows } = await sql<EntityRelationship>`
-                    INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", "predicateId", "context")
+                    INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", "predicateId", "context", "provenance", "brainId")
                     // FIX: Property 'predicate' does not exist on type 'Partial<EntityRelationship>'. Corrected to 'predicateId'.
-                    VALUES (${data.sourceEntityId}, ${data.targetEntityId}, ${data.predicateId}, ${data.context || null})
+                    VALUES (${data.sourceEntityId}, ${data.targetEntityId}, ${data.predicateId}, ${data.context || null}, ${data.provenance ? JSON.stringify(data.provenance) : null}, ${data.brainId || null})
                     RETURNING *;
                 `;
                 return rows[0] || null;

@@ -28,6 +28,7 @@ export async function PUT(req: NextRequest, { params }: { params: { entityId: st
             return NextResponse.json({ error: 'Entity not found' }, { status: 404 });
         }
         const oldEntity = oldEntityRows[0];
+        const newVersion = (oldEntity.version || 0) + 1;
 
         // 2. Update the entity
         const { rows: updatedRows } = await client.query<EntityDefinition>(
@@ -38,10 +39,11 @@ export async function PUT(req: NextRequest, { params }: { params: { entityId: st
                 description = $3, 
                 aliases = $4,
                 tags = $5,
+                version = $6,
                 "lastUpdatedAt" = CURRENT_TIMESTAMP
-            WHERE id = $6
+            WHERE id = $7
             RETURNING *;`,
-            [name, type, description || null, aliases ? JSON.stringify(aliases) : '[]', tags ? (tags as any) : null, entityId]
+            [name, type, description || null, aliases ? JSON.stringify(aliases) : '[]', tags ? (tags as any) : null, newVersion, entityId]
         );
         const updatedEntity = updatedRows[0];
         
@@ -66,9 +68,9 @@ export async function PUT(req: NextRequest, { params }: { params: { entityId: st
 
         for (const change of changes) {
             await client.query(
-                `INSERT INTO entity_history ("entityId", "fieldName", "oldValue", "newValue")
-                 VALUES ($1, $2, $3, $4)`,
-                 [entityId, change.fieldName, change.oldValue, change.newValue]
+                `INSERT INTO entity_history ("entityId", "fieldName", "oldValue", "newValue", "version")
+                 VALUES ($1, $2, $3, $4, $5)`,
+                 [entityId, change.fieldName, change.oldValue, change.newValue, oldEntity.version]
             );
         }
 

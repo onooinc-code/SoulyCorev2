@@ -42,6 +42,14 @@ const statements = [
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
 
+  `CREATE TABLE IF NOT EXISTS "brains" (
+    "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "name" VARCHAR(255) UNIQUE NOT NULL,
+    "configJson" JSONB,
+    "createdAt" TIMESTAMPTZ DEFAULT now(),
+    "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
+  );`,
+
   `CREATE TABLE IF NOT EXISTS "conversations" (
     "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "title" VARCHAR(255) NOT NULL,
@@ -54,6 +62,7 @@ const statements = [
     "useSemanticMemory" BOOLEAN DEFAULT true,
     "useStructuredMemory" BOOLEAN DEFAULT true,
     "enableMemoryExtraction" BOOLEAN DEFAULT true,
+    "brainId" UUID REFERENCES "brains"("id") ON DELETE SET NULL,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
@@ -93,9 +102,13 @@ const statements = [
     "description" TEXT,
     "aliases" JSONB,
     "tags" TEXT[],
+    "provenance" JSONB,
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "brainId" UUID REFERENCES "brains"("id") ON DELETE SET NULL,
+    "vectorId" VARCHAR(255),
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now(),
-    UNIQUE("name", "type")
+    UNIQUE("name", "type", "brainId")
   );`,
   
   `CREATE TABLE IF NOT EXISTS "predicate_definitions" (
@@ -111,6 +124,8 @@ const statements = [
     "targetEntityId" UUID NOT NULL REFERENCES "entity_definitions"("id") ON DELETE CASCADE,
     "predicateId" UUID NOT NULL REFERENCES "predicate_definitions"("id") ON DELETE CASCADE,
     "context" TEXT,
+    "provenance" JSONB,
+    "brainId" UUID REFERENCES "brains"("id") ON DELETE SET NULL,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     UNIQUE("sourceEntityId", "targetEntityId", "predicateId")
   );`,
@@ -379,14 +394,6 @@ const statements = [
     "level" VARCHAR(50) NOT NULL
   );`,
 
-  `CREATE TABLE IF NOT EXISTS "brains" (
-    "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "name" VARCHAR(255) UNIQUE NOT NULL,
-    "configJson" JSONB,
-    "createdAt" TIMESTAMPTZ DEFAULT now(),
-    "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
-  );`,
-
   `CREATE TABLE IF NOT EXISTS "documents" (
       "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       "filename" VARCHAR(255),
@@ -402,6 +409,7 @@ const statements = [
     "fieldName" VARCHAR(255) NOT NULL,
     "oldValue" TEXT,
     "newValue" TEXT,
+    "version" INTEGER,
     "changedBy" VARCHAR(255) DEFAULT 'system',
     "changedAt" TIMESTAMPTZ DEFAULT now()
   );`,

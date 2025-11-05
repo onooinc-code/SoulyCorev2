@@ -1,13 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-// FIX: Corrected import path for type.
 import type { Brain } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-// FIX: Corrected relative import paths for icon components and hooks to use the absolute path alias `@`, resolving module resolution errors during the build process.
 import { PlusIcon, TrashIcon, EditIcon } from '@/components/Icons';
 import { useAppContext } from '@/lib/hooks/useAppContext';
-// FIX: Corrected relative import paths for icon components and hooks to use the absolute path alias `@`, resolving module resolution errors during the build process.
 import { useLog } from '@/components/providers/LogProvider';
 
 const BrainManagementTab = () => {
@@ -50,7 +47,6 @@ const BrainManagementTab = () => {
         if (brain) {
             brainForForm = {
                 ...brain,
-                // FIX: Corrected a property name from `config_json` to `configJson` to match the `Brain` type definition.
                 configJson: JSON.stringify(brain.configJson, null, 2)
             };
         } else {

@@ -11,6 +11,7 @@ interface IMemoryExtractionParams {
     text: string;
     messageId: string;
     conversationId: string;
+    brainId: string | null;
     config: IMemoryExtractionConfig;
 }
 
@@ -54,7 +55,7 @@ export class MemoryExtractionPipeline {
     }
 
     async run(params: IMemoryExtractionParams) {
-        const { text, messageId, conversationId, config } = params;
+        const { text, messageId, conversationId, brainId, config } = params;
         
         const { rows: runRows } = await sql<PipelineRun>`
             INSERT INTO pipeline_runs ("messageId", "pipelineType", status)
@@ -123,18 +124,24 @@ export class MemoryExtractionPipeline {
                 return JSON.parse(response.text.trim());
             });
 
+            const provenance = {
+                type: 'memory_extraction',
+                source: 'conversation',
+                conversationId: params.conversationId,
+                messageId: params.messageId,
+            };
+
             if (config.enableEntityExtraction && extractionResult.entities && extractionResult.entities.length > 0) {
                 const storedEntities = await this.logStep(runId, 2, 'Store Entities & Embeddings', { count: extractionResult.entities.length }, async () => {
-                    const stored = await Promise.all(extractionResult.entities.map((entity: any) =>
-                        this.structuredMemory.store({ type: 'entity', data: entity })
-                    ));
-
-                    // Now store embeddings for the successfully stored entities
-                    await Promise.all(stored.map((entity: EntityDefinition) => {
-                        if (entity && entity.id) {
-                            const embeddingText = `${entity.name} (${entity.type}): ${entity.description}`;
-                            return this.entityVectorMemory.store({ id: entity.id, text: embeddingText, metadata: { entity_id: entity.id, name: entity.name, type: entity.type, is_entity: true } });
-                        }
+                    const stored = await Promise.all(extractionResult.entities.map(async (entity: any) => {
+                        // 1. Store description in semantic memory and get vectorId
+                        const vectorId = await this.semanticMemory.store({ text: `${entity.name} (${entity.type}): ${entity.description}` });
+                        
+                        // 2. Store structured entity data with the vectorId
+                        return this.structuredMemory.store({
+                            type: 'entity',
+                            data: { ...entity, vectorId, provenance, brainId }
+                        });
                     }));
                     
                     return stored;
@@ -167,6 +174,8 @@ export class MemoryExtractionPipeline {
                                         sourceEntityId: sourceId,
                                         targetEntityId: targetId,
                                         predicateId: predicateId,
+                                        provenance: provenance,
+                                        brainId: brainId,
                                     }
                                 });
                             }

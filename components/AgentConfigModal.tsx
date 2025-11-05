@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { XIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
 import { useAppContext } from '@/lib/hooks/useAppContext';
-import { Conversation } from '@/lib/types';
+import { Conversation, Brain } from '@/lib/types';
 
 interface AgentConfigModalProps {
     onClose: () => void;
@@ -16,12 +16,30 @@ const AgentConfigModal = ({ onClose, conversation }: AgentConfigModalProps) => {
     const [systemPrompt, setSystemPrompt] = useState('');
     const [useSemantic, setUseSemantic] = useState(true);
     const [useStructured, setUseStructured] = useState(true);
+    const [brainId, setBrainId] = useState<string | null>(null);
+    const [brains, setBrains] = useState<Brain[]>([]);
+
+    useEffect(() => {
+        const fetchBrains = async () => {
+            try {
+                const res = await fetch('/api/brains');
+                if(res.ok) {
+                    const data = await res.json();
+                    setBrains(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch brains for agent config", error);
+            }
+        };
+        fetchBrains();
+    }, []);
 
     useEffect(() => {
         if (conversation) {
             setSystemPrompt(conversation.systemPrompt || '');
             setUseSemantic(conversation.useSemanticMemory ?? true);
             setUseStructured(conversation.useStructuredMemory ?? true);
+            setBrainId(conversation.brainId || null);
         }
     }, [conversation]);
 
@@ -31,6 +49,7 @@ const AgentConfigModal = ({ onClose, conversation }: AgentConfigModalProps) => {
             systemPrompt,
             useSemanticMemory: useSemantic,
             useStructuredMemory: useStructured,
+            brainId: brainId === 'none' ? null : brainId,
         });
         addNotification({ type: 'success', title: 'تم الحفظ بنجاح', message: 'Agent configuration has been updated.' });
         onClose();
@@ -68,6 +87,20 @@ const AgentConfigModal = ({ onClose, conversation }: AgentConfigModalProps) => {
                         className="w-full p-2 bg-gray-700 rounded-lg text-sm"
                         rows={4}
                     />
+                </div>
+                 <div>
+                    <label htmlFor="brainSelect" className="block text-sm font-medium text-gray-400 mb-1">Cognitive Context (Brain)</label>
+                    <select
+                        id="brainSelect"
+                        value={brainId || 'none'}
+                        onChange={e => setBrainId(e.target.value)}
+                        className="w-full p-2 bg-gray-700 rounded-lg text-sm"
+                    >
+                        <option value="none">Default (No Brain)</option>
+                        {brains.map(brain => (
+                            <option key={brain.id} value={brain.id}>{brain.name}</option>
+                        ))}
+                    </select>
                 </div>
                 <div className="space-y-2">
                     <h3 className="text-sm font-medium text-gray-400">Memory Access</h3>

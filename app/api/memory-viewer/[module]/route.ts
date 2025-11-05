@@ -1,7 +1,3 @@
-
-
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { StructuredMemoryModule } from '@/core/memory/modules/structured';
 import { EpisodicMemoryModule } from '@/core/memory/modules/episodic';
@@ -48,7 +44,6 @@ export async function GET(req: NextRequest, { params }: { params: { module: stri
                 if (!queryParams.conversationId) {
                     return NextResponse.json({ error: 'conversationId is required for episodic memory viewer' }, { status: 400 });
                 }
-                // FIX: Explicitly construct the query parameters object to match the expected type `IEpisodicMemoryQueryParams`.
                 const limit = queryParams.limit ? parseInt(queryParams.limit, 10) : undefined;
                 data = await episodicMemory.query({
                     conversationId: queryParams.conversationId,

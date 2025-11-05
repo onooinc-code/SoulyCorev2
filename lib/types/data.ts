@@ -17,6 +17,7 @@ export interface Conversation {
     useSemanticMemory?: boolean;
     useStructuredMemory?: boolean;
     enableMemoryExtraction?: boolean;
+    brainId?: string | null;
     createdAt: Date;
     lastUpdatedAt: Date;
 }
@@ -56,6 +57,10 @@ export interface EntityDefinition {
     description?: string;
     aliases?: string[];
     tags?: string[];
+    provenance?: any;
+    version: number;
+    brainId?: string | null;
+    vectorId?: string;
     createdAt: Date;
     lastUpdatedAt: Date;
 }
@@ -73,6 +78,8 @@ export interface EntityRelationship {
     targetEntityId: string;
     predicateId: string;
     context?: string;
+    provenance?: any;
+    brainId?: string | null;
     createdAt: Date;
 }
 
@@ -82,6 +89,7 @@ export interface EntityHistoryLog {
     fieldName: string;
     oldValue?: string;
     newValue?: string;
+    version: number;
     changedBy: string;
     changedAt: Date;
 }

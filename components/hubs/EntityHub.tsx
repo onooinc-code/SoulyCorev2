@@ -6,7 +6,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { EntityDefinition } from '@/lib/types';
+import type { EntityDefinition, Brain } from '@/lib/types';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { XIcon, TrashIcon, PlusIcon, EditIcon, SearchIcon, ArrowsRightLeftIcon, Bars3Icon, Squares2X2Icon, ViewColumnsIcon, LinkIcon, TagIcon, WrenchScrewdriverIcon, BeakerIcon } from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -145,6 +145,9 @@ const EntityHub = () => {
     const { log } = useLog();
     
     const [entities, setEntities] = useState<EntityDefinition[]>([]);
+    const [brains, setBrains] = useState<Brain[]>([]);
+    const [activeBrainId, setActiveBrainId] = useState<string>('none');
+    
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [entityForm, setEntityForm] = useState<EntityFormState>({});
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -171,24 +174,39 @@ const EntityHub = () => {
 
     const ITEMS_PER_PAGE = 20;
 
-    const fetchEntities = useCallback(async () => {
-        log('Fetching entities for Entity Hub...');
+    const fetchEntities = useCallback(async (brainId: string) => {
+        log('Fetching entities for Entity Hub...', { brainId });
         try {
-            const res = await fetch('/api/entities');
+            const res = await fetch(`/api/entities?brainId=${brainId}`);
             if (!res.ok) throw new Error('Failed to fetch entities');
             const data = await res.json();
             setEntities(data.entities);
-            log(`Successfully fetched ${data.entities.length} entities.`);
+            log(`Successfully fetched ${data.entities.length} entities for brain ${brainId}.`);
         } catch (error) {
             const errorMessage = (error as Error).message;
             setStatus({ error: errorMessage });
             log('Failed to fetch entities.', { error: { message: errorMessage } }, 'error');
         }
     }, [log, setStatus]);
+    
+    useEffect(() => {
+        const fetchBrains = async () => {
+            try {
+                const res = await fetch('/api/brains');
+                if (res.ok) {
+                    const data = await res.json();
+                    setBrains(data);
+                }
+            } catch (error) {
+                log('Failed to fetch brains', { error }, 'error');
+            }
+        };
+        fetchBrains();
+    }, [log]);
 
     useEffect(() => {
-        fetchEntities();
-    }, [fetchEntities]);
+        fetchEntities(activeBrainId);
+    }, [fetchEntities, activeBrainId]);
     
     const validateForm = () => {
         const errors: Record<string, string> = {};
@@ -205,7 +223,7 @@ const EntityHub = () => {
                 aliases_str: Array.isArray(entity.aliases) ? entity.aliases.join(', ') : '',
             });
         } else {
-            setEntityForm({ type: 'Misc' });
+            setEntityForm({ type: 'Misc', brainId: activeBrainId === 'none' ? undefined : activeBrainId });
         }
         setIsFormVisible(true);
     };
@@ -232,7 +250,7 @@ const EntityHub = () => {
             });
             if (!res.ok) throw new Error(`Failed to ${isUpdating ? 'update' : 'create'} entity`);
 
-            await fetchEntities();
+            await fetchEntities(activeBrainId);
             setIsFormVisible(false);
             setEntityForm({});
         } catch (error) {
@@ -245,7 +263,7 @@ const EntityHub = () => {
         try {
             const res = await fetch(`/api/entities/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Failed to delete entity');
-            await fetchEntities();
+            await fetchEntities(activeBrainId);
         } catch (error) {
              setStatus({ error: (error as Error).message });
         }
@@ -267,7 +285,7 @@ const EntityHub = () => {
                 body: JSON.stringify({ action, ids, payload }),
             });
             if (!res.ok) throw new Error(`Bulk ${action} failed.`);
-            await fetchEntities();
+            await fetchEntities(activeBrainId);
             setSelectedIds(new Set());
         } catch (error) {
             setStatus({ error: (error as Error).message });
@@ -282,7 +300,7 @@ const EntityHub = () => {
                 body: JSON.stringify({ targetId, sourceId }),
             });
              if (!res.ok) throw new Error('Merge failed.');
-             await fetchEntities();
+             await fetchEntities(activeBrainId);
              setSelectedIds(new Set());
              setIsMergeModalOpen(false);
         } catch(error) {
@@ -310,7 +328,7 @@ const EntityHub = () => {
                 body: JSON.stringify(updatedEntity),
             });
             if (!res.ok) throw new Error('Failed to save cell update.');
-            await fetchEntities(); // Re-sync with DB
+            await fetchEntities(activeBrainId); // Re-sync with DB
         } catch (error) {
             setStatus({ error: (error as Error).message });
             setEntities(prev => prev.map(e => e.id === entityId ? originalEntity : e)); // Revert
@@ -429,6 +447,11 @@ const EntityHub = () => {
             
              <div className="flex justify-between items-center mb-4 flex-shrink-0">
                 <div className="flex items-center gap-2">
+                    <select value={activeBrainId} onChange={e => setActiveBrainId(e.target.value)} className="bg-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="none">Default (No Brain)</option>
+                        {brains.map(brain => <option key={brain.id} value={brain.id}>{brain.name}</option>)}
+                        <option value="all">All Brains</option>
+                    </select>
                     <div className="relative"><SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" /><input type="text" placeholder="Search entities..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-gray-700 rounded-md pl-8 pr-2 py-1.5 text-sm" /></div>
                     <select value={filters.type} onChange={e => setFilters({ ...filters, type: e.target.value })} className="bg-gray-700 rounded-md px-2 py-1.5 text-sm"><option value="all">All Types</option>{entityTypes.slice(1).map(type => <option key={type} value={type}>{type}</option>)}</select>
                 </div>
@@ -445,7 +468,6 @@ const EntityHub = () => {
                         <span className="text-sm font-semibold">{selectedIds.size} selected</span>
                         <div className="flex items-center gap-2">
                             {selectedIds.size === 2 && <button onClick={() => setIsMergeModalOpen(true)} className="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-600 rounded-md"><ArrowsRightLeftIcon className="w-4 h-4" /> Merge</button>}
-                            {/* FIX: Corrected a type error where `trim` was called on an array. The prompt result is now correctly handled. */}
                             <button onClick={() => handleBulkAction('add_tags', { tags: [prompt("Enter tag to add:")?.trim()].filter(Boolean) })} className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 rounded-md"><TagIcon className="w-4 h-4" /> Add Tag</button>
                             <button onClick={() => handleBulkAction('change_type', { newType: prompt("Enter new type:") })} className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-600 rounded-md"><WrenchScrewdriverIcon className="w-4 h-4" /> Change Type</button>
                             <button onClick={() => handleBulkAction('delete')} className="flex items-center gap-1 px-2 py-1 text-xs bg-red-600 rounded-md"><TrashIcon className="w-4 h-4" /> Delete</button>
