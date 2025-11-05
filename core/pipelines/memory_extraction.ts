@@ -1,9 +1,8 @@
 import { SemanticMemoryModule } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
 import { EntityVectorMemoryModule } from '../memory/modules/entity_vector';
-import { sql } from '@/lib/db';
-// FIX: Corrected import path for type.
-import type { PipelineRun, EntityDefinition } from '@/lib/types';
+import { sql, db } from '@/lib/db';
+import type { PipelineRun, EntityDefinition, EntityRelationship } from '@/lib/types';
 import { IMemoryExtractionConfig } from '../memory/types';
 import { GoogleGenAI, Type } from "@google/genai";
 
@@ -29,7 +28,6 @@ export class MemoryExtractionPipeline {
         if (!apiKey) {
             throw new Error("API key not found for MemoryExtractionPipeline.");
         }
-        // @google/genai-api-guideline-fix: Initialize GoogleGenAI with a named apiKey parameter.
         this.ai = new GoogleGenAI({ apiKey });
     }
 
@@ -54,6 +52,121 @@ export class MemoryExtractionPipeline {
         }
     }
 
+    private async inferAndStoreRelationships(
+        newRelationships: EntityRelationship[],
+        allEntities: EntityDefinition[],
+        brainId: string | null,
+        provenance: any
+    ) {
+        if (newRelationships.length === 0) return { inferencesMade: 0 };
+
+        const entityIds = new Set<string>();
+        newRelationships.forEach(rel => {
+            entityIds.add(rel.sourceEntityId);
+            entityIds.add(rel.targetEntityId);
+        });
+
+        // Fetch all relationships involving these entities
+        const { rows: existingRels } = await db.query(`
+            SELECT r.*, p.name as "predicateName", s.name as "sourceName", t.name as "targetName"
+            FROM entity_relationships r
+            JOIN predicate_definitions p ON r."predicateId" = p.id
+            JOIN entity_definitions s ON r."sourceEntityId" = s.id
+            JOIN entity_definitions t ON r."targetEntityId" = t.id
+            WHERE (r."sourceEntityId" = ANY($1::uuid[]) OR r."targetEntityId" = ANY($1::uuid[]))
+            AND (r."brainId" = $2 OR r."brainId" IS NULL)
+        `, [Array.from(entityIds), brainId]);
+
+        if (existingRels.length <= 1) {
+            return { inferencesMade: 0 }; // Not enough facts to infer anything
+        }
+
+        const facts = existingRels.map(r => `'${r.sourceName}' -> '${r.predicateName}' -> '${r.targetName}'`).join('\n');
+
+        const prompt = `
+            You are a logical inference engine. Based on the following known facts, deduce new relationships.
+            Do not repeat existing facts. Only state new, valid, and logical inferences.
+            For example, if you know "A works_for B" and "B is_located_in C", you can infer "A has_work_location C".
+
+            Known Facts:
+            ${facts}
+
+            Inferred Relationships:
+        `;
+
+        const response = await this.ai.models.generateContent({
+            model: 'gemini-2.5-pro', // Use a more powerful model for reasoning
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            config: {
+                 responseMimeType: "application/json",
+                 responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        inferences: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    source: { type: Type.STRING },
+                                    predicate: { type: Type.STRING },
+                                    target: { type: Type.STRING }
+                                },
+                                required: ['source', 'predicate', 'target']
+                            }
+                        }
+                    },
+                     required: ['inferences'],
+                }
+            }
+        });
+
+        if (!response.text) return { inferencesMade: 0 };
+
+        const { inferences } = JSON.parse(response.text.trim());
+        if (!inferences || inferences.length === 0) return { inferencesMade: 0 };
+
+        const entityMap = new Map(allEntities.map(e => [e.name.toLowerCase(), e.id]));
+        const predicateMap = new Map<string, string>();
+
+        let inferencesMade = 0;
+        for (const inference of inferences) {
+            const sourceId = entityMap.get(inference.source.toLowerCase());
+            const targetId = entityMap.get(inference.target.toLowerCase());
+
+            if (!sourceId || !targetId) continue;
+
+            let predicateId = predicateMap.get(inference.predicate);
+            if (!predicateId) {
+                const { rows: predRows } = await sql`
+                    INSERT INTO predicate_definitions (name) VALUES (${inference.predicate})
+                    ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id;
+                `;
+                predicateId = predRows[0].id;
+                predicateMap.set(inference.predicate, predicateId);
+            }
+
+            const { rows: checkRows } = await sql`
+                SELECT id FROM entity_relationships WHERE "sourceEntityId" = ${sourceId} AND "targetEntityId" = ${targetId} AND "predicateId" = ${predicateId}
+            `;
+
+            if (checkRows.length === 0) {
+                const inferredProvenance = { ...provenance, type: 'inferred', from: facts.split('\n') };
+                await this.structuredMemory.store({
+                    type: 'relationship',
+                    data: {
+                        sourceEntityId: sourceId,
+                        targetEntityId: targetId,
+                        predicateId: predicateId,
+                        provenance: inferredProvenance,
+                        brainId: brainId
+                    }
+                });
+                inferencesMade++;
+            }
+        }
+        return { inferencesMade };
+    }
+
     async run(params: IMemoryExtractionParams) {
         const { text, messageId, conversationId, brainId, config } = params;
         
@@ -66,53 +179,28 @@ export class MemoryExtractionPipeline {
 
         try {
             const extractionResult = await this.logStep(runId, 1, 'Extract Entities, Knowledge, and Relationships', { text }, async () => {
-                const prompt = `Analyze the following text from a conversation between a user and an AI. Your task is to extract key information and structure it as a JSON object.
+                const prompt = `Analyze the following text from a conversation. Your task is to extract key information as a JSON object.
 
                 Text to analyze:
                 "${text}"
 
-                Respond with a JSON object containing three keys: "entities", "knowledge", and "relationships".
-                - "entities": An array of objects. Each object should represent a distinct person, place, project, company, or important concept. Include a "name", a "type", and a concise "description" summarizing all relevant details from the text.
-                - "knowledge": An array of strings. Each string must be a self-contained, factual statement or piece of information worth remembering.
-                - "relationships": An array of objects representing the connections between the entities found in the text. Each object must have "source" (the name of the source entity), "predicate" (the verb or connecting phrase, e.g., 'works_for', 'is_located_in'), and "target" (the name of the target entity).
+                Respond with a JSON object containing "entities", "knowledge", and "relationships".
+                - "entities": An array of objects, each with "name", "type", and "description".
+                - "knowledge": An array of self-contained, factual strings.
+                - "relationships": An array of objects, each with "source", "predicate" (e.g., 'works_for'), and "target".
                 `;
                 
                 const response = await this.ai.models.generateContent({
                     model: 'gemini-2.5-flash',
-                    contents: prompt,
+                    contents: [{ role: 'user', parts: [{ text: prompt }] }],
                     config: {
                          responseMimeType: "application/json",
                          responseSchema: {
                             type: Type.OBJECT,
                             properties: {
-                                entities: {
-                                    type: Type.ARRAY,
-                                    items: {
-                                        type: Type.OBJECT,
-                                        properties: {
-                                            name: { type: Type.STRING },
-                                            type: { type: Type.STRING },
-                                            description: { type: Type.STRING }
-                                        },
-                                        required: ['name', 'type', 'description']
-                                    }
-                                },
-                                knowledge: {
-                                    type: Type.ARRAY,
-                                    items: { type: Type.STRING }
-                                },
-                                relationships: {
-                                    type: Type.ARRAY,
-                                    items: {
-                                        type: Type.OBJECT,
-                                        properties: {
-                                            source: { type: Type.STRING },
-                                            predicate: { type: Type.STRING },
-                                            target: { type: Type.STRING }
-                                        },
-                                        required: ['source', 'predicate', 'target']
-                                    }
-                                }
+                                entities: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, type: { type: Type.STRING }, description: { type: Type.STRING } }, required: ['name', 'type', 'description'] } },
+                                knowledge: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                relationships: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { source: { type: Type.STRING }, predicate: { type: Type.STRING }, target: { type: Type.STRING } }, required: ['source', 'predicate', 'target'] } }
                             },
                              required: ['entities', 'knowledge', 'relationships'],
                         }
@@ -131,61 +219,57 @@ export class MemoryExtractionPipeline {
                 messageId: params.messageId,
             };
 
+            let storedEntities: EntityDefinition[] = [];
             if (config.enableEntityExtraction && extractionResult.entities && extractionResult.entities.length > 0) {
-                const storedEntities = await this.logStep(runId, 2, 'Store Entities & Embeddings', { count: extractionResult.entities.length }, async () => {
-                    const stored = await Promise.all(extractionResult.entities.map(async (entity: any) => {
-                        // 1. Store description in semantic memory and get vectorId
+                storedEntities = await this.logStep(runId, 2, 'Store Entities & Embeddings', { count: extractionResult.entities.length }, () => 
+                    Promise.all(extractionResult.entities.map(async (entity: any) => {
                         const vectorId = await this.semanticMemory.store({ text: `${entity.name} (${entity.type}): ${entity.description}` });
-                        
-                        // 2. Store structured entity data with the vectorId
                         return this.structuredMemory.store({
                             type: 'entity',
                             data: { ...entity, vectorId, provenance, brainId }
                         });
-                    }));
-                    
-                    return stored;
+                    }))
+                );
+            }
+            
+            const allEntitiesInBrain = await this.structuredMemory.query({ type: 'entity' }) as EntityDefinition[];
+
+            if (extractionResult.relationships && extractionResult.relationships.length > 0) {
+                const storedDirectRelationships = await this.logStep(runId, 3, 'Store Direct Relationships', { count: extractionResult.relationships.length }, async () => {
+                    const entityMap = new Map(allEntitiesInBrain.map(e => [e.name.toLowerCase(), e.id]));
+                    const predicateMap = new Map<string, string>();
+                    const createdRels: EntityRelationship[] = [];
+
+                    for (const rel of extractionResult.relationships) {
+                        let predicateId = predicateMap.get(rel.predicate);
+                        if (!predicateId) {
+                            const { rows: predRows } = await sql`INSERT INTO predicate_definitions (name) VALUES (${rel.predicate}) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id;`;
+                            predicateId = predRows[0].id;
+                            predicateMap.set(rel.predicate, predicateId);
+                        }
+
+                        const sourceId = entityMap.get(rel.source.toLowerCase());
+                        const targetId = entityMap.get(rel.target.toLowerCase());
+
+                        if (sourceId && targetId && predicateId) {
+                            const newRel = await this.structuredMemory.store({
+                                type: 'relationship',
+                                data: { sourceEntityId: sourceId, targetEntityId: targetId, predicateId, provenance, brainId }
+                            });
+                            createdRels.push(newRel);
+                        }
+                    }
+                    return createdRels;
                 });
 
-                // After storing entities, process relationships
-                if (extractionResult.relationships && extractionResult.relationships.length > 0) {
-                    await this.logStep(runId, 3, 'Store Relationships', { count: extractionResult.relationships.length }, async () => {
-                         // Create a map of entity names to IDs for quick lookup
-                        const allEntities = [...storedEntities, ...(await this.structuredMemory.query({type: 'entity'}))];
-                        const entityMap = new Map(allEntities.map(e => [e.name.toLowerCase(), e.id]));
-
-                        for (const rel of extractionResult.relationships) {
-                            // Find or create predicate
-                            const { rows: predicateRows } = await sql`
-                                INSERT INTO predicate_definitions (name)
-                                VALUES (${rel.predicate})
-                                ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
-                                RETURNING id;
-                            `;
-                            const predicateId = predicateRows[0].id;
-
-                            const sourceId = entityMap.get(rel.source.toLowerCase());
-                            const targetId = entityMap.get(rel.target.toLowerCase());
-
-                            if (sourceId && targetId && predicateId) {
-                                await this.structuredMemory.store({
-                                    type: 'relationship',
-                                    data: {
-                                        sourceEntityId: sourceId,
-                                        targetEntityId: targetId,
-                                        predicateId: predicateId,
-                                        provenance: provenance,
-                                        brainId: brainId,
-                                    }
-                                });
-                            }
-                        }
-                    });
-                }
+                await this.logStep(runId, 4, 'Infer New Relationships', { newDirectRels: storedDirectRelationships.length }, () =>
+                    this.inferAndStoreRelationships(storedDirectRelationships, allEntitiesInBrain, brainId, provenance)
+                );
             }
 
+
             if (config.enableKnowledgeExtraction && extractionResult.knowledge) {
-                 await this.logStep(runId, 4, 'Store Knowledge', { count: extractionResult.knowledge.length }, () =>
+                 await this.logStep(runId, 5, 'Store Knowledge', { count: extractionResult.knowledge.length }, () =>
                     Promise.all(extractionResult.knowledge.map((k: string) =>
                         this.semanticMemory.store({ text: k })
                     ))
@@ -193,7 +277,7 @@ export class MemoryExtractionPipeline {
             }
             
             if (config.enableSegmentExtraction) {
-                await this.logStep(runId, 5, 'Extract Segments', { text }, async () => {
+                await this.logStep(runId, 6, 'Extract Segments', { text }, async () => {
                     return { segments: ['Project Alpha', 'Q3 Planning'] }; // Mock result
                 });
             }
