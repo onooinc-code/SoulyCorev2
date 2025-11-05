@@ -49,6 +49,21 @@ export class ContextAssemblyPipeline {
             throw error;
         }
     }
+    
+    private async updateEntitySalience(entityIds: string[]): Promise<void> {
+        if (entityIds.length === 0) return;
+        try {
+            await sql`
+                UPDATE entity_definitions
+                SET "accessCount" = "accessCount" + 1, "lastAccessedAt" = CURRENT_TIMESTAMP
+                WHERE id = ANY(${entityIds}::uuid[]);
+            `;
+        } catch (error) {
+            // Log this error but don't let it crash the main pipeline
+            console.error("Background salience update failed:", error);
+        }
+    }
+
 
     private async extractPotentialNames(query: string): Promise<string[]> {
         try {
@@ -123,21 +138,50 @@ Respond with ONLY the JSON array.`;
             });
 
 
-            // Step 3: Proactive Entity Retrieval (Semantic Search for Entities)
-            const proactiveEntities = await this.logStep(runId, 3, 'Proactive Entity Retrieval', { userQuery, topK: 3 }, async () => {
+            // Step 3: Proactive Entity Retrieval with Salience
+            const proactiveEntities = await this.logStep(runId, 3, 'Proactive Entity Retrieval w/ Salience', { userQuery, topK: 3, candidates: 10 }, async () => {
                 if (!conversation.useStructuredMemory) return [];
-                const entityResults: IVectorQueryResult[] = await this.entityVectorMemory.query({ queryText: userQuery, topK: 3 });
-                if (entityResults.length === 0) return [];
-
-                const entityIds = entityResults.map(e => e.id);
-                // Fetch full entity details from Postgres
-                // FIX: Switched from `sql` template literal to `db.query` to resolve a persistent
-                // TypeScript error with array parameters (`Type 'string[]' is not assignable to type 'Primitive'`).
-                // This uses a standard parameterized query, which is more robust for array values.
-                // FIX: Removed the generic type argument from `db.query` as the wrapper function in `lib/db.ts` does not support it. The return type of this step is already correctly cast to `EntityDefinition[]`.
-                const { rows } = await db.query('SELECT * FROM entity_definitions WHERE id = ANY($1::uuid[])', [entityIds]);
-                return rows;
+            
+                // 1. Fetch more candidates from vector search
+                const vectorResults: IVectorQueryResult[] = await this.entityVectorMemory.query({ queryText: userQuery, topK: 10 });
+                if (vectorResults.length === 0) return [];
+            
+                const entityIds = vectorResults.map(e => e.id);
+                const vectorScores = new Map(vectorResults.map(e => [e.id, e.score]));
+            
+                // 2. Fetch full entity details including salience data
+                // FIX: Removed the generic type argument from `db.query`. The wrapper function in `lib/db.ts` is not generic, and calling it with a type argument causes a TypeScript error "Expected 0 type arguments, but got 1."
+                const { rows: candidateEntities } = await db.query(
+                    'SELECT * FROM entity_definitions WHERE id = ANY($1::uuid[])',
+                    [entityIds]
+                );
+            
+                // 3. Calculate salience and re-rank
+                const now = new Date().getTime();
+                const rankedEntities = candidateEntities.map(entity => {
+                    const vectorScore = vectorScores.get(entity.id) || 0;
+                    
+                    const lastAccessed = entity.lastAccessedAt ? new Date(entity.lastAccessedAt).getTime() : now;
+                    const daysSinceAccess = (now - lastAccessed) / (1000 * 3600 * 24);
+                    const recencyWeight = 1 / (1 + Math.log(1 + daysSinceAccess));
+            
+                    const frequencyWeight = Math.log(1 + (entity.accessCount || 0));
+            
+                    const finalScore = vectorScore * (1 + 0.5 * recencyWeight + 0.5 * frequencyWeight);
+            
+                    return { ...entity, finalScore };
+                });
+            
+                rankedEntities.sort((a, b) => b.finalScore - a.finalScore);
+                
+                const topEntities = rankedEntities.slice(0, 3);
+            
+                return topEntities;
             }) as EntityDefinition[];
+            
+            // Fire-and-forget salience update for the entities that were actually used
+            this.updateEntitySalience(proactiveEntities.map(e => e.id));
+
 
             // Step 4: Retrieve Semantic Memory (Relevant Knowledge)
             const semanticResults = await this.logStep(runId, 4, 'Retrieve Semantic Memory', { userQuery, topK: config.semanticMemoryTopK }, () =>

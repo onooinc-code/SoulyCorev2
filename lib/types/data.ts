@@ -61,6 +61,8 @@ export interface EntityDefinition {
     version: number;
     brainId?: string | null;
     vectorId?: string;
+    accessCount?: number;
+    lastAccessedAt?: Date;
     createdAt: Date;
     lastUpdatedAt: Date;
 }

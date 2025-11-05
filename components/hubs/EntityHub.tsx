@@ -140,6 +140,22 @@ const EntityCard: React.FC<EntityCardProps> = ({ entity, isSelected, onToggleSel
     </motion.div>
 );
 
+const getRelativeTime = (date: Date): string => {
+    const now = new Date();
+    const seconds = Math.round((now.getTime() - date.getTime()) / 1000);
+    const minutes = Math.round(seconds / 60);
+    const hours = Math.round(minutes / 60);
+    const days = Math.round(hours / 24);
+
+    if (seconds < 60) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
+};
+
+
 const EntityHub = () => {
     const { setStatus, clearError } = useConversation();
     const { log } = useLog();
@@ -487,8 +503,8 @@ const EntityHub = () => {
                                 <SortableHeader sortKey="name" label="Name" />
                                 <SortableHeader sortKey="type" label="Type" />
                                 {visibleColumns.description && <th className="p-2 text-left">Description</th>}
-                                {visibleColumns.aliases && <th className="p-2 text-left">Aliases</th>}
-                                {visibleColumns.tags && <th className="p-2 text-left">Tags</th>}
+                                <SortableHeader sortKey="accessCount" label="Access Count" />
+                                <SortableHeader sortKey="lastAccessedAt" label="Last Accessed" />
                                 {visibleColumns.createdAt && <SortableHeader sortKey="createdAt" label="Created" />}
                                 <th className="p-2 text-left w-20">Actions</th>
                             </tr>
@@ -500,8 +516,8 @@ const EntityHub = () => {
                                     <td className="p-2 font-medium truncate" onDoubleClick={() => setEditingCell({ entityId: entity.id, field: 'name' })}>{editingCell?.entityId === entity.id && editingCell.field === 'name' ? <input type="text" defaultValue={entity.name} onBlur={e => handleCellUpdate(entity.id, 'name', e.target.value)} autoFocus className="bg-gray-600 w-full" /> : entity.name}</td>
                                     <td className="p-2 font-mono text-xs text-indigo-300 truncate">{entity.type}</td>
                                     {visibleColumns.description && <td className="p-2 text-xs text-gray-400 truncate" onDoubleClick={() => setEditingCell({ entityId: entity.id, field: 'description' })}>{editingCell?.entityId === entity.id && editingCell.field === 'description' ? <textarea defaultValue={entity.description} onBlur={e => handleCellUpdate(entity.id, 'description', e.target.value)} autoFocus className="bg-gray-600 w-full h-16" /> : entity.description}</td>}
-                                    {visibleColumns.aliases && <td className="p-2 text-xs truncate">{entity.aliases?.join(', ')}</td>}
-                                    {visibleColumns.tags && <td className="p-2 text-xs truncate">{entity.tags?.join(', ')}</td>}
+                                    <td className="p-2 text-center text-gray-400">{entity.accessCount || 0}</td>
+                                    <td className="p-2 text-xs text-gray-500">{entity.lastAccessedAt ? getRelativeTime(new Date(entity.lastAccessedAt)) : 'Never'}</td>
                                     {visibleColumns.createdAt && <td className="p-2 text-xs text-gray-500">{new Date(entity.createdAt).toLocaleDateString()}</td>}
                                     <td className="p-2" onClick={e => e.stopPropagation()}>
                                         <div className="flex gap-1"><button onClick={() => handleOpenForm(entity)} title="Edit" className="p-1 text-gray-400 hover:text-white"><EditIcon className="w-4 h-4" /></button><button onClick={() => handleDeleteEntity(entity.id)} title="Delete" className="p-1 text-gray-400 hover:text-red-400"><TrashIcon className="w-4 h-4" /></button></div>

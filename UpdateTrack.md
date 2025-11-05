@@ -205,3 +205,20 @@ Performed a final, exhaustive audit and refactoring of the entire application's 
 - `app/api/contacts/test/route.ts`
 - `components/dev_center/api_command_center/ResponsePanel.tsx`
 - `app/api/dashboard/charts/route.ts`
+---
+### Update #12: Personalized Entity Salience
+
+**Details:**
+Implemented a system to track and utilize the "importance" of entities based on user interaction. The AI now prioritizes entities that are accessed frequently and recently, leading to more contextually relevant responses.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `scripts/create-tables.js`
+- `lib/types/data.ts`
+- `core/pipelines/context_assembly.ts`
+- `components/hubs/EntityHub.tsx`
+
+**Changes Made:**
+- **Database Schema**: Added `accessCount` and `lastAccessedAt` columns to the `entity_definitions` table to store salience metadata.
+- **Context Assembly Pipeline**: The pipeline now fetches a larger set of candidate entities from the vector store and re-ranks them using a salience score calculated from vector similarity, access frequency, and recency. It also updates the salience data for used entities in the background.
+- **Entity Hub UI**: The `EntityHub` table now displays the "Access Count" and "Last Accessed" date for each entity, with both columns being sortable, providing visibility into the new system.

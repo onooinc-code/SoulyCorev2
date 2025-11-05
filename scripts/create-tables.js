@@ -106,6 +106,8 @@ const statements = [
     "version" INTEGER NOT NULL DEFAULT 1,
     "brainId" UUID REFERENCES "brains"("id") ON DELETE SET NULL,
     "vectorId" VARCHAR(255),
+    "accessCount" INTEGER NOT NULL DEFAULT 0,
+    "lastAccessedAt" TIMESTAMPTZ DEFAULT now(),
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now(),
     UNIQUE("name", "type", "brainId")
