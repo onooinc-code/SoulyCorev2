@@ -25,7 +25,9 @@ export async function GET() {
             label: (r as any).predicateName, // Use the joined name
             context: r.context,
             startDate: r.startDate,
-            endDate: r.endDate
+            endDate: r.endDate,
+            confidenceScore: r.confidenceScore,
+            metadata: r.metadata,
         }));
 
         const graphData: RelationshipGraphData = { nodes, edges };
@@ -41,7 +43,7 @@ export async function GET() {
 // POST a new relationship
 export async function POST(req: NextRequest) {
     try {
-        const { sourceEntityId, targetEntityId, predicateName, context, startDate, endDate } = await req.json();
+        const { sourceEntityId, targetEntityId, predicateName, context, startDate, endDate, confidenceScore, metadata } = await req.json();
 
         if (!sourceEntityId || !targetEntityId || !predicateName) {
             return NextResponse.json({ error: 'sourceEntityId, targetEntityId, and predicateName are required' }, { status: 400 });
@@ -57,8 +59,12 @@ export async function POST(req: NextRequest) {
         const predicateId = predicateRows[0].id;
 
         const { rows } = await sql<EntityRelationship>`
-            INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", "predicateId", context, "startDate", "endDate")
-            VALUES (${sourceEntityId}, ${targetEntityId}, ${predicateId}, ${context || null}, ${startDate || null}, ${endDate || null})
+            INSERT INTO entity_relationships (
+                "sourceEntityId", "targetEntityId", "predicateId", context, "startDate", "endDate", "confidenceScore", "metadata"
+            )
+            VALUES (
+                ${sourceEntityId}, ${targetEntityId}, ${predicateId}, ${context || null}, ${startDate || null}, ${endDate || null}, ${confidenceScore || 0.5}, ${metadata ? JSON.stringify(metadata) : null}
+            )
             ON CONFLICT ("sourceEntityId", "targetEntityId", "predicateId") DO NOTHING
             RETURNING *;
         `;

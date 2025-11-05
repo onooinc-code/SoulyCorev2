@@ -296,3 +296,23 @@ Implemented a dynamic "Relevancy Score" for entities, making the AI's memory mor
 - **`EntityDetailPanel.tsx`**: Updated to display the new relevancy score with a visual progress bar.
 - **`app/api/entities/unused/route.ts`**: Created a new backend endpoint that specifically queries for entities that have no relationships and have never been mentioned in a message.
 - **`components/hubs/PruneUnusedModal.tsx`**: Created a new modal component that fetches the list of unused entities from the new API, allows the user to select them, and performs a bulk deletion via the existing bulk actions API.
+---
+
+### Update #17: Automated Fact Verification & Staleness Detection
+
+**Details:**
+Implemented an AI-powered "Fact Verifier" tool in the Entity Hub. This feature allows the system to use Google Search to periodically check if stored relationships (facts) are still accurate. This keeps the AI's knowledge base up-to-date and prevents it from relying on stale information.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `components/hubs/EntityHub.tsx`
+- `app/api/entities/verifiable-facts/route.ts` (new file)
+- `app/api/entities/verify-fact/route.ts` (new file)
+- `components/hubs/FactVerifierModal.tsx` (new file)
+
+**Changes Made:**
+- **Database**: Leveraged the `lastVerifiedAt` and `verificationStatus` columns in the `entity_relationships` table.
+- **`EntityHub.tsx`**: Added a "Verify Facts" button to the "Tools" menu, which launches the new `FactVerifierModal`.
+- **`FactVerifierModal.tsx`**: Created a new modal that fetches a list of facts needing verification. For each fact, the user can click a "Verify" button.
+- **API `verifiable-facts`**: Created a new endpoint that queries the database for relationships that are unverified or haven't been checked in over 30 days.
+- **API `verify-fact`**: Created a new endpoint that takes a relationship ID, constructs a question (e.g., "Is X the CEO of Y?"), and uses the Gemini API with Google Search grounding to get a current answer. It then updates the fact's status to 'Verified', 'Refuted', or 'Unverified' in the database.

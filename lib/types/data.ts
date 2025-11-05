@@ -84,6 +84,10 @@ export interface EntityRelationship {
     brainId?: string | null;
     startDate?: Date | null;
     endDate?: Date | null;
+    lastVerifiedAt?: Date;
+    verificationStatus?: string;
+    confidenceScore?: number;
+    metadata?: Record<string, any>;
     createdAt: Date;
 }
 
@@ -409,6 +413,8 @@ export interface GraphEdge {
     context?: string;
     startDate?: Date | null;
     endDate?: Date | null;
+    confidenceScore?: number;
+    metadata?: Record<string, any>;
 }
 export interface RelationshipGraphData {
     nodes: GraphNode[];

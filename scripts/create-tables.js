@@ -131,6 +131,10 @@ const statements = [
     "brainId" UUID REFERENCES "brains"("id") ON DELETE SET NULL,
     "startDate" TIMESTAMPTZ DEFAULT NULL,
     "endDate" TIMESTAMPTZ DEFAULT NULL,
+    "lastVerifiedAt" TIMESTAMPTZ,
+    "verificationStatus" VARCHAR(50),
+    "confidenceScore" REAL DEFAULT 0.5,
+    "metadata" JSONB,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     UNIQUE("sourceEntityId", "targetEntityId", "predicateId")
   );`,

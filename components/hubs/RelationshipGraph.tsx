@@ -177,6 +177,7 @@ const RelationshipGraph = () => {
 
                     const midX = (sourcePos.x + targetPos.x) / 2;
                     const midY = (sourcePos.y + targetPos.y) / 2;
+                    const confidence = edge.confidenceScore ?? 0.5;
 
                     let dateLabel = '';
                     if (edge.startDate && edge.endDate) {
@@ -188,7 +189,7 @@ const RelationshipGraph = () => {
                     }
 
                     return (
-                        <g key={edge.id} className="pointer-events-none">
+                        <g key={edge.id} className="pointer-events-none" opacity={0.3 + confidence * 0.7}>
                             <line
                                 x1={sourcePos.x}
                                 y1={sourcePos.y}
@@ -206,7 +207,7 @@ const RelationshipGraph = () => {
                                 textAnchor="middle"
                                 className="font-mono"
                             >
-                                {edge.label}
+                                {edge.label} ({Math.round(confidence * 100)}%)
                             </text>
                             {dateLabel && (
                                 <text
