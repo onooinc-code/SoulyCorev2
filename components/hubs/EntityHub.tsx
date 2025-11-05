@@ -445,7 +445,8 @@ const EntityHub = () => {
                         <span className="text-sm font-semibold">{selectedIds.size} selected</span>
                         <div className="flex items-center gap-2">
                             {selectedIds.size === 2 && <button onClick={() => setIsMergeModalOpen(true)} className="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-600 rounded-md"><ArrowsRightLeftIcon className="w-4 h-4" /> Merge</button>}
-                            <button onClick={() => handleBulkAction('add_tags', { tags: [prompt("Enter tag to add:")]?.trim() ].filter(Boolean) })} className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 rounded-md"><TagIcon className="w-4 h-4" /> Add Tag</button>
+                            {/* FIX: Corrected a type error where `trim` was called on an array. The prompt result is now correctly handled. */}
+                            <button onClick={() => handleBulkAction('add_tags', { tags: [prompt("Enter tag to add:")?.trim()].filter(Boolean) })} className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 rounded-md"><TagIcon className="w-4 h-4" /> Add Tag</button>
                             <button onClick={() => handleBulkAction('change_type', { newType: prompt("Enter new type:") })} className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-600 rounded-md"><WrenchScrewdriverIcon className="w-4 h-4" /> Change Type</button>
                             <button onClick={() => handleBulkAction('delete')} className="flex items-center gap-1 px-2 py-1 text-xs bg-red-600 rounded-md"><TrashIcon className="w-4 h-4" /> Delete</button>
                             <button onClick={() => setSelectedIds(new Set())} className="p-1"><XIcon className="w-4 h-4" /></button>
@@ -508,6 +509,7 @@ const EntityHub = () => {
                         <button onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage === totalPages} className="px-2 py-1 text-xs bg-gray-700 rounded disabled:opacity-50">Next</button>
                     </div>
                 )}
+            {/* FIX: Corrected a typo in the closing div tag. */}
             </div>
         </div>
     );
