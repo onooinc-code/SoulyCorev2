@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { XIcon, ClockIcon, SparklesIcon } from '../Icons';
+import { XIcon, ClockIcon, SparklesIcon, ScissorsIcon } from '../Icons';
 import type { EntityDefinition, EntityHistoryLog, Event } from '@/lib/types';
 import { useNotification } from '@/lib/hooks/use-notifications';
+import SplitEntityModal from '../modals/SplitEntityModal';
+import { AnimatePresence } from 'framer-motion';
 
 interface EntityDetailPanelProps {
     entity: EntityDefinition & { relevancyScore?: number };
@@ -73,6 +75,7 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
     const [events, setEvents] = useState<EnrichedEvent[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSummarizing, setIsSummarizing] = useState(false);
+    const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
     const { addNotification } = useNotification();
 
     useEffect(() => {
@@ -135,6 +138,7 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
     else if (score > 30) barColor = 'bg-yellow-500';
 
     return (
+        <>
         <motion.div
             initial={{ x: '100%' }}
             animate={{ x: '0%' }}
@@ -145,6 +149,10 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
             <header className="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
                 <h3 className="font-bold text-lg">{entity.name}</h3>
                 <div className="flex items-center gap-2">
+                    <button onClick={() => setIsSplitModalOpen(true)} className="flex items-center gap-1 px-2 py-1 bg-yellow-600 text-xs rounded-md hover:bg-yellow-500">
+                        <ScissorsIcon className="w-4 h-4" />
+                        Split
+                    </button>
                     <button onClick={handleAiSummarize} disabled={isSummarizing} className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-xs rounded-md hover:bg-blue-500 disabled:opacity-50">
                         <SparklesIcon className="w-4 h-4" />
                         {isSummarizing ? 'Summarizing...' : 'AI Summarize'}
@@ -222,6 +230,16 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
                 <p>Last Updated: {new Date(entity.lastUpdatedAt).toLocaleString()}</p>
             </footer>
         </motion.div>
+        <AnimatePresence>
+            {isSplitModalOpen && (
+                <SplitEntityModal 
+                    sourceEntity={entity}
+                    onClose={() => setIsSplitModalOpen(false)}
+                    onSplitSuccess={() => { onRefresh(); onClose(); }}
+                />
+            )}
+        </AnimatePresence>
+        </>
     );
 };
 

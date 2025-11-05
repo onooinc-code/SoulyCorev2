@@ -403,6 +403,21 @@ export interface EventParticipant {
     role: string;
 }
 
+export type ValidationRuleType = 'unique_across_types' | 'min_length';
+export interface ValidationRule {
+    field: 'name' | 'description';
+    rule: ValidationRuleType;
+    params?: any[];
+    errorMessage: string;
+}
+export interface EntityTypeValidationRules {
+    id: string;
+    entityType: string;
+    rulesJson: ValidationRule[];
+    createdAt: Date;
+    lastUpdatedAt: Date;
+}
+
 
 // For Nivo charts
 export interface FeatureStatusChartData {

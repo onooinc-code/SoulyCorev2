@@ -52,7 +52,12 @@ export interface AppSettings {
         fontSize?: string;
         messageFontSize?: 'xs' | 'sm' | 'base' | 'lg';
         theme?: 'theme-dark' | 'theme-light' | 'theme-solarized';
-    }
+    };
+    entityGridSettings?: {
+        showDescription: boolean;
+        showAliases: boolean;
+        showTags: boolean;
+    };
     savedEntityHubFilters?: SavedFilterSet[];
 }
 

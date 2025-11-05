@@ -25,8 +25,13 @@ const PredicatesHub = dynamic(() => import('./hubs/PredicatesHub'), {
     loading: () => <div className="flex items-center justify-center h-full"><p>Loading Predicates Hub...</p></div>
 });
 
+const ValidationRulesHub = dynamic(() => import('./hubs/ValidationRulesHub'), {
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center h-full"><p>Loading Validation Rules...</p></div>
+});
 
-type Tab = 'entities' | 'relationships' | 'segments' | 'predicates';
+
+type Tab = 'entities' | 'relationships' | 'segments' | 'predicates' | 'validation';
 
 const MemoryCenter = () => {
     const [activeTab, setActiveTab] = useState<Tab>('entities');
@@ -53,6 +58,8 @@ const MemoryCenter = () => {
                 return <SegmentHub />;
             case 'predicates':
                 return <PredicatesHub />;
+            case 'validation':
+                return <ValidationRulesHub />;
             default: return null;
         }
     };
@@ -67,6 +74,7 @@ const MemoryCenter = () => {
                 <TabButton tabName="entities" label="Entities" icon={CubeIcon} />
                 <TabButton tabName="relationships" label="Relationships" icon={LinkIcon} />
                 <TabButton tabName="predicates" label="Predicates" icon={BeakerIcon} />
+                <TabButton tabName="validation" label="Validation Rules" icon={BeakerIcon} />
                 <TabButton tabName="segments" label="Segments" icon={TagIcon} />
             </div>
 

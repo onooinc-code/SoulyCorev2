@@ -29,6 +29,11 @@ const defaultSettings: AppSettings = {
         messageFontSize: 'base',
         theme: 'theme-dark',
     },
+    entityGridSettings: {
+        showDescription: true,
+        showAliases: true,
+        showTags: false,
+    },
     savedEntityHubFilters: [],
 };
 
@@ -51,6 +56,7 @@ export async function GET() {
                 enableDebugLog: { ...defaultSettings.enableDebugLog, ...dbSettings.enableDebugLog },
                 featureFlags: { ...defaultSettings.featureFlags, ...dbSettings.featureFlags },
                 global_ui_settings: { ...defaultSettings.global_ui_settings, ...dbSettings.global_ui_settings },
+                entityGridSettings: { ...defaultSettings.entityGridSettings, ...dbSettings.entityGridSettings },
                 savedEntityHubFilters: dbSettings.savedEntityHubFilters ?? defaultSettings.savedEntityHubFilters,
             };
             return NextResponse.json(mergedSettings);

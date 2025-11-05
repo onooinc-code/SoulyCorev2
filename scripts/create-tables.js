@@ -37,6 +37,7 @@ const statements = [
   `DROP TABLE IF EXISTS "entity_relationships" CASCADE;`,
   `DROP TABLE IF EXISTS "events" CASCADE;`,
   `DROP TABLE IF EXISTS "event_participants" CASCADE;`,
+  `DROP TABLE IF EXISTS "entity_type_validation_rules" CASCADE;`,
   `DROP MATERIALIZED VIEW IF EXISTS "vw_detailed_relationships" CASCADE;`,
 
 
@@ -446,6 +447,14 @@ const statements = [
     "entityId" UUID NOT NULL REFERENCES "entity_definitions"("id") ON DELETE CASCADE,
     "role" VARCHAR(255) NOT NULL,
     UNIQUE("eventId", "entityId", "role")
+  );`,
+
+  `CREATE TABLE IF NOT EXISTS "entity_type_validation_rules" (
+    "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "entityType" VARCHAR(255) UNIQUE NOT NULL,
+    "rulesJson" JSONB NOT NULL,
+    "createdAt" TIMESTAMPTZ DEFAULT now(),
+    "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
 
   `CREATE MATERIALIZED VIEW "vw_detailed_relationships" AS

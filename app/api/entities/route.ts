@@ -1,8 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import type { EntityDefinition } from '@/lib/types';
+import type { EntityDefinition, EntityTypeValidationRules, ValidationRule } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+
+async function validate(entity: Partial<EntityDefinition>): Promise<{ valid: boolean; message: string }> {
+    if (!entity.type) return { valid: true, message: '' };
+
+    const { rows } = await sql<EntityTypeValidationRules>`
+        SELECT "rulesJson" FROM entity_type_validation_rules WHERE "entityType" = ${entity.type};
+    `;
+    if (rows.length === 0) return { valid: true, message: '' };
+
+    const rules: ValidationRule[] = rows[0].rulesJson;
+
+    for (const rule of rules) {
+        if (rule.rule === 'unique_across_types' && rule.field === 'name') {
+            const typesToCheck = [entity.type, ...(rule.params || [])];
+            const { rows: existing } = await sql`
+                SELECT id FROM entity_definitions WHERE name = ${entity.name} AND type = ANY(${typesToCheck}::text[]);
+            `;
+            if (existing.length > 0) {
+                return { valid: false, message: rule.errorMessage || `An entity with name "${entity.name}" already exists in a conflicting type.` };
+            }
+        }
+        // Add more rule checks here...
+    }
+
+    return { valid: true, message: '' };
+}
+
 
 export async function GET(req: NextRequest) {
     try {
@@ -32,10 +59,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const { name, type, description, aliases, tags, brainId } = await req.json();
+        const entityData: Partial<EntityDefinition> = await req.json();
+        const { name, type, description, aliases, tags, brainId } = entityData;
         if (!name || !type) {
             return NextResponse.json({ error: 'Missing required fields: name and type' }, { status: 400 });
         }
+
+        const validationResult = await validate(entityData);
+        if (!validationResult.valid) {
+            return NextResponse.json({ error: validationResult.message }, { status: 400 });
+        }
+
         const { rows } = await sql<EntityDefinition>`
             INSERT INTO entity_definitions (name, type, description, aliases, tags, "brainId")
             VALUES (${name}, ${type}, ${description || null}, ${aliases ? JSON.stringify(aliases) : '[]'}, ${tags ? (tags as any) : null}, ${brainId || null})
