@@ -11,8 +11,10 @@ export async function GET() {
         const { rows: entities } = await sql`
             SELECT id, name, type FROM entity_definitions;
         `;
-        const { rows: relationships } = await sql<EntityRelationship>`
-            SELECT * FROM entity_relationships;
+        const { rows: relationships } = await sql`
+            SELECT r.*, p.name as "predicateName" 
+            FROM entity_relationships r
+            JOIN predicate_definitions p ON r."predicateId" = p.id;
         `;
 
         const nodes: GraphNode[] = entities.map(e => ({ id: e.id, name: e.name, type: e.type }));
@@ -20,7 +22,7 @@ export async function GET() {
             id: r.id,
             source: r.sourceEntityId,
             target: r.targetEntityId,
-            label: r.predicate,
+            label: (r as any).predicateName, // Use the joined name
             context: r.context
         }));
 
@@ -37,16 +39,16 @@ export async function GET() {
 // POST a new relationship
 export async function POST(req: NextRequest) {
     try {
-        const { sourceEntityId, targetEntityId, predicate, context } = await req.json();
+        const { sourceEntityId, targetEntityId, predicateId, context } = await req.json();
 
-        if (!sourceEntityId || !targetEntityId || !predicate) {
-            return NextResponse.json({ error: 'source, target, and predicate are required' }, { status: 400 });
+        if (!sourceEntityId || !targetEntityId || !predicateId) {
+            return NextResponse.json({ error: 'source, target, and predicateId are required' }, { status: 400 });
         }
 
         const { rows } = await sql<EntityRelationship>`
-            INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", predicate, context)
-            VALUES (${sourceEntityId}, ${targetEntityId}, ${predicate}, ${context || null})
-            ON CONFLICT ("sourceEntityId", "targetEntityId", predicate) DO NOTHING
+            INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", "predicateId", context)
+            VALUES (${sourceEntityId}, ${targetEntityId}, ${predicateId}, ${context || null})
+            ON CONFLICT ("sourceEntityId", "targetEntityId", "predicateId") DO NOTHING
             RETURNING *;
         `;
         

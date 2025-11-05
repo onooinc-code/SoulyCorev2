@@ -3,6 +3,7 @@ const { db } = require('@vercel/postgres');
 
 const statements = [
   `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`,
+  `CREATE EXTENSION IF NOT EXISTS "pg_trgm";`,
 
   // FIX: Force a clean state for ALL tables on every build to prevent errors from stale,
   // incomplete table structures persisting in the Vercel build cache. This is the definitive
@@ -31,6 +32,8 @@ const statements = [
   `DROP TABLE IF EXISTS "documents" CASCADE;`,
   `DROP TABLE IF EXISTS "data_sources" CASCADE;`,
   `DROP TABLE IF EXISTS "settings" CASCADE;`,
+  `DROP TABLE IF EXISTS "predicate_definitions" CASCADE;`,
+  `DROP TABLE IF EXISTS "entity_history" CASCADE;`,
 
 
   `CREATE TABLE IF NOT EXISTS "settings" (
@@ -95,14 +98,21 @@ const statements = [
     UNIQUE("name", "type")
   );`,
   
+  `CREATE TABLE IF NOT EXISTS "predicate_definitions" (
+    "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "name" VARCHAR(255) UNIQUE NOT NULL,
+    "description" TEXT,
+    "createdAt" TIMESTAMPTZ DEFAULT now()
+  );`,
+
   `CREATE TABLE IF NOT EXISTS "entity_relationships" (
     "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "sourceEntityId" UUID NOT NULL REFERENCES "entity_definitions"("id") ON DELETE CASCADE,
     "targetEntityId" UUID NOT NULL REFERENCES "entity_definitions"("id") ON DELETE CASCADE,
-    "predicate" VARCHAR(255) NOT NULL,
+    "predicateId" UUID NOT NULL REFERENCES "predicate_definitions"("id") ON DELETE CASCADE,
     "context" TEXT,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
-    UNIQUE("sourceEntityId", "targetEntityId", "predicate")
+    UNIQUE("sourceEntityId", "targetEntityId", "predicateId")
   );`,
 
   `CREATE TABLE IF NOT EXISTS "message_entities" (
@@ -386,10 +396,21 @@ const statements = [
       "createdAt" TIMESTAMPTZ DEFAULT now()
   );`,
 
+  `CREATE TABLE IF NOT EXISTS "entity_history" (
+    "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "entityId" UUID NOT NULL REFERENCES "entity_definitions"("id") ON DELETE CASCADE,
+    "fieldName" VARCHAR(255) NOT NULL,
+    "oldValue" TEXT,
+    "newValue" TEXT,
+    "changedBy" VARCHAR(255) DEFAULT 'system',
+    "changedAt" TIMESTAMPTZ DEFAULT now()
+  );`,
+
   // Create indexes for faster queries
   `CREATE INDEX IF NOT EXISTS "idx_messages_conversation_id" ON "messages"("conversationId");`,
   `CREATE INDEX IF NOT EXISTS "idx_conversations_lastupdatedat" ON "conversations"("lastUpdatedAt");`,
   `CREATE INDEX IF NOT EXISTS "idx_pipeline_runs_message_id" ON "pipeline_runs"("messageId");`,
+  `CREATE INDEX IF NOT EXISTS "idx_entity_history_entity_id" ON "entity_history"("entityId");`,
 ];
 
 async function createTables() {

@@ -148,16 +148,25 @@ export class MemoryExtractionPipeline {
                         const entityMap = new Map(allEntities.map(e => [e.name.toLowerCase(), e.id]));
 
                         for (const rel of extractionResult.relationships) {
+                            // Find or create predicate
+                            const { rows: predicateRows } = await sql`
+                                INSERT INTO predicate_definitions (name)
+                                VALUES (${rel.predicate})
+                                ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+                                RETURNING id;
+                            `;
+                            const predicateId = predicateRows[0].id;
+
                             const sourceId = entityMap.get(rel.source.toLowerCase());
                             const targetId = entityMap.get(rel.target.toLowerCase());
 
-                            if (sourceId && targetId) {
+                            if (sourceId && targetId && predicateId) {
                                 await this.structuredMemory.store({
                                     type: 'relationship',
                                     data: {
                                         sourceEntityId: sourceId,
                                         targetEntityId: targetId,
-                                        predicate: rel.predicate,
+                                        predicateId: predicateId,
                                     }
                                 });
                             }

@@ -72,12 +72,14 @@ export class StructuredMemoryModule implements ISingleMemoryModule {
             }
              case 'relationship': {
                 const { data } = params;
-                if (!data.sourceEntityId || !data.targetEntityId || !data.predicate) {
-                    throw new Error('StructuredMemoryModule.store (relationship) requires source, target, and predicate.');
+                // FIX: Property 'predicate' does not exist on type 'Partial<EntityRelationship>'. Corrected to 'predicateId'.
+                if (!data.sourceEntityId || !data.targetEntityId || !data.predicateId) {
+                    throw new Error('StructuredMemoryModule.store (relationship) requires source, target, and predicateId.');
                 }
                 const { rows } = await sql<EntityRelationship>`
-                    INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", "predicate", "context")
-                    VALUES (${data.sourceEntityId}, ${data.targetEntityId}, ${data.predicate}, ${data.context || null})
+                    INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", "predicateId", "context")
+                    // FIX: Property 'predicate' does not exist on type 'Partial<EntityRelationship>'. Corrected to 'predicateId'.
+                    VALUES (${data.sourceEntityId}, ${data.targetEntityId}, ${data.predicateId}, ${data.context || null})
                     RETURNING *;
                 `;
                 return rows[0] || null;

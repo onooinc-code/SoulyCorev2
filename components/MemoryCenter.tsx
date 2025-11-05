@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CubeIcon, LinkIcon, TagIcon } from './Icons';
+import { CubeIcon, LinkIcon, TagIcon, BeakerIcon } from './Icons';
 import dynamic from 'next/dynamic';
 
 const EntityHub = dynamic(() => import('./hubs/EntityHub'), {
@@ -10,7 +10,6 @@ const EntityHub = dynamic(() => import('./hubs/EntityHub'), {
     loading: () => <div className="flex items-center justify-center h-full"><p>Loading Entity Hub...</p></div>
 });
 
-// FIX: Corrected import path for RelationshipGraph.
 const RelationshipGraph = dynamic(() => import('./hubs/RelationshipGraph'), {
     ssr: false,
     loading: () => <div className="flex items-center justify-center h-full"><p>Loading Relationship Graph...</p></div>
@@ -21,8 +20,13 @@ const SegmentHub = dynamic(() => import('./hubs/SegmentHub'), {
     loading: () => <div className="flex items-center justify-center h-full"><p>Loading Segment Hub...</p></div>
 });
 
+const PredicatesHub = dynamic(() => import('./hubs/PredicatesHub'), {
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center h-full"><p>Loading Predicates Hub...</p></div>
+});
 
-type Tab = 'entities' | 'relationships' | 'segments';
+
+type Tab = 'entities' | 'relationships' | 'segments' | 'predicates';
 
 const MemoryCenter = () => {
     const [activeTab, setActiveTab] = useState<Tab>('entities');
@@ -47,6 +51,8 @@ const MemoryCenter = () => {
                 return <RelationshipGraph />;
             case 'segments':
                 return <SegmentHub />;
+            case 'predicates':
+                return <PredicatesHub />;
             default: return null;
         }
     };
@@ -60,6 +66,7 @@ const MemoryCenter = () => {
             <div className="flex items-center gap-2 mb-4 flex-shrink-0">
                 <TabButton tabName="entities" label="Entities" icon={CubeIcon} />
                 <TabButton tabName="relationships" label="Relationships" icon={LinkIcon} />
+                <TabButton tabName="predicates" label="Predicates" icon={BeakerIcon} />
                 <TabButton tabName="segments" label="Segments" icon={TagIcon} />
             </div>
 

@@ -60,13 +60,30 @@ export interface EntityDefinition {
     lastUpdatedAt: Date;
 }
 
+export interface PredicateDefinition {
+    id: string;
+    name: string;
+    description?: string;
+    createdAt: Date;
+}
+
 export interface EntityRelationship {
     id: string;
     sourceEntityId: string;
     targetEntityId: string;
-    predicate: string; // e.g., 'is_related_to', 'works_at'
+    predicateId: string;
     context?: string;
     createdAt: Date;
+}
+
+export interface EntityHistoryLog {
+    id: string;
+    entityId: string;
+    fieldName: string;
+    oldValue?: string;
+    newValue?: string;
+    changedBy: string;
+    changedAt: Date;
 }
 
 export interface Segment {
