@@ -111,3 +111,10 @@ export async function shouldExtractMemory(history: Content[]): Promise<boolean> 
         return false;
     }
 }
+
+export function shouldPredictLink(history: Content[]): boolean {
+    // Simple probabilistic check to avoid running on every turn.
+    // A more sophisticated check could analyze conversation length or entity density.
+    if (history.length < 4) return false; // Don't run on very short conversations
+    return Math.random() < 0.2; // 20% chance
+}

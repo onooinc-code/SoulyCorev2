@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 // FIX: Corrected import path for types.
 import { Conversation, Message, Contact } from '@/lib/types';
 import { ContextAssemblyPipeline } from '@/core/pipelines/context_assembly';
-import { generateProactiveSuggestion, shouldExtractMemory } from '@/lib/gemini-server';
+import { generateProactiveSuggestion, shouldExtractMemory, shouldPredictLink } from '@/lib/gemini-server';
 import { sql } from '@/lib/db';
 import { EpisodicMemoryModule } from '@/core/memory/modules/episodic';
+import { LinkPredictionPipeline } from '@/core/pipelines/link_prediction';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,12 +64,13 @@ export async function POST(req: NextRequest) {
             suggestion = await generateProactiveSuggestion(historyForSuggestion);
         }
         
+        const historyForMemoryCheck = [
+            { role: 'user' as 'user', parts: [{ text: userQuery }] },
+            { role: 'model' as 'model', parts: [{ text: llmResponse }] },
+        ];
+
         let memoryProposal = null;
         if (featureFlags.enableMemoryExtraction && llmResponse) {
-            const historyForMemoryCheck = [
-                { role: 'user' as 'user', parts: [{ text: userQuery }] },
-                { role: 'model' as 'model', parts: [{ text: llmResponse }] },
-            ];
             const shouldExtract = await shouldExtractMemory(historyForMemoryCheck);
             if (shouldExtract) {
                 memoryProposal = {
@@ -78,8 +80,23 @@ export async function POST(req: NextRequest) {
                 };
             }
         }
+
+        let linkProposal = null;
+        // Only try to predict links if we didn't just learn something new, to avoid overwhelming the user.
+        if (!memoryProposal && shouldPredictLink(historyForMemoryCheck)) {
+            try {
+                const linkPredictionPipeline = new LinkPredictionPipeline();
+                linkProposal = await linkPredictionPipeline.run({
+                    conversationId: conversation.id,
+                    brainId: conversation.brainId || null,
+                });
+            } catch (e) {
+                console.error("Link prediction pipeline failed:", e);
+                // Don't let a failed prediction stop the chat response.
+            }
+        }
         
-        return NextResponse.json({ response: llmResponse, suggestion, memoryProposal });
+        return NextResponse.json({ response: llmResponse, suggestion, memoryProposal, linkProposal });
 
     } catch (error) {
         console.error('Error in chat API route:', error);
