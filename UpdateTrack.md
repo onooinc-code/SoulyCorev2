@@ -222,3 +222,39 @@ Implemented a system to track and utilize the "importance" of entities based on 
 - **Database Schema**: Added `accessCount` and `lastAccessedAt` columns to the `entity_definitions` table to store salience metadata.
 - **Context Assembly Pipeline**: The pipeline now fetches a larger set of candidate entities from the vector store and re-ranks them using a salience score calculated from vector similarity, access frequency, and recency. It also updates the salience data for used entities in the background.
 - **Entity Hub UI**: The `EntityHub` table now displays the "Access Count" and "Last Accessed" date for each entity, with both columns being sortable, providing visibility into the new system.
+---
+
+### Update #13: AI-Generated Entity Summaries
+
+**Details:**
+Implemented a feature to allow the AI to dynamically re-summarize an entity based on all known information. This transforms static descriptions into living summaries that evolve as more context is gathered.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `app/api/entities/[entityId]/summarize/route.ts` (new file)
+- `components/hubs/EntityDetailPanel.tsx`
+- `components/hubs/EntityHub.tsx`
+
+**Changes Made:**
+- **Backend**: Created a new API endpoint that, when called for a specific entity, gathers its description, relationships, and recent message mentions. It then prompts a powerful AI model to synthesize this data into a new, comprehensive description and updates the entity in the database, logging the change to its history.
+- **Frontend**: Added an "AI Summarize" button to the `EntityDetailPanel`. This button triggers the backend summarization process and provides loading feedback.
+- **Integration**: The `EntityHub` was updated to pass a refresh function to the detail panel, ensuring the UI updates automatically to display the new, AI-generated summary upon completion.
+---
+
+### Update #14: Automated Clustering & Categorization
+
+**Details:**
+Implemented an advanced "AI Categorizer" tool within the Entity Hub. This feature allows the AI to analyze the entire set of entities, identify semantically similar groups, and propose new, more accurate categories for them. Users can review these suggestions in a dedicated modal and apply them with a single click.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `app/api/entities/suggest-categories/route.ts` (new file)
+- `components/hubs/AICategorizerModal.tsx` (new file)
+- `components/hubs/EntityHub.tsx`
+
+**Changes Made:**
+- **Backend**: Created a new API endpoint (`/api/entities/suggest-categories`) that fetches all entities, passes them to a powerful reasoning model (`gemini-2.5-pro`) with a specific prompt, and receives a structured JSON response of suggested categories and their member entities (including IDs).
+- **Frontend**:
+    - Created a new `AICategorizerModal.tsx` component to manage the user-facing workflow. It calls the API, displays a loading state, and then renders the AI's suggestions as a series of cards.
+    - Each suggestion card has an "Apply Category" button which triggers a call to the existing `/api/entities/bulk-actions` endpoint to efficiently update the `type` for all entities in the group.
+- **Integration**: Added an "AI Categorizer" button to the "Tools" menu in `EntityHub.tsx` to launch the new modal. The hub is configured to automatically refresh its data after categories are successfully applied.

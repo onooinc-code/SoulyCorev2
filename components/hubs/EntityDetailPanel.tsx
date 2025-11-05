@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { XIcon, ClockIcon } from '../Icons';
+import { XIcon, ClockIcon, SparklesIcon } from '../Icons';
 import type { EntityDefinition, EntityHistoryLog } from '@/lib/types';
+import { useNotification } from '@/lib/hooks/use-notifications';
 
 interface EntityDetailPanelProps {
     entity: EntityDefinition;
     onClose: () => void;
+    onRefresh: () => void;
 }
 
 const DetailRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
@@ -60,10 +62,12 @@ const HistoryRow: React.FC<HistoryRowProps> = ({ log }) => {
     )
 };
 
-const EntityDetailPanel = ({ entity, onClose }: EntityDetailPanelProps) => {
+const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProps) => {
     const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
     const [history, setHistory] = useState<EntityHistoryLog[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [isSummarizing, setIsSummarizing] = useState(false);
+    const { addNotification } = useNotification();
 
     useEffect(() => {
         if (activeTab === 'history' && entity) {
@@ -84,6 +88,27 @@ const EntityDetailPanel = ({ entity, onClose }: EntityDetailPanelProps) => {
         }
     }, [activeTab, entity]);
 
+    const handleAiSummarize = async () => {
+        if (!entity) return;
+        setIsSummarizing(true);
+        addNotification({ type: 'info', title: 'AI Summarization', message: 'Generating a new summary for this entity...' });
+        try {
+            const res = await fetch(`/api/entities/${entity.id}/summarize`, {
+                method: 'POST'
+            });
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Failed to generate summary.");
+            }
+            addNotification({ type: 'success', title: 'Summary Updated', message: 'The entity description has been updated.' });
+            onRefresh(); // Trigger a refresh in the parent component
+        } catch (error) {
+            addNotification({ type: 'error', title: 'Summarization Failed', message: (error as Error).message });
+        } finally {
+            setIsSummarizing(false);
+        }
+    };
+
     const TabButton = ({ tab, label }: { tab: 'details' | 'history', label: string }) => (
         <button
             onClick={() => setActiveTab(tab)}
@@ -103,7 +128,13 @@ const EntityDetailPanel = ({ entity, onClose }: EntityDetailPanelProps) => {
         >
             <header className="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
                 <h3 className="font-bold text-lg">{entity.name}</h3>
-                <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-700"><XIcon className="w-5 h-5" /></button>
+                <div className="flex items-center gap-2">
+                    <button onClick={handleAiSummarize} disabled={isSummarizing} className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-xs rounded-md hover:bg-blue-500 disabled:opacity-50">
+                        <SparklesIcon className="w-4 h-4" />
+                        {isSummarizing ? 'Summarizing...' : 'AI Summarize'}
+                    </button>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-700"><XIcon className="w-5 h-5" /></button>
+                </div>
             </header>
             
             <nav className="flex-shrink-0 border-b border-gray-700 flex gap-4 px-4">

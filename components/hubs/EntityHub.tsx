@@ -30,6 +30,10 @@ const PruneUnusedModal = dynamic(() => import('./PruneUnusedModal'), {
     ssr: false
 });
 
+const AICategorizerModal = dynamic(() => import('./AICategorizerModal'), {
+    ssr: false
+});
+
 
 type EntityFormState = Partial<EntityDefinition> & {
     aliases_str?: string;
@@ -186,6 +190,7 @@ const EntityHub = () => {
     const [isToolsMenuOpen, setToolsMenuOpen] = useState(false);
     const [isDuplicateFinderOpen, setIsDuplicateFinderOpen] = useState(false);
     const [isPruneUnusedOpen, setIsPruneUnusedOpen] = useState(false);
+    const [isCategorizerOpen, setIsCategorizerOpen] = useState(false);
 
 
     const ITEMS_PER_PAGE = 20;
@@ -419,7 +424,11 @@ const EntityHub = () => {
         <div className="flex flex-col h-full p-4 relative">
             <AnimatePresence>
                 {detailPanelEntity && (
-                    <EntityDetailPanel entity={detailPanelEntity} onClose={() => setDetailPanelEntity(null)} />
+                    <EntityDetailPanel 
+                        entity={detailPanelEntity} 
+                        onClose={() => setDetailPanelEntity(null)}
+                        onRefresh={() => fetchEntities(activeBrainId)}
+                    />
                 )}
             </AnimatePresence>
             <AnimatePresence>
@@ -437,6 +446,9 @@ const EntityHub = () => {
              <AnimatePresence>
                 {isPruneUnusedOpen && <PruneUnusedModal onClose={() => setIsPruneUnusedOpen(false)} />}
             </AnimatePresence>
+            <AnimatePresence>
+                {isCategorizerOpen && <AICategorizerModal onClose={() => { setIsCategorizerOpen(false); fetchEntities(activeBrainId); }} />}
+            </AnimatePresence>
 
 
             <div className="flex justify-between items-center mb-4 flex-shrink-0">
@@ -451,6 +463,7 @@ const EntityHub = () => {
                                 <motion.div initial={{opacity: 0, y: -10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0, y: -10}} className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-20">
                                     <button onClick={() => { setIsDuplicateFinderOpen(true); setToolsMenuOpen(false); }} className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-700"><BeakerIcon className="w-4 h-4" /> Find Duplicates</button>
                                     <button onClick={() => { setIsPruneUnusedOpen(true); setToolsMenuOpen(false); }} className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-700"><TrashIcon className="w-4 h-4" /> Prune Unused</button>
+                                    <button onClick={() => { setIsCategorizerOpen(true); setToolsMenuOpen(false); }} className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-700"><BeakerIcon className="w-4 h-4" /> Suggest Categories</button>
                                 </motion.div>
                             )}
                         </AnimatePresence>
