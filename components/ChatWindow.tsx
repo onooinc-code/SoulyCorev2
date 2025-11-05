@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -6,6 +7,7 @@ import { useUIState } from '@/components/providers/UIStateProvider';
 import type { Message as MessageType, Contact } from '@/lib/types';
 import { AnimatePresence } from 'framer-motion';
 import { useNotification } from '@/lib/hooks/use-notifications';
+import { ILinkPredictionProposal } from '@/core/pipelines/link_prediction';
 
 // Refactored Components
 import Header from '@/components/Header';
@@ -58,6 +60,29 @@ const ChatWindow = () => {
     }, [currentConversation]);
 
     // --- HANDLERS ---
+    const handleConfirmLinkProposal = async (proposal: ILinkPredictionProposal) => {
+        addNotification({ type: 'info', title: 'Saving new link...' });
+        try {
+            const res = await fetch('/api/entities/relationships', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sourceEntityId: proposal.sourceEntity.id,
+                    targetEntityId: proposal.targetEntity.id,
+                    predicateName: proposal.suggestedPredicate, // Sending the name
+                }),
+            });
+            if (!res.ok) {
+                 const errorData = await res.json();
+                throw new Error(errorData.error || 'Failed to save relationship.');
+            }
+            addNotification({ type: 'success', title: 'Link Saved', message: `The relationship has been saved to memory.` });
+        } catch (error) {
+            addNotification({ type: 'error', title: 'Save Failed', message: (error as Error).message });
+        }
+    };
+
+
     const handleSummarizeMessage = async (content: string) => {
         console.log('User requested message summary.');
         setSummaryModalState({ isOpen: true, text: '', isLoading: true });
@@ -88,7 +113,7 @@ const ChatWindow = () => {
             lastUpdatedAt: new Date(),
         };
 
-        const { aiResponse, suggestion, memoryProposal } = await addMessage(userMessage, mentionedContacts, undefined, replyToMessage?.id);
+        const { aiResponse, suggestion, memoryProposal, linkProposal } = await addMessage(userMessage, mentionedContacts, undefined, replyToMessage?.id);
 
         setReplyToMessage(null); // Clear reply state after sending
 
@@ -109,6 +134,18 @@ const ChatWindow = () => {
               }
             }
           });
+        }
+        
+        if (linkProposal) {
+            addNotification({
+                type: 'info',
+                title: 'AI Link Suggestion',
+                message: `I've noticed you often mention '${linkProposal.sourceEntity.name}' and '${linkProposal.targetEntity.name}' together. Is this relationship correct: ${linkProposal.sourceEntity.name} -> ${linkProposal.suggestedPredicate} -> ${linkProposal.targetEntity.name}?`,
+                action: {
+                    label: 'Confirm & Save',
+                    onClick: () => handleConfirmLinkProposal(linkProposal),
+                }
+            })
         }
     };
     

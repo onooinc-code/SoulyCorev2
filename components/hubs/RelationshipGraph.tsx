@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { RelationshipGraphData, GraphNode, GraphEdge } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 
@@ -9,6 +9,15 @@ const RelationshipGraph = () => {
     const [isLoading, setIsLoading] = useState(true);
     const { log } = useLog();
 
+    // State for interactivity
+    const [positions, setPositions] = useState<Map<string, { x: number, y: number }>>(new Map());
+    const [viewBox, setViewBox] = useState({ x: 0, y: 0, width: 1000, height: 1000 });
+    const [draggedNode, setDraggedNode] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null);
+    const [isPanning, setIsPanning] = useState(false);
+    const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
+    const svgRef = useRef<SVGSVGElement>(null);
+
+
     const fetchGraphData = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -16,6 +25,25 @@ const RelationshipGraph = () => {
             if (!res.ok) throw new Error("Failed to fetch relationship data");
             const data = await res.json();
             setGraphData(data);
+
+            // Set initial positions
+            if (data?.nodes) {
+                const initialPositions = new Map<string, { x: number, y: number }>();
+                const count = data.nodes.length;
+                const radius = Math.min(400, count * 25);
+                const centerX = 500;
+                const centerY = 500;
+
+                data.nodes.forEach((node: GraphNode, i: number) => {
+                    const angle = (i / count) * 2 * Math.PI;
+                    initialPositions.set(node.id, {
+                        x: centerX + radius * Math.cos(angle),
+                        y: centerY + radius * Math.sin(angle),
+                    });
+                });
+                setPositions(initialPositions);
+            }
+
         } catch (error) {
             log('Error fetching relationship graph data', { error }, 'error');
         } finally {
@@ -27,23 +55,77 @@ const RelationshipGraph = () => {
         fetchGraphData();
     }, [fetchGraphData]);
 
-    const nodePositions = useMemo(() => {
-        if (!graphData?.nodes) return new Map();
-        const positions = new Map<string, { x: number, y: number }>();
-        const count = graphData.nodes.length;
-        const radius = Math.min(400, count * 20); 
-        const centerX = 500;
-        const centerY = 500;
+    const getSVGPoint = (clientX: number, clientY: number) => {
+        const svg = svgRef.current;
+        if (!svg) return { x: 0, y: 0 };
+        const pt = svg.createSVGPoint();
+        pt.x = clientX;
+        pt.y = clientY;
+        const svgP = pt.matrixTransform(svg.getScreenCTM()?.inverse());
+        return { x: svgP.x, y: svgP.y };
+    };
 
-        graphData.nodes.forEach((node, i) => {
-            const angle = (i / count) * 2 * Math.PI;
-            positions.set(node.id, {
-                x: centerX + radius * Math.cos(angle),
-                y: centerY + radius * Math.sin(angle),
+    const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+        if (e.target === svgRef.current) {
+            setIsPanning(true);
+            setPanStart({ x: e.clientX, y: e.clientY });
+        }
+    };
+
+    const handleNodeMouseDown = (e: React.MouseEvent, nodeId: string) => {
+        e.stopPropagation();
+        const point = getSVGPoint(e.clientX, e.clientY);
+        const nodePos = positions.get(nodeId);
+        if (nodePos) {
+            setDraggedNode({
+                id: nodeId,
+                offsetX: point.x - nodePos.x,
+                offsetY: point.y - nodePos.y,
             });
+        }
+    };
+    
+    const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+        if (draggedNode && positions.has(draggedNode.id)) {
+            const point = getSVGPoint(e.clientX, e.clientY);
+            const newPositions = new Map(positions);
+            newPositions.set(draggedNode.id, {
+                x: point.x - draggedNode.offsetX,
+                y: point.y - draggedNode.offsetY,
+            });
+            setPositions(newPositions);
+        } else if (isPanning && panStart) {
+            const dx = (e.clientX - panStart.x) * (viewBox.width / (svgRef.current?.clientWidth || 1000));
+            const dy = (e.clientY - panStart.y) * (viewBox.height / (svgRef.current?.clientHeight || 1000));
+            setViewBox(prev => ({ ...prev, x: prev.x - dx, y: prev.y - dy }));
+            setPanStart({ x: e.clientX, y: e.clientY });
+        }
+    };
+
+    const handleMouseUp = () => {
+        setDraggedNode(null);
+        setIsPanning(false);
+        setPanStart(null);
+    };
+
+    const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
+        e.preventDefault();
+        const scaleFactor = 1.1;
+        const { x, y } = getSVGPoint(e.clientX, e.clientY);
+        
+        const newWidth = e.deltaY > 0 ? viewBox.width * scaleFactor : viewBox.width / scaleFactor;
+        const newHeight = e.deltaY > 0 ? viewBox.height * scaleFactor : viewBox.height / scaleFactor;
+        
+        const dx = (x - viewBox.x) * (newWidth / viewBox.width - 1);
+        const dy = (y - viewBox.y) * (newHeight / viewBox.height - 1);
+
+        setViewBox({
+            x: viewBox.x - dx,
+            y: viewBox.y - dy,
+            width: newWidth,
+            height: newHeight,
         });
-        return positions;
-    }, [graphData]);
+    };
 
 
     if (isLoading) {
@@ -59,13 +141,22 @@ const RelationshipGraph = () => {
     }
     
     return (
-        <div className="w-full h-full overflow-auto">
-            <svg viewBox="0 0 1000 1000" className="min-w-full min-h-full">
+        <div className="w-full h-full overflow-hidden" style={{ cursor: isPanning ? 'grabbing' : 'grab' }}>
+            <svg
+                ref={svgRef}
+                viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
+                className="min-w-full min-h-full"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onWheel={handleWheel}
+            >
                 <defs>
                     <marker
                         id="arrowhead"
                         viewBox="0 0 10 10"
-                        refX="9"
+                        refX="20"
                         refY="5"
                         markerWidth="6"
                         markerHeight="6"
@@ -76,15 +167,15 @@ const RelationshipGraph = () => {
                 
                 {/* Edges */}
                 {graphData.edges.map(edge => {
-                    const sourcePos = nodePositions.get(edge.source);
-                    const targetPos = nodePositions.get(edge.target);
+                    const sourcePos = positions.get(edge.source);
+                    const targetPos = positions.get(edge.target);
                     if (!sourcePos || !targetPos) return null;
 
                     const midX = (sourcePos.x + targetPos.x) / 2;
                     const midY = (sourcePos.y + targetPos.y) / 2;
 
                     return (
-                        <g key={edge.id}>
+                        <g key={edge.id} className="pointer-events-none">
                             <line
                                 x1={sourcePos.x}
                                 y1={sourcePos.y}
@@ -110,18 +201,24 @@ const RelationshipGraph = () => {
                 
                 {/* Nodes */}
                 {graphData.nodes.map(node => {
-                    const pos = nodePositions.get(node.id);
+                    const pos = positions.get(node.id);
                     if (!pos) return null;
 
                     return (
-                        <g key={node.id} transform={`translate(${pos.x}, ${pos.y})`}>
-                            <circle r="12" fill="#4f46e5" />
+                        <g 
+                            key={node.id} 
+                            transform={`translate(${pos.x}, ${pos.y})`}
+                            onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+                            style={{ cursor: draggedNode?.id === node.id ? 'grabbing' : 'grab' }}
+                        >
+                            <circle r="12" fill="#4f46e5" stroke="#818cf8" strokeWidth="2" />
                             <text
                                 y="-20"
                                 fill="#d1d5db"
                                 fontSize="12"
                                 fontWeight="bold"
                                 textAnchor="middle"
+                                className="pointer-events-none select-none"
                             >
                                 {node.name}
                             </text>
@@ -130,7 +227,7 @@ const RelationshipGraph = () => {
                                 fill="#9ca3af"
                                 fontSize="10"
                                 textAnchor="middle"
-                                className="font-mono"
+                                className="font-mono pointer-events-none select-none"
                             >
                                 ({node.type})
                             </text>

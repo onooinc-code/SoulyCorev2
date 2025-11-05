@@ -39,11 +39,20 @@ export async function GET() {
 // POST a new relationship
 export async function POST(req: NextRequest) {
     try {
-        const { sourceEntityId, targetEntityId, predicateId, context } = await req.json();
+        const { sourceEntityId, targetEntityId, predicateName, context } = await req.json();
 
-        if (!sourceEntityId || !targetEntityId || !predicateId) {
-            return NextResponse.json({ error: 'source, target, and predicateId are required' }, { status: 400 });
+        if (!sourceEntityId || !targetEntityId || !predicateName) {
+            return NextResponse.json({ error: 'sourceEntityId, targetEntityId, and predicateName are required' }, { status: 400 });
         }
+
+        // Upsert the predicate to get its ID
+        const { rows: predicateRows } = await sql`
+            INSERT INTO predicate_definitions (name)
+            VALUES (${predicateName})
+            ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+            RETURNING id;
+        `;
+        const predicateId = predicateRows[0].id;
 
         const { rows } = await sql<EntityRelationship>`
             INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", "predicateId", context)

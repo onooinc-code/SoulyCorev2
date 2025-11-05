@@ -126,6 +126,40 @@ const features = [
     { name: "UX: Theming Engine", category: "Global UI/UX", overview: "Allows switching between Dark, Light, and Solarized themes via CSS variables.", status: "✅ Completed", keyFilesJson: JSON.stringify(["app/globals.css", "components/providers/SettingsProvider.tsx"]) },
     { name: "UX: Versioning System", category: "Global UI/UX", overview: "Displays the current app version in the header with a hover card for recent changes and a modal for the full history.", status: "✅ Completed", keyFilesJson: JSON.stringify(["components/Header.tsx", "components/VersionLogModal.tsx", "app/api/version/current/route.ts"]) },
     { name: "UX: Morning Briefing", category: "Global UI/UX", overview: "A welcome-back modal that appears once per day, summarizing the user's last session.", status: "✅ Completed", keyFilesJson: JSON.stringify(["components/MorningBriefing.tsx"]) },
+    {
+        name: "UI: Visual Relationship Graph",
+        overview: "A visual, interactive graph to display the relationships between entities stored in structured memory.",
+        status: "✅ Completed",
+        category: "Memory",
+        uiUxBreakdownJson: JSON.stringify([
+            { "subFeature": "Node Rendering", "description": "Display each entity as a node.", "status": "✅ Completed" },
+            { "subFeature": "Edge Rendering", "description": "Display relationships as labeled, directed edges.", "status": "✅ Completed" },
+            { "subFeature": "Interactivity", "description": "Allow users to drag nodes, zoom, and pan the graph.", "status": "✅ Completed" }
+        ], null, 2),
+        logicFlow: "The component fetches data from `/api/entities/relationships` and uses a custom SVG implementation to render the nodes and edges, with full interactivity.",
+        keyFilesJson: JSON.stringify([
+            "components/hubs/RelationshipGraph.tsx"
+        ], null, 2),
+        notes: "Fully interactive graph for exploring entity relationships."
+    },
+    {
+        name: "Input: File Uploads",
+        overview: "Allow users to upload files (PDF, TXT, images) to be included in the conversation context.",
+        status: "✅ Completed",
+        category: "Chat",
+        uiUxBreakdownJson: JSON.stringify([
+            { "subFeature": "Attach Button", "description": "A functional paperclip button in the chat input opens a file selector.", "status": "✅ Completed" },
+            { "subFeature": "File Display", "description": "Shows the name of the selected file with an option to remove it before sending.", "status": "✅ Completed" },
+            { "subFeature": "Upload on Send", "description": "File is uploaded to Vercel Blob when the user sends the message.", "status": "✅ Completed" },
+            { "subFeature": "Contextual Injection", "description": "A markdown link to the uploaded file is appended to the user's message content.", "status": "✅ Completed" }
+        ], null, 2),
+        logicFlow: "The frontend uploads the file to Vercel Blob via '/api/files/upload'. The file URL is then appended to the message content before being sent to the chat API.",
+        keyFilesJson: JSON.stringify([
+            "components/ChatInput.tsx",
+            "app/api/files/upload/route.ts"
+        ], null, 2),
+        notes: "Currently supports .txt and .md files. Backend processing of file content for context is a future enhancement."
+    },
 
     // Planned Features
     {
@@ -140,35 +174,6 @@ const features = [
             "core/tools/index.ts"
         ], null, 2),
         notes: "This is the next major evolution for the agent system."
-    },
-    {
-        name: "UI: Visual Relationship Graph",
-        overview: "A visual, interactive graph to display the relationships between entities stored in structured memory.",
-        status: "⚪ Planned",
-        category: "Memory",
-        uiUxBreakdownJson: JSON.stringify([
-            { "subFeature": "Node Rendering", "description": "Display each entity as a node.", "status": "⚪ Planned" },
-            { "subFeature": "Edge Rendering", "description": "Display relationships as labeled, directed edges.", "status": "⚪ Planned" },
-            { "subFeature": "Interactivity", "description": "Allow users to drag nodes, zoom, and pan the graph.", "status": "⚪ Planned" }
-        ], null, 2),
-        logicFlow: "The component will fetch data from `/api/entities/relationships` and use a library like D3.js or react-flow to render the nodes and edges.",
-        keyFilesJson: JSON.stringify([
-            "components/hubs/RelationshipGraph.tsx"
-        ], null, 2),
-        notes: "Currently, this component only displays the raw JSON data."
-    },
-    {
-        name: "Input: File Uploads",
-        overview: "Allow users to upload files (PDF, TXT, images) to be included in the conversation context.",
-        status: "⚪ Planned",
-        category: "Chat",
-        uiUxBreakdownJson: "[]",
-        logicFlow: "The frontend would upload the file to Vercel Blob via '/api/files/upload'. The file URL would then be passed to the backend, which would fetch and parse the content before including it in the context for an LLM call.",
-        keyFilesJson: JSON.stringify([
-            "components/ChatInput.tsx",
-            "app/api/files/upload/route.ts"
-        ], null, 2),
-        notes: "The 'Paperclip' button in the chat input is currently disabled."
     }
 ];
 
