@@ -342,3 +342,20 @@ Implemented a suite of advanced UI/UX features to enhance user interaction and d
 - **In-Graph Editing**: Enhanced `RelationshipGraph.tsx` to allow direct manipulation. Users can now double-click to edit entity names and right-click on relationships to open a context menu for deleting them, supported by a new API endpoint (`/api/entities/relationships/[relationshipId]`).
 - **Icons**: Added a new `DocumentMagnifyingGlassIcon` for the Contextual Analyzer Hub.
 - **Integration**: Fully integrated the new hub into the application's navigation, view rendering, and command palette systems.
+---
+
+### Update #19: Materialized Views & Real-time Graph Updates
+
+**Details:**
+Implemented two major performance and scalability features. First, a materialized view (`vw_detailed_relationships`) was created to pre-calculate and cache complex relationship queries, dramatically speeding up data retrieval. A new "Detailed List" view was added to the Entity Hub to demonstrate this performance gain. Second, a "real-time" update feature was simulated in the Relationship Graph using a polling mechanism, allowing the graph to automatically refresh with new data from the server, with a "LIVE" indicator to control it.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `scripts/create-tables.js`
+- `components/hubs/RelationshipGraph.tsx`
+- `app/api/entities/relationships/detailed/route.ts` (new file)
+- `components/hubs/EntityHub.tsx`
+- `components/hubs/DetailedListView.tsx` (new file)
+- `app/api/system/refresh-views/route.ts` (new file)
+- `components/data_hub/DataHubCenter.tsx`
+- `components/data_hub/MaintenancePanel.tsx` (new file)

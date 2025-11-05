@@ -1,15 +1,17 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ServicesPanel from './ServicesPanel';
 import LogsPanel from './LogsPanel';
+import MaintenancePanel from './MaintenancePanel';
 import type { DataSource } from '@/lib/types';
 import DataSourceSettingsModal from './DataSourceSettingsModal';
 import { useLog } from '../providers/LogProvider';
 
-type Tab = 'services' | 'logs';
+type Tab = 'services' | 'logs' | 'maintenance';
 
 const DataHubCenter = () => {
     const { log } = useLog();
@@ -87,6 +89,7 @@ const DataHubCenter = () => {
         switch (activeTab) {
             case 'services': return <ServicesPanel services={dataSources} onOpenSettings={handleOpenSettings} />;
             case 'logs': return <LogsPanel />;
+            case 'maintenance': return <MaintenancePanel />;
             default: return null;
         }
     };
@@ -120,6 +123,7 @@ const DataHubCenter = () => {
                 <div className="flex items-center gap-2">
                     <TabButton tabName="services" label="Manage Data Sources" />
                     <TabButton tabName="logs" label="Global Logs" />
+                    <TabButton tabName="maintenance" label="Maintenance" />
                 </div>
             </nav>
 

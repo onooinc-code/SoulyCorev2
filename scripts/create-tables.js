@@ -35,6 +35,7 @@ const statements = [
   `DROP TABLE IF EXISTS "predicate_definitions" CASCADE;`,
   `DROP TABLE IF EXISTS "entity_history" CASCADE;`,
   `DROP TABLE IF EXISTS "entity_relationships" CASCADE;`,
+  `DROP MATERIALIZED VIEW IF EXISTS "vw_detailed_relationships" CASCADE;`,
 
 
   `CREATE TABLE IF NOT EXISTS "settings" (
@@ -138,7 +139,7 @@ const statements = [
     "confidenceScore" REAL DEFAULT 0.5,
     "metadata" JSONB,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
-    UNIQUE("sourceEntityId", "targetEntityId", "predicateId")
+    UNIQUE("sourceEntityId", "targetEntityId", "predicateId", "brainId")
   );`,
 
   `CREATE TABLE IF NOT EXISTS "message_entities" (
@@ -425,11 +426,34 @@ const statements = [
     "changedAt" TIMESTAMPTZ DEFAULT now()
   );`,
 
+  `CREATE MATERIALIZED VIEW "vw_detailed_relationships" AS
+    SELECT
+        r.id,
+        r."sourceEntityId",
+        s.name as "sourceName",
+        s.type as "sourceType",
+        r."targetEntityId",
+        t.name as "targetName",
+        t.type as "targetType",
+        r."predicateId",
+        p.name as "predicateName",
+        r.context,
+        r."brainId",
+        b.name as "brainName",
+        r."createdAt"
+    FROM entity_relationships r
+    JOIN entity_definitions s ON r."sourceEntityId" = s.id
+    JOIN entity_definitions t ON r."targetEntityId" = t.id
+    JOIN predicate_definitions p ON r."predicateId" = p.id
+    LEFT JOIN brains b ON r."brainId" = b.id;`,
+
   // Create indexes for faster queries
+  `CREATE UNIQUE INDEX IF NOT EXISTS "idx_vw_detailed_relationships_id" ON "vw_detailed_relationships"(id);`,
   `CREATE INDEX IF NOT EXISTS "idx_messages_conversation_id" ON "messages"("conversationId");`,
   `CREATE INDEX IF NOT EXISTS "idx_conversations_lastupdatedat" ON "conversations"("lastUpdatedAt");`,
   `CREATE INDEX IF NOT EXISTS "idx_pipeline_runs_message_id" ON "pipeline_runs"("messageId");`,
   `CREATE INDEX IF NOT EXISTS "idx_entity_history_entity_id" ON "entity_history"("entityId");`,
+  `CREATE INDEX IF NOT EXISTS "idx_relationships_brain_id" ON "entity_relationships"("brainId");`,
 ];
 
 async function createTables() {

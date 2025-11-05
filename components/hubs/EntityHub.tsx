@@ -38,6 +38,11 @@ const FactVerifierModal = dynamic(() => import('./FactVerifierModal'), {
     ssr: false
 });
 
+const DetailedListView = dynamic(() => import('./DetailedListView'), {
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center h-full"><p>Loading Detailed View...</p></div>
+});
+
 
 type EntityFormState = Partial<EntityDefinition> & {
     aliases_str?: string;
@@ -108,6 +113,8 @@ const MergeConfirmationModal = ({
 };
 
 type SortKey = keyof EntityDefinition | 'relevancyScore';
+type ViewMode = 'list' | 'grid' | 'graph' | 'detailed-list';
+
 
 interface EntityCardProps {
     entity: EntityDefinition;
@@ -180,7 +187,7 @@ const EntityHub = () => {
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' }>({ key: 'relevancyScore', direction: 'descending' });
     const [filters, setFilters] = useState<{ type: string }>({ type: 'all' });
     const [currentPage, setCurrentPage] = useState(1);
-    const [viewMode, setViewMode] = useState<'list' | 'grid' | 'graph'>('list');
+    const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
         description: true, aliases: true, createdAt: true, tags: true
     });
@@ -517,6 +524,7 @@ const EntityHub = () => {
                 </div>
                  <div className="flex items-center gap-2">
                     <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'}`}><Bars3Icon className="w-5 h-5" /></button>
+                    <button onClick={() => setViewMode('detailed-list')} className={`p-1.5 rounded-md ${viewMode === 'detailed-list' ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'}`}><ViewColumnsIcon className="w-5 h-5" /></button>
                     <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'}`}><Squares2X2Icon className="w-5 h-5" /></button>
                     <button onClick={() => setViewMode('graph')} className={`p-1.5 rounded-md ${viewMode === 'graph' ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'}`}><LinkIcon className="w-5 h-5" /></button>
                 </div>
@@ -591,6 +599,9 @@ const EntityHub = () => {
                 )}
                 {viewMode === 'graph' && (
                     <RelationshipGraph />
+                )}
+                {viewMode === 'detailed-list' && (
+                    <DetailedListView />
                 )}
             </div>
              <div className="flex justify-between items-center mt-4 flex-shrink-0">

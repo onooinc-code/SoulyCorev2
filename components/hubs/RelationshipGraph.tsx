@@ -1,8 +1,7 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { RelationshipGraphData, GraphNode, GraphEdge } from '@/lib/types';
+import type { RelationshipGraphData, GraphNode, GraphEdge, Brain } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 import { SearchIcon, XIcon, TrashIcon } from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +11,8 @@ const RelationshipGraph = () => {
     const [displayGraphData, setDisplayGraphData] = useState<RelationshipGraphData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const { log } = useLog();
+    const [brains, setBrains] = useState<Brain[]>([]);
+    const [activeBrainId, setActiveBrainId] = useState<string>('none');
 
     // State for interactivity
     const [positions, setPositions] = useState<Map<string, { x: number, y: number }>>(new Map());
@@ -27,12 +28,31 @@ const RelationshipGraph = () => {
     const [isSearching, setIsSearching] = useState(false);
     const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; edgeId: string | null }>({ visible: false, x: 0, y: 0, edgeId: null });
     const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+    const [isAutoRefreshEnabled, setIsAutoRefreshEnabled] = useState(true);
 
 
-    const fetchGraphData = useCallback(async () => {
-        setIsLoading(true);
+    useEffect(() => {
+        const fetchBrains = async () => {
+            try {
+                const res = await fetch('/api/brains');
+                if (res.ok) {
+                    const data = await res.json();
+                    setBrains(data);
+                }
+            } catch (error) {
+                log('Failed to fetch brains for graph', { error }, 'error');
+            }
+        };
+        fetchBrains();
+    }, [log]);
+
+
+    const fetchGraphData = useCallback(async (brainId: string) => {
+        if (!isAutoRefreshEnabled && !isLoading) { // Don't set loading on background refresh
+            setIsLoading(true);
+        }
         try {
-            const res = await fetch('/api/entities/relationships');
+            const res = await fetch(`/api/entities/relationships?brainId=${brainId}`);
             if (!res.ok) throw new Error("Failed to fetch relationship data");
             const data = await res.json();
             setFullGraphData(data);
@@ -60,11 +80,21 @@ const RelationshipGraph = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [log]);
+    }, [log, isAutoRefreshEnabled, isLoading]);
 
     useEffect(() => {
-        fetchGraphData();
-    }, [fetchGraphData]);
+        fetchGraphData(activeBrainId);
+    }, [fetchGraphData, activeBrainId]);
+    
+    useEffect(() => {
+        if (isAutoRefreshEnabled) {
+            const intervalId = setInterval(() => {
+                fetchGraphData(activeBrainId);
+            }, 15000); // every 15 seconds
+
+            return () => clearInterval(intervalId);
+        }
+    }, [isAutoRefreshEnabled, fetchGraphData, activeBrainId]);
 
     // --- Interactivity Handlers ---
 
@@ -174,7 +204,7 @@ const RelationshipGraph = () => {
 
     const handleResetSearch = () => {
         setSearchQuery('');
-        setDisplayGraphData(fullGraphData);
+        fetchGraphData(activeBrainId);
     };
 
     const handleDeleteEdge = async () => {
@@ -183,7 +213,7 @@ const RelationshipGraph = () => {
             const res = await fetch(`/api/entities/relationships/${contextMenu.edgeId}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Failed to delete relationship');
             setContextMenu({ visible: false, x: 0, y: 0, edgeId: null });
-            await fetchGraphData(); // Refresh data
+            await fetchGraphData(activeBrainId); // Refresh data
         } catch (error) {
             log('Error deleting relationship', { error }, 'error');
         }
@@ -203,7 +233,7 @@ const RelationshipGraph = () => {
                 body: JSON.stringify({ ...originalNode, name: newName }),
             });
             if (!res.ok) throw new Error('Failed to update entity name');
-            await fetchGraphData();
+            await fetchGraphData(activeBrainId);
         } catch (error) {
             log('Error updating entity name', { error }, 'error');
         }
@@ -221,7 +251,7 @@ const RelationshipGraph = () => {
     if (!displayGraphData || displayGraphData.nodes.length === 0) {
         return (
             <div className="p-4 h-full flex flex-col items-center justify-center text-gray-500">
-                No entities or relationships to display for this query.
+                No entities or relationships to display for this query or brain.
                  <button onClick={handleResetSearch} className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm">Reset View</button>
             </div>
         );
@@ -241,14 +271,27 @@ const RelationshipGraph = () => {
                     </button>
                 </motion.div>
             )}
-             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-full max-w-lg">
-                <form onSubmit={handleSearch} className="relative">
+             <div className="absolute top-2 left-2 right-2 z-10 flex items-center justify-center gap-2">
+                 <button 
+                    onClick={() => setIsAutoRefreshEnabled(prev => !prev)}
+                    className="flex items-center gap-2 px-3 py-2 bg-gray-800/80 backdrop-blur-md border border-gray-700 rounded-full text-xs font-semibold"
+                    title={isAutoRefreshEnabled ? 'Disable auto-refresh' : 'Enable auto-refresh'}
+                >
+                    <span className={`w-2 h-2 rounded-full ${isAutoRefreshEnabled ? 'bg-green-400 animate-pulse' : 'bg-gray-500'}`}></span>
+                    LIVE
+                </button>
+                <select value={activeBrainId} onChange={e => setActiveBrainId(e.target.value)} className="bg-gray-800/80 backdrop-blur-md border border-gray-700 rounded-full px-4 py-2 text-sm">
+                    <option value="none">Default (No Brain)</option>
+                    {brains.map(brain => <option key={brain.id} value={brain.id}>{brain.name}</option>)}
+                    <option value="all">All Brains</option>
+                </select>
+                <form onSubmit={handleSearch} className="relative flex-1 max-w-lg">
                     <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Ask a question about the graph (e.g., 'who works for Google?')"
+                        placeholder="Ask a question about the graph..."
                         className="w-full pl-10 pr-20 py-2 bg-gray-800/80 backdrop-blur-md border border-gray-700 rounded-full text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     />
                     <button type="button" onClick={handleResetSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white">Reset</button>
