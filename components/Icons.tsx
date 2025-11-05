@@ -77,3 +77,4 @@ export * from './icons/ClipboardDocumentListIcon';
 export * from './icons/Bars3Icon';
 export * from './icons/Squares2X2Icon';
 export * from './icons/ViewColumnsIcon';
+export * from './icons/ChevronDownIcon';

@@ -7,7 +7,7 @@ import ChatWindow from '@/components/chat/ChatWindow';
 import Sidebar from '@/components/Sidebar';
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { AnimatePresence, motion } from 'framer-motion';
-import NavigationRail from './NavigationRail';
+import TopHeader from './TopHeader'; // New top navigation header
 import ActiveViewRenderer from './views/ActiveViewRenderer';
 import { useAppContextMenu } from '@/lib/hooks/useAppContextMenu';
 import ContextMenu from './ContextMenu';
@@ -84,35 +84,38 @@ export const App = () => {
 
     return (
         <main
-            className="flex h-screen w-screen overflow-hidden bg-gray-900"
+            className="flex flex-col h-screen w-screen overflow-hidden bg-gray-900"
             onContextMenu={handleContextMenu}
         >
             <TopProgressBar />
             <AnimatePresence>
                 {showProgress && <UniversalProgressIndicator />}
             </AnimatePresence>
-            <NavigationRail />
             
-            <AnimatePresence>
-                {isConversationPanelOpen && (
-                    <motion.div
-                        initial={{ width: 0, padding: 0, marginRight: 0 }}
-                        animate={{ 
-                            width: isConversationPanelMinimized ? 80 : 320,
-                            padding: isConversationPanelMinimized ? 0 : '',
-                            marginRight: isConversationPanelMinimized ? 0 : '' 
-                        }}
-                        exit={{ width: 0, padding: 0, marginRight: 0 }}
-                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                        className="flex-shrink-0 h-full overflow-hidden bg-gray-800"
-                    >
-                        <Sidebar />
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <TopHeader />
 
-            <div className="flex-1 flex flex-col min-w-0 h-full relative pb-6">
-                {mainContent}
+            <div className="flex-1 flex flex-row min-w-0 h-full relative">
+                <AnimatePresence>
+                    {isConversationPanelOpen && (
+                        <motion.div
+                            initial={{ width: 0, padding: 0, marginRight: 0 }}
+                            animate={{ 
+                                width: isConversationPanelMinimized ? 80 : 320,
+                                padding: isConversationPanelMinimized ? 0 : '',
+                                marginRight: isConversationPanelMinimized ? 0 : '' 
+                            }}
+                            exit={{ width: 0, padding: 0, marginRight: 0 }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            className="flex-shrink-0 h-full overflow-hidden bg-gray-800"
+                        >
+                            <Sidebar />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <div className="flex-1 flex flex-col min-w-0 h-full relative pb-6">
+                    {mainContent}
+                </div>
             </div>
 
             <AnimatePresence>
