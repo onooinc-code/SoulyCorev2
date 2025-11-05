@@ -34,6 +34,7 @@ const statements = [
   `DROP TABLE IF EXISTS "settings" CASCADE;`,
   `DROP TABLE IF EXISTS "predicate_definitions" CASCADE;`,
   `DROP TABLE IF EXISTS "entity_history" CASCADE;`,
+  `DROP TABLE IF EXISTS "entity_relationships" CASCADE;`,
 
 
   `CREATE TABLE IF NOT EXISTS "settings" (
@@ -128,6 +129,8 @@ const statements = [
     "context" TEXT,
     "provenance" JSONB,
     "brainId" UUID REFERENCES "brains"("id") ON DELETE SET NULL,
+    "startDate" TIMESTAMPTZ DEFAULT NULL,
+    "endDate" TIMESTAMPTZ DEFAULT NULL,
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     UNIQUE("sourceEntityId", "targetEntityId", "predicateId")
   );`,

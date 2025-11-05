@@ -103,7 +103,7 @@ const MergeConfirmationModal = ({
     );
 };
 
-type SortKey = keyof EntityDefinition;
+type SortKey = keyof EntityDefinition | 'relevancyScore';
 
 interface EntityCardProps {
     entity: EntityDefinition;
@@ -173,7 +173,7 @@ const EntityHub = () => {
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' }>({ key: 'createdAt', direction: 'descending' });
+    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' }>({ key: 'relevancyScore', direction: 'descending' });
     const [filters, setFilters] = useState<{ type: string }>({ type: 'all' });
     const [currentPage, setCurrentPage] = useState(1);
     const [viewMode, setViewMode] = useState<'list' | 'grid' | 'graph'>('list');
@@ -356,8 +356,30 @@ const EntityHub = () => {
         }
     };
 
+    // Calculate relevancy scores
+    const entitiesWithRelevancy = useMemo(() => {
+        if (entities.length === 0) return [];
+
+        const now = new Date().getTime();
+        const entitiesWithRawScore = entities.map(entity => {
+            const lastAccessed = entity.lastAccessedAt ? new Date(entity.lastAccessedAt).getTime() : now - (365 * 24 * 3600 * 1000); // Default to 1 year ago if never accessed
+            const daysSinceAccess = (now - lastAccessed) / (1000 * 3600 * 24);
+            const recencyScore = Math.exp(-0.05 * daysSinceAccess); // Slower decay
+            const frequencyScore = Math.log10((entity.accessCount || 0) + 1);
+            const rawScore = (recencyScore * 0.6) + (frequencyScore * 0.4);
+            return { ...entity, rawScore };
+        });
+
+        const maxRawScore = Math.max(...entitiesWithRawScore.map(e => e.rawScore), 1); // Avoid division by zero
+
+        return entitiesWithRawScore.map(entity => ({
+            ...entity,
+            relevancyScore: (entity.rawScore / maxRawScore) * 100,
+        }));
+    }, [entities]);
+
     const sortedAndFilteredEntities = useMemo(() => {
-        let filtered = entities.filter(e => {
+        let filtered = entitiesWithRelevancy.filter(e => {
             const typeMatch = filters.type === 'all' || e.type === filters.type;
             const searchMatch = searchTerm === '' || 
                 e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -367,15 +389,15 @@ const EntityHub = () => {
         });
 
         filtered.sort((a, b) => {
-            const aVal = a[sortConfig.key] as any;
-            const bVal = b[sortConfig.key] as any;
+            const aVal = a[sortConfig.key as keyof typeof a] as any;
+            const bVal = b[sortConfig.key as keyof typeof b] as any;
             if (aVal < bVal) return sortConfig.direction === 'ascending' ? -1 : 1;
             if (aVal > bVal) return sortConfig.direction === 'ascending' ? 1 : -1;
             return 0;
         });
         
         return filtered;
-    }, [entities, searchTerm, sortConfig, filters]);
+    }, [entitiesWithRelevancy, searchTerm, sortConfig, filters]);
     
     const paginatedEntities = useMemo(() => {
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -444,7 +466,7 @@ const EntityHub = () => {
                 {isDuplicateFinderOpen && <DuplicateFinderModal onClose={() => setIsDuplicateFinderOpen(false)} />}
             </AnimatePresence>
              <AnimatePresence>
-                {isPruneUnusedOpen && <PruneUnusedModal onClose={() => setIsPruneUnusedOpen(false)} />}
+                {isPruneUnusedOpen && <PruneUnusedModal onClose={() => { setIsPruneUnusedOpen(false); fetchEntities(activeBrainId); }} />}
             </AnimatePresence>
             <AnimatePresence>
                 {isCategorizerOpen && <AICategorizerModal onClose={() => { setIsCategorizerOpen(false); fetchEntities(activeBrainId); }} />}
@@ -515,28 +537,39 @@ const EntityHub = () => {
                                 <th className="p-2 w-10"><input type="checkbox" onChange={toggleSelectAll} checked={selectedIds.size === paginatedEntities.length && paginatedEntities.length > 0} className="bg-gray-800 border-gray-600 rounded" /></th>
                                 <SortableHeader sortKey="name" label="Name" />
                                 <SortableHeader sortKey="type" label="Type" />
+                                <SortableHeader sortKey="relevancyScore" label="Relevancy" />
                                 {visibleColumns.description && <th className="p-2 text-left">Description</th>}
-                                <SortableHeader sortKey="accessCount" label="Access Count" />
                                 <SortableHeader sortKey="lastAccessedAt" label="Last Accessed" />
                                 {visibleColumns.createdAt && <SortableHeader sortKey="createdAt" label="Created" />}
                                 <th className="p-2 text-left w-20">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {paginatedEntities.map(entity => (
+                            {paginatedEntities.map(entity => {
+                                const score = entity.relevancyScore || 0;
+                                let barColor = 'bg-red-500';
+                                if (score > 70) barColor = 'bg-green-500';
+                                else if (score > 30) barColor = 'bg-yellow-500';
+
+                                return (
                                 <tr key={entity.id} onClick={() => setDetailPanelEntity(entity)} className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer">
                                     <td className="p-2" onClick={e => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(entity.id)} onChange={() => toggleSelection(entity.id)} className="bg-gray-800 border-gray-600 rounded" /></td>
                                     <td className="p-2 font-medium truncate" onDoubleClick={() => setEditingCell({ entityId: entity.id, field: 'name' })}>{editingCell?.entityId === entity.id && editingCell.field === 'name' ? <input type="text" defaultValue={entity.name} onBlur={e => handleCellUpdate(entity.id, 'name', e.target.value)} autoFocus className="bg-gray-600 w-full" /> : entity.name}</td>
                                     <td className="p-2 font-mono text-xs text-indigo-300 truncate">{entity.type}</td>
+                                    <td className="p-2">
+                                        <div className="flex items-center gap-2" title={`Score: ${score.toFixed(1)}%`}>
+                                            <div className="w-full bg-gray-600 rounded-full h-1.5"><div className={`${barColor} h-1.5 rounded-full`} style={{width: `${score}%`}}></div></div>
+                                            <span className="text-xs text-gray-400">{score.toFixed(0)}%</span>
+                                        </div>
+                                    </td>
                                     {visibleColumns.description && <td className="p-2 text-xs text-gray-400 truncate" onDoubleClick={() => setEditingCell({ entityId: entity.id, field: 'description' })}>{editingCell?.entityId === entity.id && editingCell.field === 'description' ? <textarea defaultValue={entity.description} onBlur={e => handleCellUpdate(entity.id, 'description', e.target.value)} autoFocus className="bg-gray-600 w-full h-16" /> : entity.description}</td>}
-                                    <td className="p-2 text-center text-gray-400">{entity.accessCount || 0}</td>
                                     <td className="p-2 text-xs text-gray-500">{entity.lastAccessedAt ? getRelativeTime(new Date(entity.lastAccessedAt)) : 'Never'}</td>
                                     {visibleColumns.createdAt && <td className="p-2 text-xs text-gray-500">{new Date(entity.createdAt).toLocaleDateString()}</td>}
                                     <td className="p-2" onClick={e => e.stopPropagation()}>
                                         <div className="flex gap-1"><button onClick={() => handleOpenForm(entity)} title="Edit" className="p-1 text-gray-400 hover:text-white"><EditIcon className="w-4 h-4" /></button><button onClick={() => handleDeleteEntity(entity.id)} title="Delete" className="p-1 text-gray-400 hover:text-red-400"><TrashIcon className="w-4 h-4" /></button></div>
                                     </td>
                                 </tr>
-                            ))}
+                            )})}
                         </tbody>
                     </table>
                 )}

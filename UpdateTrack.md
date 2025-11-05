@@ -258,3 +258,41 @@ Implemented an advanced "AI Categorizer" tool within the Entity Hub. This featur
     - Created a new `AICategorizerModal.tsx` component to manage the user-facing workflow. It calls the API, displays a loading state, and then renders the AI's suggestions as a series of cards.
     - Each suggestion card has an "Apply Category" button which triggers a call to the existing `/api/entities/bulk-actions` endpoint to efficiently update the `type` for all entities in the group.
 - **Integration**: Added an "AI Categorizer" button to the "Tools" menu in `EntityHub.tsx` to launch the new modal. The hub is configured to automatically refresh its data after categories are successfully applied.
+---
+
+### Update #15: Temporal Relationships
+
+**Details:**
+Added a temporal dimension to the AI's structured memory. Entity relationships can now have optional `startDate` and `endDate` properties, allowing the AI to understand time-bound connections (e.g., "John `worked_at` Acme Corp `from 2020 to 2023`").
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `scripts/create-tables.js`
+- `lib/types/data.ts`
+- `app/api/entities/relationships/route.ts`
+- `components/hubs/RelationshipGraph.tsx`
+
+**Changes Made:**
+- **Database**: Added `startDate` and `endDate` columns to the `entity_relationships` table.
+- **Backend**: Updated the relationship API endpoints to accept and return these new optional date fields.
+- **Frontend**: The `RelationshipGraph` component was updated to display the start and end dates on the relationship edges, making the graph visually time-aware.
+- **Types**: Updated the `EntityRelationship` and `GraphEdge` types to include the optional date properties.
+---
+
+### Update #16: Entity "Decay" & Relevancy Scoring
+
+**Details:**
+Implemented a dynamic "Relevancy Score" for entities, making the AI's memory more human-like. The score is calculated on-the-fly based on how frequently and recently an entity has been accessed. This is visualized in the Entity Hub with a new sortable "Relevancy" column. Additionally, a "Prune Unused" tool has been added to help clean up orphaned entities that have never been used.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `components/hubs/EntityHub.tsx`
+- `components/hubs/EntityDetailPanel.tsx`
+- `app/api/entities/unused/route.ts` (new file)
+- `components/hubs/PruneUnusedModal.tsx` (new file)
+
+**Changes Made:**
+- **`EntityHub.tsx`**: Implemented the client-side logic to calculate a relevancy score for each entity. Added a new sortable "Relevancy" column that displays the score as a percentage and a colored progress bar. Integrated the new "Prune Unused" tool into the "Tools" menu.
+- **`EntityDetailPanel.tsx`**: Updated to display the new relevancy score with a visual progress bar.
+- **`app/api/entities/unused/route.ts`**: Created a new backend endpoint that specifically queries for entities that have no relationships and have never been mentioned in a message.
+- **`components/hubs/PruneUnusedModal.tsx`**: Created a new modal component that fetches the list of unused entities from the new API, allows the user to select them, and performs a bulk deletion via the existing bulk actions API.

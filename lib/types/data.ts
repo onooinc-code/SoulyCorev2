@@ -82,6 +82,8 @@ export interface EntityRelationship {
     context?: string;
     provenance?: any;
     brainId?: string | null;
+    startDate?: Date | null;
+    endDate?: Date | null;
     createdAt: Date;
 }
 
@@ -405,6 +407,8 @@ export interface GraphEdge {
     target: string;
     label: string;
     context?: string;
+    startDate?: Date | null;
+    endDate?: Date | null;
 }
 export interface RelationshipGraphData {
     nodes: GraphNode[];

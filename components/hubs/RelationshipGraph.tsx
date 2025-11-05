@@ -127,6 +127,10 @@ const RelationshipGraph = () => {
         });
     };
 
+    const formatDate = (date: Date | string | null | undefined): string => {
+        if (!date) return '';
+        return new Date(date).toLocaleDateString(undefined, { year: 'numeric', month: 'short' });
+    };
 
     if (isLoading) {
         return <div className="p-4 text-center">Loading relationship data...</div>;
@@ -174,6 +178,15 @@ const RelationshipGraph = () => {
                     const midX = (sourcePos.x + targetPos.x) / 2;
                     const midY = (sourcePos.y + targetPos.y) / 2;
 
+                    let dateLabel = '';
+                    if (edge.startDate && edge.endDate) {
+                        dateLabel = `(${formatDate(edge.startDate)} - ${formatDate(edge.endDate)})`;
+                    } else if (edge.startDate) {
+                        dateLabel = `(since ${formatDate(edge.startDate)})`;
+                    } else if (edge.endDate) {
+                        dateLabel = `(until ${formatDate(edge.endDate)})`;
+                    }
+
                     return (
                         <g key={edge.id} className="pointer-events-none">
                             <line
@@ -195,6 +208,17 @@ const RelationshipGraph = () => {
                             >
                                 {edge.label}
                             </text>
+                            {dateLabel && (
+                                <text
+                                    x={midX}
+                                    y={midY + 5}
+                                    fill="#718096"
+                                    fontSize="8"
+                                    textAnchor="middle"
+                                >
+                                    {dateLabel}
+                                </text>
+                            )}
                         </g>
                     );
                 })}

@@ -61,6 +61,7 @@ const PruneUnusedModal = ({ onClose }: { onClose: () => void }) => {
             if (!res.ok) throw new Error('Bulk delete failed.');
             setSelectedIds(new Set());
             await fetchUnused();
+            onClose(); // Close on success
         } catch (err) {
             setError(`Delete failed: ${(err as Error).message}`);
         }
@@ -74,6 +75,7 @@ const PruneUnusedModal = ({ onClose }: { onClose: () => void }) => {
                     <button onClick={onClose}><XIcon className="w-5 h-5" /></button>
                 </header>
                 <main className="flex-1 p-6 overflow-y-auto space-y-2">
+                    <p className="text-sm text-gray-400 mb-4">The following entities have no relationships and have never been mentioned in a conversation. They can be safely deleted.</p>
                     {isLoading && <p>Searching for unused entities...</p>}
                     {error && <p className="text-red-400">Error: {error}</p>}
                     {!isLoading && entities.length === 0 && <p className="text-center text-gray-500 py-8">No unused entities found.</p>}

@@ -7,7 +7,7 @@ import type { EntityDefinition, EntityHistoryLog } from '@/lib/types';
 import { useNotification } from '@/lib/hooks/use-notifications';
 
 interface EntityDetailPanelProps {
-    entity: EntityDefinition;
+    entity: EntityDefinition & { relevancyScore?: number };
     onClose: () => void;
     onRefresh: () => void;
 }
@@ -117,6 +117,11 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
             {label}
         </button>
     );
+    
+    const score = entity.relevancyScore || 0;
+    let barColor = 'bg-red-500';
+    if (score > 70) barColor = 'bg-green-500';
+    else if (score > 30) barColor = 'bg-yellow-500';
 
     return (
         <motion.div
@@ -146,6 +151,12 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
                 {activeTab === 'details' && (
                     <>
                         <DetailRow label="Type" value={<span className="font-mono bg-gray-700 px-2 py-0.5 rounded-md">{entity.type}</span>} />
+                        <DetailRow label="Relevancy" value={
+                            <div className="flex items-center gap-2" title={`Score: ${score.toFixed(1)}%`}>
+                                <div className="w-full bg-gray-600 rounded-full h-2"><div className={`${barColor} h-2 rounded-full`} style={{width: `${score}%`}}></div></div>
+                                <span className="text-sm font-semibold">{score.toFixed(0)}%</span>
+                            </div>
+                        } />
                         <DetailRow label="Description" value={<p className="whitespace-pre-wrap">{entity.description || <i className="text-gray-500">No description provided.</i>}</p>} />
                         <DetailRow label="Aliases" value={
                             Array.isArray(entity.aliases) && entity.aliases.length > 0 ? (
