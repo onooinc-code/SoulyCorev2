@@ -316,3 +316,29 @@ Implemented an AI-powered "Fact Verifier" tool in the Entity Hub. This feature a
 - **`FactVerifierModal.tsx`**: Created a new modal that fetches a list of facts needing verification. For each fact, the user can click a "Verify" button.
 - **API `verifiable-facts`**: Created a new endpoint that queries the database for relationships that are unverified or haven't been checked in over 30 days.
 - **API `verify-fact`**: Created a new endpoint that takes a relationship ID, constructs a question (e.g., "Is X the CEO of Y?"), and uses the Gemini API with Google Search grounding to get a current answer. It then updates the fact's status to 'Verified', 'Refuted', or 'Unverified' in the database.
+---
+
+### Update #18: Advanced UI/UX Features
+
+**Details:**
+Implemented a suite of advanced UI/UX features to enhance user interaction and data analysis capabilities. This includes Natural Language Querying on the relationship graph, a new Contextual Analyzer Hub for on-demand text analysis, and in-graph editing capabilities.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `app/api/entities/relationships/query/route.ts` (new file)
+- `app/api/entities/relationships/[relationshipId]/route.ts` (new file)
+- `app/api/contextual-analyzer/route.ts` (new file)
+- `components/hubs/RelationshipGraph.tsx`
+- `components/hubs/ContextualAnalyzer.tsx` (new file)
+- `components/views/ActiveViewRenderer.tsx`
+- `components/NavigationRail.tsx`
+- `lib/actionsRegistry.ts`
+- `components/Icons.tsx`
+- `components/icons/DocumentMagnifyingGlassIcon.tsx` (new file)
+
+**Changes Made:**
+- **Natural Language Querying**: Added a search bar to the Relationship Graph. It uses a new API endpoint (`/api/entities/relationships/query`) which leverages Gemini to translate natural language questions into structured queries, filtering the graph display dynamically.
+- **Contextual Analyzer Hub**: Created a new hub as a practical alternative to a browser extension. Users can paste text, and the system highlights known entities, showing their descriptions on hover via a new API endpoint (`/api/contextual-analyzer`). Integrated this new hub into the main navigation and action registry.
+- **In-Graph Editing**: Enhanced `RelationshipGraph.tsx` to allow direct manipulation. Users can now double-click to edit entity names and right-click on relationships to open a context menu for deleting them, supported by a new API endpoint (`/api/entities/relationships/[relationshipId]`).
+- **Icons**: Added a new `DocumentMagnifyingGlassIcon` for the Contextual Analyzer Hub.
+- **Integration**: Fully integrated the new hub into the application's navigation, view rendering, and command palette systems.

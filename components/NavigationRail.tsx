@@ -18,7 +18,8 @@ import {
     ClipboardDocumentListIcon, // Changed from TasksIcon
     RssIcon,
     LightbulbIcon,
-    ScissorsIcon
+    ScissorsIcon,
+    DocumentMagnifyingGlassIcon
 } from '@/components/Icons';
 
 const NavigationRail = () => {
@@ -31,6 +32,7 @@ const NavigationRail = () => {
         { view: 'agent_center', icon: RocketLaunchIcon, label: 'Agent Center' },
         { view: 'brain_center', icon: BrainIcon, label: 'Brain Center' },
         { view: 'memory_extraction_hub', icon: ScissorsIcon, label: 'Memory Extraction' },
+        { view: 'contextual_analyzer', icon: DocumentMagnifyingGlassIcon, label: 'Contextual Analyzer' },
         { view: 'memory_center', icon: MemoryIcon, label: 'Memory Center' },
         { view: 'contacts_hub', icon: UsersIcon, label: 'Contacts Hub' },
         { view: 'prompts_hub', icon: PromptsIcon, label: 'Prompts Hub' },

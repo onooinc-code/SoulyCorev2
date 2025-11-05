@@ -10,6 +10,7 @@ const componentMap = {
     agent_center: dynamic(() => import('@/components/agent_center/AgentCenter')),
     brain_center: dynamic(() => import('@/components/brain_center/BrainCenter')),
     memory_extraction_hub: dynamic(() => import('@/components/hubs/MemoryExtractionHub')),
+    contextual_analyzer: dynamic(() => import('@/components/hubs/ContextualAnalyzer')),
     memory_center: dynamic(() => import('@/components/MemoryCenter')),
     contacts_hub: dynamic(() => import('@/components/ContactsHub')),
     prompts_hub: dynamic(() => import('@/components/PromptsHub')),
