@@ -6,11 +6,13 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { EntityDefinition, Brain } from '@/lib/types';
+import type { EntityDefinition, Brain, SavedFilterSet } from '@/lib/types';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { XIcon, TrashIcon, PlusIcon, EditIcon, SearchIcon, ArrowsRightLeftIcon, Bars3Icon, Squares2X2Icon, ViewColumnsIcon, LinkIcon, TagIcon, WrenchScrewdriverIcon, BeakerIcon } from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLog } from '@/components/providers/LogProvider';
+import { useSettings } from '../providers/SettingsProvider';
+import { v4 as uuidv4 } from 'uuid';
 import dynamic from 'next/dynamic';
 
 const RelationshipGraph = dynamic(() => import('./RelationshipGraph'), {
@@ -41,6 +43,10 @@ const FactVerifierModal = dynamic(() => import('./FactVerifierModal'), {
 const DetailedListView = dynamic(() => import('./DetailedListView'), {
     ssr: false,
     loading: () => <div className="flex items-center justify-center h-full"><p>Loading Detailed View...</p></div>
+});
+
+const FilterPanel = dynamic(() => import('./FilterPanel'), {
+    ssr: false
 });
 
 
@@ -174,6 +180,7 @@ const getRelativeTime = (date: Date): string => {
 const EntityHub = () => {
     const { setStatus, clearError } = useConversation();
     const { log } = useLog();
+    const { settings, saveSettings } = useSettings();
     
     const [entities, setEntities] = useState<EntityDefinition[]>([]);
     const [brains, setBrains] = useState<Brain[]>([]);
@@ -184,8 +191,8 @@ const EntityHub = () => {
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' }>({ key: 'relevancyScore', direction: 'descending' });
-    const [filters, setFilters] = useState<{ type: string }>({ type: 'all' });
+    const [sortConfig, setSortConfig] = useState<Array<{ key: SortKey; direction: 'ascending' | 'descending' }>>([{ key: 'relevancyScore', direction: 'descending' }]);
+    const [filters, setFilters] = useState({ type: 'all', tags: '', createdAtStart: '', createdAtEnd: '', lastAccessedStart: '', lastAccessedEnd: '' });
     const [currentPage, setCurrentPage] = useState(1);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
@@ -203,6 +210,7 @@ const EntityHub = () => {
     const [isPruneUnusedOpen, setIsPruneUnusedOpen] = useState(false);
     const [isCategorizerOpen, setIsCategorizerOpen] = useState(false);
     const [isFactVerifierOpen, setIsFactVerifierOpen] = useState(false);
+    const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
 
 
     const ITEMS_PER_PAGE = 20;
@@ -397,14 +405,37 @@ const EntityHub = () => {
                 e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 e.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 e.type.toLowerCase().includes(searchTerm.toLowerCase());
-            return typeMatch && searchMatch;
+            
+            const tags = (e.tags || []).join(' ').toLowerCase();
+            const filterTags = filters.tags.toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
+            const tagsMatch = filterTags.length === 0 || filterTags.every(ft => tags.includes(ft));
+
+            const createdAtStartMatch = !filters.createdAtStart || new Date(e.createdAt) >= new Date(filters.createdAtStart);
+            const createdAtEndMatch = !filters.createdAtEnd || new Date(e.createdAt) <= new Date(filters.createdAtEnd);
+            const lastAccessedStartMatch = !filters.lastAccessedStart || (e.lastAccessedAt && new Date(e.lastAccessedAt) >= new Date(filters.lastAccessedStart));
+            const lastAccessedEndMatch = !filters.lastAccessedEnd || (e.lastAccessedAt && new Date(e.lastAccessedAt) <= new Date(filters.lastAccessedEnd));
+            
+            return typeMatch && searchMatch && tagsMatch && createdAtStartMatch && createdAtEndMatch && lastAccessedStartMatch && lastAccessedEndMatch;
         });
 
         filtered.sort((a, b) => {
-            const aVal = a[sortConfig.key as keyof typeof a] as any;
-            const bVal = b[sortConfig.key as keyof typeof b] as any;
-            if (aVal < bVal) return sortConfig.direction === 'ascending' ? -1 : 1;
-            if (aVal > bVal) return sortConfig.direction === 'ascending' ? 1 : -1;
+            for (const sort of sortConfig) {
+                const { key, direction } = sort;
+                const aVal = a[key as keyof typeof a] as any;
+                const bVal = b[key as keyof typeof b] as any;
+        
+                // Handle date sorting
+                if (key === 'createdAt' || key === 'lastAccessedAt') {
+                    const dateA = aVal ? new Date(aVal).getTime() : 0;
+                    const dateB = bVal ? new Date(bVal).getTime() : 0;
+                    if (dateA < dateB) return direction === 'ascending' ? -1 : 1;
+                    if (dateA > dateB) return direction === 'ascending' ? 1 : -1;
+                    continue;
+                }
+
+                if (aVal < bVal) return direction === 'ascending' ? -1 : 1;
+                if (aVal > bVal) return direction === 'ascending' ? 1 : -1;
+            }
             return 0;
         });
         
@@ -419,20 +450,57 @@ const EntityHub = () => {
     const entityTypes = useMemo(() => ['all', ...Array.from(new Set(entities.map(e => e.type)))], [entities]);
     const totalPages = Math.ceil(sortedAndFilteredEntities.length / ITEMS_PER_PAGE);
     
-    const requestSort = (key: SortKey) => {
-        let direction: 'ascending' | 'descending' = 'ascending';
-        if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-            direction = 'descending';
+    const requestSort = (key: SortKey, event: React.MouseEvent) => {
+        const existingSortIndex = sortConfig.findIndex(s => s.key === key);
+        const isShift = event.shiftKey;
+
+        if (existingSortIndex > -1) {
+            const existingSort = sortConfig[existingSortIndex];
+            const newDirection = existingSort.direction === 'ascending' ? 'descending' : 'ascending';
+            
+            // If it's the primary sort and no shift, just change direction
+            if (existingSortIndex === 0 && !isShift) {
+                 if (existingSort.direction === 'descending') {
+                    setSortConfig(sortConfig.filter(s => s.key !== key));
+                } else {
+                    setSortConfig([{ key, direction: newDirection }, ...sortConfig.filter(s => s.key !== key)]);
+                }
+            } else { // It's a secondary sort or shift is pressed
+                 const newConfig = [...sortConfig];
+                 if (existingSort.direction === 'descending') {
+                    newConfig.splice(existingSortIndex, 1); // Remove from sort
+                 } else {
+                    newConfig[existingSortIndex] = { key, direction: newDirection };
+                 }
+                 setSortConfig(newConfig);
+            }
+        } else { // Not in sort config yet
+            if (isShift) {
+                setSortConfig([...sortConfig, { key, direction: 'ascending' }]);
+            } else {
+                setSortConfig([{ key, direction: 'ascending' }]);
+            }
         }
-        setSortConfig({ key, direction });
     };
 
-    const SortableHeader = ({ sortKey, label }: { sortKey: SortKey; label: string }) => (
-        <th className="p-2 text-left cursor-pointer" onClick={() => requestSort(sortKey)}>
-            {label}
-            {sortConfig.key === sortKey && (sortConfig.direction === 'ascending' ? ' ▲' : ' ▼')}
-        </th>
-    );
+
+    const SortableHeader = ({ sortKey, label }: { sortKey: SortKey; label: string }) => {
+        const sortInfo = sortConfig.find(s => s.key === sortKey);
+        const sortIndex = sortConfig.findIndex(s => s.key === sortKey);
+    
+        return (
+            <th className="p-2 text-left cursor-pointer select-none" onClick={(e) => requestSort(sortKey, e)}>
+                {label}
+                {sortInfo && (
+                    <span className="ml-1">
+                        <span className="text-xs text-gray-500">[{sortIndex + 1}]</span>
+                        {sortInfo.direction === 'ascending' ? ' ▲' : ' ▼'}
+                    </span>
+                )}
+            </th>
+        );
+    };
+
 
     const toggleSelection = (id: string) => {
         setSelectedIds(prev => {
@@ -453,6 +521,26 @@ const EntityHub = () => {
             setSelectedIds(new Set(paginatedEntities.map(e => e.id)));
         }
     };
+    
+    // --- Filter Preset Handlers ---
+    const handleSaveFilter = (name: string) => {
+        if (!settings) return;
+        const newFilterSet: SavedFilterSet = { id: uuidv4(), name, filters };
+        const newSavedFilters = [...(settings.savedEntityHubFilters || []), newFilterSet];
+        saveSettings({ ...settings, savedEntityHubFilters: newSavedFilters });
+    };
+
+    const handleLoadFilter = (filterSet: SavedFilterSet) => {
+        setFilters(filterSet.filters);
+        setIsFilterPanelOpen(false);
+    };
+
+    const handleDeleteFilter = (id: string) => {
+        if (!settings) return;
+        const newSavedFilters = (settings.savedEntityHubFilters || []).filter(f => f.id !== id);
+        saveSettings({ ...settings, savedEntityHubFilters: newSavedFilters });
+    };
+
 
     return (
         <div className="flex flex-col h-full p-4 relative">
@@ -485,6 +573,18 @@ const EntityHub = () => {
             </AnimatePresence>
             <AnimatePresence>
                 {isFactVerifierOpen && <FactVerifierModal onClose={() => { setIsFactVerifierOpen(false); fetchEntities(activeBrainId); }} />}
+            </AnimatePresence>
+             <AnimatePresence>
+                <FilterPanel
+                    isOpen={isFilterPanelOpen}
+                    onClose={() => setIsFilterPanelOpen(false)}
+                    filters={filters}
+                    onFilterChange={setFilters}
+                    savedFilters={settings?.savedEntityHubFilters || []}
+                    onSave={handleSaveFilter}
+                    onLoad={handleLoadFilter}
+                    onDelete={handleDeleteFilter}
+                />
             </AnimatePresence>
 
 
@@ -521,6 +621,9 @@ const EntityHub = () => {
                     </select>
                     <div className="relative"><SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" /><input type="text" placeholder="Search entities..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-gray-700 rounded-md pl-8 pr-2 py-1.5 text-sm" /></div>
                     <select value={filters.type} onChange={e => setFilters({ ...filters, type: e.target.value })} className="bg-gray-700 rounded-md px-2 py-1.5 text-sm"><option value="all">All Types</option>{entityTypes.slice(1).map(type => <option key={type} value={type}>{type}</option>)}</select>
+                     <button onClick={() => setIsFilterPanelOpen(true)} className="px-3 py-1.5 bg-gray-700 text-white rounded-md hover:bg-gray-600 text-sm">
+                        Filters
+                    </button>
                 </div>
                  <div className="flex items-center gap-2">
                     <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'}`}><Bars3Icon className="w-5 h-5" /></button>

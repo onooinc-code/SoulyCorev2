@@ -28,7 +28,8 @@ const defaultSettings: AppSettings = {
         fontSize: '16px',
         messageFontSize: 'base',
         theme: 'theme-dark',
-    }
+    },
+    savedEntityHubFilters: [],
 };
 
 // GET the application settings
@@ -50,6 +51,7 @@ export async function GET() {
                 enableDebugLog: { ...defaultSettings.enableDebugLog, ...dbSettings.enableDebugLog },
                 featureFlags: { ...defaultSettings.featureFlags, ...dbSettings.featureFlags },
                 global_ui_settings: { ...defaultSettings.global_ui_settings, ...dbSettings.global_ui_settings },
+                savedEntityHubFilters: dbSettings.savedEntityHubFilters ?? defaultSettings.savedEntityHubFilters,
             };
             return NextResponse.json(mergedSettings);
         }

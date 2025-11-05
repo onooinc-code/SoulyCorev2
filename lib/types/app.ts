@@ -24,6 +24,13 @@ export interface ActiveWorkflowState {
     stepOutputs: Record<number, string>;
 }
 
+export interface SavedFilterSet {
+    id: string;
+    name: string;
+    filters: any; 
+}
+
+
 export interface AppSettings {
     defaultModelConfig: {
         model: string;
@@ -46,6 +53,7 @@ export interface AppSettings {
         messageFontSize?: 'xs' | 'sm' | 'base' | 'lg';
         theme?: 'theme-dark' | 'theme-light' | 'theme-solarized';
     }
+    savedEntityHubFilters?: SavedFilterSet[];
 }
 
 // For notification system
