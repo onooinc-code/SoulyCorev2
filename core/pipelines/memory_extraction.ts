@@ -2,7 +2,7 @@ import { SemanticMemoryModule } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
 import { EntityVectorMemoryModule } from '../memory/modules/entity_vector';
 import { sql, db } from '@/lib/db';
-import type { PipelineRun, EntityDefinition, EntityRelationship } from '@/lib/types';
+import type { PipelineRun, EntityDefinition, EntityRelationship, PredicateDefinition } from '@/lib/types';
 import { IMemoryExtractionConfig } from '../memory/types';
 import { GoogleGenAI, Type } from "@google/genai";
 
@@ -52,7 +52,7 @@ export class MemoryExtractionPipeline {
         }
     }
 
-    private async inferAndStoreRelationships(
+    private async _runLLMBasedInference(
         newRelationships: EntityRelationship[],
         allEntities: EntityDefinition[],
         brainId: string | null,
@@ -150,7 +150,7 @@ export class MemoryExtractionPipeline {
             `;
 
             if (checkRows.length === 0) {
-                const inferredProvenance = { ...provenance, type: 'inferred', from: facts.split('\n') };
+                const inferredProvenance = { ...provenance, type: 'inferred_llm', from: facts.split('\n') };
                 await this.structuredMemory.store({
                     type: 'relationship',
                     data: {
@@ -166,6 +166,101 @@ export class MemoryExtractionPipeline {
         }
         return { inferencesMade };
     }
+
+    private async _runRuleBasedInference(
+        newlyCreatedRels: EntityRelationship[],
+        brainId: string | null,
+        provenance: any
+    ) {
+        const { rows: rulePredicates } = await sql<PredicateDefinition>`
+            SELECT id, name, "isSymmetric", "isTransitive" 
+            FROM predicate_definitions 
+            WHERE "isSymmetric" = true OR "isTransitive" = true
+        `;
+    
+        if (rulePredicates.length === 0) return { inferredCount: 0 };
+    
+        const symmetricPredicateIds = new Set(rulePredicates.filter(p => p.isSymmetric).map(p => p.id));
+        const transitivePredicateIds = new Set(rulePredicates.filter(p => p.isTransitive).map(p => p.id));
+        let inferredCount = 0;
+    
+        const newInferences: Omit<EntityRelationship, 'id' | 'createdAt'>[] = [];
+    
+        // 1. Symmetric Inference
+        for (const rel of newlyCreatedRels) {
+            if (symmetricPredicateIds.has(rel.predicateId)) {
+                newInferences.push({
+                    sourceEntityId: rel.targetEntityId,
+                    targetEntityId: rel.sourceEntityId,
+                    predicateId: rel.predicateId,
+                    provenance: { ...provenance, type: 'inferred_symmetric', from: rel.id },
+                    brainId: brainId,
+                });
+            }
+        }
+    
+        // 2. Transitive Inference (one level deep for simplicity)
+        for (const rel of newlyCreatedRels) {
+            if (transitivePredicateIds.has(rel.predicateId)) {
+                // Find A -> B (new), look for B -> C (existing) => infer A -> C
+                const { rows: secondLegRels } = await sql<EntityRelationship>`
+                    SELECT * FROM entity_relationships 
+                    WHERE "sourceEntityId" = ${rel.targetEntityId} AND "predicateId" = ${rel.predicateId}
+                `;
+                for (const secondLeg of secondLegRels) {
+                    newInferences.push({
+                        sourceEntityId: rel.sourceEntityId,
+                        targetEntityId: secondLeg.targetEntityId,
+                        predicateId: rel.predicateId,
+                        provenance: { ...provenance, type: 'inferred_transitive', from: [rel.id, secondLeg.id] },
+                        brainId: brainId,
+                    });
+                }
+    
+                // Find B -> C (new), look for A -> B (existing) => infer A -> C
+                const { rows: firstLegRels } = await sql<EntityRelationship>`
+                    SELECT * FROM entity_relationships 
+                    WHERE "targetEntityId" = ${rel.sourceEntityId} AND "predicateId" = ${rel.predicateId}
+                `;
+                for (const firstLeg of firstLegRels) {
+                     newInferences.push({
+                        sourceEntityId: firstLeg.sourceEntityId,
+                        targetEntityId: rel.targetEntityId,
+                        predicateId: rel.predicateId,
+                        provenance: { ...provenance, type: 'inferred_transitive', from: [firstLeg.id, rel.id] },
+                        brainId: brainId,
+                    });
+                }
+            }
+        }
+        
+        // 3. Batch insert new inferences, ignoring conflicts
+        if (newInferences.length > 0) {
+            const client = await db.connect();
+            try {
+                await client.query('BEGIN');
+                for (const inference of newInferences) {
+                    const res = await client.query(`
+                        INSERT INTO entity_relationships ("sourceEntityId", "targetEntityId", "predicateId", provenance, "brainId", "confidenceScore")
+                        VALUES ($1, $2, $3, $4, $5, 0.95)
+                        ON CONFLICT ("sourceEntityId", "targetEntityId", "predicateId") DO NOTHING;
+                    `, [inference.sourceEntityId, inference.targetEntityId, inference.predicateId, JSON.stringify(inference.provenance), inference.brainId]);
+                    if (res.rowCount > 0) {
+                        inferredCount++;
+                    }
+                }
+                await client.query('COMMIT');
+            } catch (e) {
+                await client.query('ROLLBACK');
+                throw e;
+            } finally {
+                client.release();
+            }
+        }
+    
+        return { inferredCount };
+    }
+
 
     async run(params: IMemoryExtractionParams) {
         const { text, messageId, conversationId, brainId, config } = params;
@@ -233,9 +328,10 @@ export class MemoryExtractionPipeline {
             }
             
             const allEntitiesInBrain = await this.structuredMemory.query({ type: 'entity' }) as EntityDefinition[];
+            let storedDirectRelationships: EntityRelationship[] = [];
 
             if (extractionResult.relationships && extractionResult.relationships.length > 0) {
-                const storedDirectRelationships = await this.logStep(runId, 3, 'Store Direct Relationships', { count: extractionResult.relationships.length }, async () => {
+                storedDirectRelationships = await this.logStep(runId, 3, 'Store Direct Relationships', { count: extractionResult.relationships.length }, async () => {
                     const entityMap = new Map(allEntitiesInBrain.map(e => [e.name.toLowerCase(), e.id]));
                     const predicateMap = new Map<string, string>();
                     const createdRels: EntityRelationship[] = [];
@@ -262,14 +358,20 @@ export class MemoryExtractionPipeline {
                     return createdRels;
                 });
 
-                await this.logStep(runId, 4, 'Infer New Relationships', { newDirectRels: storedDirectRelationships.length }, () =>
-                    this.inferAndStoreRelationships(storedDirectRelationships, allEntitiesInBrain, brainId, provenance)
+                await this.logStep(runId, 4, 'Infer Relationships (LLM)', { newDirectRels: storedDirectRelationships.length }, () =>
+                    this._runLLMBasedInference(storedDirectRelationships, allEntitiesInBrain, brainId, provenance)
                 );
+                
+                if (storedDirectRelationships.length > 0) {
+                    await this.logStep(runId, 5, 'Infer Relationships (Rule-Based)', { count: storedDirectRelationships.length }, () => 
+                        this._runRuleBasedInference(storedDirectRelationships, brainId, provenance)
+                    );
+                }
             }
 
 
             if (config.enableKnowledgeExtraction && extractionResult.knowledge) {
-                 await this.logStep(runId, 5, 'Store Knowledge', { count: extractionResult.knowledge.length }, () =>
+                 await this.logStep(runId, 6, 'Store Knowledge', { count: extractionResult.knowledge.length }, () =>
                     Promise.all(extractionResult.knowledge.map((k: string) =>
                         this.semanticMemory.store({ text: k })
                     ))
@@ -277,7 +379,7 @@ export class MemoryExtractionPipeline {
             }
             
             if (config.enableSegmentExtraction) {
-                await this.logStep(runId, 6, 'Extract Segments', { text }, async () => {
+                await this.logStep(runId, 7, 'Extract Segments', { text }, async () => {
                     return { segments: ['Project Alpha', 'Q3 Planning'] }; // Mock result
                 });
             }

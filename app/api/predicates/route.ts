@@ -16,15 +16,17 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
-        const { name, description } = await req.json();
+        const { name, description, isTransitive, isSymmetric } = await req.json();
         if (!name) {
             return NextResponse.json({ error: 'Missing required field: name' }, { status: 400 });
         }
         const { rows } = await sql<PredicateDefinition>`
-            INSERT INTO predicate_definitions (name, description)
-            VALUES (${name}, ${description || null})
+            INSERT INTO predicate_definitions (name, description, "isTransitive", "isSymmetric")
+            VALUES (${name}, ${description || null}, ${isTransitive || false}, ${isSymmetric || false})
             ON CONFLICT (name) DO UPDATE SET 
-                description = EXCLUDED.description
+                description = EXCLUDED.description,
+                "isTransitive" = EXCLUDED."isTransitive",
+                "isSymmetric" = EXCLUDED."isSymmetric"
             RETURNING *;
         `;
         return NextResponse.json(rows[0], { status: 201 });

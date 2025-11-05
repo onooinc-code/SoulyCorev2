@@ -5,13 +5,16 @@ import type { PredicateDefinition } from '@/lib/types';
 export async function PUT(req: NextRequest, { params }: { params: { predicateId: string } }) {
     try {
         const { predicateId } = params;
-        const { name, description } = await req.json();
+        const { name, description, isTransitive, isSymmetric } = await req.json();
         if (!name) {
             return NextResponse.json({ error: 'Missing required field: name' }, { status: 400 });
         }
         const { rows } = await sql<PredicateDefinition>`
             UPDATE predicate_definitions
-            SET name = ${name}, description = ${description || null}
+            SET name = ${name}, 
+                description = ${description || null},
+                "isTransitive" = ${isTransitive || false},
+                "isSymmetric" = ${isSymmetric || false}
             WHERE id = ${predicateId}
             RETURNING *;
         `;

@@ -71,6 +71,8 @@ export interface PredicateDefinition {
     id: string;
     name: string;
     description?: string;
+    isTransitive?: boolean;
+    isSymmetric?: boolean;
     createdAt: Date;
 }
 

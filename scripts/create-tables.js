@@ -118,6 +118,8 @@ const statements = [
     "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "name" VARCHAR(255) UNIQUE NOT NULL,
     "description" TEXT,
+    "isTransitive" BOOLEAN NOT NULL DEFAULT false,
+    "isSymmetric" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMPTZ DEFAULT now()
   );`,
 

@@ -15,6 +15,7 @@ const RelationshipGraph = () => {
     const [draggedNode, setDraggedNode] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null);
     const [isPanning, setIsPanning] = useState(false);
     const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
+    const [hoveredEdge, setHoveredEdge] = useState<{ edge: GraphEdge; pos: { x: number; y: number } } | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
 
 
@@ -189,15 +190,25 @@ const RelationshipGraph = () => {
                     }
 
                     return (
-                        <g key={edge.id} className="pointer-events-none" opacity={0.3 + confidence * 0.7}>
+                        <g 
+                            key={edge.id}
+                            opacity={0.3 + confidence * 0.7}
+                            onMouseEnter={() => {
+                                if (edge.metadata && Object.keys(edge.metadata).length > 0) {
+                                    setHoveredEdge({ edge, pos: { x: midX + 10, y: midY + 10 } });
+                                }
+                            }}
+                            onMouseLeave={() => setHoveredEdge(null)}
+                        >
                             <line
                                 x1={sourcePos.x}
                                 y1={sourcePos.y}
                                 x2={targetPos.x}
                                 y2={targetPos.y}
                                 stroke="#4a5568"
-                                strokeWidth="1"
+                                strokeWidth="1.5"
                                 markerEnd="url(#arrowhead)"
+                                className="pointer-events-auto"
                             />
                             <text
                                 x={midX}
@@ -205,7 +216,7 @@ const RelationshipGraph = () => {
                                 fill="#a0aec0"
                                 fontSize="10"
                                 textAnchor="middle"
-                                className="font-mono"
+                                className="font-mono pointer-events-none"
                             >
                                 {edge.label} ({Math.round(confidence * 100)}%)
                             </text>
@@ -216,6 +227,7 @@ const RelationshipGraph = () => {
                                     fill="#718096"
                                     fontSize="8"
                                     textAnchor="middle"
+                                     className="pointer-events-none"
                                 >
                                     {dateLabel}
                                 </text>
@@ -259,6 +271,16 @@ const RelationshipGraph = () => {
                         </g>
                     );
                 })}
+
+                {/* Tooltip for N-ary relationships */}
+                {hoveredEdge && (
+                    <foreignObject x={hoveredEdge.pos.x} y={hoveredEdge.pos.y} width="200" height="150" className="pointer-events-none">
+                        <div className="bg-gray-900/80 p-2 rounded text-xs border border-gray-600 shadow-lg">
+                            <h4 className="font-bold text-gray-200 mb-1">Additional Data</h4>
+                            <pre className="whitespace-pre-wrap text-gray-300"><code>{JSON.stringify(hoveredEdge.edge.metadata, null, 2)}</code></pre>
+                        </div>
+                    </foreignObject>
+                )}
             </svg>
         </div>
     );

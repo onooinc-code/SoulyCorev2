@@ -98,6 +98,16 @@ const PredicatesHub = () => {
                      <div>
                         <textarea value={formState.description || ''} onChange={e => setFormState({...formState, description: e.target.value})} placeholder='Description' className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={2}></textarea>
                     </div>
+                    <div className="flex gap-4 text-sm">
+                        <label className="flex items-center gap-2">
+                            <input type="checkbox" checked={formState.isTransitive || false} onChange={e => setFormState({...formState, isTransitive: e.target.checked})} />
+                            Transitive (e.g., is_part_of)
+                        </label>
+                         <label className="flex items-center gap-2">
+                            <input type="checkbox" checked={formState.isSymmetric || false} onChange={e => setFormState({...formState, isSymmetric: e.target.checked})} />
+                            Symmetric (e.g., is_married_to)
+                        </label>
+                    </div>
                     <div className="flex gap-2">
                         <button onClick={handleSave} className="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-500">Save</button>
                         <button onClick={() => { setIsFormVisible(false); setFormState({}); setFormErrors({}); }} className="px-4 py-2 bg-gray-600 text-white rounded-md text-sm hover:bg-gray-500">Cancel</button>
@@ -110,6 +120,8 @@ const PredicatesHub = () => {
                         <tr>
                             <th className="p-3">Name</th>
                             <th className="p-3">Description</th>
+                            <th className="p-3">Transitive</th>
+                            <th className="p-3">Symmetric</th>
                             <th className="p-3">Actions</th>
                         </tr>
                     </thead>
@@ -118,6 +130,8 @@ const PredicatesHub = () => {
                             <tr key={predicate.id} className="border-b border-gray-700 hover:bg-gray-700/50">
                                 <td className="p-3 font-medium font-mono">{predicate.name}</td>
                                 <td className="p-3 text-gray-400 text-xs">{predicate.description}</td>
+                                <td className="p-3 text-center">{predicate.isTransitive ? '✅' : '❌'}</td>
+                                <td className="p-3 text-center">{predicate.isSymmetric ? '✅' : '❌'}</td>
                                 <td className="p-3">
                                     <div className="flex gap-2">
                                         <button onClick={() => handleOpenForm(predicate)} title="Edit" className="p-2 rounded-lg text-gray-300 transition-colors hover:bg-white/10 hover:text-blue-400"><EditIcon className="w-5 h-5"/></button>
