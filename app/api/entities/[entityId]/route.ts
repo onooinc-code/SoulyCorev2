@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 // FIX: Corrected import path for type.
@@ -7,7 +8,7 @@ import type { EntityDefinition } from '@/lib/types';
 export async function PUT(req: NextRequest, { params }: { params: { entityId: string } }) {
     try {
         const { entityId } = params;
-        const { name, type, description, aliases } = await req.json();
+        const { name, type, description, aliases, tags } = await req.json();
         if (!name || !type) {
             return NextResponse.json({ error: 'Missing required fields: name and type' }, { status: 400 });
         }
@@ -18,6 +19,7 @@ export async function PUT(req: NextRequest, { params }: { params: { entityId: st
                 type = ${type}, 
                 description = ${description || null}, 
                 aliases = ${aliases ? JSON.stringify(aliases) : '[]'},
+                tags = ${tags ? (tags as any) : null},
                 "lastUpdatedAt" = CURRENT_TIMESTAMP
             WHERE id = ${entityId}
             RETURNING *;

@@ -1,4 +1,5 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 // FIX: Corrected import path for type.
@@ -19,16 +20,17 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
-        const { name, type, description, aliases } = await req.json();
+        const { name, type, description, aliases, tags } = await req.json();
         if (!name || !type) {
             return NextResponse.json({ error: 'Missing required fields: name and type' }, { status: 400 });
         }
         const { rows } = await sql<EntityDefinition>`
-            INSERT INTO entity_definitions (name, type, description, aliases)
-            VALUES (${name}, ${type}, ${description || null}, ${aliases ? JSON.stringify(aliases) : '[]'})
+            INSERT INTO entity_definitions (name, type, description, aliases, tags)
+            VALUES (${name}, ${type}, ${description || null}, ${aliases ? JSON.stringify(aliases) : '[]'}, ${tags ? (tags as any) : null})
             ON CONFLICT (name, type) DO UPDATE SET 
                 description = EXCLUDED.description, 
                 aliases = EXCLUDED.aliases,
+                tags = EXCLUDED.tags,
                 "lastUpdatedAt" = CURRENT_TIMESTAMP
             RETURNING *;
         `;

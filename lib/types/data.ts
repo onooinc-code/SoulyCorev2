@@ -55,6 +55,7 @@ export interface EntityDefinition {
     type: string;
     description?: string;
     aliases?: string[];
+    tags?: string[];
     createdAt: Date;
     lastUpdatedAt: Date;
 }

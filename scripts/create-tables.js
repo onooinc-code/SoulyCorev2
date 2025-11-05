@@ -89,6 +89,7 @@ const statements = [
     "type" VARCHAR(255) NOT NULL,
     "description" TEXT,
     "aliases" JSONB,
+    "tags" TEXT[],
     "createdAt" TIMESTAMPTZ DEFAULT now(),
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now(),
     UNIQUE("name", "type")
