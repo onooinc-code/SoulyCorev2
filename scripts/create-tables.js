@@ -35,6 +35,8 @@ const statements = [
   `DROP TABLE IF EXISTS "predicate_definitions" CASCADE;`,
   `DROP TABLE IF EXISTS "entity_history" CASCADE;`,
   `DROP TABLE IF EXISTS "entity_relationships" CASCADE;`,
+  `DROP TABLE IF EXISTS "events" CASCADE;`,
+  `DROP TABLE IF EXISTS "event_participants" CASCADE;`,
   `DROP MATERIALIZED VIEW IF EXISTS "vw_detailed_relationships" CASCADE;`,
 
 
@@ -427,6 +429,25 @@ const statements = [
     "changedAt" TIMESTAMPTZ DEFAULT now()
   );`,
 
+  `CREATE TABLE IF NOT EXISTS "events" (
+    "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "type" VARCHAR(255) NOT NULL,
+    "description" TEXT,
+    "startDate" TIMESTAMPTZ,
+    "endDate" TIMESTAMPTZ,
+    "provenance" JSONB,
+    "brainId" UUID REFERENCES "brains"("id") ON DELETE SET NULL,
+    "createdAt" TIMESTAMPTZ DEFAULT now()
+  );`,
+
+  `CREATE TABLE IF NOT EXISTS "event_participants" (
+    "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "eventId" UUID NOT NULL REFERENCES "events"("id") ON DELETE CASCADE,
+    "entityId" UUID NOT NULL REFERENCES "entity_definitions"("id") ON DELETE CASCADE,
+    "role" VARCHAR(255) NOT NULL,
+    UNIQUE("eventId", "entityId", "role")
+  );`,
+
   `CREATE MATERIALIZED VIEW "vw_detailed_relationships" AS
     SELECT
         r.id,
@@ -455,6 +476,8 @@ const statements = [
   `CREATE INDEX IF NOT EXISTS "idx_pipeline_runs_message_id" ON "pipeline_runs"("messageId");`,
   `CREATE INDEX IF NOT EXISTS "idx_entity_history_entity_id" ON "entity_history"("entityId");`,
   `CREATE INDEX IF NOT EXISTS "idx_relationships_brain_id" ON "entity_relationships"("brainId");`,
+  `CREATE INDEX IF NOT EXISTS "idx_event_participants_event_id" ON "event_participants"("eventId");`,
+  `CREATE INDEX IF NOT EXISTS "idx_event_participants_entity_id" ON "event_participants"("entityId");`,
 ];
 
 async function createTables() {

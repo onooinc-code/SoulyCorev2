@@ -385,6 +385,24 @@ export interface Brain {
     lastUpdatedAt: Date;
 }
 
+export interface Event {
+    id: string;
+    type: string;
+    description?: string;
+    startDate?: Date;
+    endDate?: Date;
+    provenance?: any;
+    brainId?: string | null;
+    createdAt: Date;
+}
+
+export interface EventParticipant {
+    id: string;
+    eventId: string;
+    entityId: string;
+    role: string;
+}
+
 
 // For Nivo charts
 export interface FeatureStatusChartData {

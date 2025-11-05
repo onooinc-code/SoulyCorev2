@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { XIcon, ClockIcon, SparklesIcon } from '../Icons';
-import type { EntityDefinition, EntityHistoryLog } from '@/lib/types';
+import type { EntityDefinition, EntityHistoryLog, Event } from '@/lib/types';
 import { useNotification } from '@/lib/hooks/use-notifications';
 
 interface EntityDetailPanelProps {
@@ -11,6 +11,11 @@ interface EntityDetailPanelProps {
     onClose: () => void;
     onRefresh: () => void;
 }
+
+interface EnrichedEvent extends Event {
+    participants: { role: string; entityName: string }[];
+}
+
 
 const DetailRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
     <div>
@@ -65,28 +70,34 @@ const HistoryRow: React.FC<HistoryRowProps> = ({ log }) => {
 const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProps) => {
     const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
     const [history, setHistory] = useState<EntityHistoryLog[]>([]);
-    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [events, setEvents] = useState<EnrichedEvent[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     const [isSummarizing, setIsSummarizing] = useState(false);
     const { addNotification } = useNotification();
 
     useEffect(() => {
-        if (activeTab === 'history' && entity) {
-            const fetchHistory = async () => {
-                setIsLoadingHistory(true);
-                try {
+        const fetchData = async () => {
+            if (!entity) return;
+            setIsLoading(true);
+            try {
+                if (activeTab === 'history') {
                     const res = await fetch(`/api/entities/${entity.id}/history`);
                     if (!res.ok) throw new Error('Failed to fetch history');
-                    const data = await res.json();
-                    setHistory(data);
-                } catch (error) {
-                    console.error("History fetch error:", error);
-                } finally {
-                    setIsLoadingHistory(false);
+                    setHistory(await res.json());
+                } else if (activeTab === 'details') {
+                    const res = await fetch(`/api/events/${entity.id}`);
+                     if (!res.ok) throw new Error('Failed to fetch events');
+                    setEvents(await res.json());
                 }
-            };
-            fetchHistory();
-        }
-    }, [activeTab, entity]);
+            } catch (error) {
+                console.error("Data fetch error:", error);
+                addNotification({type: 'error', title: 'Error', message: `Failed to fetch ${activeTab} data.`});
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, [activeTab, entity, addNotification]);
 
     const handleAiSummarize = async () => {
         if (!entity) return;
@@ -173,15 +184,29 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
                             ) : <i className="text-gray-500">No tags.</i>
                         } />
                         <div className="border-t border-gray-700 pt-4">
-                            <DetailRow label="Relationships" value={<i className="text-gray-500">Relationship data loading is planned for a future update.</i>} />
-                        </div>
-                        <div>
-                            <DetailRow label="Associated Messages" value={<i className="text-gray-500">Message association is planned for a future update.</i>} />
+                            <h4 className="text-sm font-semibold text-gray-400 mb-2">Complex Relationships (Events)</h4>
+                             {isLoading ? <p>Loading events...</p> : events.length > 0 ? (
+                                <div className="space-y-3">
+                                    {events.map(event => (
+                                        <div key={event.id} className="text-sm p-3 bg-gray-900/50 rounded-lg">
+                                            <p className="font-semibold text-indigo-300">{event.type}</p>
+                                            <div className="pl-4 mt-2 space-y-1">
+                                                {event.participants?.map(p => (
+                                                    <div key={p.entityName}>
+                                                        <span className="text-gray-500">{p.role}: </span>
+                                                        <span className="text-gray-200">{p.entityName}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                             ) : <p className="text-sm text-gray-500">No complex relationships found.</p>}
                         </div>
                     </>
                 )}
                 {activeTab === 'history' && (
-                    isLoadingHistory ? (
+                    isLoading ? (
                         <p className="text-gray-400">Loading history...</p>
                     ) : history.length > 0 ? (
                         <div className="space-y-4">

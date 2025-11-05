@@ -382,7 +382,7 @@ const RelationshipGraph = () => {
                             <g 
                                 key={edge.id}
                                 opacity={opacity}
-                                onMouseEnter={() => { if (edge.metadata && Object.keys(edge.metadata).length > 0) { setHoveredEdge({ edge, pos: { x: midX + 10, y: midY + 10 } }); } }}
+                                onMouseEnter={() => { if (edge.metadata && Object.keys(edge.metadata).length > 0 || edge.startDate || edge.endDate) { setHoveredEdge({ edge, pos: { x: midX + 10, y: midY + 10 } }); } }}
                                 onMouseLeave={() => setHoveredEdge(null)}
                                 onContextMenu={(e) => handleEdgeContextMenu(e, edge.id)}
                             >
@@ -431,7 +431,16 @@ const RelationshipGraph = () => {
 
                     {hoveredEdge && (
                         <foreignObject x={hoveredEdge.pos.x} y={hoveredEdge.pos.y} width="200" height="150" className="pointer-events-none">
-                            <div className="bg-gray-900/80 p-2 rounded text-xs border border-gray-600 shadow-lg"><h4 className="font-bold text-gray-200 mb-1">Additional Data</h4><pre className="whitespace-pre-wrap text-gray-300"><code>{JSON.stringify(hoveredEdge.edge.metadata, null, 2)}</code></pre></div>
+                            <div className="bg-gray-900/80 p-2 rounded text-xs border border-gray-600 shadow-lg space-y-1">
+                                {hoveredEdge.edge.startDate && <p><strong className="text-gray-400">From:</strong> {new Date(hoveredEdge.edge.startDate).toLocaleDateString()}</p>}
+                                {hoveredEdge.edge.endDate && <p><strong className="text-gray-400">To:</strong> {new Date(hoveredEdge.edge.endDate).toLocaleDateString()}</p>}
+                                {hoveredEdge.edge.metadata && Object.keys(hoveredEdge.edge.metadata).length > 0 && (
+                                    <>
+                                        <h4 className="font-bold text-gray-200 mt-1">Metadata</h4>
+                                        <pre className="whitespace-pre-wrap text-gray-300"><code>{JSON.stringify(hoveredEdge.edge.metadata, null, 2)}</code></pre>
+                                    </>
+                                )}
+                            </div>
                         </foreignObject>
                     )}
                 </svg>

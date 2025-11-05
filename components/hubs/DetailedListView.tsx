@@ -28,6 +28,11 @@ const DetailedListView = () => {
         fetchData();
     }, [fetchData]);
 
+    const formatDate = (dateString: string | null) => {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleDateString();
+    };
+
     if (isLoading) {
         return <div className="p-4"><SkeletonLoader className="h-8 w-full" /><SkeletonLoader className="h-8 w-full mt-2" /></div>;
     }
@@ -45,6 +50,8 @@ const DetailedListView = () => {
                         <th className="p-3">Predicate</th>
                         <th className="p-3">Target Entity</th>
                         <th className="p-3">Brain</th>
+                        <th className="p-3">Start Date</th>
+                        <th className="p-3">End Date</th>
                         <th className="p-3">Context</th>
                     </tr>
                 </thead>
@@ -55,6 +62,8 @@ const DetailedListView = () => {
                             <td className="p-3 font-mono text-indigo-300">{rel.predicateName}</td>
                             <td className="p-3">{rel.targetName} <span className="text-gray-500">({rel.targetType})</span></td>
                             <td className="p-3">{rel.brainName || 'Default'}</td>
+                            <td className="p-3 text-gray-400">{formatDate(rel.startDate)}</td>
+                            <td className="p-3 text-gray-400">{formatDate(rel.endDate)}</td>
                             <td className="p-3 text-gray-400 text-xs truncate">{rel.context}</td>
                         </tr>
                     ))}
