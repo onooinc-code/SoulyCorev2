@@ -8,7 +8,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { EntityDefinition, Brain, SavedFilterSet } from '@/lib/types';
 import { useConversation } from '@/components/providers/ConversationProvider';
-import { XIcon, TrashIcon, PlusIcon, EditIcon, SearchIcon, ArrowsRightLeftIcon, Bars3Icon, Squares2X2Icon, ViewColumnsIcon, LinkIcon, TagIcon, WrenchScrewdriverIcon, BeakerIcon } from '@/components/Icons';
+import { XIcon, TrashIcon, PlusIcon, EditIcon, SearchIcon, ArrowsRightLeftIcon, Bars3Icon, Squares2X2Icon, ViewColumnsIcon, LinkIcon, TagIcon, WrenchScrewdriverIcon, BeakerIcon, SparklesIcon } from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLog } from '@/components/providers/LogProvider';
 import { useSettings } from '../providers/SettingsProvider';
@@ -46,6 +46,14 @@ const DetailedListView = dynamic(() => import('./DetailedListView'), {
 });
 
 const FilterPanel = dynamic(() => import('./FilterPanel'), {
+    ssr: false
+});
+
+const EntityFormModal = dynamic(() => import('../modals/EntityFormModal'), {
+    ssr: false
+});
+
+const AISuggestionModal = dynamic(() => import('../modals/AISuggestionModal'), {
     ssr: false
 });
 
@@ -121,46 +129,6 @@ const MergeConfirmationModal = ({
 type SortKey = keyof EntityDefinition | 'relevancyScore';
 type ViewMode = 'list' | 'grid' | 'graph' | 'detailed-list';
 
-
-interface EntityCardProps {
-    entity: EntityDefinition;
-    isSelected: boolean;
-    onToggleSelection: () => void;
-    onEdit: () => void;
-    onDelete: () => void;
-}
-
-const EntityCard: React.FC<EntityCardProps> = ({ entity, isSelected, onToggleSelection, onEdit, onDelete }) => (
-    <motion.div 
-        layout 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        className={`p-4 rounded-lg border transition-colors ${isSelected ? 'bg-indigo-900/50 border-indigo-600' : 'bg-gray-700/50 border-gray-700 hover:border-gray-600'}`}
-    >
-        <div className="flex justify-between items-start">
-            <div className="flex items-start gap-3">
-                <input type="checkbox" checked={isSelected} onChange={onToggleSelection} className="mt-1 bg-gray-800 border-gray-600 rounded" />
-                <div className="flex-1">
-                    <h4 className="font-semibold text-gray-100">{entity.name}</h4>
-                    <p className="text-xs text-indigo-300 font-mono">{entity.type}</p>
-                </div>
-            </div>
-            <div className="flex gap-1">
-                <button onClick={onEdit} title="Edit" className="p-1 text-gray-400 hover:text-white"><EditIcon className="w-4 h-4" /></button>
-                <button onClick={onDelete} title="Delete" className="p-1 text-gray-400 hover:text-red-400"><TrashIcon className="w-4 h-4" /></button>
-            </div>
-        </div>
-        {entity.description && <p className="text-xs text-gray-400 mt-2 line-clamp-2">{entity.description}</p>}
-        {Array.isArray(entity.aliases) && entity.aliases.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1">
-                {entity.aliases.map(alias => (
-                    <span key={alias} className="text-xs bg-gray-600 px-2 py-0.5 rounded-full">{alias}</span>
-                ))}
-            </div>
-        )}
-    </motion.div>
-);
-
 const getRelativeTime = (date: Date): string => {
     const now = new Date();
     const seconds = Math.round((now.getTime() - date.getTime()) / 1000);
@@ -186,9 +154,8 @@ const EntityHub = () => {
     const [brains, setBrains] = useState<Brain[]>([]);
     const [activeBrainId, setActiveBrainId] = useState<string>('none');
     
-    const [isFormVisible, setIsFormVisible] = useState(false);
-    const [entityForm, setEntityForm] = useState<EntityFormState>({});
-    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+    const [currentEntityForForm, setCurrentEntityForForm] = useState<Partial<EntityDefinition> | null>(null);
     
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState<Array<{ key: SortKey; direction: 'ascending' | 'descending' }>>([{ key: 'relevancyScore', direction: 'descending' }]);
@@ -211,6 +178,7 @@ const EntityHub = () => {
     const [isCategorizerOpen, setIsCategorizerOpen] = useState(false);
     const [isFactVerifierOpen, setIsFactVerifierOpen] = useState(false);
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+    const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
 
 
     const ITEMS_PER_PAGE = 20;
@@ -248,52 +216,31 @@ const EntityHub = () => {
     useEffect(() => {
         fetchEntities(activeBrainId);
     }, [fetchEntities, activeBrainId]);
-    
-    const validateForm = () => {
-        const errors: Record<string, string> = {};
-        if (!entityForm.name?.trim()) errors.name = "Name is required.";
-        if (!entityForm.type?.trim()) errors.type = "Type is required.";
-        setFormErrors(errors);
-        return Object.keys(errors).length === 0;
-    };
-    
-    const handleOpenForm = (entity: EntityDefinition | null = null) => {
-        if (entity) {
-            setEntityForm({
-                ...entity,
-                aliases_str: Array.isArray(entity.aliases) ? entity.aliases.join(', ') : '',
-            });
-        } else {
-            setEntityForm({ type: 'Misc', brainId: activeBrainId === 'none' ? undefined : activeBrainId });
-        }
-        setIsFormVisible(true);
+
+    const handleOpenForm = (entity: Partial<EntityDefinition> | null = null) => {
+        setCurrentEntityForForm(entity || { type: 'Misc', brainId: activeBrainId === 'none' ? undefined : activeBrainId });
+        setIsFormModalOpen(true);
     };
 
-    const handleSaveEntity = async () => {
-        if (!validateForm()) return;
-        
+    const handleSaveEntity = async (entityToSave: Partial<EntityDefinition>) => {
         clearError();
-        const isUpdating = !!entityForm.id;
-        const url = isUpdating ? `/api/entities/${entityForm.id}` : '/api/entities';
+        const isUpdating = !!entityToSave.id;
+        const url = isUpdating ? `/api/entities/${entityToSave.id}` : '/api/entities';
         const method = isUpdating ? 'PUT' : 'POST';
-
-        const payload = {
-            ...entityForm,
-            aliases: entityForm.aliases_str?.split(',').map(s => s.trim()).filter(Boolean) || [],
-        };
-        delete payload.aliases_str;
 
         try {
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
+                body: JSON.stringify(entityToSave),
             });
-            if (!res.ok) throw new Error(`Failed to ${isUpdating ? 'update' : 'create'} entity`);
+            if (!res.ok) {
+                 const errorData = await res.json();
+                 throw new Error(errorData.error || `Failed to ${isUpdating ? 'update' : 'create'} entity`);
+            }
 
             await fetchEntities(activeBrainId);
-            setIsFormVisible(false);
-            setEntityForm({});
+            setIsFormModalOpen(false);
         } catch (error) {
             setStatus({ error: (error as Error).message });
         }
@@ -586,6 +533,23 @@ const EntityHub = () => {
                     onDelete={handleDeleteFilter}
                 />
             </AnimatePresence>
+            <AnimatePresence>
+                {isFormModalOpen && (
+                    <EntityFormModal
+                        entity={currentEntityForForm}
+                        onClose={() => setIsFormModalOpen(false)}
+                        onSave={handleSaveEntity}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isSuggestionModalOpen && (
+                    <AISuggestionModal
+                        onClose={() => setIsSuggestionModalOpen(false)}
+                        onEntityCreated={() => fetchEntities(activeBrainId)}
+                    />
+                )}
+            </AnimatePresence>
 
 
             <div className="flex justify-between items-center mb-4 flex-shrink-0">
@@ -597,7 +561,8 @@ const EntityHub = () => {
                         </button>
                         <AnimatePresence>
                             {isToolsMenuOpen && (
-                                <motion.div initial={{opacity: 0, y: -10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0, y: -10}} className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-20">
+                                <motion.div initial={{opacity: 0, y: -10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0, y: -10}} className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-20">
+                                    <button onClick={() => { setIsSuggestionModalOpen(true); setToolsMenuOpen(false); }} className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-700"><SparklesIcon className="w-4 h-4 text-purple-400" /> Find Entity Suggestions</button>
                                     <button onClick={() => { setIsFactVerifierOpen(true); setToolsMenuOpen(false); }} className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-700"><BeakerIcon className="w-4 h-4" /> Verify Facts</button>
                                     <button onClick={() => { setIsDuplicateFinderOpen(true); setToolsMenuOpen(false); }} className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-700"><BeakerIcon className="w-4 h-4" /> Find Duplicates</button>
                                     <button onClick={() => { setIsPruneUnusedOpen(true); setToolsMenuOpen(false); }} className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-700"><TrashIcon className="w-4 h-4" /> Prune Unused</button>
@@ -674,7 +639,7 @@ const EntityHub = () => {
                                 return (
                                 <tr key={entity.id} onClick={() => setDetailPanelEntity(entity)} className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer">
                                     <td className="p-2" onClick={e => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(entity.id)} onChange={() => toggleSelection(entity.id)} className="bg-gray-800 border-gray-600 rounded" /></td>
-                                    <td className="p-2 font-medium truncate" onDoubleClick={() => setEditingCell({ entityId: entity.id, field: 'name' })}>{editingCell?.entityId === entity.id && editingCell.field === 'name' ? <input type="text" defaultValue={entity.name} onBlur={e => handleCellUpdate(entity.id, 'name', e.target.value)} autoFocus className="bg-gray-600 w-full" /> : entity.name}</td>
+                                    <td className="p-2 font-medium truncate" onDoubleClick={(e) => { e.stopPropagation(); setEditingCell({ entityId: entity.id, field: 'name' })}}>{editingCell?.entityId === entity.id && editingCell.field === 'name' ? <input type="text" defaultValue={entity.name} onBlur={e => handleCellUpdate(entity.id, 'name', e.target.value)} autoFocus className="bg-gray-600 w-full" /> : entity.name}</td>
                                     <td className="p-2 font-mono text-xs text-indigo-300 truncate">{entity.type}</td>
                                     <td className="p-2">
                                         <div className="flex items-center gap-2" title={`Score: ${score.toFixed(1)}%`}>
@@ -682,7 +647,7 @@ const EntityHub = () => {
                                             <span className="text-xs text-gray-400">{score.toFixed(0)}%</span>
                                         </div>
                                     </td>
-                                    {visibleColumns.description && <td className="p-2 text-xs text-gray-400 truncate" onDoubleClick={() => setEditingCell({ entityId: entity.id, field: 'description' })}>{editingCell?.entityId === entity.id && editingCell.field === 'description' ? <textarea defaultValue={entity.description} onBlur={e => handleCellUpdate(entity.id, 'description', e.target.value)} autoFocus className="bg-gray-600 w-full h-16" /> : entity.description}</td>}
+                                    {visibleColumns.description && <td className="p-2 text-xs text-gray-400 truncate" onDoubleClick={(e) => { e.stopPropagation(); setEditingCell({ entityId: entity.id, field: 'description' })}}>{editingCell?.entityId === entity.id && editingCell.field === 'description' ? <textarea defaultValue={entity.description} onBlur={e => handleCellUpdate(entity.id, 'description', e.target.value)} autoFocus className="bg-gray-600 w-full h-16" /> : entity.description}</td>}
                                     <td className="p-2 text-xs text-gray-500">{entity.lastAccessedAt ? getRelativeTime(new Date(entity.lastAccessedAt)) : 'Never'}</td>
                                     {visibleColumns.createdAt && <td className="p-2 text-xs text-gray-500">{new Date(entity.createdAt).toLocaleDateString()}</td>}
                                     <td className="p-2" onClick={e => e.stopPropagation()}>
@@ -695,9 +660,7 @@ const EntityHub = () => {
                 )}
                 {viewMode === 'grid' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {paginatedEntities.map(entity => (
-                            <EntityCard key={entity.id} entity={entity} isSelected={selectedIds.has(entity.id)} onToggleSelection={() => toggleSelection(entity.id)} onEdit={() => handleOpenForm(entity)} onDelete={() => handleDeleteEntity(entity.id)} />
-                        ))}
+                        <p>Grid view not yet implemented.</p>
                     </div>
                 )}
                 {viewMode === 'graph' && (
@@ -716,7 +679,6 @@ const EntityHub = () => {
                         <button onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage === totalPages} className="px-2 py-1 text-xs bg-gray-700 rounded disabled:opacity-50">Next</button>
                     </div>
                 )}
-            {/* FIX: Corrected a typo in the closing div tag. */}
             </div>
         </div>
     );

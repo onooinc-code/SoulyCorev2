@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { XIcon, ClockIcon, SparklesIcon, ScissorsIcon } from '../Icons';
 import type { EntityDefinition, EntityHistoryLog, Event } from '@/lib/types';
 import { useNotification } from '@/lib/hooks/use-notifications';
 import SplitEntityModal from '../modals/SplitEntityModal';
-import { AnimatePresence } from 'framer-motion';
+import EnrichmentModal from '../modals/EnrichmentModal';
 
 interface EntityDetailPanelProps {
     entity: EntityDefinition & { relevancyScore?: number };
@@ -18,6 +18,11 @@ interface EnrichedEvent extends Event {
     participants: { role: string; entityName: string }[];
 }
 
+interface RelationshipSuggestion {
+    source: string;
+    predicate: string;
+    target: string;
+}
 
 const DetailRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
     <div>
@@ -26,7 +31,6 @@ const DetailRow = ({ label, value }: { label: string; value: React.ReactNode }) 
     </div>
 );
 
-// FIX: Added a props interface and typed the component as a React.FC to resolve the type error with the 'key' prop.
 interface HistoryRowProps {
     log: EntityHistoryLog;
 }
@@ -74,8 +78,16 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
     const [history, setHistory] = useState<EntityHistoryLog[]>([]);
     const [events, setEvents] = useState<EnrichedEvent[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [isSummarizing, setIsSummarizing] = useState(false);
+    
+    // AI Feature State
+    const [isAiToolsMenuOpen, setIsAiToolsMenuOpen] = useState(false);
     const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
+    const [isEnrichmentModalOpen, setIsEnrichmentModalOpen] = useState(false);
+    const [enrichmentSuggestion, setEnrichmentSuggestion] = useState<string | null>(null);
+    const [aiSummary, setAiSummary] = useState<string | null>(null);
+    const [relationshipSuggestions, setRelationshipSuggestions] = useState<RelationshipSuggestion[]>([]);
+    const [isAiLoading, setIsAiLoading] = useState<Record<string, boolean>>({});
+
     const { addNotification } = useNotification();
 
     useEffect(() => {
@@ -88,9 +100,17 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
                     if (!res.ok) throw new Error('Failed to fetch history');
                     setHistory(await res.json());
                 } else if (activeTab === 'details') {
-                    const res = await fetch(`/api/events/${entity.id}`);
-                     if (!res.ok) throw new Error('Failed to fetch events');
-                    setEvents(await res.json());
+                    // Fetch both events and AI summary
+                    const [eventsRes, summaryRes] = await Promise.all([
+                        fetch(`/api/events/${entity.id}`),
+                        fetch(`/api/entities/${entity.id}/status-summary`)
+                    ]);
+                    if (!eventsRes.ok) throw new Error('Failed to fetch events');
+                    setEvents(await eventsRes.json());
+                    if (summaryRes.ok) {
+                        const data = await summaryRes.json();
+                        setAiSummary(data.summary);
+                    }
                 }
             } catch (error) {
                 console.error("Data fetch error:", error);
@@ -102,26 +122,70 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
         fetchData();
     }, [activeTab, entity, addNotification]);
 
-    const handleAiSummarize = async () => {
+    const handleAiAction = async (action: 'summarize' | 'enrich' | 'suggest-relationships') => {
         if (!entity) return;
-        setIsSummarizing(true);
-        addNotification({ type: 'info', title: 'AI Summarization', message: 'Generating a new summary for this entity...' });
+        setIsAiLoading(prev => ({ ...prev, [action]: true }));
+        setIsAiToolsMenuOpen(false);
         try {
-            const res = await fetch(`/api/entities/${entity.id}/summarize`, {
-                method: 'POST'
-            });
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || "Failed to generate summary.");
+            if (action === 'summarize') {
+                const res = await fetch(`/api/entities/${entity.id}/summarize`, { method: 'POST' });
+                if (!res.ok) throw new Error((await res.json()).error || 'Failed to summarize');
+                addNotification({ type: 'success', title: 'Summary Updated' });
+                onRefresh();
+            } else if (action === 'enrich') {
+                const res = await fetch(`/api/entities/${entity.id}/enrich`, { method: 'POST' });
+                if (!res.ok) throw new Error((await res.json()).error || 'Failed to enrich');
+                const data = await res.json();
+                setEnrichmentSuggestion(data.enrichedDescription);
+                setIsEnrichmentModalOpen(true);
+            } else if (action === 'suggest-relationships') {
+                const res = await fetch(`/api/entities/${entity.id}/suggest-relationships`);
+                if (!res.ok) throw new Error((await res.json()).error || 'Failed to suggest relationships');
+                const data = await res.json();
+                setRelationshipSuggestions(data.suggestions);
+                addNotification({ type: 'info', title: 'Suggestions Found', message: `Found ${data.suggestions.length} new potential relationships.` });
             }
-            addNotification({ type: 'success', title: 'Summary Updated', message: 'The entity description has been updated.' });
-            onRefresh(); // Trigger a refresh in the parent component
         } catch (error) {
-            addNotification({ type: 'error', title: 'Summarization Failed', message: (error as Error).message });
+            addNotification({ type: 'error', title: `${action} Failed`, message: (error as Error).message });
         } finally {
-            setIsSummarizing(false);
+            setIsAiLoading(prev => ({ ...prev, [action]: false }));
         }
     };
+    
+    const handleSaveEnrichment = async (newDescription: string) => {
+        try {
+            await fetch(`/api/entities/${entity.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...entity, description: newDescription })
+            });
+            addNotification({type: 'success', title: 'Description Updated'});
+            onRefresh();
+        } catch(error) {
+            addNotification({type: 'error', title: 'Update Failed', message: (error as Error).message});
+        }
+    };
+
+    const handleCreateRelationship = async (suggestion: RelationshipSuggestion) => {
+        addNotification({type: 'info', title: 'Creating Relationship...'});
+        try {
+            // We need IDs, not names. This requires a lookup.
+            // For demo purposes, we'll assume the names are unique and do a backend lookup.
+            // A more robust solution might pass IDs from the suggestion API.
+             const res = await fetch(`/api/entities/relationships/from-names`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(suggestion),
+            });
+            if (!res.ok) throw new Error((await res.json()).error || "Failed to create relationship");
+
+            addNotification({type: 'success', title: 'Relationship Created'});
+            setRelationshipSuggestions(prev => prev.filter(s => s !== suggestion)); // Remove from list
+        } catch(error) {
+             addNotification({type: 'error', title: 'Creation Failed', message: (error as Error).message});
+        }
+    };
+
 
     const TabButton = ({ tab, label }: { tab: 'details' | 'history', label: string }) => (
         <button
@@ -149,13 +213,24 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
             <header className="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
                 <h3 className="font-bold text-lg">{entity.name}</h3>
                 <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <button onClick={() => setIsAiToolsMenuOpen(p => !p)} className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-xs rounded-md hover:bg-blue-500">
+                            <SparklesIcon className="w-4 h-4" />
+                            AI Tools
+                        </button>
+                        <AnimatePresence>
+                            {isAiToolsMenuOpen && (
+                                <motion.div initial={{opacity:0, y:-10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-lg z-10">
+                                    <button onClick={() => handleAiAction('summarize')} disabled={isAiLoading['summarize']} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-700 disabled:opacity-50">Re-Summarize Entity</button>
+                                    <button onClick={() => handleAiAction('enrich')} disabled={isAiLoading['enrich']} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-700 disabled:opacity-50">Enrich Description</button>
+                                    <button onClick={() => handleAiAction('suggest-relationships')} disabled={isAiLoading['suggest-relationships']} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-700 disabled:opacity-50">Suggest Relationships</button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                     <button onClick={() => setIsSplitModalOpen(true)} className="flex items-center gap-1 px-2 py-1 bg-yellow-600 text-xs rounded-md hover:bg-yellow-500">
                         <ScissorsIcon className="w-4 h-4" />
                         Split
-                    </button>
-                    <button onClick={handleAiSummarize} disabled={isSummarizing} className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-xs rounded-md hover:bg-blue-500 disabled:opacity-50">
-                        <SparklesIcon className="w-4 h-4" />
-                        {isSummarizing ? 'Summarizing...' : 'AI Summarize'}
                     </button>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-700"><XIcon className="w-5 h-5" /></button>
                 </div>
@@ -169,6 +244,12 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
             <main className="p-6 overflow-y-auto space-y-6">
                 {activeTab === 'details' && (
                     <>
+                        {aiSummary && (
+                            <div className="p-3 bg-indigo-900/30 rounded-lg border border-indigo-500/50">
+                                <h5 className="text-xs font-semibold text-indigo-300 uppercase mb-2">AI Status Summary</h5>
+                                <p className="text-sm text-gray-300">{aiSummary}</p>
+                            </div>
+                        )}
                         <DetailRow label="Type" value={<span className="font-mono bg-gray-700 px-2 py-0.5 rounded-md">{entity.type}</span>} />
                         <DetailRow label="Relevancy" value={
                             <div className="flex items-center gap-2" title={`Score: ${score.toFixed(1)}%`}>
@@ -211,6 +292,19 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
                                 </div>
                              ) : <p className="text-sm text-gray-500">No complex relationships found.</p>}
                         </div>
+                        {relationshipSuggestions.length > 0 && (
+                             <div className="border-t border-gray-700 pt-4">
+                                <h4 className="text-sm font-semibold text-gray-400 mb-2">AI Relationship Suggestions</h4>
+                                <div className="space-y-2">
+                                    {relationshipSuggestions.map((s, i) => (
+                                        <div key={i} className="flex items-center justify-between p-2 bg-gray-900/50 rounded-md">
+                                            <span className="text-xs font-mono">{s.source} --[{s.predicate}]--> {s.target}</span>
+                                            <button onClick={() => handleCreateRelationship(s)} className="px-2 py-1 text-xs bg-green-600 rounded">Create</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
                 {activeTab === 'history' && (
@@ -236,6 +330,16 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
                     sourceEntity={entity}
                     onClose={() => setIsSplitModalOpen(false)}
                     onSplitSuccess={() => { onRefresh(); onClose(); }}
+                />
+            )}
+        </AnimatePresence>
+         <AnimatePresence>
+            {isEnrichmentModalOpen && enrichmentSuggestion && (
+                <EnrichmentModal
+                    currentDescription={entity.description || ''}
+                    enrichedDescription={enrichmentSuggestion}
+                    onClose={() => setIsEnrichmentModalOpen(false)}
+                    onSave={handleSaveEnrichment}
                 />
             )}
         </AnimatePresence>
