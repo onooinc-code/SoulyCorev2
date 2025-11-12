@@ -22,6 +22,7 @@ const componentMap = {
     experiences_hub: dynamic(() => import('@/components/hubs/ExperiencesHub')),
     // FIX: Added tasks_hub to the component map.
     tasks_hub: dynamic(() => import('@/components/TasksHub')),
+    reports_hub: dynamic(() => import('@/components/hubs/ReportsHub')),
 };
 
 const ActiveViewRenderer = () => {

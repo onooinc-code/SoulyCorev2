@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -113,6 +114,8 @@ const ChatWindow = () => {
             lastUpdatedAt: new Date(),
         };
 
+        // FIX: The destructuring was incomplete, causing 'linkProposal' and 'memoryProposal' to be undefined.
+        // It has been updated to include all properties returned by the `addMessage` function.
         const { aiResponse, suggestion, memoryProposal, linkProposal } = await addMessage(userMessage, mentionedContacts, undefined, replyToMessage?.id);
 
         setReplyToMessage(null); // Clear reply state after sending

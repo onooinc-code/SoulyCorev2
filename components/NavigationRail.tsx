@@ -19,7 +19,8 @@ import {
     RssIcon,
     LightbulbIcon,
     ScissorsIcon,
-    DocumentMagnifyingGlassIcon
+    DocumentMagnifyingGlassIcon,
+    ClipboardPasteIcon
 } from '@/components/Icons';
 
 const NavigationRail = () => {
@@ -42,6 +43,7 @@ const NavigationRail = () => {
         { view: 'comm_hub', icon: RssIcon, label: 'Comm Hub' },
         { view: 'data_hub', icon: CircleStackIcon, label: 'Data Hub' },
         { view: 'dev_center', icon: CodeIcon, label: 'Dev Center' },
+        { view: 'reports_hub', icon: ClipboardPasteIcon, label: 'Reports Hub' },
     ] as const;
 
     return (

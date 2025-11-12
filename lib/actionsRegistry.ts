@@ -20,6 +20,7 @@ import {
     KeyboardIcon,
     ScissorsIcon,
     DocumentMagnifyingGlassIcon,
+    ClipboardPasteIcon,
 } from '@/components/Icons';
 
 export interface Action {
@@ -48,6 +49,7 @@ export const actions: Action[] = [
     { id: 'nav-projects-hub', name: 'Go to Projects Hub', icon: ClipboardDocumentListIcon, section: 'Navigation', handlerId: 'setActiveView-projects_hub' },
     { id: 'nav-data-hub', name: 'Go to Data Hub', icon: CircleStackIcon, section: 'Navigation', handlerId: 'setActiveView-data_hub' },
     { id: 'nav-dev-center', name: 'Go to Dev Center', icon: CodeIcon, section: 'Navigation', handlerId: 'setActiveView-dev_center' },
+    { id: 'nav-reports-hub', name: 'Go to Reports Hub', icon: ClipboardPasteIcon, section: 'Navigation', handlerId: 'setActiveView-reports_hub' },
     
     // Conversation
     { id: 'convo-new', name: 'New Conversation', subtitle: 'Start a new chat', icon: PlusIcon, section: 'Conversation', handlerId: 'createNewConversation' },

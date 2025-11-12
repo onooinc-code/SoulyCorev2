@@ -97,7 +97,7 @@ graph TD
   - **`/memory`**: All Single Memory Module (SMM) implementations (Episodic, Semantic, etc.).
   - **`/pipelines`**: The high-level orchestrators (`ContextAssemblyPipeline`, `MemoryExtractionPipeline`).
   - **`/tools`**: Implementations of agent-usable tools like `web_search`.
-- **`/DocsV2`**: The individual, deep-dive chapters of this guide.
+- **`/reports`**: Contains HTML templates and saved reports, viewable through the Reports Hub.
 - **`/lib`**: Shared utilities, hooks, and global type definitions.
 - **`/scripts`**: Standalone Node.js scripts for database management (`create-tables.js`, `seed-*.js`).
 - **`PROJECT_GUIDE.md`**: This file. The single source of truth for all project documentation.
@@ -176,7 +176,12 @@ Provides a visual, interactive graph to display the relationships between entiti
 - **Edge Rendering**: Shows relationships as labeled, directed edges connecting nodes.
 - **Interactivity**: Users can drag nodes to rearrange the graph, and use the mouse wheel to zoom in/out and pan across the canvas for better exploration of complex data.
 
-### 5.13. SoulyDev Center (`/components/dev_center`)
+### 5.13. Reports Hub (`/components/hubs/ReportsHub.tsx`)
+A dedicated viewer for HTML templates and saved reports.
+- **File Browser**: Lists all available `.html` files from the `/reports` directory.
+- **HTML Viewer**: Renders the content of the selected file in an `<iframe>`, allowing for interactive previews of complex reports and templates.
+
+### 5.14. SoulyDev Center (`/components/dev_center`)
 An integrated control panel for developers.
 - **API Command Center**: A Postman-like interface to test all backend API endpoints directly in the app.
 - **Feature Health Dashboard**: A QA hub to display the health status of all system features based on registered test cases.

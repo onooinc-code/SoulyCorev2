@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import type { Conversation, Message, Contact, IStatus, ActiveWorkflowState, Prompt, ConversationContextType } from '@/lib/types';
+import type { Conversation, Message, Contact, IStatus, ActiveWorkflowState, Prompt, ConversationContextType, ILinkPredictionProposal } from '@/lib/types';
 import { useAppStatus } from '@/lib/hooks/useAppStatus';
 import { useConversationList } from '@/lib/hooks/useConversationList';
 import { useMessageManager } from '@/lib/hooks/useMessageManager';
@@ -31,7 +31,9 @@ interface ExtendedConversationContextType extends Omit<ConversationContextType, 
     loadConversations: (segmentId?: string | null) => Promise<void>;
     updateCurrentConversation: (updates: Partial<Conversation>) => void;
     
-    addMessage: (message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, mentionedContacts?: Contact[], historyOverride?: Message[], parentMessageId?: string | null) => Promise<{ aiResponse: string | null, suggestion: string | null, memoryProposal: any | null }>;
+    // FIX: The return type for `addMessage` was missing `linkProposal`, causing a type error in `ChatWindow.tsx`.
+    // It has been added to match the actual return value from the API and hook.
+    addMessage: (message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, mentionedContacts?: Contact[], historyOverride?: Message[], parentMessageId?: string | null) => Promise<{ aiResponse: string | null; suggestion: string | null; memoryProposal: any | null; linkProposal: ILinkPredictionProposal | null; }>;
     toggleBookmark: (messageId: string) => Promise<void>;
     deleteMessage: (messageId: string) => Promise<void>;
     updateMessage: (messageId: string, newContent: string) => Promise<void>;
