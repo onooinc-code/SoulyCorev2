@@ -1,6 +1,6 @@
 # SoulyCore: The Total Recall AI Companion
 
-**Version:** 0.4.0 (Cognitive Architecture v2.0)
+**Version:** 0.4.1 (Cognitive Architecture v2.0)
 **Status:** Live
 
 ---

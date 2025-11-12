@@ -1,6 +1,6 @@
 # SoulyCore: The Definitive Developer's Guide
 
-**Version:** 0.4.0
+**Version:** 0.4.1
 **Status:** Live (Reflects Cognitive Architecture v2.0)
 
 ---
@@ -131,8 +131,10 @@ The central management hub for the AI's cognitive architecture.
 ### 5.4. Memory Center (`/components/MemoryCenter.tsx`)
 Manages the AI's **Structured Memory** (explicit facts).
 - **Entity Management**: A full CRUD interface for managing entities (people, projects, concepts) stored in the Postgres database.
-- **Visual Relationship Graph**: A fully interactive, visual graph to display and explore the relationships between entities. Users can drag nodes, zoom, and pan the graph. See section 5.12 for details.
+- **Visual Relationship Graph**: An interactive graph to display and explore entity relationships. See section 5.14 for details.
 - **Segment Hub**: A UI to manage `Segments` (like Topics or Impact levels) for categorizing messages.
+- **Predicates Hub**: A CRUD interface for defining the types of relationships (e.g., `works_for`, `is_located_in`) that can exist between entities.
+- **Validation Rules Hub**: A UI to define validation logic for different entity types, ensuring data consistency.
 
 ### 5.5. Contacts Hub (`/components/ContactsHub.tsx`)
 A specialized part of Structured Memory for managing people and organizations.
@@ -156,32 +158,46 @@ A hub to manage projects and their associated tasks, replacing the simple `Tasks
 - **Task Management**: Full CRUD for tasks within each project.
 - **AI Summarization**: On-demand AI-powered summaries of a project's status based on its tasks.
 
-### 5.9. Experiences Hub (`/components/hubs/ExperiencesHub.tsx`)
+### 5.9. Memory Extraction Hub (`/components/hubs/MemoryExtractionHub.tsx`)
+A dedicated workspace for turning unstructured data into structured knowledge.
+- **Multi-Source Extraction**: Provides tools to extract entities, knowledge, and relationships from various sources:
+  - **AI-Contact Conversations**: Analyzes full conversation histories.
+  - **Contact-Contact Chat**: Analyzes pasted chat logs from external sources.
+  - **Documents**: Analyzes uploaded text or markdown files.
+- **Interactive Review**: Presents the AI's extracted information in an editable format, allowing the user to review, modify, and select which items to save to the AI's long-term memory.
+
+### 5.10. Contextual Analyzer Hub (`/components/hubs/ContextualAnalyzer.tsx`)
+An on-demand text analysis tool that acts like an integrated "find" feature for the AI's memory.
+- **Text Input**: Users can paste any block of text (e.g., an email, an article).
+- **Entity Highlighting**: The system scans the text and automatically highlights any names or terms that match entities already stored in its memory.
+- **Context on Hover**: Hovering over a highlighted entity reveals its description, providing instant context without leaving the page.
+
+### 5.11. Experiences Hub (`/components/hubs/ExperiencesHub.tsx`)
 A UI to view and manage "Experiences"—generalized plans automatically learned from successful agent runs.
 
-### 5.10. Communication Hub (`/components/hubs/CommunicationHub.tsx`)
+### 5.12. Communication Hub (`/components/hubs/CommunicationHub.tsx`)
 Manages external communication channels.
 - **Channel Dashboard**: Create and view webhook channels.
 - **Unified Inbox**: View incoming messages from all connected channels.
 - **Broadcast Manager**: Send notifications to channels.
 
-### 5.11. Data Hub (`/components/data_hub`)
+### 5.13. Data Hub (`/components/data_hub`)
 A dashboard for monitoring and managing all connected data sources and storage services.
 - **Status Overview**: Displays the real-time status of all connected services (Postgres, Pinecone, KV, etc.).
 - **Configuration Management**: Provides modals to test connections and update credentials for each data source.
 
-### 5.12. Visual Relationship Graph (`/components/hubs/RelationshipGraph.tsx`)
+### 5.14. Visual Relationship Graph (`/components/hubs/RelationshipGraph.tsx`)
 Provides a visual, interactive graph to display the relationships between entities stored in structured memory.
 - **Node Rendering**: Displays each entity as a draggable node.
 - **Edge Rendering**: Shows relationships as labeled, directed edges connecting nodes.
 - **Interactivity**: Users can drag nodes to rearrange the graph, and use the mouse wheel to zoom in/out and pan across the canvas for better exploration of complex data.
 
-### 5.13. Reports Hub (`/components/hubs/ReportsHub.tsx`)
+### 5.15. Reports Hub (`/components/hubs/ReportsHub.tsx`)
 A dedicated viewer for HTML templates and saved reports.
 - **File Browser**: Lists all available `.html` files from the `/reports` directory.
-- **HTML Viewer**: Renders the content of the selected file in an `<iframe>`, allowing for interactive previews of complex reports and templates.
+- **HTML Viewer**: Renders the content of the selected file in an `<iframe>`, allowing for interactive previews of complex reports and templates, including those with Mermaid.js diagrams.
 
-### 5.14. SoulyDev Center (`/components/dev_center`)
+### 5.16. SoulyDev Center (`/components/dev_center`)
 An integrated control panel for developers.
 - **API Command Center**: A Postman-like interface to test all backend API endpoints directly in the app.
 - **Feature Health Dashboard**: A QA hub to display the health status of all system features based on registered test cases.
