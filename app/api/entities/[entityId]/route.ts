@@ -18,9 +18,10 @@ async function validate(entity: Partial<EntityDefinition>, entityIdToExclude: st
     for (const rule of rules) {
         if (rule.rule === 'unique_across_types' && rule.field === 'name') {
             const typesToCheck = [entity.type, ...(rule.params || [])];
+            // FIX: Replaced `ANY(${typesToCheck})` with `IN (${sql.join(typesToCheck)})` to provide a type-safe array to the query helper, resolving the build error.
             const { rows: existing } = await sql`
                 SELECT id FROM entity_definitions 
-                WHERE name = ${entity.name} AND type = ANY(${typesToCheck}) AND id != ${entityIdToExclude};
+                WHERE name = ${entity.name} AND type IN (${sql.join(typesToCheck)}) AND id != ${entityIdToExclude};
             `;
             if (existing.length > 0) {
                 return { valid: false, message: rule.errorMessage || `An entity with name "${entity.name}" already exists in a conflicting type.` };
