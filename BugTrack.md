@@ -514,3 +514,15 @@ Refactored the Upstash Vector client initialization to use a lazy-loading patter
 - `BugTrack.md`
 - `core/memory/modules/entity_vector.ts`
 - `core/memory/modules/upstash_vector.ts`
+---
+### Bug #30: Vercel Build Fails (JSX Syntax Error)
+
+**Error Details:**
+The Vercel build is failing with a `Type error: Unexpected token. Did you mean {' > '}` or `&gt;`?` in `components/hubs/EntityDetailPanel.tsx`. This was caused by using a literal `>` character inside a JSX expression (`{}`), which is interpreted as an invalid closing tag when rendering a relationship suggestion string.
+
+**Solution:**
+Escaped the `>` character by wrapping it in a string literal within the JSX expression (`{'>'}`). This tells the JSX parser to treat it as a string to be rendered, not as part of the JSX syntax, resolving the compilation error.
+
+**Modified Files:**
+- `BugTrack.md`
+- `components/hubs/EntityDetailPanel.tsx`

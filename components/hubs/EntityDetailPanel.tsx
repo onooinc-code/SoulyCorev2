@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -298,7 +299,7 @@ const EntityDetailPanel = ({ entity, onClose, onRefresh }: EntityDetailPanelProp
                                 <div className="space-y-2">
                                     {relationshipSuggestions.map((s, i) => (
                                         <div key={i} className="flex items-center justify-between p-2 bg-gray-900/50 rounded-md">
-                                            <span className="text-xs font-mono">{s.source} --[{s.predicate}]--> {s.target}</span>
+                                            <span className="text-xs font-mono">{s.source} --[{s.predicate}]--{'>'} {s.target}</span>
                                             <button onClick={() => handleCreateRelationship(s)} className="px-2 py-1 text-xs bg-green-600 rounded">Create</button>
                                         </div>
                                     ))}
