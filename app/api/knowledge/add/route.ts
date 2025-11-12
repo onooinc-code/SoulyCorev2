@@ -28,13 +28,21 @@ export async function POST(req: NextRequest) {
 
         const embedding = await generateEmbedding(content);
         
+        const index = getKnowledgeBaseIndex();
+
+        if (!index) {
+            const errorMsg = 'Pinecone database is not configured. Knowledge snippet was not saved.';
+            await serverLog(errorMsg, {}, 'error');
+            return NextResponse.json({ error: errorMsg }, { status: 500 });
+        }
+
         const vectorToUpsert = {
             id: uuidv4(),
             values: embedding,
             metadata: { text: content },
         };
 
-        await getKnowledgeBaseIndex().upsert([vectorToUpsert]);
+        await index.upsert([vectorToUpsert]);
 
         await serverLog('Successfully upserted knowledge snippet to Pinecone.', { id: vectorToUpsert.id });
 
