@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
         
         // Fetch conversation to get brainId
         const { rows: convoRows } = await sql<Conversation>`SELECT "brainId" FROM conversations WHERE id = ${conversationId}`;
-        const brainId = convoRows.length > 0 ? convoRows[0].brainId : null;
+        const brainId = convoRows.length > 0 ? (convoRows[0].brainId ?? null) : null;
 
         // Run the pipeline in the background (fire-and-forget)
         const pipeline = new MemoryExtractionPipeline();
