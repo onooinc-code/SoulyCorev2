@@ -49,9 +49,9 @@ export async function GET(req: NextRequest) {
         let nodes: GraphNode[] = [];
         if (entityIds.size > 0) {
             const { rows: entities } = await sql`
-                SELECT id, name, type FROM entity_definitions WHERE id = ANY(${Array.from(entityIds)}::uuid[]);
+                SELECT id, name, type FROM entity_definitions WHERE id = ANY(${Array.from(entityIds) as any});
             `;
-            nodes = entities.map(e => ({ id: e.id, name: e.name, type: e.type }));
+             nodes = entities.map(e => ({ id: e.id, name: e.name, type: e.type }));
         }
         
         const edges: GraphEdge[] = relationships.map(r => ({
