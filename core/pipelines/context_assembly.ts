@@ -53,10 +53,12 @@ export class ContextAssemblyPipeline {
     private async updateEntitySalience(entityIds: string[]): Promise<void> {
         if (entityIds.length === 0) return;
         try {
+            // FIX: The @vercel/postgres `sql` template literal has strict typings that do not correctly handle array parameters for `ANY()` clauses, causing a build failure.
+            // The `entityIds` array has been cast to `any` to bypass this type checking issue, which is the recommended workaround as the runtime correctly handles the array.
             await sql`
                 UPDATE entity_definitions
                 SET "accessCount" = "accessCount" + 1, "lastAccessedAt" = CURRENT_TIMESTAMP
-                WHERE id = ANY(${entityIds}::uuid[]);
+                WHERE id = ANY(${entityIds as any}::uuid[]);
             `;
         } catch (error) {
             // Log this error but don't let it crash the main pipeline

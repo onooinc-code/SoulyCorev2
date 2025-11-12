@@ -434,7 +434,7 @@ This change prevents any part of the application from crashing due to a missing 
 ### Bug #25: Vercel Build Fails (Stale `messages` table)
 
 **Error Details:**
-The application is failing on Vercel with a `500 Internal Server Error` and a client-side error `column "parentMessageId" of relation "messages" does not exist`. This confirms that the Vercel build cache is preserving a stale version of the `messages` table which does not include the recently added `parentMessageId` column. The `CREATE TABLE IF NOT EXISTS` statement in the `db:create` script is being skipped, leading to a crash when the application code tries to insert a message with the new property.
+The application is failing on Vercel with a `500 Internal Server Error` and a client-side error `column "parentMessageId" of relation "messages" does not exist`. This confirms that the Vercel build cache is preserving a stale version of the `messages` table which does not include the `parentMessageId` column. The `CREATE TABLE IF NOT EXISTS` statement in the `db:create` script is being skipped, leading to a crash when the application code tries to insert a message with the new property.
 
 **Solution:**
 Implemented the definitive solution for Vercel's stale schema caching issue by expanding the `DROP TABLE` strategy.
@@ -538,3 +538,15 @@ Escaped the `>` character by wrapping it in a string literal within the JSX expr
 **Modified Files:**
 - `BugTrack.md`
 - `components/hubs/FactVerifierModal.tsx`
+---
+### Bug #32: Vercel Build Fails (TypeScript error in `context_assembly.ts`)
+
+**Error Details:**
+The Vercel build is failing with a TypeScript error: `Argument of type 'string[]' is not assignable to parameter of type 'Primitive'`. This error occurs in `core/pipelines/context_assembly.ts` within the `updateEntitySalience` function when passing the `entityIds` array to the `@vercel/postgres` `sql` template literal helper for a `WHERE id = ANY(...)` clause. The type definitions for the `sql` helper are overly strict and do not correctly allow array types for this SQL clause, even though the runtime supports it.
+
+**Solution:**
+Applied the standard workaround for this known `@vercel/postgres` typing issue. The `entityIds` array was cast to `any` (`entityIds as any`) before being passed into the template literal. This bypasses the strict TypeScript check while allowing the runtime, which correctly handles array parameters for `ANY` clauses, to function as intended.
+
+**Modified Files:**
+- `BugTrack.md`
+- `core/pipelines/context_assembly.ts`
