@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
         // 3. Fetch full relationships from Postgres
         const { rows: relationships } = await sql<EntityRelationship>`
-            SELECT * FROM entity_relationships WHERE id = ANY(${relationshipIds}::uuid[]);
+            SELECT * FROM entity_relationships WHERE id = ANY(${relationshipIds as any}::uuid[]);
         `;
 
         return NextResponse.json(relationships);
