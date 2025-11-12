@@ -141,8 +141,13 @@ export class MemoryExtractionPipeline {
                     INSERT INTO predicate_definitions (name) VALUES (${inference.predicate})
                     ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id;
                 `;
-                predicateId = predRows[0].id;
-                predicateMap.set(inference.predicate, predicateId);
+                const newId = predRows[0]?.id;
+                if (!newId) {
+                    console.warn(`Could not create predicate for '${inference.predicate}'`);
+                    continue;
+                }
+                predicateId = newId;
+                predicateMap.set(inference.predicate, newId);
             }
 
             const { rows: checkRows } = await sql`
@@ -340,8 +345,13 @@ export class MemoryExtractionPipeline {
                         let predicateId = predicateMap.get(rel.predicate);
                         if (!predicateId) {
                             const { rows: predRows } = await sql`INSERT INTO predicate_definitions (name) VALUES (${rel.predicate}) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id;`;
-                            predicateId = predRows[0].id;
-                            predicateMap.set(rel.predicate, predicateId);
+                            const newId = predRows[0]?.id;
+                            if (!newId) {
+                                console.warn(`Could not find or create predicate ID for '${rel.predicate}'`);
+                                continue;
+                            }
+                            predicateId = newId;
+                            predicateMap.set(rel.predicate, newId);
                         }
 
                         const sourceId = entityMap.get(rel.source.toLowerCase());
