@@ -131,7 +131,7 @@ The central management hub for the AI's cognitive architecture.
 ### 5.4. Memory Center (`/components/MemoryCenter.tsx`)
 Manages the AI's **Structured Memory** (explicit facts).
 - **Entity Management**: A full CRUD interface for managing entities (people, projects, concepts) stored in the Postgres database.
-- **Relationship Graph**: A data viewer for entity relationships.
+- **Visual Relationship Graph**: A fully interactive, visual graph to display and explore the relationships between entities. Users can drag nodes, zoom, and pan the graph. See section 5.12 for details.
 - **Segment Hub**: A UI to manage `Segments` (like Topics or Impact levels) for categorizing messages.
 
 ### 5.5. Contacts Hub (`/components/ContactsHub.tsx`)
@@ -170,7 +170,13 @@ A dashboard for monitoring and managing all connected data sources and storage s
 - **Status Overview**: Displays the real-time status of all connected services (Postgres, Pinecone, KV, etc.).
 - **Configuration Management**: Provides modals to test connections and update credentials for each data source.
 
-### 5.12. SoulyDev Center (`/components/dev_center`)
+### 5.12. Visual Relationship Graph (`/components/hubs/RelationshipGraph.tsx`)
+Provides a visual, interactive graph to display the relationships between entities stored in structured memory.
+- **Node Rendering**: Displays each entity as a draggable node.
+- **Edge Rendering**: Shows relationships as labeled, directed edges connecting nodes.
+- **Interactivity**: Users can drag nodes to rearrange the graph, and use the mouse wheel to zoom in/out and pan across the canvas for better exploration of complex data.
+
+### 5.13. SoulyDev Center (`/components/dev_center`)
 An integrated control panel for developers.
 - **API Command Center**: A Postman-like interface to test all backend API endpoints directly in the app.
 - **Feature Health Dashboard**: A QA hub to display the health status of all system features based on registered test cases.
@@ -194,7 +200,6 @@ Adherence to these guidelines is **mandatory** for all development work. Refer t
 
 ### Key Unimplemented Features:
 - **Advanced Autonomous Agent (ReAct)**: The current agent executes a pre-defined plan. The next major step is to implement a true ReAct (Reason + Act) loop where the agent can choose and use tools from the **Tools Hub** to solve problems dynamically.
-- **Visual Relationship Graph**: The UI for the relationship graph is currently a JSON viewer and needs a visual component.
 
 ### Important Notes:
 - The project is designed for a **single power user**. Features related to multi-tenancy or public sharing are out of scope.
