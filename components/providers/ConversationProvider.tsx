@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+// FIX: The type `ILinkPredictionProposal` is now correctly exported from the central types file.
 import type { Conversation, Message, Contact, IStatus, ActiveWorkflowState, Prompt, ConversationContextType, ILinkPredictionProposal } from '@/lib/types';
 import { useAppStatus } from '@/lib/hooks/useAppStatus';
 import { useConversationList } from '@/lib/hooks/useConversationList';

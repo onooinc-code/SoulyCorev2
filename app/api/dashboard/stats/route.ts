@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getKnowledgeBaseIndex } from '@/lib/pinecone';
@@ -8,6 +6,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     try {
+        const pineconeIndex = getKnowledgeBaseIndex();
+
         const [
             conversationStats,
             messageCount,
@@ -24,13 +24,13 @@ export async function GET(req: NextRequest) {
             sql`SELECT COUNT(*) as total_convos, AVG(msg_count) as avg_msgs_per_convo FROM (SELECT c.id, COUNT(m.id) as msg_count FROM conversations c LEFT JOIN messages m ON c.id = m."conversationId" GROUP BY c.id) as convo_msgs;`,
             sql`SELECT COUNT(*) FROM messages;`,
             sql`SELECT 
-                pipeline_type, 
+                "pipelineType", 
                 status, 
                 COUNT(*)::int as count,
-                AVG(duration_ms)::float as avg_duration
+                AVG("durationMs")::float as avg_duration
              FROM pipeline_runs 
-             GROUP BY pipeline_type, status;`,
-            getKnowledgeBaseIndex().describeIndexStats(),
+             GROUP BY "pipelineType", status;`,
+            pineconeIndex ? pineconeIndex.describeIndexStats() : Promise.resolve({ totalRecordCount: 0 }),
             sql`SELECT COUNT(*) FROM entity_definitions;`,
             sql`SELECT COUNT(*) FROM contacts;`,
             sql`SELECT status, COUNT(*)::int as count FROM features GROUP BY status;`,
@@ -52,14 +52,14 @@ export async function GET(req: NextRequest) {
             },
             pipelines: {
                 contextAssembly: {
-                    completed: pipelineRunStats.rows.find(r => r.pipeline_type === 'ContextAssembly' && r.status === 'completed')?.count || 0,
-                    failed: pipelineRunStats.rows.find(r => r.pipeline_type === 'ContextAssembly' && r.status === 'failed')?.count || 0,
-                    avgDuration: pipelineRunStats.rows.find(r => r.pipeline_type === 'ContextAssembly' && r.status === 'completed')?.avg_duration || 0,
+                    completed: pipelineRunStats.rows.find(r => r.pipelineType === 'ContextAssembly' && r.status === 'completed')?.count || 0,
+                    failed: pipelineRunStats.rows.find(r => r.pipelineType === 'ContextAssembly' && r.status === 'failed')?.count || 0,
+                    avgDuration: pipelineRunStats.rows.find(r => r.pipelineType === 'ContextAssembly' && r.status === 'completed')?.avg_duration || 0,
                 },
                 memoryExtraction: {
-                    completed: pipelineRunStats.rows.find(r => r.pipeline_type === 'MemoryExtraction' && r.status === 'completed')?.count || 0,
-                    failed: pipelineRunStats.rows.find(r => r.pipeline_type === 'MemoryExtraction' && r.status === 'failed')?.count || 0,
-                    avgDuration: pipelineRunStats.rows.find(r => r.pipeline_type === 'MemoryExtraction' && r.status === 'completed')?.avg_duration || 0,
+                    completed: pipelineRunStats.rows.find(r => r.pipelineType === 'MemoryExtraction' && r.status === 'completed')?.count || 0,
+                    failed: pipelineRunStats.rows.find(r => r.pipelineType === 'MemoryExtraction' && r.status === 'failed')?.count || 0,
+                    avgDuration: pipelineRunStats.rows.find(r => r.pipelineType === 'MemoryExtraction' && r.status === 'completed')?.avg_duration || 0,
                 },
             },
             memory: {

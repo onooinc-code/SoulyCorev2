@@ -418,6 +418,13 @@ export interface EntityTypeValidationRules {
     lastUpdatedAt: Date;
 }
 
+// FIX: Added ILinkPredictionProposal type to be shared across core and components.
+export interface ILinkPredictionProposal {
+    sourceEntity: Pick<EntityDefinition, 'id' | 'name'>;
+    targetEntity: Pick<EntityDefinition, 'id' | 'name'>;
+    suggestedPredicate: string;
+}
+
 
 // For Nivo charts
 export interface FeatureStatusChartData {

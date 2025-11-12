@@ -1,16 +1,11 @@
 import { sql, db } from '@/lib/db';
 import { GoogleGenAI, Type } from "@google/genai";
-import { EntityDefinition } from '@/lib/types';
+// FIX: Import ILinkPredictionProposal from the central types definition file.
+import { EntityDefinition, ILinkPredictionProposal } from '@/lib/types';
 
 interface ILinkPredictionParams {
     conversationId: string;
     brainId: string | null;
-}
-
-export interface ILinkPredictionProposal {
-    sourceEntity: Pick<EntityDefinition, 'id' | 'name'>;
-    targetEntity: Pick<EntityDefinition, 'id' | 'name'>;
-    suggestedPredicate: string;
 }
 
 export class LinkPredictionPipeline {

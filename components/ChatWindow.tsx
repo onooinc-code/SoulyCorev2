@@ -5,10 +5,11 @@
 import React, { useState, useEffect } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
-import type { Message as MessageType, Contact } from '@/lib/types';
+// FIX: ILinkPredictionProposal is now a shared type.
+import type { Message as MessageType, Contact, ILinkPredictionProposal } from '@/lib/types';
 import { AnimatePresence } from 'framer-motion';
+// FIX: Add useNotification hook to handle new link and memory proposals.
 import { useNotification } from '@/lib/hooks/use-notifications';
-import { ILinkPredictionProposal } from '@/core/pipelines/link_prediction';
 
 // Refactored Components
 import Header from '@/components/Header';
@@ -38,6 +39,7 @@ const ChatWindow = () => {
         activeWorkflow,
         updateCurrentConversation,
     } = useConversation();
+    // FIX: Destructure new setters needed for memory/link proposals.
     const { isZenMode, isLogPanelOpen, setExtractionTarget, setActiveView } = useUIState();
     const { addNotification } = useNotification();
     
@@ -61,6 +63,7 @@ const ChatWindow = () => {
     }, [currentConversation]);
 
     // --- HANDLERS ---
+    // FIX: Add handler for confirming a link proposal.
     const handleConfirmLinkProposal = async (proposal: ILinkPredictionProposal) => {
         addNotification({ type: 'info', title: 'Saving new link...' });
         try {
