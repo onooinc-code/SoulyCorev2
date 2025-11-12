@@ -18,7 +18,7 @@ async function validate(entity: Partial<EntityDefinition>): Promise<{ valid: boo
         if (rule.rule === 'unique_across_types' && rule.field === 'name') {
             const typesToCheck = [entity.type, ...(rule.params || [])];
             const { rows: existing } = await sql`
-                SELECT id FROM entity_definitions WHERE name = ${entity.name} AND type = ANY(${typesToCheck}::text[]);
+                SELECT id FROM entity_definitions WHERE name = ${entity.name} AND type = ANY(${typesToCheck}) AND id != ${entity.id || '00000000-0000-0000-0000-000000000000'};
             `;
             if (existing.length > 0) {
                 return { valid: false, message: rule.errorMessage || `An entity with name "${entity.name}" already exists in a conflicting type.` };

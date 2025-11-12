@@ -20,7 +20,7 @@ async function validate(entity: Partial<EntityDefinition>, entityIdToExclude: st
             const typesToCheck = [entity.type, ...(rule.params || [])];
             const { rows: existing } = await sql`
                 SELECT id FROM entity_definitions 
-                WHERE name = ${entity.name} AND type = ANY(${typesToCheck}::text[]) AND id != ${entityIdToExclude};
+                WHERE name = ${entity.name} AND type = ANY(${typesToCheck}) AND id != ${entityIdToExclude};
             `;
             if (existing.length > 0) {
                 return { valid: false, message: rule.errorMessage || `An entity with name "${entity.name}" already exists in a conflicting type.` };
