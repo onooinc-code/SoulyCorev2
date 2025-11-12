@@ -50,7 +50,11 @@ export async function POST(req: NextRequest) {
             config: { responseMimeType: "application/json" }
         });
         
-        const structuredQuery = JSON.parse(response.text.trim());
+        const responseText = response.text;
+        if (!responseText) {
+            throw new Error("AI failed to generate a structured query from the natural language input.");
+        }
+        const structuredQuery = JSON.parse(responseText.trim());
 
         // Build SQL query from the structured JSON
         let whereClauses = [];
