@@ -88,7 +88,7 @@ const FactVerifierModal = ({ onClose }: { onClose: () => void }) => {
                             <motion.div key={fact.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -20 }} className="bg-gray-900/50 p-3 rounded-lg flex items-center justify-between gap-4">
                                 <div className="flex-1 font-mono text-sm">
                                     <span className="text-blue-400">{fact.sourceName}</span>
-                                    <span className="text-gray-400"> --[{fact.predicateName.replace(/_/g, ' ')}]--> </span>
+                                    <span className="text-gray-400"> --[{fact.predicateName.replace(/_/g, ' ')}]--{'>'} </span>
                                     <span className="text-green-400">{fact.targetName}</span>
                                 </div>
                                 <div className="flex items-center gap-4">

@@ -459,7 +459,7 @@ A final, comprehensive sweep of the entire codebase was conducted to eliminate e
 3.  **API Test Runner**: Fixed a legacy API test file (`/api/contacts/test/route.ts`) and the `ResponsePanel.tsx` UI to use correct `camelCase` properties (`endpointId`, `statusCode`, `expectedStatusCode`, etc.).
 4.  **Dashboard API**: Fixed the `/api/dashboard/charts` route to query for `"pipelineType"` and `"durationMs"` and process the results correctly.
 
-This final, exhaustive fix ensures 100% consistency across the data access layer, permanently resolving this class of bugs.
+This exhaustive fix ensures 100% consistency across the data access layer, permanently resolving this class of bugs.
 
 **Modified Files:**
 - `BugTrack.md`
@@ -526,3 +526,15 @@ Escaped the `>` character by wrapping it in a string literal within the JSX expr
 **Modified Files:**
 - `BugTrack.md`
 - `components/hubs/EntityDetailPanel.tsx`
+---
+### Bug #31: Vercel Build Fails (JSX Syntax Error in `FactVerifierModal`)
+
+**Error Details:**
+The Vercel build is failing with a `Type error: Unexpected token. Did you mean {' > '}` or `&gt;`?` in `components/hubs/FactVerifierModal.tsx`. This is a recurrence of Bug #30, caused by using a literal `>` character inside a JSX expression (`{}`), which is interpreted as an invalid closing tag when rendering a relationship string like `-->`.
+
+**Solution:**
+Escaped the `>` character by wrapping it in a string literal within the JSX expression (`{'>'}`). This tells the JSX parser to treat it as a string to be rendered, not as part of the JSX syntax, resolving the compilation error.
+
+**Modified Files:**
+- `BugTrack.md`
+- `components/hubs/FactVerifierModal.tsx`
