@@ -17,9 +17,10 @@ async function validate(entity: Partial<EntityDefinition>): Promise<{ valid: boo
     for (const rule of rules) {
         if (rule.rule === 'unique_across_types' && rule.field === 'name') {
             const typesToCheck = [entity.type, ...(rule.params || [])];
-            // FIX: Replaced `ANY(${typesToCheck})` with `IN (${sql.join(typesToCheck)})` to provide a type-safe array to the query helper, resolving the build error.
+            // FIX: Reverted to use ANY() with a type assertion to bypass the build error.
+            // The @vercel/postgres runtime handles array parameters correctly with ANY().
             const { rows: existing } = await sql`
-                SELECT id FROM entity_definitions WHERE name = ${entity.name} AND type IN (${sql.join(typesToCheck)}) AND id != ${entity.id || '00000000-0000-0000-0000-000000000000'};
+                SELECT id FROM entity_definitions WHERE name = ${entity.name} AND type = ANY(${typesToCheck as any}) AND id != ${entity.id || '00000000-0000-0000-0000-000000000000'};
             `;
             if (existing.length > 0) {
                 return { valid: false, message: rule.errorMessage || `An entity with name "${entity.name}" already exists in a conflicting type.` };
