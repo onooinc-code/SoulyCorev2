@@ -250,7 +250,8 @@ export class MemoryExtractionPipeline {
                         VALUES ($1, $2, $3, $4, $5, 0.95)
                         ON CONFLICT ("sourceEntityId", "targetEntityId", "predicateId") DO NOTHING;
                     `, [inference.sourceEntityId, inference.targetEntityId, inference.predicateId, JSON.stringify(inference.provenance), inference.brainId]);
-                    if (res.rowCount > 0) {
+                    // FIX: Handle potential null value for rowCount
+                    if ((res.rowCount ?? 0) > 0) {
                         inferredCount++;
                     }
                 }

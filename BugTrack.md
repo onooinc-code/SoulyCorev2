@@ -550,3 +550,15 @@ Applied the standard workaround for this known `@vercel/postgres` typing issue. 
 **Modified Files:**
 - `BugTrack.md`
 - `core/pipelines/context_assembly.ts`
+---
+### Bug #33: Vercel Build Fails (Type error in memory_extraction.ts)
+
+**Error Details:**
+The Vercel build is failing with a TypeScript error in `core/pipelines/memory_extraction.ts`: `'res.rowCount' is possibly 'null'`. This happens because the `@vercel/postgres` client's `query` method returns a `QueryResult` object where `rowCount` is typed as `number | null`, and the code attempts to compare it (`res.rowCount > 0`) without first checking for null.
+
+**Solution:**
+Updated the `_runRuleBasedInference` method in `core/pipelines/memory_extraction.ts` to safely handle the nullable `rowCount` property. The check was changed to `if ((res.rowCount ?? 0) > 0)`, ensuring that if `rowCount` is null, it defaults to 0 before the comparison, satisfying TypeScript's strict null checks.
+
+**Modified Files:**
+- `BugTrack.md`
+- `core/pipelines/memory_extraction.ts`
