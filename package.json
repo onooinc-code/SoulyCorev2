@@ -1,7 +1,7 @@
 
 {
   "name": "soulycore-next-final",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "private": true,
   "scripts": {
     "dev": "next dev",

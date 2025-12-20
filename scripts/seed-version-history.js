@@ -4,8 +4,20 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.4.11',
+        version: '0.4.12',
         releaseDate: new Date().toISOString(),
+        changes: `
+### 📐 Symmetric Interface Update (v0.4.12)
+
+**Visual Polish:**
+- **Symmetric Toolbars:** Both the top (Prompt Macros) and bottom (Text Formatting) toolbars now have exactly 12 buttons each.
+- **Identical Layout:** Applied a uniform layout strategy (Flex Distribution) to both toolbars, ensuring buttons are the exact same size and spacing across the interface.
+- **Curated Actions:** Reduced the top toolbar actions to the most essential 12 items to fit the new balanced design.
+`
+    },
+    {
+        version: '0.4.11',
+        releaseDate: new Date('2024-07-29T16:00:00Z'),
         changes: `
 ### 🖌️ Visual Refresh & Compact Mode (v0.4.11)
 

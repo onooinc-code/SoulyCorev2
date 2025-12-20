@@ -40,21 +40,21 @@ interface ToolbarButtonProps {
 }
 
 const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon: Icon, label, onClick, onContextMenu, colorIndex, onEdit, isEditing, className }) => (
-    <div className={`relative group ${className || ''}`}>
+    <div className={`relative group w-full ${className || ''}`}>
         <button 
             onClick={onClick} 
             onContextMenu={onContextMenu}
-            className="flex items-center justify-center w-full h-10 rounded-lg bg-gray-800/40 hover:bg-gray-800 border border-transparent hover:border-indigo-500/30 transition-all duration-200 relative"
+            className="flex items-center justify-center w-full h-9 rounded-lg bg-gray-800/40 hover:bg-gray-800 border border-transparent hover:border-indigo-500/30 transition-all duration-200 relative"
             title={label}
         >
-            <Icon className={`w-5 h-5 transition-colors ${COLORS[colorIndex % COLORS.length]}`} />
+            <Icon className={`w-4 h-4 transition-colors ${COLORS[colorIndex % COLORS.length]}`} />
         </button>
         {isEditing && onEdit && (
             <button 
                 onClick={(e) => { e.stopPropagation(); onEdit(); }}
                 className="absolute -top-1 -right-1 bg-gray-900 text-gray-300 rounded-full p-0.5 border border-gray-600 hover:text-white hover:bg-indigo-600 shadow-md z-10"
             >
-                <EditIcon className="w-2.5 h-2.5" />
+                <EditIcon className="w-2 h-2" />
             </button>
         )}
     </div>
@@ -166,13 +166,11 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         });
     };
 
+    // Exactly 12 items for symmetry
     const bottomToolbarActions = [
         { icon: TrashIcon, label: 'Clear', action: () => setContent('') },
         { icon: CopyIcon, label: 'Copy', action: () => navigator.clipboard.writeText(content).then(() => addNotification({type:'success', title:'Copied'})) },
         { icon: ClipboardPasteIcon, label: 'Paste', action: () => navigator.clipboard.readText().then(t => handleAction(t)) },
-        // { icon: DocumentTextIcon, label: 'Uppercase', action: () => modifyText(t => t.toUpperCase()) }, // Reduced count for better spacing
-        
-        // New formatting tools
         { icon: DocumentTextIcon, label: 'Bold', action: () => modifyText(t => `**${t}**`) },
         { icon: DocumentTextIcon, label: 'Italic', action: () => modifyText(t => `*${t}*`) },
         { icon: MinusIcon, label: 'Strike', action: () => modifyText(t => `~~${t}~~`) },
@@ -180,12 +178,12 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         { icon: ChatBubbleLeftRightIcon, label: 'Quote', action: () => modifyText(t => t.split('\n').map(l => `> ${l}`).join('\n')) },
         { icon: CodeIcon, label: 'Code', action: () => modifyText(t => `\`${t}\``) },
         { icon: LinkIcon, label: 'Link', action: () => modifyText(t => `[${t}](url)`) },
-
         { icon: ClockIcon, label: 'Time', action: () => handleAction(new Date().toLocaleTimeString()) },
         { icon: WrenchScrewdriverIcon, label: 'JSON Fmt', action: () => { try { modifyText(t => JSON.stringify(JSON.parse(t), null, 2)) } catch(e) { addNotification({type:'error', title:'Invalid JSON'}) } } },
     ];
     
     // --- Top Toolbar Configuration ---
+    // Reduced to exactly 12 items to match bottom toolbar for perfect alignment
     const defaultTopActions = [
         { key: 'summarize', icon: SummarizeIcon, label: "تلخيص", prompt: "لخص ما سبق باختصار.", replace: true },
         { key: 'enhance', icon: SparklesIcon, label: "تحسين", prompt: "أعد صياغة النص التالي ليكون أكثر احترافية:\n", replace: false },
@@ -198,10 +196,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         { key: 'plan', icon: DocumentTextIcon, label: "خطة", prompt: "ضع خطة عمل لتنفيذ:\n", replace: false },
         { key: 'sql', icon: CommandLineIcon, label: "SQL", prompt: "اكتب استعلام SQL لـ:\n", replace: false },
         { key: 'react', icon: CodeIcon, label: "React", prompt: "أنشئ مكون React يقوم بـ:\n", replace: false },
-        { key: 'analyze_link', icon: LinkIcon, label: "تحليل رابط", prompt: "حلل محتوى الرابط التالي:\n", replace: false },
         { key: 'entity', icon: CubeIcon, label: "Entity", prompt: "/extract-entities ", replace: false },
-        { key: 'save', icon: BookmarkIcon, label: "Save", prompt: "Save this to memory.", replace: false },
-        { key: 'critique', icon: SparklesIcon, label: "نقد", prompt: "انقد النص التالي نقدًا بناءً:\n", replace: false },
     ];
 
     const topActions = useMemo(() => {
@@ -269,11 +264,11 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 )}
             </AnimatePresence>
 
-            {/* 1. Top Toolbar (Prompt Macros) - Scaled Down & Distributed */}
-            <div className="flex items-center gap-2 px-2 mb-2 relative">
-                <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-1.5 pb-1 mask-linear-fade">
+            {/* 1. Top Toolbar (Prompt Macros) - Exact 12 items, distributed */}
+            <div className="px-3 pb-1 pt-1 relative">
+                <div className="flex items-center justify-between gap-1 w-full">
                     {topActions.map((action, idx) => (
-                        <div key={action.key} className="flex-shrink-0 min-w-[36px]">
+                        <div key={action.key} className="flex-1">
                             <ToolbarButton 
                                 icon={action.icon}
                                 label={action.label}
@@ -288,10 +283,10 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 </div>
                 <button 
                     onClick={() => setIsEditMode(!isEditMode)} 
-                    className={`absolute right-2 top-0 p-2 rounded-full shadow-lg ${isEditMode ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+                    className={`absolute -right-1 -top-1 p-1 rounded-full shadow-lg scale-75 ${isEditMode ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
                     title="Configure Toolbar"
                 >
-                    <WrenchScrewdriverIcon className="w-4 h-4" />
+                    <WrenchScrewdriverIcon className="w-3 h-3" />
                 </button>
             </div>
 
@@ -349,16 +344,16 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 </div>
             </div>
 
-            {/* 4. Bottom Toolbar (Text Manipulation) - Justified & Flexible */}
-            <div className="px-4 pb-2">
-                <div className="flex items-center justify-between gap-1.5 w-full">
+            {/* 4. Bottom Toolbar (Text Manipulation) - Justified & Flexible - 12 items */}
+            <div className="px-3 pb-2">
+                <div className="flex items-center justify-between gap-1 w-full">
                     {bottomToolbarActions.map((action, idx) => (
                         <div key={idx} className="flex-1">
                              <ToolbarButton 
                                 icon={action.icon}
                                 label={action.label}
                                 onClick={action.action}
-                                onContextMenu={(e) => e.preventDefault()} // No right click edit for bottom bar
+                                onContextMenu={(e) => e.preventDefault()}
                                 colorIndex={idx + 5}
                             />
                         </div>
