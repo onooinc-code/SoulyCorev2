@@ -8,7 +8,13 @@ import { motion } from 'framer-motion';
 import type { Conversation } from '@/lib/types';
 import SidebarToolbar from './SidebarToolbar';
 
-const getRelativeTime = (date: Date): string => {
+const normalizeDate = (dateInput: Date | string): Date => {
+    const date = new Date(dateInput);
+    return isNaN(date.getTime()) ? new Date() : date;
+};
+
+const getRelativeTime = (dateInput: Date | string): string => {
+    const date = normalizeDate(dateInput);
     const now = new Date();
     const seconds = Math.round((now.getTime() - date.getTime()) / 1000);
     const minutes = Math.round(seconds / 60);
@@ -19,11 +25,13 @@ const getRelativeTime = (date: Date): string => {
     return date.toLocaleDateString('ar-EG');
 };
 
-const getGroupKey = (date: Date): string => {
+const getGroupKey = (dateInput: Date | string): string => {
+    const date = normalizeDate(dateInput);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
+    
     const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
     if (checkDate.getTime() === today.getTime()) return 'اليوم';
@@ -40,18 +48,29 @@ const ConversationPanel = ({ isMinimized }: { isMinimized: boolean }) => {
         deleteConversation,
         generateConversationTitle,
         unreadConversations,
+        loadConversations // Ensure we can force load
     } = useConversation();
     
     const { setConversationPanelOpen, isConversationPanelPinned, setIsConversationPanelPinned, isMobileView } = useUIState();
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Force load on mount to ensure data exists
+    useEffect(() => {
+        loadConversations();
+    }, []);
 
     const groupedConversations = useMemo(() => {
         const filtered = searchTerm
             ? conversations.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase()))
             : conversations;
 
-        return filtered.reduce((acc, convo) => {
-            const groupKey = getGroupKey(new Date(convo.lastUpdatedAt));
+        // Add sorting by lastUpdatedAt desc to ensure order is correct before grouping
+        const sorted = [...filtered].sort((a, b) => 
+            new Date(b.lastUpdatedAt).getTime() - new Date(a.lastUpdatedAt).getTime()
+        );
+
+        return sorted.reduce((acc, convo) => {
+            const groupKey = getGroupKey(convo.lastUpdatedAt);
             if (!acc[groupKey]) acc[groupKey] = [];
             acc[groupKey].push(convo);
             return acc;
@@ -94,44 +113,50 @@ const ConversationPanel = ({ isMinimized }: { isMinimized: boolean }) => {
             </div>
 
             <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-6 scrollbar-hide">
-                {groupOrder.map(group => groupedConversations[group]?.length > 0 && (
-                    <div key={group} className="space-y-1">
-                        <h3 className="px-3 text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2 text-right">{group}</h3>
-                        {groupedConversations[group].map(convo => {
-                            const isActive = currentConversation?.id === convo.id;
-                            const isUnread = unreadConversations.has(convo.id);
-                            
-                            return (
-                                <motion.div key={convo.id} className="relative group/item px-1">
-                                    <button
-                                        onClick={() => {
-                                            setCurrentConversation(convo.id);
-                                            if (isMobileView) setConversationPanelOpen(false);
-                                        }}
-                                        className={`w-full text-right p-3 rounded-xl transition-all duration-200 flex items-center justify-between gap-3 ${
-                                            isActive ? 'bg-indigo-600/15 border border-indigo-500/30' : 'hover:bg-gray-800/50 border border-transparent'
-                                        }`}
-                                    >
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-end gap-2 mb-0.5">
-                                                <p className={`text-sm font-semibold truncate ${isActive ? 'text-indigo-300' : 'text-gray-200'}`}>
-                                                    {convo.title}
-                                                </p>
-                                                {isUnread && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />}
-                                            </div>
-                                            <p className="text-[10px] text-gray-500">{getRelativeTime(new Date(convo.lastUpdatedAt))}</p>
-                                        </div>
-                                    </button>
-                                    
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center gap-1 bg-gray-800/80 backdrop-blur-md p-1 rounded-lg border border-white/10 shadow-lg">
-                                        <button onClick={(e) => { e.stopPropagation(); deleteConversation(convo.id); }} className="p-1.5 hover:text-red-400 transition-colors"><TrashIcon className="w-3.5 h-3.5" /></button>
-                                        <button onClick={(e) => { e.stopPropagation(); generateConversationTitle(convo.id); }} className="p-1.5 hover:text-indigo-400 transition-colors"><SparklesIcon className="w-3.5 h-3.5" /></button>
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
+                {conversations.length === 0 ? (
+                    <div className="text-center text-gray-500 py-10 text-sm">
+                        لا توجد محادثات سابقة.
                     </div>
-                ))}
+                ) : (
+                    groupOrder.map(group => groupedConversations[group]?.length > 0 && (
+                        <div key={group} className="space-y-1">
+                            <h3 className="px-3 text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2 text-right">{group}</h3>
+                            {groupedConversations[group].map(convo => {
+                                const isActive = currentConversation?.id === convo.id;
+                                const isUnread = unreadConversations.has(convo.id);
+                                
+                                return (
+                                    <motion.div key={convo.id} className="relative group/item px-1">
+                                        <button
+                                            onClick={() => {
+                                                setCurrentConversation(convo.id);
+                                                if (isMobileView) setConversationPanelOpen(false);
+                                            }}
+                                            className={`w-full text-right p-3 rounded-xl transition-all duration-200 flex items-center justify-between gap-3 ${
+                                                isActive ? 'bg-indigo-600/15 border border-indigo-500/30' : 'hover:bg-gray-800/50 border border-transparent'
+                                            }`}
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-end gap-2 mb-0.5">
+                                                    <p className={`text-sm font-semibold truncate ${isActive ? 'text-indigo-300' : 'text-gray-200'}`}>
+                                                        {convo.title}
+                                                    </p>
+                                                    {isUnread && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />}
+                                                </div>
+                                                <p className="text-[10px] text-gray-500">{getRelativeTime(convo.lastUpdatedAt)}</p>
+                                            </div>
+                                        </button>
+                                        
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center gap-1 bg-gray-800/80 backdrop-blur-md p-1 rounded-lg border border-white/10 shadow-lg z-10">
+                                            <button onClick={(e) => { e.stopPropagation(); deleteConversation(convo.id); }} className="p-1.5 hover:text-red-400 transition-colors"><TrashIcon className="w-3.5 h-3.5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); generateConversationTitle(convo.id); }} className="p-1.5 hover:text-indigo-400 transition-colors"><SparklesIcon className="w-3.5 h-3.5" /></button>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    ))
+                )}
             </div>
 
             <div className="p-4 border-t border-white/5 space-y-2">

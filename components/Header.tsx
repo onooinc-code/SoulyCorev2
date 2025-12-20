@@ -6,10 +6,12 @@ import { useUIState } from '@/components/providers/UIStateProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { 
     Bars3Icon, 
-    MinusIcon, PlusIcon, PowerIcon, RefreshIcon,
-    FullscreenIcon, ExitFullscreenIcon 
+    MinusIcon, PlusIcon, RefreshIcon,
+    FullscreenIcon, ExitFullscreenIcon,
+    CodeIcon,
+    ArrowDownOnSquareIcon
 } from '@/components/Icons';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import ToolbarButton from './ToolbarButton';
 import type { VersionHistory } from '@/lib/types';
 import dynamic from 'next/dynamic';
@@ -20,6 +22,7 @@ const VersionSystem = () => {
     const [currentVersion, setCurrentVersion] = useState<VersionHistory | null>(null);
     const [isLogOpen, setIsLogOpen] = useState(false);
     const [hasUnreadUpdate, setHasUnreadUpdate] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
 
     useEffect(() => {
         const checkVersion = async () => {
@@ -29,8 +32,7 @@ const VersionSystem = () => {
                     const data = await res.json();
                     setCurrentVersion(data);
                     
-                    // Check local storage for last seen version
-                    const lastSeen = localStorage.getItem('last_seen_version');
+                    const lastSeen = typeof window !== 'undefined' ? localStorage.getItem('last_seen_version') : null;
                     if (lastSeen !== data.version) {
                         setHasUnreadUpdate(true);
                     }
@@ -47,30 +49,62 @@ const VersionSystem = () => {
             localStorage.setItem('last_seen_version', currentVersion.version);
             setHasUnreadUpdate(false);
             setIsLogOpen(true);
+            setIsHovered(false);
         }
     };
 
     if (!currentVersion) return null;
 
     return (
-        <>
+        <div className="relative z-50">
             <button 
                 onClick={handleClick}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
                 className="relative group hidden md:flex items-center justify-center px-3 py-1 rounded-full bg-gray-800 border border-gray-700 hover:border-indigo-500/50 hover:bg-gray-700 transition-all cursor-pointer mr-2"
-                title="Click to view full changelog"
             >
-                <span className="text-[10px] font-bold text-gray-400 group-hover:text-indigo-300 transition-colors">
+                <CodeIcon className="w-3.5 h-3.5 text-gray-400 mr-2 group-hover:text-indigo-400" />
+                <span className="text-[10px] font-bold text-gray-400 group-hover:text-white transition-colors">
                     v{currentVersion.version}
                 </span>
                 
-                {/* Unread Indicator Pulse */}
                 {hasUnreadUpdate && (
-                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-gray-900 animate-pulse"></span>
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-gray-900 animate-pulse"></span>
                 )}
             </button>
 
-            {isLogOpen && <VersionLogModal onClose={() => setIsLogOpen(false)} />}
-        </>
+            {/* Hover Card for Quick View */}
+            <AnimatePresence>
+                {isHovered && !isLogOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute top-full right-0 mt-2 w-72 bg-gray-800/90 backdrop-blur-xl border border-gray-700 rounded-xl shadow-2xl overflow-hidden pointer-events-none"
+                    >
+                        <div className="p-4 border-b border-white/5">
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="text-xs font-bold text-indigo-400">Latest Update</span>
+                                <span className="text-[10px] text-gray-500">{new Date(currentVersion.releaseDate).toLocaleDateString()}</span>
+                            </div>
+                            <div className="text-xs text-gray-300 line-clamp-4 leading-relaxed">
+                                {currentVersion.changes.replace(/^- /gm, '').substring(0, 150)}...
+                            </div>
+                        </div>
+                        <div className="bg-gray-900/50 px-4 py-2 text-[10px] text-gray-500 flex justify-between items-center">
+                            <span>Click to view full changelog</span>
+                            <ArrowDownOnSquareIcon className="w-3 h-3" />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Full Modal */}
+            <AnimatePresence>
+                {isLogOpen && <VersionLogModal onClose={() => setIsLogOpen(false)} />}
+            </AnimatePresence>
+        </div>
     );
 };
 
