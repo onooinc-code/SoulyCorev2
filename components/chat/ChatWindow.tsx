@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
-import type { Message as MessageType, Contact } from '@/lib/types';
+import type { Message as MessageType, Contact, ILinkPredictionProposal } from '@/lib/types';
 import { AnimatePresence } from 'framer-motion';
+import { useNotification } from '@/lib/hooks/use-notifications';
 
-// Refactored Components
 import Header from '@/components/Header';
 import MessageList from '@/components/chat/MessageList';
 import ErrorDisplay from '@/components/chat/ErrorDisplay';
@@ -16,191 +16,100 @@ import StatusBar from '@/components/StatusBar';
 import LogOutputPanel from '@/components/LogOutputPanel';
 
 const ChatWindow = () => {
-    // --- HOOKS ---
     const { 
-        currentConversation, 
-        messages, 
-        addMessage,
-        toggleBookmark,
-        isLoading,
-        status,
-        setStatus,
-        clearError,
-        deleteMessage,
-        updateMessage,
-        regenerateAiResponse,
-        regenerateUserPromptAndGetResponse,
-        backgroundTaskCount,
-        activeWorkflow,
+        currentConversation, messages, addMessage, toggleBookmark, isLoading, status,
+        setStatus, clearError, deleteMessage, updateMessage, regenerateAiResponse,
+        regenerateUserPromptAndGetResponse, backgroundTaskCount, activeWorkflow,
         updateCurrentConversation,
     } = useConversation();
-    const { isZenMode, isLogPanelOpen } = useUIState();
     
-    // --- STATE ---
+    const { isZenMode, isLogPanelOpen, setExtractionTarget, setActiveView, isMobileView } = useUIState();
+    const { addNotification } = useNotification();
+    
     const [proactiveSuggestion, setProactiveSuggestion] = useState<string | null>(null);
     const [replyToMessage, setReplyToMessage] = useState<MessageType | null>(null);
     
-    // Modal States
     const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
     const [isAgentConfigModalOpen, setAgentConfigModalOpen] = useState(false);
-    const [summaryModalState, setSummaryModalState] = useState<{isOpen: boolean, text: string, isLoading: boolean}>({isOpen: false, text: '', isLoading: false});
-    const [inspectorModalState, setInspectorModalState] = useState<{ isOpen: boolean; messageId: string | null }>({ isOpen: false, messageId: null });
-    const [contextViewerModalState, setContextViewerModalState] = useState<{ isOpen: boolean, messageId: string | null, type: 'prompt' | 'system' | 'config' | null }>({ isOpen: false, messageId: null, type: null });
+    const [summaryModalState, setSummaryModalState] = useState({isOpen: false, text: '', isLoading: false});
+    const [inspectorModalState, setInspectorModalState] = useState({ isOpen: false, messageId: null });
+    const [contextViewerModalState, setContextViewerModalState] = useState({ isOpen: false, messageId: null, type: null });
     const [htmlModalState, setHtmlModalState] = useState({ isOpen: false, content: '' });
 
-    // --- EFFECTS ---
-    useEffect(() => {
-        // Clear suggestion when conversation changes
-        setProactiveSuggestion(null);
-        setReplyToMessage(null);
-    }, [currentConversation]);
-
-    // --- HANDLERS ---
-    const handleSummarizeMessage = async (content: string) => {
-        console.log('User requested message summary.');
-        setSummaryModalState({ isOpen: true, text: '', isLoading: true });
-        try {
-            const res = await fetch('/api/summarize', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: content }),
-            });
-            if (!res.ok) throw new Error('Failed to fetch summary from the server.');
-            const data = await res.json();
-            setSummaryModalState({ isOpen: true, text: data.summary, isLoading: false });
-        } catch (error) {
-            const errorText = 'Sorry, the summary could not be generated at this time.';
-            console.error('Error fetching message summary.', { error: (error as Error).message });
-            setSummaryModalState({ isOpen: true, text: errorText, isLoading: false });
-            setStatus({ error: (error as Error).message });
-        }
-    };
+    useEffect(() => { setProactiveSuggestion(null); setReplyToMessage(null); }, [currentConversation]);
 
     const handleSendMessage = async (content: string, mentionedContacts: Contact[]) => {
         if (!content.trim()) return;
-        
         const userMessage: Omit<MessageType, 'id' | 'createdAt' | 'conversationId'> = {
-            role: 'user',
-            content,
-            tokenCount: Math.ceil(content.length / 4),
-            lastUpdatedAt: new Date(),
+            role: 'user', content, tokenCount: Math.ceil(content.length / 4), lastUpdatedAt: new Date(),
         };
-
-        const { aiResponse, suggestion } = await addMessage(userMessage, mentionedContacts, undefined, replyToMessage?.id);
-
-        setReplyToMessage(null); // Clear reply state after sending
-
-        if (aiResponse) {
-            setProactiveSuggestion(suggestion);
+        const { aiResponse, suggestion, memoryProposal, linkProposal } = await addMessage(userMessage, mentionedContacts, undefined, replyToMessage?.id);
+        setReplyToMessage(null);
+        if (aiResponse) setProactiveSuggestion(suggestion);
+        if (memoryProposal) {
+          addNotification({
+            type: 'info', title: 'فرصة تعلم جديدة', message: "تعلمت شيئاً جديداً من محادثتنا. هل تود مراجعته؟",
+            action: { label: 'مراجعة وحفظ', onClick: () => { setExtractionTarget({ type: 'conversation', id: memoryProposal.conversationId }); setActiveView('memory_extraction_hub'); }}
+          });
         }
     };
-    
-    const handleSetConversationAlign = (align: 'left' | 'right') => {
-        if (!currentConversation) return;
-        const newUiSettings = { ...(currentConversation.uiSettings || {}), textAlign: align };
-        updateCurrentConversation({ uiSettings: newUiSettings });
-    };
-
-    const handleRegenerate = (messageId: string) => {
-        const message = messages.find(m => m.id === messageId);
-        if (!message) return;
-    
-        if (message.role === 'model') {
-            regenerateAiResponse(messageId);
-        } else if (message.role === 'user') {
-            regenerateUserPromptAndGetResponse(messageId);
-        }
-    };
-    
-    const handleSuggestionClick = () => {
-        if (!proactiveSuggestion) return;
-        console.log('User clicked proactive suggestion.', { suggestion: proactiveSuggestion });
-        alert(`Action triggered: ${proactiveSuggestion}`);
-        setProactiveSuggestion(null);
-    };
-
-    const handleViewHtml = (htmlContent: string) => {
-        setHtmlModalState({ isOpen: true, content: htmlContent });
-    };
-    
-    const handleViewContext = (messageId: string, type: 'prompt' | 'system' | 'config') => {
-        setContextViewerModalState({ isOpen: true, messageId, type });
-    };
-
-    const handleReply = (message: MessageType) => {
-        console.log('User is replying to a message', { messageId: message.id });
-        setReplyToMessage(message);
-    }
-
-    const isDbError = !!(status.error && /database|vercel|table|relation.+does not exist/i.test(status.error));
 
     return (
-        <div className="flex flex-col h-full bg-gray-900">
+        <div className="flex flex-col h-full bg-gray-950 overflow-hidden chat-container">
             {!isZenMode && <Header />}
             
-            <MessageList 
-                messages={messages}
-                currentConversation={currentConversation}
-                isLoading={isLoading}
-                activeWorkflow={activeWorkflow}
-                backgroundTaskCount={backgroundTaskCount}
-                onSummarize={handleSummarizeMessage}
-                onToggleBookmark={toggleBookmark}
-                onDeleteMessage={deleteMessage}
-                onUpdateMessage={updateMessage}
-                onRegenerate={handleRegenerate}
-                onInspect={(messageId) => setInspectorModalState({ isOpen: true, messageId })}
-                onViewContext={handleViewContext}
-                onViewHtml={handleViewHtml}
-                onSetConversationAlign={handleSetConversationAlign}
-                onReply={handleReply}
-            />
-
-            {!isZenMode && currentConversation && (
-                <StatusBar 
-                    onSettingsClick={() => setSettingsModalOpen(true)}
-                    onAgentConfigClick={() => setAgentConfigModalOpen(true)}
+            <div className="flex-1 min-h-0 flex flex-col relative overflow-hidden">
+                <MessageList 
+                    messages={messages}
+                    currentConversation={currentConversation}
+                    isLoading={isLoading}
+                    activeWorkflow={activeWorkflow}
+                    backgroundTaskCount={backgroundTaskCount}
+                    onSummarize={(content) => {
+                        setSummaryModalState({ isOpen: true, text: '', isLoading: true });
+                        fetch('/api/summarize', { method: 'POST', body: JSON.stringify({ text: content }) })
+                            .then(res => res.json())
+                            .then(data => setSummaryModalState({ isOpen: true, text: data.summary, isLoading: false }));
+                    }}
+                    onToggleBookmark={toggleBookmark}
+                    onDeleteMessage={deleteMessage}
+                    onUpdateMessage={updateMessage}
+                    onRegenerate={(id) => {
+                        const m = messages.find(x => x.id === id);
+                        if (!m) return;
+                        m.role === 'model' ? regenerateAiResponse(id) : regenerateUserPromptAndGetResponse(id);
+                    }}
+                    onInspect={(id) => setInspectorModalState({ isOpen: true, messageId: id as any })}
+                    onViewContext={(id, type) => setContextViewerModalState({ isOpen: true, messageId: id as any, type: type as any })}
+                    onViewHtml={(content) => setHtmlModalState({ isOpen: true, content })}
+                    onSetConversationAlign={(align) => currentConversation && updateCurrentConversation({ uiSettings: { ...currentConversation.uiSettings, textAlign: align } })}
+                    onReply={setReplyToMessage}
                 />
-            )}
-            
-            <ErrorDisplay 
-                status={status}
-                isDbError={isDbError}
-                clearError={clearError}
-            />
+            </div>
+
+            <ErrorDisplay status={status} isDbError={!!(status.error && /database|postgres/i.test(status.error))} clearError={clearError} />
             
             <ChatFooter 
                 proactiveSuggestion={proactiveSuggestion}
-                onSuggestionClick={handleSuggestionClick}
-                onDismissSuggestion={() => {
-                    // FIX: Corrected a typo from `proactiveSuggestion` to `suggestion` to align with the log event schema.
-                    console.log('User dismissed proactive suggestion.', { suggestion: proactiveSuggestion });
-                    setProactiveSuggestion(null);
-                }}
+                onSuggestionClick={() => { proactiveSuggestion && alert(`Action: ${proactiveSuggestion}`); setProactiveSuggestion(null); }}
+                onDismissSuggestion={() => setProactiveSuggestion(null)}
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}
                 replyToMessage={replyToMessage}
                 onCancelReply={() => setReplyToMessage(null)}
-                onInspectClick={(messageId) => setInspectorModalState({ isOpen: true, messageId })}
+                onInspectClick={(id) => setInspectorModalState({ isOpen: true, messageId: id as any })}
             />
-            <AnimatePresence>
-                {isLogPanelOpen && <LogOutputPanel />}
-            </AnimatePresence>
+            
+            <AnimatePresence>{isLogPanelOpen && <LogOutputPanel />}</AnimatePresence>
 
             <ChatModals 
-                isSettingsModalOpen={isSettingsModalOpen}
-                setSettingsModalOpen={setSettingsModalOpen}
-                isAgentConfigModalOpen={isAgentConfigModalOpen}
-                setAgentConfigModalOpen={setAgentConfigModalOpen}
+                isSettingsModalOpen={isSettingsModalOpen} setSettingsModalOpen={setSettingsModalOpen}
+                isAgentConfigModalOpen={isAgentConfigModalOpen} setAgentConfigModalOpen={setAgentConfigModalOpen}
                 currentConversation={currentConversation}
-                summaryModalState={summaryModalState}
-                setSummaryModalState={setSummaryModalState}
-                inspectorModalState={inspectorModalState}
-                setInspectorModalState={setInspectorModalState}
-                contextViewerModalState={contextViewerModalState}
-                setContextViewerModalState={setContextViewerModalState}
-                htmlModalState={htmlModalState}
-                setHtmlModalState={setHtmlModalState}
+                summaryModalState={summaryModalState as any} setSummaryModalState={setSummaryModalState as any}
+                inspectorModalState={inspectorModalState as any} setInspectorModalState={setInspectorModalState as any}
+                contextViewerModalState={contextViewerModalState as any} setContextViewerModalState={setContextViewerModalState as any}
+                htmlModalState={htmlModalState} setHtmlModalState={setHtmlModalState}
             />
         </div>
     );

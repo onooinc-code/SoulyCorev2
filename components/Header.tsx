@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -7,7 +5,7 @@ import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { 
-    SparklesIcon, EditIcon, TrashIcon, SidebarLeftIcon, LogIcon, 
+    SparklesIcon, EditIcon, TrashIcon, Bars3Icon, LogIcon, 
     MinusIcon, PlusIcon, PowerIcon, RefreshIcon,
     FullscreenIcon, ExitFullscreenIcon 
 } from '@/components/Icons';
@@ -19,250 +17,102 @@ import remarkGfm from 'remark-gfm';
 import dynamic from 'next/dynamic';
 import { useNotification } from '@/lib/hooks/use-notifications';
 
-const VersionLogModal = dynamic(() => import('@/components/VersionLogModal'), {
-    ssr: false,
-    loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><p className="text-white">Loading Version History...</p></div>
-});
-
+const VersionLogModal = dynamic(() => import('@/components/VersionLogModal'), { ssr: false });
 
 const VersionCard = () => {
     const [currentVersion, setCurrentVersion] = useState<VersionHistory | null>(null);
     const [isHovered, setIsHovered] = useState(false);
-    const [isNew, setIsNew] = useState(false);
     const [isLogOpen, setIsLogOpen] = useState(false);
 
     useEffect(() => {
-        const fetchVersion = async () => {
-            try {
-                const res = await fetch('/api/version/current');
-                if (res.ok) {
-                    const data = await res.json();
-                    setCurrentVersion(data);
-                    const lastSeenVersion = localStorage.getItem('lastSeenVersion');
-                    if (lastSeenVersion !== data.version) {
-                        setIsNew(true);
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to fetch current version", error);
-            }
-        };
-        fetchVersion();
+        fetch('/api/version/current').then(res => res.ok && res.json()).then(data => data && setCurrentVersion(data));
     }, []);
-
-    const handleMouseEnter = () => {
-        setIsHovered(true);
-        if (isNew && currentVersion) {
-            localStorage.setItem('lastSeenVersion', currentVersion.version);
-            setIsNew(false);
-        }
-    };
 
     if (!currentVersion) return null;
 
-    const isToday = new Date(currentVersion.releaseDate).toDateString() === new Date().toDateString();
-
     return (
         <>
-            <motion.div
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={() => setIsHovered(false)}
-                className="relative"
-            >
-                <div 
-                    onClick={() => setIsLogOpen(true)}
-                    className={`relative px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors duration-300 ${isToday ? 'bg-indigo-600/80 text-indigo-100' : 'bg-gray-700/80 text-gray-300'}`}
-                >
+            <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} className="relative hidden md:block">
+                <div onClick={() => setIsLogOpen(true)} className="px-3 py-1 rounded-full text-[10px] font-bold cursor-pointer bg-gray-800 text-gray-400 hover:text-indigo-400 transition-colors">
                     v{currentVersion.version}
-                    {isNew && (
-                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-                        </span>
-                    )}
                 </div>
                 <AnimatePresence>
                     {isHovered && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute top-full right-0 mt-2 w-72 bg-gray-900/80 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl p-4 z-20"
-                        >
-                            <h4 className="font-bold text-white">Version {currentVersion.version}</h4>
-                            <p className="text-xs text-gray-400 mb-2">Released: {new Date(currentVersion.releaseDate).toLocaleDateString()}</p>
-                            <div className="prose-custom text-xs max-h-40 overflow-y-auto pr-2">
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute top-full right-0 mt-2 w-64 glass-panel rounded-lg shadow-2xl p-4 z-50">
+                            <h4 className="font-bold text-white text-xs">اصدار {currentVersion.version}</h4>
+                            <div className="prose-custom text-[10px] max-h-40 overflow-y-auto mt-2">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentVersion.changes}</ReactMarkdown>
                             </div>
-                            <button onClick={() => setIsLogOpen(true)} className="mt-3 w-full text-center text-xs text-indigo-300 hover:underline">View Full History</button>
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </motion.div>
-            <AnimatePresence>
-                {isLogOpen && <VersionLogModal onClose={() => setIsLogOpen(false)} />}
-            </AnimatePresence>
+            </div>
+            {isLogOpen && <VersionLogModal onClose={() => setIsLogOpen(false)} />}
         </>
     );
 };
 
-
 const Header = () => {
-    const { 
-        currentConversation, 
-        deleteConversation,
-        updateConversationTitle,
-        generateConversationTitle,
-        loadConversations,
-    } = useConversation();
-    const {
-        isConversationPanelOpen,
-        setConversationPanelOpen,
-        setLogPanelOpen,
-        restartApp,
-        exitApp,
-        isFullscreen,
-        toggleFullscreen,
-    } = useUIState();
+    const { currentConversation, deleteConversation, updateConversationTitle, generateConversationTitle } = useConversation();
+    const { setConversationPanelOpen, isMobileView, toggleFullscreen, isFullscreen, restartApp } = useUIState();
     const { changeGlobalFontSize } = useSettings();
-    const { addNotification } = useNotification();
-
+    
     const [isEditing, setIsEditing] = useState(false);
     const [title, setTitle] = useState('');
 
-    useEffect(() => {
-        if (currentConversation) {
-            setTitle(currentConversation.title);
-        }
-    }, [currentConversation]);
-
-    const handleEdit = () => {
-        if (!currentConversation) return;
-        setIsEditing(true);
-    };
+    useEffect(() => { if (currentConversation) setTitle(currentConversation.title); }, [currentConversation]);
 
     const handleSave = () => {
-        if (currentConversation && title.trim()) {
-            updateConversationTitle(currentConversation.id, title.trim());
-        }
+        if (currentConversation && title.trim()) updateConversationTitle(currentConversation.id, title.trim());
         setIsEditing(false);
     };
 
-    const handleDelete = () => {
-        if (currentConversation && window.confirm('Are you sure you want to delete this conversation?')) {
-            deleteConversation(currentConversation.id);
-        }
-    };
-    
-    const handleGenerateTitle = () => {
-        if (currentConversation) {
-            generateConversationTitle(currentConversation.id);
-        }
-    };
-
-    const handleSoftRefresh = async () => {
-        await loadConversations();
-        addNotification({
-            type: 'success',
-            title: 'Data Synced',
-            message: 'Your conversation list has been refreshed from the server.'
-        });
-    };
-
     return (
-        <motion.header 
-            initial={{ y: -60, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.4, ease: 'easeInOut' }}
-            className="relative w-full glass-panel z-10 p-2 border-b border-gray-700/50 flex-shrink-0"
-        >
-            <div 
-                className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-500 to-transparent"
-                style={{
-                    animation: 'move-glow 4s linear infinite'
-                }}
-            ></div>
-
-            <div className="flex items-center justify-between w-full max-w-4xl mx-auto gap-4">
-                {!isConversationPanelOpen && (
-                    <div className="flex-shrink-0">
-                        <ToolbarButton onClick={() => setConversationPanelOpen(true)} title="Show Sidebar" color="gray">
-                            <SidebarLeftIcon className="w-5 h-5 transform rotate-180" />
-                        </ToolbarButton>
-                    </div>
-                )}
-                <div className="flex-1 min-w-0">
-                    <AnimatePresence mode="wait">
+        <header className="relative w-full glass-panel z-30 px-4 py-2 border-b border-white/5 flex-shrink-0 safe-top">
+            <div className="flex items-center justify-between w-full max-w-5xl mx-auto gap-4">
+                <div className="flex items-center gap-3">
+                    <button onClick={() => setConversationPanelOpen(prev => !prev)} className="p-2 text-gray-400 hover:bg-gray-800 rounded-lg">
+                        <Bars3Icon className="w-5 h-5" />
+                    </button>
+                    
+                    <div className="min-w-0">
                         {isEditing ? (
-                            <motion.div key="editing-title" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                                <input
-                                    type="text"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    onBlur={handleSave}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                                    className="w-full bg-gray-700 text-white rounded-md px-2 py-1 text-lg font-semibold"
-                                    autoFocus
-                                />
-                            </motion.div>
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={e => setTitle(e.target.value)}
+                                onBlur={handleSave}
+                                onKeyDown={e => e.key === 'Enter' && handleSave()}
+                                className="bg-gray-800 text-white rounded-md px-2 py-0.5 text-sm font-bold w-full"
+                                autoFocus
+                            />
                         ) : (
-                            <motion.h1 
-                                key="display-title" 
-                                initial={{ opacity: 0 }} 
-                                animate={{ opacity: 1 }} 
-                                exit={{ opacity: 0 }}
-                                className="text-lg font-semibold truncate text-gray-200 cursor-pointer"
-                                onDoubleClick={handleEdit}
-                                title="Double-click to rename"
-                            >
-                                {currentConversation?.title || 'New Conversation'}
-                            </motion.h1>
+                            <h1 onClick={() => setIsEditing(true)} className="text-sm font-bold truncate text-gray-200 cursor-pointer hover:text-indigo-400">
+                                {currentConversation?.title || 'محادثة جديدة'}
+                            </h1>
                         )}
-                    </AnimatePresence>
+                    </div>
                 </div>
-                <div className="flex items-center justify-end gap-2 flex-shrink-0">
+
+                <div className="flex items-center gap-1">
                     <VersionCard />
-                    <div className="w-px h-6 bg-gray-600 mx-1"></div>
-                    {currentConversation && (
+                    <div className="w-px h-4 bg-white/10 mx-1 hidden md:block"></div>
+                    
+                    {!isMobileView && (
                         <>
-                            <ToolbarButton onClick={handleGenerateTitle} title="Generate new title with AI" color="purple">
-                                <SparklesIcon className="w-5 h-5" />
-                            </ToolbarButton>
-                            <ToolbarButton onClick={handleEdit} title="Rename conversation" color="blue">
-                                <EditIcon className="w-5 h-5" />
-                            </ToolbarButton>
-                            <ToolbarButton onClick={handleDelete} title="Delete conversation" color="red">
-                                <TrashIcon className="w-5 h-5" />
-                            </ToolbarButton>
-                            <div className="w-px h-6 bg-gray-600 mx-1"></div>
+                            <ToolbarButton onClick={() => changeGlobalFontSize('decrease')} title="تصغير الخط" color="gray"><MinusIcon className="w-4 h-4" /></ToolbarButton>
+                            <ToolbarButton onClick={() => changeGlobalFontSize('increase')} title="تكبير الخط" color="gray"><PlusIcon className="w-4 h-4" /></ToolbarButton>
                         </>
                     )}
-                    <ToolbarButton onClick={() => changeGlobalFontSize('decrease')} title="Decrease font size" color="gray">
-                        <MinusIcon className="w-5 h-5" />
+                    
+                    <ToolbarButton onClick={toggleFullscreen} title="ملء الشاشة" color="gray">
+                        {isFullscreen ? <ExitFullscreenIcon className="w-4 h-4" /> : <FullscreenIcon className="w-4 h-4" />}
                     </ToolbarButton>
-                    <ToolbarButton onClick={() => changeGlobalFontSize('increase')} title="Increase font size" color="gray">
-                        <PlusIcon className="w-5 h-5" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => setLogPanelOpen(prev => !prev)} title="Toggle Log Panel" color="cyan">
-                        <LogIcon className="w-5 h-5" />
-                    </ToolbarButton>
-                    <div className="w-px h-6 bg-gray-600 mx-1"></div>
-                    <ToolbarButton onClick={toggleFullscreen} title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"} color="lime">
-                        {isFullscreen ? <ExitFullscreenIcon className="w-5 h-5" /> : <FullscreenIcon className="w-5 h-5" />}
-                    </ToolbarButton>
-                     <ToolbarButton onClick={handleSoftRefresh} title="Soft Refresh (Sync data)" color="cyan">
-                        <RefreshIcon className="w-5 h-5" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={restartApp} title="Hard Refresh" color="yellow">
-                        <RefreshIcon className="w-5 h-5" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={exitApp} title="Exit App" color="red">
-                        <PowerIcon className="w-5 h-5" />
-                    </ToolbarButton>
+                    
+                    <ToolbarButton onClick={restartApp} title="اعادة التشغيل" color="yellow"><RefreshIcon className="w-4 h-4" /></ToolbarButton>
                 </div>
             </div>
-        </motion.header>
+        </header>
     );
 };
 

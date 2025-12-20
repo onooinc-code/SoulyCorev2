@@ -1,188 +1,78 @@
-/* FIX: The app previously used direct color values from Tailwind, making it difficult to theme.
-This update refactors the styling to use CSS variables for colors, fonts, and other themeable
-properties, enabling a dynamic theming engine. Three themes (dark, light, solarized) are defined. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root, .theme-dark {
-    --bg-primary: #111827; /* gray-900 */
-    --bg-secondary: #1f2937; /* gray-800 */
-    --bg-tertiary: #374151; /* gray-700 */
-    --bg-interactive: #4f46e5; /* indigo-600 */
-    --bg-interactive-hover: #4338ca; /* indigo-700 */
+    --bg-primary: #111827;
+    --bg-secondary: #1f2937;
+    --bg-tertiary: #374151;
+    --bg-interactive: #4f46e5;
+    --bg-interactive-hover: #4338ca;
     
-    --text-primary: #f9fafb; /* gray-50 */
-    --text-secondary: #d1d5db; /* gray-300 */
-    --text-muted: #9ca3af; /* gray-400 */
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --text-muted: #9ca3af;
     --text-interactive: #ffffff;
     
-    --border-primary: #374151; /* gray-700 */
-    --border-interactive: #6366f1; /* indigo-500 */
-    --border-focus: #818cf8; /* indigo-400 */
+    --border-primary: #374151;
+    --border-interactive: #6366f1;
+    --border-focus: #818cf8;
 
     --prose-code-bg: #374151;
     --prose-pre-bg: #1f2937;
     --prose-link: #60a5fa;
   }
 
-  .theme-light {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f3f4f6; /* gray-100 */
-    --bg-tertiary: #e5e7eb; /* gray-200 */
-    --bg-interactive: #4f46e5;
-    --bg-interactive-hover: #6366f1;
-    
-    --text-primary: #111827; /* gray-900 */
-    --text-secondary: #374151; /* gray-700 */
-    --text-muted: #6b7280; /* gray-500 */
-    --text-interactive: #ffffff;
-    
-    --border-primary: #d1d5db; /* gray-300 */
-    --border-interactive: #4f46e5;
-    --border-focus: #4338ca;
-
-    --prose-code-bg: #e5e7eb;
-    --prose-pre-bg: #f3f4f6;
-    --prose-link: #3b82f6;
-  }
-
-  .theme-solarized {
-    --bg-primary: #002b36;
-    --bg-secondary: #073642;
-    --bg-tertiary: #586e75;
-    --bg-interactive: #268bd2;
-    --bg-interactive-hover: #2aa198;
-
-    --text-primary: #93a1a1;
-    --text-secondary: #839496;
-    --text-muted: #657b83;
-    --text-interactive: #ffffff;
-
-    --border-primary: #073642;
-    --border-interactive: #268bd2;
-    --border-focus: #2aa198;
-    
-    --prose-code-bg: #073642;
-    --prose-pre-bg: #002b36;
-    --prose-link: #2aa198;
-  }
-
   html,
   body {
     height: 100%;
-    overflow: hidden; /* Prevent body scrollbars */
+    overflow: hidden;
     background-color: var(--bg-primary);
     color: var(--text-secondary);
+    font-family: 'Cairo', sans-serif;
+    touch-action: manipulation;
   }
 
-  /* Fix word wrapping issues in narrow containers, especially with long words or RTL text */
   p, h1, h2, h3, h4, h5, h6, pre, code, li {
     overflow-wrap: break-word;
-    word-wrap: break-word; /* for older browsers */
+    word-wrap: break-word;
   }
-
-  html.font-size-sm { font-size: 14px; }
-  html.font-size-base { font-size: 16px; /* Default */ }
-  html.font-size-lg { font-size: 18px; }
-  html.font-size-xl { font-size: 20px; }
 }
 
 .prose-custom {
   color: var(--text-secondary);
-  font-family: 'Cairo', 'Droid Sans Arabic', sans-serif; /* Added requested font */
-  font-size: 1rem; /* This will be overridden by the new classes below */
+  font-family: 'Cairo', sans-serif;
   line-height: 1.6;
-  text-align: right; /* Default to RTL alignment */
-  direction: rtl; /* Default to RTL direction */
-  font-weight: 700; /* Bold font as requested */
+  direction: rtl;
+  text-align: right;
 }
 
-/* New font size classes for message bubbles */
-html.message-font-sm .prose-custom { font-size: 11px; } /* Requested default */
-html.message-font-base .prose-custom { font-size: 13px; }
-html.message-font-lg .prose-custom { font-size: 15px; }
-html.message-font-xl .prose-custom { font-size: 17px; }
-
-
-.prose-custom code {
-    color: var(--text-primary);
-    background-color: var(--prose-code-bg);
-    padding: 0.2em 0.4em;
-    margin: 0;
-    font-size: 85%;
-    border-radius: 6px;
-}
-.prose-custom pre {
-    background-color: var(--prose-pre-bg);
-    color: var(--text-secondary);
-    padding: 1em;
-    border-radius: 8px;
-    overflow-x: auto;
-    text-align: left; /* Keep code blocks LTR */
-    direction: ltr; /* Keep code blocks LTR */
-}
-.prose-custom pre code {
-    background-color: transparent;
-    padding: 0;
-}
-.prose-custom a {
-  color: var(--prose-link);
-  text-decoration-line: underline;
-}
-.prose-custom ol, .prose-custom ul {
-  padding-right: 2em; /* Adjusted for RTL */
-  padding-left: 0;
-  margin-top: 1em;
-  margin-bottom: 1em;
-}
-.prose-custom li {
-    margin-top: 0.25em;
-    margin-bottom: 0.25em;
-}
-.prose-custom p {
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-    font-size: inherit; /* Ensure paragraphs scale too */
-}
-.prose-custom li > p {
-  margin: 0;
-}
-.prose-custom strong {
-  color: var(--text-primary);
-}
-.prose-custom blockquote {
-  border-right-color: var(--border-primary); /* Adjusted for RTL */
-  border-left-color: transparent;
-  color: var(--text-muted);
-  padding-right: 1em; /* Adjusted for RTL */
-  padding-left: 0;
-  margin-right: 0; /* Adjusted for RTL */
-  margin-left: 0;
+@media (max-width: 640px) {
+  .prose-custom {
+    font-size: 0.95rem !important;
+  }
 }
 
-/* Glassmorphism utility */
 .glass-panel {
-  background-color: rgb(31 41 55 / 0.6);
-  -webkit-backdrop-filter: blur(24px);
-  backdrop-filter: blur(24px);
+  background-color: rgb(31 41 55 / 0.7);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   border-width: 1px;
   border-color: rgb(255 255 255 / 0.1);
 }
 
-/* Custom scrollbar for Navigation Rail */
-.rail-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-.rail-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.rail-scrollbar::-webkit-scrollbar-thumb {
-  background: #4f46e5; /* indigo-600 */
-  border-radius: 2px;
-}
-.rail-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #4f46e5 transparent;
+.rail-scrollbar::-webkit-scrollbar { width: 4px; }
+.rail-scrollbar::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 2px; }
+
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+@media (max-width: 768px) {
+  .chat-container {
+    height: calc(100vh - 4rem); /* المساحة لشريط التنقل السفلي */
+  }
 }
