@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
 
         for await (const m of pager) {
             if (
+                m.name && // Check if name exists
                 m.name.toLowerCase().includes('gemini') && 
                 m.supportedGenerationMethods?.includes('generateContent')
             ) {
