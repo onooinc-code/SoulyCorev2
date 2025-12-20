@@ -31,6 +31,14 @@ const ConversationPanel = ({ isMinimized }: { isMinimized: boolean }) => {
         loadConversations();
     }, []);
 
+    const handleSelectConversation = (id: string) => {
+        setCurrentConversation(id);
+        // Automatically close the panel on mobile or if not pinned on desktop
+        if (isMobileView || !isConversationPanelPinned) {
+            setConversationPanelOpen(false);
+        }
+    };
+
     const filteredConversations = (conversations as ConversationWithStats[])
         .filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase()))
         .sort((a, b) => new Date(b.lastUpdatedAt).getTime() - new Date(a.lastUpdatedAt).getTime());
@@ -71,10 +79,7 @@ const ConversationPanel = ({ isMinimized }: { isMinimized: boolean }) => {
                         return (
                             <div key={convo.id} className="group relative">
                                 <button
-                                    onClick={() => {
-                                        setCurrentConversation(convo.id);
-                                        if (isMobileView) setConversationPanelOpen(false);
-                                    }}
+                                    onClick={() => handleSelectConversation(convo.id)}
                                     className={`w-full text-right p-3 rounded-lg transition-all duration-200 border ${isActive ? 'bg-indigo-600/20 border-indigo-500/50 shadow-sm' : 'bg-transparent border-transparent hover:bg-gray-800/50'}`}
                                 >
                                     <div className="flex justify-between items-start mb-1">

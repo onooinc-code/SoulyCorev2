@@ -1,15 +1,17 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { Contact } from '@/lib/types';
 import { 
     SendIcon, PaperclipIcon, XIcon, SparklesIcon, CodeIcon, 
     SummarizeIcon, BeakerIcon, ArrowsRightLeftIcon, LightbulbIcon,
     DocumentTextIcon, WrenchScrewdriverIcon, CommandLineIcon,
-    LinkIcon, CubeIcon, BookmarkIcon
+    LinkIcon, CubeIcon, BookmarkIcon, ClipboardPasteIcon, CopyIcon, TrashIcon, CheckIcon, EditIcon,
+    ScissorsIcon, ClockIcon
 } from '@/components/Icons';
 import { useConversation } from './providers/ConversationProvider';
+import { useSettings } from '@/components/providers/SettingsProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotification } from '@/lib/hooks/use-notifications';
 
@@ -19,15 +21,42 @@ interface ChatInputProps {
     replyToMessage: import('@/lib/types').Message | null;
 }
 
-const ToolbarButton = ({ icon: Icon, label, onClick, colorClass = "text-gray-400 group-hover:text-indigo-400" }: { icon: any, label: string, onClick: () => void, colorClass?: string }) => (
-    <button 
-        onClick={onClick} 
-        className="group flex flex-col items-center justify-center min-w-[72px] h-[64px] p-1 rounded-xl bg-gray-800/40 hover:bg-gray-800 border border-transparent hover:border-indigo-500/30 transition-all duration-200"
-        title={label}
-    >
-        <Icon className={`w-5 h-5 mb-1.5 transition-colors ${colorClass}`} />
-        <span className="text-[9px] text-gray-500 group-hover:text-gray-200 font-medium leading-none text-center px-1">{label}</span>
-    </button>
+// Color palette for diversified buttons
+const COLORS = [
+    'text-purple-400', 'text-blue-400', 'text-green-400', 'text-yellow-400', 
+    'text-pink-400', 'text-indigo-400', 'text-red-400', 'text-teal-400', 
+    'text-orange-400', 'text-cyan-400', 'text-lime-400', 'text-amber-400'
+];
+
+interface ToolbarButtonProps {
+    icon: any;
+    label: string;
+    onClick: () => void;
+    colorIndex: number;
+    onEdit?: () => void;
+    isEditing?: boolean;
+}
+
+const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon: Icon, label, onClick, colorIndex, onEdit, isEditing }) => (
+    <div className="relative group">
+        <button 
+            onClick={onClick} 
+            className="flex flex-col items-center justify-center min-w-[72px] h-[64px] p-1 rounded-xl bg-gray-800/40 hover:bg-gray-800 border border-transparent hover:border-indigo-500/30 transition-all duration-200 relative"
+            title={label}
+        >
+            <Icon className={`w-5 h-5 mb-1.5 transition-colors ${COLORS[colorIndex % COLORS.length]}`} />
+            <span className="text-[9px] text-gray-500 group-hover:text-gray-200 font-medium leading-none text-center px-1 line-clamp-2">{label}</span>
+            
+        </button>
+        {isEditing && onEdit && (
+            <button 
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                className="absolute -top-1 -right-1 bg-gray-900 text-gray-300 rounded-full p-1 border border-gray-600 hover:text-white hover:bg-indigo-600 shadow-md z-10"
+            >
+                <EditIcon className="w-3 h-3" />
+            </button>
+        )}
+    </div>
 );
 
 const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps) => {
@@ -38,6 +67,13 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     // Command/Mention State
     const [showCommandMenu, setShowCommandMenu] = useState(false);
     
+    // Customization State
+    const { settings, saveSettings } = useSettings();
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editingButtonKey, setEditingButtonKey] = useState<string | null>(null);
+    const [newButtonLabel, setNewButtonLabel] = useState('');
+    const [newButtonPrompt, setNewButtonPrompt] = useState('');
+
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { addNotification } = useNotification();
@@ -55,6 +91,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         if (replyToMessage) textareaRef.current?.focus();
     }, [replyToMessage]);
 
+    // --- Core Handlers ---
     const handleAction = (text: string, replace = false) => {
         if (replace) setContent(text);
         else setContent(prev => prev + (prev ? '\n' : '') + text);
@@ -98,26 +135,139 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         if (textareaRef.current) textareaRef.current.style.height = 'auto';
     };
 
+    // --- Bottom Toolbar Text Manipulation Logic ---
+    const modifyText = (modifier: (text: string) => string) => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = content.substring(start, end);
+
+        if (!selectedText) {
+             // If no text selected, apply to whole content or just warn
+             // For now, let's apply to whole content for simple actions
+             const modified = modifier(content);
+             setContent(modified);
+             return;
+        }
+
+        const modifiedText = modifier(selectedText);
+        const newContent = content.substring(0, start) + modifiedText + content.substring(end);
+        setContent(newContent);
+        
+        // Restore cursor/selection
+        requestAnimationFrame(() => {
+            textarea.selectionStart = start;
+            textarea.selectionEnd = start + modifiedText.length;
+            textarea.focus();
+        });
+    };
+
+    const bottomToolbarActions = [
+        { icon: CheckIcon, label: 'Select All', action: () => textareaRef.current?.select() },
+        { icon: TrashIcon, label: 'Clear', action: () => setContent('') },
+        { icon: CopyIcon, label: 'Copy', action: () => navigator.clipboard.writeText(content).then(() => addNotification({type:'success', title:'Copied'})) },
+        { icon: ClipboardPasteIcon, label: 'Paste', action: () => navigator.clipboard.readText().then(t => handleAction(t)) },
+        { icon: DocumentTextIcon, label: 'Uppercase', action: () => modifyText(t => t.toUpperCase()) },
+        { icon: DocumentTextIcon, label: 'Lowercase', action: () => modifyText(t => t.toLowerCase()) },
+        { icon: ScissorsIcon, label: 'Trim', action: () => setContent(c => c.trim()) },
+        { icon: CodeIcon, label: 'Code Block', action: () => modifyText(t => "```\n" + t + "\n```") },
+        { icon: LinkIcon, label: 'Encode URL', action: () => modifyText(t => encodeURIComponent(t)) },
+        { icon: LinkIcon, label: 'Decode URL', action: () => modifyText(t => decodeURIComponent(t)) },
+        { icon: SparklesIcon, label: 'Remove Lines', action: () => modifyText(t => t.replace(/(\r\n|\n|\r)/gm, " ")) },
+        { icon: BeakerIcon, label: 'Base64 Enc', action: () => modifyText(t => btoa(t)) },
+        { icon: BeakerIcon, label: 'Base64 Dec', action: () => { try { modifyText(t => atob(t)) } catch(e) { addNotification({type:'error', title:'Invalid Base64'}) } } },
+        { icon: DocumentTextIcon, label: 'Indent', action: () => modifyText(t => "\t" + t) },
+        { icon: ClockIcon, label: 'Time', action: () => handleAction(new Date().toLocaleTimeString()) },
+        { icon: WrenchScrewdriverIcon, label: 'JSON Fmt', action: () => { try { modifyText(t => JSON.stringify(JSON.parse(t), null, 2)) } catch(e) { addNotification({type:'error', title:'Invalid JSON'}) } } },
+    ];
+    
+    // --- Top Toolbar Configuration ---
+    const defaultTopActions = [
+        { key: 'summarize', icon: SummarizeIcon, label: "تلخيص", prompt: "لخص ما سبق باختصار.", replace: true },
+        { key: 'enhance', icon: SparklesIcon, label: "تحسين", prompt: "أعد صياغة النص التالي ليكون أكثر احترافية:\n", replace: false },
+        { key: 'explain_code', icon: CodeIcon, label: "شرح كود", prompt: "اشرح الكود التالي بالتفصيل:\n", replace: false },
+        { key: 'trans_en', icon: ArrowsRightLeftIcon, label: "ترجمة EN", prompt: "ترجم إلى الإنجليزية:\n", replace: false },
+        { key: 'trans_ar', icon: ArrowsRightLeftIcon, label: "ترجمة AR", prompt: "ترجم إلى العربية:\n", replace: false },
+        { key: 'ideas', icon: LightbulbIcon, label: "أفكار", prompt: "اقترح 5 أفكار إبداعية حول:\n", replace: false },
+        { key: 'simplify', icon: BeakerIcon, label: "تبسيط", prompt: "اشرح لي هذا المفهوم وكأني طفل في الخامسة:\n", replace: false },
+        { key: 'debug', icon: WrenchScrewdriverIcon, label: "Debug", prompt: "ساعدني في اكتشاف الخطأ هنا:\n", replace: false },
+        { key: 'plan', icon: DocumentTextIcon, label: "خطة", prompt: "ضع خطة عمل لتنفيذ:\n", replace: false },
+        { key: 'sql', icon: CommandLineIcon, label: "SQL", prompt: "اكتب استعلام SQL لـ:\n", replace: false },
+        { key: 'react', icon: CodeIcon, label: "React", prompt: "أنشئ مكون React يقوم بـ:\n", replace: false },
+        { key: 'analyze_link', icon: LinkIcon, label: "تحليل رابط", prompt: "حلل محتوى الرابط التالي:\n", replace: false },
+        { key: 'entity', icon: CubeIcon, label: "Entity", prompt: "/extract-entities ", replace: false },
+        { key: 'save', icon: BookmarkIcon, label: "Save", prompt: "Save this to memory.", replace: false },
+        { key: 'critique', icon: SparklesIcon, label: "نقد", prompt: "انقد النص التالي نقدًا بناءً:\n", replace: false },
+    ];
+
+    const topActions = useMemo(() => {
+        const customPrompts = settings?.customToolbarPrompts || {};
+        return defaultTopActions.map(action => ({
+            ...action,
+            prompt: customPrompts[action.key] ? JSON.parse(customPrompts[action.key]).prompt : action.prompt,
+            label: customPrompts[action.key] ? JSON.parse(customPrompts[action.key]).label : action.label,
+        }));
+    }, [settings]);
+
+    const handleEditButton = (key: string, currentLabel: string, currentPrompt: string) => {
+        setEditingButtonKey(key);
+        setNewButtonLabel(currentLabel);
+        setNewButtonPrompt(currentPrompt);
+    };
+
+    const saveButtonConfig = () => {
+        if (!editingButtonKey || !settings) return;
+        const updatedCustomPrompts = {
+            ...(settings.customToolbarPrompts || {}),
+            [editingButtonKey]: JSON.stringify({ label: newButtonLabel, prompt: newButtonPrompt })
+        };
+        saveSettings({ ...settings, customToolbarPrompts: updatedCustomPrompts });
+        setEditingButtonKey(null);
+    };
+
+
     return (
         <div className="w-full bg-gray-950/90 backdrop-blur-xl border-t border-white/5 pb-2 pt-2 z-40 relative shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
             
-            {/* 1. Visible Horizontal Toolbar */}
-            <div className="px-4 mb-2 overflow-x-auto no-scrollbar flex items-center gap-2 pb-2 mask-linear-fade">
-                <ToolbarButton icon={SummarizeIcon} label="تلخيص" onClick={() => handleAction("لخص ما سبق باختصار.", true)} colorClass="text-purple-400" />
-                <ToolbarButton icon={SparklesIcon} label="تحسين" onClick={() => handleAction("أعد صياغة النص التالي ليكون أكثر احترافية:\n")} colorClass="text-yellow-400" />
-                <ToolbarButton icon={CodeIcon} label="شرح كود" onClick={() => handleAction("اشرح الكود التالي بالتفصيل:\n")} colorClass="text-blue-400" />
-                <ToolbarButton icon={ArrowsRightLeftIcon} label="ترجمة EN" onClick={() => handleAction("ترجم إلى الإنجليزية:\n")} />
-                <ToolbarButton icon={ArrowsRightLeftIcon} label="ترجمة AR" onClick={() => handleAction("ترجم إلى العربية:\n")} />
-                <ToolbarButton icon={LightbulbIcon} label="أفكار" onClick={() => handleAction("اقترح 5 أفكار إبداعية حول:\n")} colorClass="text-yellow-300" />
-                <ToolbarButton icon={BeakerIcon} label="تبسيط" onClick={() => handleAction("اشرح لي هذا المفهوم وكأني طفل في الخامسة:\n")} />
-                <ToolbarButton icon={WrenchScrewdriverIcon} label="Debug" onClick={() => handleAction("ساعدني في اكتشاف الخطأ هنا:\n")} colorClass="text-red-400" />
-                <ToolbarButton icon={DocumentTextIcon} label="خطة" onClick={() => handleAction("ضع خطة عمل لتنفيذ:\n")} />
-                <ToolbarButton icon={CommandLineIcon} label="SQL" onClick={() => handleAction("اكتب استعلام SQL لـ:\n")} />
-                <ToolbarButton icon={CodeIcon} label="React" onClick={() => handleAction("أنشئ مكون React يقوم بـ:\n")} colorClass="text-cyan-400" />
-                <ToolbarButton icon={LinkIcon} label="تحليل رابط" onClick={() => handleAction("حلل محتوى الرابط التالي:\n")} />
-                <ToolbarButton icon={CubeIcon} label="Entity" onClick={() => handleAction("/extract-entities ")} />
-                <ToolbarButton icon={BookmarkIcon} label="Save" onClick={() => handleAction("Save this to memory.")} />
-                <ToolbarButton icon={SparklesIcon} label="نقد" onClick={() => handleAction("انقد النص التالي نقدًا بناءً:\n")} />
+            {/* Edit Mode Modal */}
+            <AnimatePresence>
+                {editingButtonKey && (
+                    <motion.div initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="absolute bottom-full left-0 right-0 p-4 bg-gray-900 border-t border-white/10 shadow-2xl z-50 flex flex-col gap-2">
+                         <div className="flex justify-between items-center">
+                             <h3 className="font-bold text-white">Edit Toolbar Button</h3>
+                             <button onClick={() => setEditingButtonKey(null)}><XIcon className="w-5 h-5 text-gray-400"/></button>
+                         </div>
+                         <input value={newButtonLabel} onChange={e => setNewButtonLabel(e.target.value)} placeholder="Button Label" className="p-2 bg-gray-800 rounded text-sm"/>
+                         <textarea value={newButtonPrompt} onChange={e => setNewButtonPrompt(e.target.value)} placeholder="Prompt Text..." className="p-2 bg-gray-800 rounded text-sm" rows={2}/>
+                         <button onClick={saveButtonConfig} className="bg-indigo-600 text-white p-2 rounded text-sm font-bold">Save Configuration</button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* 1. Top Toolbar (Prompt Macros) */}
+            <div className="flex items-center gap-2 px-2 mb-2 relative">
+                <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-2 pb-2 mask-linear-fade justify-center">
+                    {topActions.map((action, idx) => (
+                        <ToolbarButton 
+                            key={action.key}
+                            icon={action.icon}
+                            label={action.label}
+                            onClick={() => handleAction(action.prompt, action.replace)}
+                            colorIndex={idx}
+                            isEditing={isEditMode}
+                            onEdit={() => handleEditButton(action.key, action.label, action.prompt)}
+                        />
+                    ))}
+                </div>
+                <button 
+                    onClick={() => setIsEditMode(!isEditMode)} 
+                    className={`absolute right-2 top-0 p-2 rounded-full shadow-lg ${isEditMode ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+                    title="Configure Toolbar"
+                >
+                    <WrenchScrewdriverIcon className="w-4 h-4" />
+                </button>
             </div>
 
             {/* 2. Command Menu Popover */}
@@ -173,6 +323,24 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                     </button>
                 </div>
             </div>
+
+            {/* 4. Bottom Toolbar (Text Manipulation) */}
+            <div className="px-4 pb-2">
+                <div className="overflow-x-auto no-scrollbar flex items-center gap-2 justify-center py-1">
+                    {bottomToolbarActions.map((action, idx) => (
+                        <button
+                            key={idx}
+                            onClick={action.action}
+                            className={`flex flex-col items-center justify-center min-w-[60px] h-[50px] p-1 rounded-lg bg-gray-900 hover:bg-gray-800 border border-white/5 hover:border-white/10 transition-all group`}
+                            title={action.label}
+                        >
+                            <action.icon className={`w-4 h-4 mb-1 ${COLORS[(idx + 5) % COLORS.length]}`} />
+                            <span className="text-[8px] text-gray-500 group-hover:text-gray-300">{action.label}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
         </div>
     );
 };

@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview This file contains application-level types, such as UI state and settings,
  * that are not direct representations of database models.
@@ -59,6 +60,8 @@ export interface AppSettings {
         showTags: boolean;
     };
     savedEntityHubFilters?: SavedFilterSet[];
+    // NEW: Store custom prompts for the ChatInput toolbar
+    customToolbarPrompts?: Record<string, string>; 
 }
 
 // For notification system
