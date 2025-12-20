@@ -562,3 +562,36 @@ Updated the `_runRuleBasedInference` method in `core/pipelines/memory_extraction
 **Modified Files:**
 - `BugTrack.md`
 - `core/pipelines/memory_extraction.ts`
+
+---
+### Bug #34: Minified React Error #299 (Target container is not a DOM element)
+
+**Error Details:**
+The application crashed with "Uncaught Error: Minified React error #299" in production/minified builds. This specific React invariant error indicates that the target container passed to `createRoot` is not a valid DOM element. The root cause was that `index.html` was completely missing the `<body>` tag and the `<div id="root"></div>` element, causing `document.getElementById('root')` to return null.
+
+**Solution:**
+1.  **Restored `index.html`**: Updated the file to include the full HTML5 boilerplate, including `<html>`, `<head>`, `<body>`, and most importantly, the `<div id="root"></div>` container.
+2.  **Added Safety Check**: Updated `index.tsx` to throw a descriptive error if the root element is missing, rather than passing null to React.
+3.  **Ensured Styles**: Added a global CSS import to `index.tsx` to guarantee styles are loaded even if the standard Next.js layout structure is bypassed in this specific environment.
+
+**Modified Files:**
+- `BugTrack.md`
+- `index.html`
+- `index.tsx`
+
+---
+
+### Bug #35: Duplicate Property in UIStateProvider (Build Error)
+
+**Error Details:**
+The Vercel build failed with `Type error: 'isMobileView' is specified more than once, so this usage will be overwritten.` in `components/providers/UIStateProvider.tsx`.
+This occurred because `isMobileView` was defined both as a local state variable within the provider (for responsive logic) and as a property returned from the `useDisplayModeManager` hook. Spreading `...displayMode` into the context value object caused a conflict with the explicitly defined `isMobileView`.
+
+**Solution:**
+1.  **Destructured Hook Return:** In `UIStateProvider.tsx`, the `displayMode` object is now destructured to extract `isMobileView` and `toggleMobileView` separately from the rest of the properties (`...restDisplayMode`).
+2.  **Implemented Local Toggle:** A local `toggleMobileView` callback was created to update the provider's local state, ensuring the manual toggle functionality interacts correctly with the responsive state logic.
+3.  **Updated Context Value:** The context value object now explicitly includes the local `isMobileView` and `toggleMobileView`, followed by `...restDisplayMode` to provide the remaining display settings (Zen Mode, Fullscreen) without conflict.
+
+**Modified Files:**
+- `BugTrack.md`
+- `components/providers/UIStateProvider.tsx`

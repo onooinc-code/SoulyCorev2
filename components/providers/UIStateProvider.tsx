@@ -82,6 +82,13 @@ export const UIStateProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const appControls = useAppControls({ setHardResetModalOpen });
     const displayMode = useDisplayModeManager();
+    
+    // Destructure displayMode to avoid conflict with local isMobileView state
+    const { isMobileView: _, toggleMobileView: __, ...restDisplayMode } = displayMode;
+
+    const toggleMobileView = useCallback(() => {
+        setIsMobileView(prev => !prev);
+    }, []);
 
     const setActiveView = useCallback((view: ActiveView) => {
         if (activeView === view) return;
@@ -95,8 +102,9 @@ export const UIStateProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setActiveView,
         isNavigating,
         isMobileView,
+        toggleMobileView,
         ...appControls,
-        ...displayMode,
+        ...restDisplayMode,
         ...panelManager,
         isContextMenuEnabled,
         toggleContextMenu: () => setIsContextMenuEnabled(!isContextMenuEnabled),
