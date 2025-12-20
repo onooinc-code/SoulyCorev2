@@ -1,3 +1,4 @@
+
 // scripts/seed-version-history.js
 const { sql } = require('@vercel/postgres');
 
@@ -61,13 +62,24 @@ const versionData = [
     },
     {
         version: '0.4.1',
-        releaseDate: new Date().toISOString(),
+        releaseDate: '2024-07-26T10:00:00Z',
         changes: `
 - **Critical Bug Fix: 500 Errors:** Resolved multiple 500 Internal Server Errors on Vercel deployments.
   - Fixed a bug in the conversation update API that caused all settings changes (e.g., Agent Instructions, Model selection) to fail.
   - Improved error reporting for dashboard APIs to provide clear guidance on missing environment variables.
 - **UI Fix: Version Log Modal:** Corrected the styling of the Version Log modal, replacing the transparent background with a solid one to ensure readability.
 - **Stability:** These changes significantly improve the stability and usability of the deployed application.`
+    },
+    {
+        version: '0.4.2',
+        releaseDate: new Date().toISOString(),
+        changes: `
+- **UI/UX Polish:**
+  - **Custom Scrollbars:** Implemented a sleek, modern scrollbar design across the entire application, replacing the default browser scrollbars for a premium feel.
+  - **Layout Fix:** Fixed the bottom Status Bar (Footer) layout. It now correctly respects the sidebar width and sits naturally within the page flow, eliminating overlap issues.
+  - **Readability:** The Version History / Changelog modal now forces Left-to-Right (LTR) text direction for the content area, ensuring that technical English logs are easy to read.
+- **Bug Fixes:**
+  - Resolved issues where message bubbles could become hidden or cut off by ensuring proper overflow handling and container sizing.`
     }
 ];
 

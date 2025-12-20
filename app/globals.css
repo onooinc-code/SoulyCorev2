@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -27,7 +28,7 @@
   html,
   body {
     height: 100%;
-    overflow: hidden;
+    overflow: hidden; /* Prevent body scroll, handle inside containers */
     background-color: var(--bg-primary);
     color: var(--text-secondary);
     font-family: 'Cairo', sans-serif;
@@ -48,6 +49,12 @@
   text-align: right;
 }
 
+/* Force LTR for specific code or english blocks */
+.dir-ltr {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
 @media (max-width: 640px) {
   .prose-custom {
     font-size: 0.95rem !important;
@@ -62,17 +69,58 @@
   border-color: rgb(255 255 255 / 0.1);
 }
 
-.rail-scrollbar::-webkit-scrollbar { width: 4px; }
-.rail-scrollbar::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 2px; }
-
 .safe-top { padding-top: env(safe-area-inset-top); }
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 
+/* --- Advanced Custom Scrollbar Styling --- */
+
+/* Base Scrollbar width */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* Track (Background) */
+::-webkit-scrollbar-track {
+  background: #111827; 
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Handle (Thumb) */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #374151 0%, #4b5563 100%);
+  border-radius: 5px;
+  border: 2px solid #111827; /* Creates padding effect */
+}
+
+/* Handle on Hover */
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #4f46e5 0%, #4338ca 100%);
+  border: 2px solid #111827;
+}
+
+/* Handle on Active (Click) */
+::-webkit-scrollbar-thumb:active {
+  background: #6366f1;
+}
+
+/* Corner */
+::-webkit-scrollbar-corner {
+  background: #111827;
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #111827;
+}
+
+/* Utility to hide scrollbar but keep functionality */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 @media (max-width: 768px) {
   .chat-container {
-    height: calc(100vh - 4rem); /* المساحة لشريط التنقل السفلي */
+    height: calc(100vh - 4rem); 
   }
 }

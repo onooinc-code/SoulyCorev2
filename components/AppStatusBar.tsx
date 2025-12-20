@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -7,10 +8,12 @@ import { CpuChipIcon } from './Icons';
 const AppStatusBar = () => {
     const { backgroundTaskCount } = useConversation();
 
-    const dbStatus = 'Connected'; // Placeholder for actual DB status check
+    const dbStatus = 'Connected'; 
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 h-6 bg-gray-800/80 backdrop-blur-md border-t border-white/10 flex items-center justify-between px-4 text-xs text-gray-400 z-40">
+        // FIX: Removed 'fixed bottom-0 left-0 right-0' to prevent overlapping with the sidebar.
+        // It now acts as a standard block element at the bottom of its flex container.
+        <div className="w-full h-8 bg-gray-900 border-t border-white/10 flex items-center justify-between px-4 text-xs text-gray-400 shrink-0 z-30">
             <div className="flex items-center gap-4">
                  <div>
                     <span>DB Status: </span>

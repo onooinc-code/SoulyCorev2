@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -39,11 +40,9 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
 
     const selectedVersion = history.find(v => v.id === selectedVersionId);
 
-    // Using z-[9999] and fixed inset-0 to guarantee it sits on top of everything.
-    // Using flex items-center justify-center to guarantee perfect centering.
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
-            {/* Backdrop with Blur */}
+            {/* Backdrop */}
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -52,17 +51,17 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
                 onClick={onClose}
             />
 
-            {/* Modal Card with Glass Effect */}
+            {/* Modal Card */}
             <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 20 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative w-full max-w-5xl h-[85vh] bg-gray-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+                className="relative w-full max-w-5xl h-[85vh] bg-gray-900 border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex justify-between items-center p-6 border-b border-white/5 bg-white/5">
+                <div className="flex justify-between items-center p-6 border-b border-white/5 bg-gray-800/50">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-indigo-500/20 rounded-xl border border-indigo-500/20 shadow-inner">
                             <CodeIcon className="w-6 h-6 text-indigo-400" />
@@ -81,8 +80,8 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
                 </div>
 
                 <div className="flex flex-1 overflow-hidden">
-                    {/* Sidebar: Version List */}
-                    <div className="w-1/3 border-r border-white/5 bg-black/20 overflow-y-auto custom-scrollbar">
+                    {/* Sidebar: Version List (RTL) */}
+                    <div className="w-1/3 border-r border-white/5 bg-black/20 overflow-y-auto">
                         {isLoading ? (
                             <div className="p-8 text-center text-gray-500 text-sm animate-pulse">جاري التحميل...</div>
                         ) : (
@@ -112,15 +111,20 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
                         )}
                     </div>
 
-                    {/* Content Area */}
-                    <div className="w-2/3 bg-transparent p-8 overflow-y-auto custom-scrollbar">
+                    {/* Content Area (LTR for Technical English) */}
+                    <div className="w-2/3 bg-gray-900 p-8 overflow-y-auto">
                         {selectedVersion ? (
                             <div className="space-y-6">
-                                <div className="flex items-center gap-2 text-sm text-indigo-300/80 pb-4 border-b border-white/5">
+                                <div className="flex items-center justify-end gap-2 text-sm text-indigo-300/80 pb-4 border-b border-white/5" dir="rtl">
                                     <ClockIcon className="w-4 h-4" />
                                     <span>تم الإصدار في {new Date(selectedVersion.releaseDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                 </div>
-                                <div className="prose-custom text-gray-300 leading-relaxed text-right dir-rtl" dir="rtl">
+                                
+                                {/* 
+                                    CRITICAL CHANGE: Added 'dir-ltr' class and forced 'text-left' and 'direction: ltr' 
+                                    style to properly render the markdown changelog which is in English.
+                                */}
+                                <div className="prose-custom text-gray-300 leading-relaxed text-left" style={{ direction: 'ltr', textAlign: 'left' }}>
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                         {selectedVersion.changes}
                                     </ReactMarkdown>
