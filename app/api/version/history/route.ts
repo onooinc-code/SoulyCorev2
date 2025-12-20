@@ -93,19 +93,25 @@ export async function GET() {
             ORDER BY "releaseDate" DESC;
         `;
         
-        // If DB has fewer entries than our static list (meaning DB is stale), merge them
-        // prioritizing the static list for newer versions.
-        if (rows.length < staticHistory.length) {
-            const dbVersions = new Set(rows.map(r => r.version));
-            const missingVersions = staticHistory.filter(h => !dbVersions.has(h.version));
-            const merged = [...missingVersions, ...rows].sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime());
-            return NextResponse.json(merged);
+        // Merge Logic: Always ensure staticHistory items exist in the returned list
+        // regardless of how many items are in the DB.
+        const allVersions = [...rows];
+        const dbVersionSet = new Set(rows.map(r => r.version));
+
+        for (const staticVer of staticHistory) {
+            if (!dbVersionSet.has(staticVer.version)) {
+                // If DB doesn't have this version, add it.
+                allVersions.push(staticVer);
+            }
         }
 
-        return NextResponse.json(rows);
+        // Re-sort combined list by date descending
+        allVersions.sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime());
+
+        return NextResponse.json(allVersions);
     } catch (error) {
         console.warn('Failed to fetch version history from DB, using static fallback:', error);
-        // Fallback to static history if DB fails
+        // Fallback to static history if DB fails entirely
         return NextResponse.json(staticHistory);
     }
 }
