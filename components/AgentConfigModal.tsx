@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { XIcon } from '@/components/Icons';
+import { XIcon, UserCircleIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
 import { useAppContext } from '@/lib/hooks/useAppContext';
 import { Conversation, Brain } from '@/lib/types';
@@ -11,11 +12,16 @@ interface AgentConfigModalProps {
     conversation: Conversation | null;
 }
 
+const personas = [
+    { name: 'Default Assistant', prompt: 'You are a helpful AI assistant.' },
+    { name: 'Senior Developer', prompt: 'You are an expert Senior Software Engineer. You write clean, efficient, type-safe code. You prefer functional patterns and explain complex concepts simply.' },
+    { name: 'Creative Writer', prompt: 'You are a creative writer with a flair for descriptive language and storytelling. You avoid cliches.' },
+    { name: 'Business Analyst', prompt: 'You are a strategic business analyst. Focus on ROI, market trends, and actionable insights. Be concise and professional.' }
+];
+
 const AgentConfigModal = ({ onClose, conversation }: AgentConfigModalProps) => {
     const { updateCurrentConversation, addNotification } = useAppContext();
     const [systemPrompt, setSystemPrompt] = useState('');
-    const [useSemantic, setUseSemantic] = useState(true);
-    const [useStructured, setUseStructured] = useState(true);
     const [brainId, setBrainId] = useState<string | null>(null);
     const [brains, setBrains] = useState<Brain[]>([]);
 
@@ -27,9 +33,7 @@ const AgentConfigModal = ({ onClose, conversation }: AgentConfigModalProps) => {
                     const data = await res.json();
                     setBrains(data);
                 }
-            } catch (error) {
-                console.error("Failed to fetch brains for agent config", error);
-            }
+            } catch (error) { console.error(error); }
         };
         fetchBrains();
     }, []);
@@ -37,8 +41,6 @@ const AgentConfigModal = ({ onClose, conversation }: AgentConfigModalProps) => {
     useEffect(() => {
         if (conversation) {
             setSystemPrompt(conversation.systemPrompt || '');
-            setUseSemantic(conversation.useSemanticMemory ?? true);
-            setUseStructured(conversation.useStructuredMemory ?? true);
             setBrainId(conversation.brainId || null);
         }
     }, [conversation]);
@@ -47,75 +49,54 @@ const AgentConfigModal = ({ onClose, conversation }: AgentConfigModalProps) => {
         if (!conversation) return;
         updateCurrentConversation({
             systemPrompt,
-            useSemanticMemory: useSemantic,
-            useStructuredMemory: useStructured,
             brainId: brainId === 'none' ? null : brainId,
         });
-        addNotification({ type: 'success', title: 'تم الحفظ بنجاح', message: 'Agent configuration has been updated.' });
+        addNotification({ type: 'success', title: 'Agent Updated', message: 'System instructions saved.' });
         onClose();
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
-            onClick={onClose}
-        >
-            <motion.div
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-                transition={{ duration: 0.2 }}
-                className="glass-panel rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4"
-                onClick={e => e.stopPropagation()}
-            >
-                <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold">Agent Configuration</h2>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-700">
-                        <XIcon className="w-6 h-6" />
-                    </button>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-gray-800 w-full max-w-lg rounded-xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+                    <h3 className="font-bold text-lg flex items-center gap-2"><UserCircleIcon className="w-5 h-5 text-indigo-400"/> Agent Configuration</h3>
+                    <button onClick={onClose}><XIcon className="w-5 h-5 text-gray-400 hover:text-white"/></button>
                 </div>
-                <div>
-                    <label htmlFor="systemPrompt" className="block text-sm font-medium text-gray-400 mb-1">System Instructions</label>
-                    <textarea
-                        id="systemPrompt"
-                        value={systemPrompt}
-                        onChange={e => setSystemPrompt(e.target.value)}
-                        placeholder="e.g., You are a helpful AI assistant that specializes in software engineering."
-                        className="w-full p-2 bg-gray-700 rounded-lg text-sm"
-                        rows={4}
-                    />
+                
+                <div className="p-6 space-y-6">
+                    <div>
+                         <label className="text-sm font-medium text-gray-300 mb-2 block">Load Persona</label>
+                         <div className="flex flex-wrap gap-2">
+                            {personas.map(p => (
+                                <button key={p.name} onClick={() => setSystemPrompt(p.prompt)} className="px-3 py-1 bg-gray-700 hover:bg-indigo-600/50 rounded-full text-xs transition-colors border border-white/5">
+                                    {p.name}
+                                </button>
+                            ))}
+                         </div>
+                    </div>
+
+                    <div>
+                        <label className="text-sm font-medium text-gray-300 mb-1 block">System Instructions</label>
+                        <textarea
+                            value={systemPrompt}
+                            onChange={e => setSystemPrompt(e.target.value)}
+                            placeholder="Define how the AI should behave..."
+                            className="w-full p-3 bg-gray-900 rounded-lg text-sm min-h-[120px] focus:ring-1 focus:ring-indigo-500 outline-none"
+                        />
+                    </div>
+
+                    <div>
+                         <label className="text-sm font-medium text-gray-300 mb-1 block">Active Brain (Memory Context)</label>
+                         <select value={brainId || 'none'} onChange={e => setBrainId(e.target.value)} className="w-full p-2 bg-gray-700 rounded-lg text-sm">
+                            <option value="none">No Specific Brain (General)</option>
+                            {brains.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                         </select>
+                    </div>
                 </div>
-                 <div>
-                    <label htmlFor="brainSelect" className="block text-sm font-medium text-gray-400 mb-1">Cognitive Context (Brain)</label>
-                    <select
-                        id="brainSelect"
-                        value={brainId || 'none'}
-                        onChange={e => setBrainId(e.target.value)}
-                        className="w-full p-2 bg-gray-700 rounded-lg text-sm"
-                    >
-                        <option value="none">Default (No Brain)</option>
-                        {brains.map(brain => (
-                            <option key={brain.id} value={brain.id}>{brain.name}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-400">Memory Access</h3>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" checked={useSemantic} onChange={e => setUseSemantic(e.target.checked)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
-                        <span>Use Semantic Memory (Knowledge Base)</span>
-                    </label>
-                     <label className="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" checked={useStructured} onChange={e => setUseStructured(e.target.checked)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
-                        <span>Use Structured Memory (Entities & Contacts)</span>
-                    </label>
-                </div>
-                <div className="flex justify-end gap-2 pt-4">
-                    <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-500">Cancel</button>
-                    <button onClick={handleSave} className="px-4 py-2 bg-indigo-600 rounded-lg hover:bg-indigo-500">Save</button>
+
+                <div className="p-4 border-t border-gray-700 flex justify-end gap-2">
+                    <button onClick={onClose} className="px-4 py-2 bg-gray-700 rounded-lg text-sm">Cancel</button>
+                    <button onClick={handleSave} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm">Save Configuration</button>
                 </div>
             </motion.div>
         </motion.div>

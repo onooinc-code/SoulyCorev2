@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { XIcon } from '@/components/Icons';
+import { XIcon, RefreshIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
 import { useAppContext } from '@/lib/hooks/useAppContext';
 
@@ -12,22 +13,25 @@ const ConversationSettingsModal = ({ onClose }: { onClose: () => void; }) => {
     const [temperature, setTemperature] = useState(0.7);
     const [topP, setTopP] = useState(0.95);
     const [availableModels, setAvailableModels] = useState<string[]>([]);
+    const [isLoadingModels, setIsLoadingModels] = useState(false);
 
-    useEffect(() => {
-        const fetchModels = async () => {
-            try {
-                const res = await fetch('/api/models');
-                if (!res.ok) throw new Error("Failed to fetch models");
-                const data = await res.json();
-                setAvailableModels(data);
-            } catch (error) {
-                console.error('Failed to fetch available models', { error });
-                // Fallback to a default model if fetch fails
-                setAvailableModels(['gemini-2.5-flash']);
-            }
-        };
-        fetchModels();
-    }, []);
+    const fetchModels = async () => {
+        setIsLoadingModels(true);
+        try {
+            const res = await fetch('/api/models');
+            if (!res.ok) throw new Error("Failed");
+            const data = await res.json();
+            setAvailableModels(data);
+        } catch (error) {
+            console.error(error);
+             // Fallback
+             setAvailableModels(['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-flash-latest']);
+        } finally {
+            setIsLoadingModels(false);
+        }
+    };
+
+    useEffect(() => { fetchModels(); }, []);
 
     useEffect(() => {
         if (currentConversation) {
@@ -39,67 +43,43 @@ const ConversationSettingsModal = ({ onClose }: { onClose: () => void; }) => {
 
     const handleSave = () => {
         if (!currentConversation) return;
-
         const updatedData = { model, temperature, topP };
-        console.log('User clicked "Save" in Conversation Settings Modal', { conversationId: currentConversation.id, updatedData });
-        
-        // The provider handles both optimistic UI update and the API call.
         updateCurrentConversation(updatedData);
-        addNotification({ type: 'success', title: 'تم الحفظ بنجاح', message: 'Model settings have been updated.' });
+        addNotification({ type: 'success', title: 'Saved', message: 'Settings updated for this chat.' });
         onClose();
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
-            onClick={onClose}
-        >
-            <motion.div
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-                transition={{ duration: 0.2 }}
-                className="glass-panel rounded-lg shadow-xl w-full max-w-md p-6 space-y-4"
-                onClick={e => e.stopPropagation()}
-            >
-                <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold">Conversation Model Settings</h2>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-700">
-                        <XIcon className="w-6 h-6" />
-                    </button>
+        <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <motion.div initial={{scale:0.95}} animate={{scale:1}} className="bg-gray-800 w-full max-w-md rounded-xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+                    <h3 className="font-bold text-lg">Conversation Model</h3>
+                    <button onClick={onClose}><XIcon className="w-5 h-5 text-gray-400 hover:text-white"/></button>
                 </div>
-                <div>
-                    <p className="text-sm text-gray-400 mb-2">
-                        These settings apply only to this conversation.
-                    </p>
+                <div className="p-6 space-y-6">
+                    <div>
+                        <div className="flex justify-between mb-2">
+                             <label className="text-sm font-medium text-gray-300">AI Model</label>
+                             <button onClick={fetchModels} className="text-xs text-indigo-400 hover:text-white flex items-center gap-1"><RefreshIcon className={`w-3 h-3 ${isLoadingModels ? 'animate-spin' : ''}`}/> Refresh</button>
+                        </div>
+                        <select value={model} onChange={e => setModel(e.target.value)} className="w-full p-2 bg-gray-700 rounded-lg text-sm">
+                            {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="text-sm font-medium text-gray-300 mb-2 block">Creativity (Temperature): {temperature}</label>
+                        <input type="range" min="0" max="1" step="0.1" value={temperature} onChange={e => setTemperature(parseFloat(e.target.value))} className="w-full accent-indigo-500" />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                            <span onClick={() => setTemperature(0.2)} className="cursor-pointer hover:text-white">Precise</span>
+                            <span onClick={() => setTemperature(0.7)} className="cursor-pointer hover:text-white">Balanced</span>
+                            <span onClick={() => setTemperature(1.0)} className="cursor-pointer hover:text-white">Creative</span>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label htmlFor="modelName" className="block text-sm font-medium text-gray-400 mb-1">Model Name</label>
-                    <select 
-                        id="modelName" 
-                        value={model} 
-                        onChange={e => setModel(e.target.value)} 
-                        className="w-full p-2 bg-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                    >
-                        {availableModels.length > 0 ? availableModels.map(m => (
-                            <option key={m} value={m}>{m}</option>
-                        )) : <option value={model}>{model}</option>}
-                    </select>
-                </div>
-                <div className="space-y-2">
-                    <label htmlFor="temperature" className="block text-sm font-medium text-gray-400">Temperature: {temperature.toFixed(2)}</label>
-                    <input id="temperature" type="range" min="0" max="1" step="0.01" value={temperature} onChange={e => setTemperature(parseFloat(e.target.value))} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
-                </div>
-                <div className="space-y-2">
-                    <label htmlFor="topP" className="block text-sm font-medium text-gray-400">Top P: {topP.toFixed(2)}</label>
-                    <input id="topP" type="range" min="0" max="1" step="0.01" value={topP} onChange={e => setTopP(parseFloat(e.target.value))} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
-                </div>
-                <div className="flex justify-end gap-2 pt-4">
-                    <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-500">Cancel</button>
-                    <button onClick={handleSave} className="px-4 py-2 bg-indigo-600 rounded-lg hover:bg-indigo-500">Save</button>
+                <div className="p-4 border-t border-gray-700 flex justify-end gap-2">
+                    <button onClick={onClose} className="px-4 py-2 bg-gray-700 rounded-lg text-sm">Cancel</button>
+                    <button onClick={handleSave} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm">Save Changes</button>
                 </div>
             </motion.div>
         </motion.div>

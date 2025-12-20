@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState } from 'react';
@@ -7,9 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserCircleIcon, CpuChipIcon } from './Icons';
-// FIX: Corrected import paths for types.
 import type { Message as MessageType, Conversation } from '@/lib/types';
-// FIX: Corrected import for MessageToolbar component.
 import MessageToolbar from './MessageToolbar';
 import MessageFooter from './MessageFooter';
 
@@ -55,14 +52,16 @@ const Message: React.FC<MessageProps> = (props) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className={`flex items-start gap-4 group ${align === 'right' ? 'justify-end' : ''}`}
+            className="flex items-start gap-4 group w-full mb-6"
         >
-            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isUser ? 'bg-gray-600' : 'bg-indigo-600'}`}>
+            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-1 ${isUser ? 'bg-gray-700 text-gray-300' : 'bg-indigo-600/20 text-indigo-400 ring-1 ring-indigo-500/50'}`}>
                 {isUser ? <UserCircleIcon className="w-6 h-6" /> : <CpuChipIcon className="w-6 h-6" />}
             </div>
-            <div className="flex-1 min-w-0 max-w-4xl">
+            
+            {/* Message Body - Full Width */}
+            <div className="flex-1 min-w-0 w-full">
                 <div className="relative">
-                    <div className="absolute top-0 right-0 -mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                    <div className="absolute -top-3 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
                         <MessageToolbar
                             isBookmarked={!!message.isBookmarked}
                             isCollapsed={isCollapsed}
@@ -81,28 +80,29 @@ const Message: React.FC<MessageProps> = (props) => {
                             onViewContext={props.onViewContext}
                         />
                     </div>
-                    <div className="bg-gray-800 p-4 rounded-lg">
+                    
+                    <div className={`rounded-xl p-4 md:p-6 ${isUser ? 'bg-gray-800/80' : 'bg-transparent border border-white/5'}`}>
                         <AnimatePresence initial={false}>
                         {isEditing ? (
                             <motion.div key="editing" initial={{opacity:0}} animate={{opacity:1}}>
                                 <textarea
                                     value={editedContent}
                                     onChange={(e) => setEditedContent(e.target.value)}
-                                    className="w-full bg-gray-700 p-2 rounded-md text-sm"
+                                    className="w-full bg-gray-900 p-3 rounded-md text-sm border border-indigo-500/50 focus:ring-1 focus:ring-indigo-500 outline-none"
                                     rows={Math.max(3, editedContent.split('\n').length)}
                                     autoFocus
                                 />
-                                <div className="flex gap-2 mt-2">
-                                    <button onClick={handleSaveEdit} className="px-3 py-1 bg-green-600 text-xs rounded-md">Save</button>
-                                    <button onClick={() => setIsEditing(false)} className="px-3 py-1 bg-gray-600 text-xs rounded-md">Cancel</button>
+                                <div className="flex gap-2 mt-2 justify-end">
+                                    <button onClick={() => setIsEditing(false)} className="px-3 py-1 bg-gray-700 text-xs rounded-md hover:bg-gray-600">Cancel</button>
+                                    <button onClick={handleSaveEdit} className="px-3 py-1 bg-green-600 text-xs rounded-md hover:bg-green-500 text-white">Save</button>
                                 </div>
                             </motion.div>
                         ) : (
-                             <motion.div key="viewing" className="prose-custom">
+                             <motion.div key="viewing" className="prose-custom max-w-none text-base">
                                 {!isCollapsed ? (
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                                 ) : (
-                                    <p className="italic text-gray-400">Message content collapsed...</p>
+                                    <p className="italic text-gray-500 cursor-pointer" onClick={() => setIsCollapsed(false)}>Message content collapsed... (Click to expand)</p>
                                 )}
                             </motion.div>
                         )}

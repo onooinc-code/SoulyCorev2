@@ -1,12 +1,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-// FIX: Corrected import path for type.
 import { Conversation, AppSettings } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-// GET all conversations
+// GET all conversations with stats
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
@@ -14,18 +13,29 @@ export async function GET(req: NextRequest) {
 
         let rows;
         if (segmentId) {
-            const result = await sql<Conversation>`
-                SELECT DISTINCT c.* 
+             // Logic for segment filtering if needed
+             const result = await sql`
+                SELECT c.*, 
+                       COUNT(m.id)::int as "messageCount", 
+                       COALESCE(SUM(m."tokenCount"), 0)::int as "tokenCount"
                 FROM conversations c
-                JOIN messages m ON c.id = m."conversationId"
+                LEFT JOIN messages m ON c.id = m."conversationId"
                 JOIN message_segments ms ON m.id = ms."messageId"
                 WHERE ms."segmentId" = ${segmentId}
+                GROUP BY c.id
                 ORDER BY c."lastUpdatedAt" DESC;
             `;
             rows = result.rows;
         } else {
-            const result = await sql<Conversation>`
-                SELECT * FROM conversations ORDER BY "lastUpdatedAt" DESC;
+            // Enhanced query to get message counts and token sums
+            const result = await sql`
+                SELECT c.*, 
+                       COUNT(m.id)::int as "messageCount", 
+                       COALESCE(SUM(m."tokenCount"), 0)::int as "tokenCount"
+                FROM conversations c
+                LEFT JOIN messages m ON c.id = m."conversationId"
+                GROUP BY c.id
+                ORDER BY c."lastUpdatedAt" DESC;
             `;
             rows = result.rows;
         }
@@ -70,7 +80,6 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // 2. Insert new conversation with these defaults applied
         const { rows } = await sql<Conversation>`
             INSERT INTO conversations (
                 title, 
@@ -82,14 +91,14 @@ export async function POST(req: NextRequest) {
                 "useStructuredMemory",
                 "brainId"
             ) VALUES (
-                ${title || 'New Chat'},
+                ${title || 'محادثة جديدة'},
                 ${defaultAgentConfig.systemPrompt},
                 ${defaultModelConfig.model},
                 ${defaultModelConfig.temperature},
                 ${defaultModelConfig.topP},
                 ${defaultAgentConfig.useSemanticMemory},
                 ${defaultAgentConfig.useStructuredMemory},
-                ${null} -- Brain ID is typically explicitly set, or could be added to defaultAgentConfig later
+                ${null}
             ) RETURNING *;
         `;
         return NextResponse.json(rows[0], { status: 201 });

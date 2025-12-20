@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -8,7 +9,9 @@ import {
     Bars3Icon, 
     MinusIcon, PlusIcon, RefreshIcon,
     FullscreenIcon, ExitFullscreenIcon,
-    CpuChipIcon
+    CpuChipIcon,
+    CodeIcon, DashboardIcon, SearchIcon, UsersIcon, 
+    BrainIcon, RocketLaunchIcon, CircleStackIcon
 } from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { VersionHistory } from '@/lib/types';
@@ -72,7 +75,7 @@ const VersionSystem = () => {
 
 const Header = () => {
     const { currentConversation, updateConversationTitle } = useConversation();
-    const { setConversationPanelOpen, toggleFullscreen, isFullscreen, restartApp, isMobileView } = useUIState();
+    const { setConversationPanelOpen, toggleFullscreen, isFullscreen, restartApp, isMobileView, activeView } = useUIState();
     const { changeGlobalFontSize } = useSettings();
     
     const [isEditing, setIsEditing] = useState(false);
@@ -83,6 +86,33 @@ const Header = () => {
     const handleSave = () => {
         if (currentConversation && title.trim()) updateConversationTitle(currentConversation.id, title.trim());
         setIsEditing(false);
+    };
+
+    const getViewTitle = () => {
+        switch (activeView) {
+            case 'chat': return currentConversation?.title || 'محادثة جديدة';
+            case 'dashboard': return 'لوحة التحكم الرئيسية (Dashboard)';
+            case 'agent_center': return 'غرفة عمليات الوكيل (Agent Center)';
+            case 'dev_center': return 'مركز المطورين (Dev Center)';
+            case 'brain_center': return 'إدارة العقل (Brain Center)';
+            case 'search': return 'البحث الشامل';
+            case 'contacts_hub': return 'سجل جهات الاتصال';
+            case 'data_hub': return 'مركز البيانات';
+            default: return activeView.replace('_', ' ').toUpperCase();
+        }
+    };
+
+    const getViewIcon = () => {
+        switch (activeView) {
+            case 'dashboard': return <DashboardIcon className="w-5 h-5 text-indigo-400" />;
+            case 'search': return <SearchIcon className="w-5 h-5 text-indigo-400" />;
+            case 'agent_center': return <RocketLaunchIcon className="w-5 h-5 text-orange-400" />;
+            case 'dev_center': return <CodeIcon className="w-5 h-5 text-green-400" />;
+            case 'brain_center': return <BrainIcon className="w-5 h-5 text-pink-400" />;
+            case 'contacts_hub': return <UsersIcon className="w-5 h-5 text-blue-400" />;
+            case 'data_hub': return <CircleStackIcon className="w-5 h-5 text-yellow-400" />;
+            default: return <CpuChipIcon className="w-5 h-5 text-indigo-400" />;
+        }
     };
 
     return (
@@ -102,32 +132,39 @@ const Header = () => {
                     
                     <div className="hidden md:flex items-center gap-2 select-none">
                         <div className="p-1.5 bg-indigo-500/10 rounded-lg">
-                            <CpuChipIcon className="w-4 h-4 text-indigo-400" />
+                            {getViewIcon()}
                         </div>
                         <span className="font-bold text-sm tracking-wide text-gray-200">SOULY<span className="text-gray-600 font-light">CORE</span></span>
                     </div>
 
                     <div className="h-4 w-px bg-white/10 mx-2 hidden md:block"></div>
 
-                    {/* Title Area */}
+                    {/* Title Area - Dynamic based on View */}
                     <div className="min-w-0 max-w-md">
-                        {isEditing ? (
-                            <input
-                                type="text"
-                                value={title}
-                                onChange={e => setTitle(e.target.value)}
-                                onBlur={handleSave}
-                                onKeyDown={e => e.key === 'Enter' && handleSave()}
-                                className="bg-gray-800/50 text-white rounded-lg px-3 py-1 text-sm font-medium w-full focus:outline-none focus:ring-1 focus:ring-indigo-500/50 border border-indigo-500/30 transition-all"
-                                autoFocus
-                            />
+                        {activeView === 'chat' ? (
+                            isEditing ? (
+                                <input
+                                    type="text"
+                                    value={title}
+                                    onChange={e => setTitle(e.target.value)}
+                                    onBlur={handleSave}
+                                    onKeyDown={e => e.key === 'Enter' && handleSave()}
+                                    className="bg-gray-800/50 text-white rounded-lg px-3 py-1 text-sm font-medium w-full focus:outline-none focus:ring-1 focus:ring-indigo-500/50 border border-indigo-500/30 transition-all text-right"
+                                    autoFocus
+                                    dir="rtl"
+                                />
+                            ) : (
+                                <h1 
+                                    onClick={() => setIsEditing(true)} 
+                                    className="text-sm font-medium truncate text-gray-300 hover:text-white cursor-pointer transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
+                                    title="انقر لإعادة التسمية"
+                                >
+                                    {getViewTitle()}
+                                </h1>
+                            )
                         ) : (
-                            <h1 
-                                onClick={() => setIsEditing(true)} 
-                                className="text-sm font-medium truncate text-gray-300 hover:text-white cursor-pointer transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
-                                title="Click to rename"
-                            >
-                                {currentConversation?.title || 'محادثة جديدة'}
+                            <h1 className="text-sm font-bold text-gray-200 px-2 flex items-center gap-2">
+                                {getViewTitle()}
                             </h1>
                         )}
                     </div>
