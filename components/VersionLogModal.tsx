@@ -39,39 +39,42 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
 
     const selectedVersion = history.find(v => v.id === selectedVersionId);
 
+    // Using z-[9999] and fixed inset-0 to guarantee it sits on top of everything.
+    // Using flex items-center justify-center to guarantee perfect centering.
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center isolate">
-            {/* Backdrop */}
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+            {/* Backdrop with Blur */}
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={onClose}
             />
 
-            {/* Modal Content */}
+            {/* Modal Card with Glass Effect */}
             <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                className="relative bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-[90vw] max-w-5xl h-[85vh] flex flex-col overflow-hidden z-10"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="relative w-full max-w-5xl h-[85vh] bg-gray-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex justify-between items-center p-6 border-b border-gray-800 bg-gray-900 shrink-0">
+                <div className="flex justify-between items-center p-6 border-b border-white/5 bg-white/5">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
+                        <div className="p-3 bg-indigo-500/20 rounded-xl border border-indigo-500/20 shadow-inner">
                             <CodeIcon className="w-6 h-6 text-indigo-400" />
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-white tracking-tight">سجل التحديثات</h2>
-                            <p className="text-sm text-gray-400">تاريخ الإصدارات والمميزات الجديدة</p>
+                            <p className="text-xs text-gray-400 mt-1">تاريخ الإصدارات والمميزات الجديدة</p>
                         </div>
                     </div>
                     <button 
                         onClick={onClose} 
-                        className="p-2 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
+                        className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-all duration-200"
                     >
                         <XIcon className="w-6 h-6" />
                     </button>
@@ -79,28 +82,28 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
 
                 <div className="flex flex-1 overflow-hidden">
                     {/* Sidebar: Version List */}
-                    <div className="w-1/3 border-r border-gray-800 bg-gray-950/30 overflow-y-auto">
+                    <div className="w-1/3 border-r border-white/5 bg-black/20 overflow-y-auto custom-scrollbar">
                         {isLoading ? (
-                            <div className="p-8 text-center text-gray-500 text-sm">جاري التحميل...</div>
+                            <div className="p-8 text-center text-gray-500 text-sm animate-pulse">جاري التحميل...</div>
                         ) : (
-                            <div className="flex flex-col p-2 gap-1">
+                            <div className="flex flex-col p-3 gap-2">
                                 {history.map((version) => (
                                     <button
                                         key={version.id}
                                         onClick={() => setSelectedVersionId(version.id)}
-                                        className={`p-3 rounded-lg text-right transition-all duration-200 group ${
+                                        className={`p-4 rounded-xl text-right transition-all duration-200 group relative overflow-hidden ${
                                             selectedVersionId === version.id 
-                                            ? 'bg-indigo-600/10 border border-indigo-500/30' 
-                                            : 'hover:bg-gray-800/50 border border-transparent'
+                                            ? 'bg-indigo-600/20 border border-indigo-500/30 shadow-lg' 
+                                            : 'hover:bg-white/5 border border-transparent'
                                         }`}
                                     >
-                                        <div className="flex justify-between items-center mb-1">
-                                            <span className={`font-mono font-bold text-sm ${selectedVersionId === version.id ? 'text-indigo-400' : 'text-gray-300'}`}>v{version.version}</span>
+                                        <div className="flex justify-between items-center mb-1 relative z-10">
+                                            <span className={`font-mono font-bold text-sm ${selectedVersionId === version.id ? 'text-indigo-300' : 'text-gray-300'}`}>v{version.version}</span>
                                             {history.indexOf(version) === 0 && (
-                                                <span className="px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] font-bold rounded">JADID</span>
+                                                <span className="px-2 py-0.5 bg-indigo-500 text-white text-[9px] font-bold rounded-full shadow-lg shadow-indigo-500/40">JADID</span>
                                             )}
                                         </div>
-                                        <span className="text-xs text-gray-500 group-hover:text-gray-400">
+                                        <span className="text-xs text-gray-500 group-hover:text-gray-400 relative z-10">
                                             {new Date(version.releaseDate).toLocaleDateString('ar-EG')}
                                         </span>
                                     </button>
@@ -110,22 +113,22 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
                     </div>
 
                     {/* Content Area */}
-                    <div className="w-2/3 bg-gray-900 p-8 overflow-y-auto">
+                    <div className="w-2/3 bg-transparent p-8 overflow-y-auto custom-scrollbar">
                         {selectedVersion ? (
                             <div className="space-y-6">
-                                <div className="flex items-center gap-2 text-sm text-indigo-300 pb-4 border-b border-gray-800">
+                                <div className="flex items-center gap-2 text-sm text-indigo-300/80 pb-4 border-b border-white/5">
                                     <ClockIcon className="w-4 h-4" />
                                     <span>تم الإصدار في {new Date(selectedVersion.releaseDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                 </div>
-                                <div className="prose-custom text-gray-300 leading-relaxed text-right" dir="rtl">
+                                <div className="prose-custom text-gray-300 leading-relaxed text-right dir-rtl" dir="rtl">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                         {selectedVersion.changes}
                                     </ReactMarkdown>
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                                <CodeIcon className="w-12 h-12 mb-4 opacity-20" />
+                            <div className="flex flex-col items-center justify-center h-full text-gray-600 gap-4">
+                                <CodeIcon className="w-16 h-16 opacity-10" />
                                 <p>اختر إصداراً لعرض التفاصيل</p>
                             </div>
                         )}

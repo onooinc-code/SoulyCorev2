@@ -152,16 +152,17 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         }
     };
 
+    // Removed max-w constraints and added generous padding
     return (
-        <div className="w-full bg-gray-900 border-t border-white/5 p-4">
-            <div className="max-w-6xl mx-auto flex flex-col gap-2">
+        <div className="w-full bg-gray-900 border-t border-white/5 p-4 z-30">
+            <div className="w-full px-2 md:px-6 flex flex-col gap-2">
                 <AnimatePresence>
                     {attachment && (
                         <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2 text-sm border border-white/10"
+                            className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2 text-sm border border-white/10 max-w-md mx-auto md:mx-0"
                         >
                             <span className="truncate text-indigo-300">Attached: {attachment.name}</span>
                             <button onClick={() => setAttachment(null)} className="p-1 rounded-full hover:bg-gray-700 text-gray-400 hover:text-white">
@@ -171,7 +172,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                     )}
                 </AnimatePresence>
                 
-                <div className="flex items-end gap-3 bg-gray-800/60 p-2 rounded-2xl border border-white/10 focus-within:border-indigo-500/50 focus-within:bg-gray-800 transition-all shadow-lg">
+                <div className="flex items-end gap-3 bg-gray-800/60 p-2 rounded-2xl border border-white/10 focus-within:border-indigo-500/50 focus-within:bg-gray-800 focus-within:shadow-xl transition-all duration-300 shadow-lg backdrop-blur-md">
                     <input
                         type="file"
                         ref={fileInputRef}
@@ -181,7 +182,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                     />
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="p-3 text-gray-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl transition-colors h-[48px] w-[48px] flex items-center justify-center"
+                        className="p-3 text-gray-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl transition-colors h-[48px] w-[48px] flex items-center justify-center flex-shrink-0"
                         title="Attach file (.txt, .md)"
                         disabled={isLoading || isUploading}
                     >
@@ -205,9 +206,9 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                     <button
                         onClick={handleSend}
                         disabled={isLoading || isUploading || (!content.trim() && !attachment)}
-                        className={`p-3 rounded-xl transition-all flex items-center justify-center w-[48px] h-[48px] ${
+                        className={`p-3 rounded-xl transition-all flex items-center justify-center w-[48px] h-[48px] flex-shrink-0 ${
                             (!content.trim() && !attachment)
-                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                ? 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
                                 : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-md shadow-indigo-600/20 active:scale-95'
                         }`}
                         title="Send message (Enter)"
