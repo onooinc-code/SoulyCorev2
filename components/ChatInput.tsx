@@ -32,15 +32,17 @@ interface ToolbarButtonProps {
     icon: any;
     label: string;
     onClick: () => void;
+    onContextMenu: (e: React.MouseEvent) => void;
     colorIndex: number;
     onEdit?: () => void;
     isEditing?: boolean;
 }
 
-const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon: Icon, label, onClick, colorIndex, onEdit, isEditing }) => (
+const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon: Icon, label, onClick, onContextMenu, colorIndex, onEdit, isEditing }) => (
     <div className="relative group">
         <button 
             onClick={onClick} 
+            onContextMenu={onContextMenu}
             className="flex flex-col items-center justify-center min-w-[60px] h-[50px] p-1 rounded-xl bg-gray-800/40 hover:bg-gray-800 border border-transparent hover:border-indigo-500/30 transition-all duration-200 relative"
             title={label}
         >
@@ -206,17 +208,30 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
 
     const topActions = useMemo(() => {
         const customPrompts = settings?.customToolbarPrompts || {};
-        return defaultTopActions.map(action => ({
-            ...action,
-            prompt: customPrompts[action.key] ? JSON.parse(customPrompts[action.key]).prompt : action.prompt,
-            label: customPrompts[action.key] ? JSON.parse(customPrompts[action.key]).label : action.label,
-        }));
+        return defaultTopActions.map(action => {
+             const custom = customPrompts[action.key];
+             if (custom) {
+                 try {
+                     const parsed = JSON.parse(custom);
+                     return { ...action, label: parsed.label, prompt: parsed.prompt };
+                 } catch (e) {
+                     return action;
+                 }
+             }
+             return action;
+        });
     }, [settings]);
 
     const handleEditButton = (key: string, currentLabel: string, currentPrompt: string) => {
         setEditingButtonKey(key);
         setNewButtonLabel(currentLabel);
         setNewButtonPrompt(currentPrompt);
+    };
+    
+    // Triggered by Right Click
+    const handleContextMenu = (e: React.MouseEvent, key: string, label: string, prompt: string) => {
+        e.preventDefault();
+        handleEditButton(key, label, prompt);
     };
 
     const saveButtonConfig = () => {
@@ -229,21 +244,29 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         setEditingButtonKey(null);
     };
 
-
     return (
         <div className="w-full bg-gray-950/90 backdrop-blur-xl border-t border-white/5 pb-2 pt-2 z-40 relative shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
             
             {/* Edit Mode Modal */}
             <AnimatePresence>
                 {editingButtonKey && (
-                    <motion.div initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="absolute bottom-full left-0 right-0 p-4 bg-gray-900 border-t border-white/10 shadow-2xl z-50 flex flex-col gap-2">
-                         <div className="flex justify-between items-center">
-                             <h3 className="font-bold text-white">Edit Toolbar Button</h3>
-                             <button onClick={() => setEditingButtonKey(null)}><XIcon className="w-5 h-5 text-gray-400"/></button>
+                    <motion.div initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0, y: 10}} className="absolute bottom-full left-0 right-0 mx-auto w-full max-w-lg mb-4 p-4 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 flex flex-col gap-3">
+                         <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                             <h3 className="font-bold text-white flex items-center gap-2"><EditIcon className="w-4 h-4 text-indigo-400"/> Customize Button</h3>
+                             <button onClick={() => setEditingButtonKey(null)} className="p-1 hover:bg-white/10 rounded"><XIcon className="w-5 h-5 text-gray-400"/></button>
                          </div>
-                         <input value={newButtonLabel} onChange={e => setNewButtonLabel(e.target.value)} placeholder="Button Label" className="p-2 bg-gray-800 rounded text-sm"/>
-                         <textarea value={newButtonPrompt} onChange={e => setNewButtonPrompt(e.target.value)} placeholder="Prompt Text..." className="p-2 bg-gray-800 rounded text-sm" rows={2}/>
-                         <button onClick={saveButtonConfig} className="bg-indigo-600 text-white p-2 rounded text-sm font-bold">Save Configuration</button>
+                         <div>
+                            <label className="text-xs text-gray-400 font-semibold uppercase">Label</label>
+                            <input value={newButtonLabel} onChange={e => setNewButtonLabel(e.target.value)} placeholder="Button Label" className="w-full p-2 bg-gray-800 border border-white/5 rounded text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none mt-1"/>
+                         </div>
+                         <div>
+                            <label className="text-xs text-gray-400 font-semibold uppercase">Prompt Template</label>
+                            <textarea value={newButtonPrompt} onChange={e => setNewButtonPrompt(e.target.value)} placeholder="Prompt Text..." className="w-full p-2 bg-gray-800 border border-white/5 rounded text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none mt-1 resize-none" rows={3}/>
+                         </div>
+                         <div className="flex justify-end gap-2 pt-1">
+                             <button onClick={() => setEditingButtonKey(null)} className="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs font-semibold text-gray-200">Cancel</button>
+                             <button onClick={saveButtonConfig} className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white">Save Changes</button>
+                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -257,6 +280,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                             icon={action.icon}
                             label={action.label}
                             onClick={() => handleAction(action.prompt, action.replace)}
+                            onContextMenu={(e) => handleContextMenu(e, action.key, action.label, action.prompt)}
                             colorIndex={idx}
                             isEditing={isEditMode}
                             onEdit={() => handleEditButton(action.key, action.label, action.prompt)}

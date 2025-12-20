@@ -4,8 +4,22 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.4.9',
+        version: '0.4.10',
         releaseDate: new Date().toISOString(),
+        changes: `
+### 🛠️ Customization & Productivity (v0.4.10)
+
+**New Features:**
+- **Customizable Prompt Buttons:** You can now **Right-Click** on any button in the top toolbar (Summarize, Enhance, etc.) to edit its label and prompt template.
+- **Persistent Settings:** Changes to toolbar buttons are saved to your global settings and persist across sessions.
+
+**Enhancements:**
+- **Toolbar UI:** Improved the edit modal for a seamless experience directly within the chat input area.
+`
+    },
+    {
+        version: '0.4.9',
+        releaseDate: new Date('2024-07-29T12:00:00Z'),
         changes: `
 ### 🎨 UI & Functional Refinement (v0.4.9)
 
