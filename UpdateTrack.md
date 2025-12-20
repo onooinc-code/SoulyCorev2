@@ -359,3 +359,20 @@ Implemented two major performance and scalability features. First, a materialize
 - `app/api/system/refresh-views/route.ts` (new file)
 - `components/data_hub/DataHubCenter.tsx`
 - `components/data_hub/MaintenancePanel.tsx` (new file)
+---
+
+### Update #20: Version System 2.0 Overhaul
+
+**Details:**
+Completely redesigned the Version/Update system in the header to be more robust, useful, and visually appealing. Fixed the bug where the details modal wouldn't open. Introduced an "Unread" indicator, "Time Travel" visualization for history, and filtering capabilities.
+
+**Modified Files:**
+- `UpdateTrack.md`
+- `components/Header.tsx`
+- `components/VersionLogModal.tsx`
+- `ProjectDevelopInstructions.md`
+
+**Changes Made:**
+- **`Header.tsx`**: Replaced the previous `VersionCard` logic. Implemented a "New Update" check using `localStorage` to compare the server version with the last seen version. Added a red notification dot. Fixed the click handler to reliably open the modal.
+- **`VersionLogModal.tsx`**: Redesigned the modal to feature a "Timeline" view connecting updates visually. Added a "Stats" tab (creative feature) showing update velocity. Added logic to parse markdown changelogs and categorize items as "Features", "Fixes", or "General".
+- **Documentation**: Updated `ProjectDevelopInstructions.md` to strictly mandate logging in `UpdateTrack.md`.

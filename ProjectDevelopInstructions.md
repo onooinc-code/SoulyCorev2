@@ -33,6 +33,7 @@ Use this file for any of the following:
 - Enhancing an existing feature with new functionality.
 - Refactoring code for improvement (not fixing a bug).
 - Adding or modifying project documentation or configuration files.
+- **IMPORTANT:** Any modification, no matter how small (UI tweak, typo fix, refactor), MUST be logged in `UpdateTrack.md`.
 
 ### Process
 1.  **Read First:** Before adding or modifying a feature, read `UpdateTrack.md` to understand the recent development history.

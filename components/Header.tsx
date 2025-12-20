@@ -5,55 +5,77 @@ import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { 
-    SparklesIcon, EditIcon, TrashIcon, Bars3Icon, LogIcon, 
+    Bars3Icon, 
     MinusIcon, PlusIcon, PowerIcon, RefreshIcon,
     FullscreenIcon, ExitFullscreenIcon 
 } from '@/components/Icons';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import ToolbarButton from './ToolbarButton';
 import type { VersionHistory } from '@/lib/types';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import dynamic from 'next/dynamic';
-import { useNotification } from '@/lib/hooks/use-notifications';
 
 const VersionLogModal = dynamic(() => import('@/components/VersionLogModal'), { ssr: false });
 
-const VersionCard = () => {
+const VersionSystem = () => {
     const [currentVersion, setCurrentVersion] = useState<VersionHistory | null>(null);
-    const [isHovered, setIsHovered] = useState(false);
     const [isLogOpen, setIsLogOpen] = useState(false);
+    const [hasUnreadUpdate, setHasUnreadUpdate] = useState(false);
 
     useEffect(() => {
-        fetch('/api/version/current').then(res => res.ok && res.json()).then(data => data && setCurrentVersion(data));
+        const checkVersion = async () => {
+            try {
+                const res = await fetch('/api/version/current');
+                if (res.ok) {
+                    const data = await res.json();
+                    setCurrentVersion(data);
+                    
+                    // Check local storage for last seen version
+                    const lastSeen = localStorage.getItem('last_seen_version');
+                    if (lastSeen !== data.version) {
+                        setHasUnreadUpdate(true);
+                    }
+                }
+            } catch (e) {
+                console.error("Version check failed", e);
+            }
+        };
+        checkVersion();
     }, []);
+
+    const handleClick = () => {
+        if (currentVersion) {
+            localStorage.setItem('last_seen_version', currentVersion.version);
+            setHasUnreadUpdate(false);
+            setIsLogOpen(true);
+        }
+    };
 
     if (!currentVersion) return null;
 
     return (
         <>
-            <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} className="relative hidden md:block">
-                <div onClick={() => setIsLogOpen(true)} className="px-3 py-1 rounded-full text-[10px] font-bold cursor-pointer bg-gray-800 text-gray-400 hover:text-indigo-400 transition-colors">
+            <button 
+                onClick={handleClick}
+                className="relative group hidden md:flex items-center justify-center px-3 py-1 rounded-full bg-gray-800 border border-gray-700 hover:border-indigo-500/50 hover:bg-gray-700 transition-all cursor-pointer mr-2"
+                title="Click to view full changelog"
+            >
+                <span className="text-[10px] font-bold text-gray-400 group-hover:text-indigo-300 transition-colors">
                     v{currentVersion.version}
-                </div>
-                <AnimatePresence>
-                    {isHovered && (
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute top-full right-0 mt-2 w-64 glass-panel rounded-lg shadow-2xl p-4 z-50">
-                            <h4 className="font-bold text-white text-xs">اصدار {currentVersion.version}</h4>
-                            <div className="prose-custom text-[10px] max-h-40 overflow-y-auto mt-2">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentVersion.changes}</ReactMarkdown>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
+                </span>
+                
+                {/* Unread Indicator Pulse */}
+                {hasUnreadUpdate && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-gray-900 animate-pulse"></span>
+                )}
+            </button>
+
             {isLogOpen && <VersionLogModal onClose={() => setIsLogOpen(false)} />}
         </>
     );
 };
 
 const Header = () => {
-    const { currentConversation, deleteConversation, updateConversationTitle, generateConversationTitle } = useConversation();
+    const { currentConversation, updateConversationTitle } = useConversation();
     const { setConversationPanelOpen, isMobileView, toggleFullscreen, isFullscreen, restartApp } = useUIState();
     const { changeGlobalFontSize } = useSettings();
     
@@ -95,7 +117,7 @@ const Header = () => {
                 </div>
 
                 <div className="flex items-center gap-1">
-                    <VersionCard />
+                    <VersionSystem />
                     <div className="w-px h-4 bg-white/10 mx-1 hidden md:block"></div>
                     
                     {!isMobileView && (
