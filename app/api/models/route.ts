@@ -19,24 +19,26 @@ export async function GET(req: NextRequest) {
         const ai = new GoogleGenAI({ apiKey });
         
         // Fetch models from the API
-        const response = await ai.models.list();
+        // ai.models.list() returns a Pager<Model> which is an async iterable.
+        const pager = await ai.models.list();
         
-        // Filter and format the models
-        // We only want models that support 'generateContent' and are likely 'gemini' models.
-        const models = response.models
-            ?.filter(m => 
+        const models: string[] = [];
+
+        for await (const m of pager) {
+            if (
                 m.name.toLowerCase().includes('gemini') && 
                 m.supportedGenerationMethods?.includes('generateContent')
-            )
-            .map(m => {
+            ) {
                 // The API returns names like "models/gemini-1.5-flash"
                 // We typically just want the ID part "gemini-1.5-flash"
-                return m.name.replace('models/', '');
-            })
-            .sort((a, b) => b.localeCompare(a)); // Sort desc (newer usually higher numbers)
+                models.push(m.name.replace('models/', ''));
+            }
+        }
+        
+        models.sort((a, b) => b.localeCompare(a)); // Sort desc (newer usually higher numbers)
 
         // Ensure we have at least some models, otherwise fallback
-        if (!models || models.length === 0) {
+        if (models.length === 0) {
              return NextResponse.json([
                 'gemini-2.5-flash',
                 'gemini-2.5-pro',
