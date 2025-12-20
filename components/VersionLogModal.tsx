@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { XIcon, ClockIcon, CodeIcon } from './Icons';
+import { XIcon, CodeIcon, ClockIcon } from './Icons';
 import type { VersionHistory } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -14,6 +14,7 @@ interface VersionLogModalProps {
 const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
     const [history, setHistory] = useState<VersionHistory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -23,6 +24,9 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
                 if (res.ok) {
                     const data = await res.json();
                     setHistory(data);
+                    if (data.length > 0) {
+                        setSelectedVersionId(data[0].id);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch version history", error);
@@ -33,80 +37,87 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
         fetchHistory();
     }, []);
 
+    const selectedVersion = history.find(v => v.id === selectedVersionId);
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[250] p-4"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[300] p-4"
             onClick={onClose}
         >
             <motion.div
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-3xl h-[85vh] flex flex-col overflow-hidden relative"
+                className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex justify-between items-center p-6 border-b border-gray-800 bg-gray-900 z-10">
-                    <div>
-                        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                            <CodeIcon className="w-6 h-6 text-indigo-500" />
-                            System Changelog
-                        </h2>
-                        <p className="text-sm text-gray-400 mt-1">Update History & Release Notes</p>
+                <div className="flex justify-between items-center p-5 border-b border-gray-800 bg-gray-900">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-500/20 rounded-lg">
+                            <CodeIcon className="w-6 h-6 text-indigo-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-white">System Updates</h2>
+                            <p className="text-xs text-gray-400">Track changes and new features</p>
+                        </div>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
                         <XIcon className="w-6 h-6" />
                     </button>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 relative bg-gray-900">
-                    {isLoading ? (
-                        <div className="flex justify-center items-center h-full">
-                            <p className="text-gray-500 animate-pulse">Loading version history...</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-8 relative pl-8 before:content-[''] before:absolute before:left-[27px] before:top-2 before:bottom-0 before:w-0.5 before:bg-gray-800">
-                            {history.map((item, index) => {
-                                const isLatest = index === 0;
-                                const date = new Date(item.releaseDate);
-                                return (
-                                    <motion.div 
-                                        key={item.id} 
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        className="relative"
+                <div className="flex flex-1 overflow-hidden">
+                    {/* Sidebar: Version List */}
+                    <div className="w-1/3 border-r border-gray-800 bg-gray-900/50 overflow-y-auto">
+                        {isLoading ? (
+                            <div className="p-6 text-center text-gray-500">Loading...</div>
+                        ) : (
+                            <div className="flex flex-col">
+                                {history.map((version) => (
+                                    <button
+                                        key={version.id}
+                                        onClick={() => setSelectedVersionId(version.id)}
+                                        className={`p-4 text-left border-b border-gray-800 transition-colors hover:bg-gray-800/80 ${
+                                            selectedVersionId === version.id ? 'bg-gray-800 border-l-4 border-l-indigo-500' : 'border-l-4 border-l-transparent'
+                                        }`}
                                     >
-                                        {/* Timeline Dot */}
-                                        <div className={`absolute -left-[39px] top-1.5 w-4 h-4 rounded-full border-2 ${isLatest ? 'bg-indigo-500 border-indigo-300 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-gray-900 border-gray-600'}`}></div>
-                                        
-                                        <div className={`p-5 rounded-xl border transition-all ${isLatest ? 'bg-indigo-900/10 border-indigo-500/30' : 'bg-gray-800/40 border-gray-700/50'}`}>
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <div className="flex items-center gap-3">
-                                                        <h3 className={`text-xl font-bold font-mono ${isLatest ? 'text-indigo-300' : 'text-gray-300'}`}>v{item.version}</h3>
-                                                        {isLatest && <span className="px-2 py-0.5 bg-indigo-500 text-white text-[10px] font-bold uppercase rounded-sm">Latest</span>}
-                                                    </div>
-                                                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                                                        <ClockIcon className="w-3 h-3" />
-                                                        <span>{date.toLocaleDateString()}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="prose-custom text-sm text-gray-300 max-w-none">
-                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.changes}</ReactMarkdown>
-                                            </div>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className={`font-bold ${selectedVersionId === version.id ? 'text-white' : 'text-gray-300'}`}>v{version.version}</span>
+                                            {history.indexOf(version) === 0 && (
+                                                <span className="px-2 py-0.5 bg-indigo-600 text-white text-[10px] rounded-full">LATEST</span>
+                                            )}
                                         </div>
-                                    </motion.div>
-                                );
-                            })}
-                        </div>
-                    )}
+                                        <span className="text-xs text-gray-500">{new Date(version.releaseDate).toLocaleDateString()}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="w-2/3 bg-gray-900 p-6 overflow-y-auto">
+                        {selectedVersion ? (
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 text-sm text-gray-400 border-b border-gray-800 pb-4">
+                                    <ClockIcon className="w-4 h-4" />
+                                    <span>Released on {new Date(selectedVersion.releaseDate).toLocaleString()}</span>
+                                </div>
+                                <div className="prose-custom text-gray-300">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {selectedVersion.changes}
+                                    </ReactMarkdown>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-gray-500">
+                                Select a version to view details.
+                            </div>
+                        )}
+                    </div>
                 </div>
             </motion.div>
         </motion.div>
