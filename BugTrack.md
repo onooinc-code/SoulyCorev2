@@ -1,3 +1,4 @@
+
 # Bug Tracking Log
 
 This file documents all bugs encountered and the solutions implemented to resolve them. It serves as an institutional memory to prevent recurring errors and accelerate future debugging.
@@ -270,7 +271,7 @@ This exhaustive fix guarantees that the application code, type definitions, and 
 The Vercel build is still failing with the same `column "messageId" does not exist` error. After exhaustive reviews of the code, it's clear the issue is not a simple typo but a systemic inconsistency that previous refactors missed. Numerous API endpoints were still using `snake_case` in their SQL queries, conflicting with the now-standardized `camelCase` schema. This mismatch likely created a race condition or an unpredictable state during the Vercel build process, manifesting as the persistent index creation error.
 
 **Solution:**
-This is the final, definitive fix. A meticulous, file-by-file audit of the entire backend was performed to eradicate every last instance of `snake_case` in SQL queries and data handling, ensuring 100% consistency with the quoted `camelCase` database schema.
+This is the final, definitive fix. A meticulous, file-by-file audit of the entire backend was performed to eliminate every last instance of `snake_case` in SQL queries and data handling, ensuring 100% consistency with the quoted `camelCase` database schema.
 1.  **Corrected All API Routes**: Systematically went through every file in `app/api/` and corrected all SQL queries to use quoted `camelCase` (e.g., `release_date` became `"releaseDate"`, `endpoint_id` became `"endpointId"`).
 2.  **Standardized `ui_settings`**: The last remaining `snake_case` property, `ui_settings`, was refactored to `"uiSettings"` across the database schema (`create-tables.js`), type definitions (`lib/types/data.ts`), and all relevant components (`ChatWindow.tsx`, `Message.tsx`).
 3.  **Fixed `features` Table Creation**: Corrected a logical error in `create-tables.js` where the `features` table was being dropped and recreated without `IF NOT EXISTS`, which could cause cascading issues.
@@ -595,3 +596,22 @@ This occurred because `isMobileView` was defined both as a local state variable 
 **Modified Files:**
 - `BugTrack.md`
 - `components/providers/UIStateProvider.tsx`
+
+---
+### Bug #36: 404 Error on Last AI Report (Response Template)
+
+**Error Details:**
+Clicking "Last AI Report" resulted in a 404 error ("No Response Report Found"). The issue was caused by the API route logic (`app/api/responses/latest/route.ts`) which:
+1.  Used an overly strict regex (`/^ResponseTemplate-\d+\.html$/`) that only matched files with numeric suffixes, failing to find files like `ResponseTemplate-Storage-Analysis.html`.
+2.  Searched in the project root instead of the specific `reports/` directory where the files are stored.
+3.  Relied on parsing numbers from filenames for sorting, which breaks for text-based suffixes.
+
+**Solution:**
+Refactored `app/api/responses/latest/route.ts` to:
+1.  Explicitly target the `reports/` directory using `path.join(process.cwd(), 'reports')`.
+2.  Relax the regex to accept any file starting with `ResponseTemplate-` and ending in `.html`.
+3.  Implement robust sorting based on file modification time (`mtime`) using `fs.stat`, ensuring the true latest file is always returned regardless of its naming convention.
+
+**Modified Files:**
+- `BugTrack.md`
+- `app/api/responses/latest/route.ts`
