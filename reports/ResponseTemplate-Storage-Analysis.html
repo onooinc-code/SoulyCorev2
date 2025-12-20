@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحليل البنية التحتية للتخزين والذاكرة | SoulyCore</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+        :root {
+            --bg-color: #12101c;
+            --surface-color: #1c182c;
+            --primary-color: #6366f1; /* Indigo */
+            --secondary-color: #10b981; /* Emerald */
+            --warning-color: #f59e0b; /* Amber */
+            --danger-color: #ef4444; /* Red */
+            --text-color: #e0e0e0;
+            --header-color: #ffffff;
+            --border-color: #3a3252;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            padding-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            color: var(--header-color);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #9ca3af;
+            font-size: 1.2em;
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            font-size: 1.8em;
+            border-right: 4px solid var(--primary-color);
+            padding-right: 15px;
+            margin: 40px 0 20px 0;
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.1) 0%, transparent 100%);
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status-active { background-color: rgba(16, 185, 129, 0.2); color: var(--secondary-color); border: 1px solid var(--secondary-color); }
+        .status-inactive { background-color: rgba(239, 68, 68, 0.2); color: var(--danger-color); border: 1px solid var(--danger-color); }
+        .status-partial { background-color: rgba(245, 158, 11, 0.2); color: var(--warning-color); border: 1px solid var(--warning-color); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: rgba(255,255,255,0.05);
+            color: var(--primary-color);
+        }
+
+        .proposal-box {
+            background-color: rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+
+        .mermaid {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+        
+        code {
+            font-family: 'Consolas', monospace;
+            background-color: #2d2a3d;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #e090d0;
+        }
+    </style>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'dark', direction: 'rtl' });
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>تحليل البنية التحتية للتخزين والذاكرة</h1>
+        <p>تقرير شامل عن تقنيات التخزين الحالية، حالتها، وخارطة طريق لتوحيد الذاكرة المعرفية.</p>
+    </header>
+
+    <!-- Section 1: Overview -->
+    <div class="section-title">1. المشهد الحالي لتقنيات التخزين</div>
+    <p>يمتلك مشروع <strong>SoulyCore</strong> بنية تحتية غنية ومتنوعة للتخزين، مصممة لدعم "ذاكرة معرفية" معقدة. الجدول التالي يوضح جميع التقنيات الموجودة في الكود المصدري وحالتها الراهنة.</p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>التقنية (Technology)</th>
+                <th>النوع (Type)</th>
+                <th>الدور الأساسي</th>
+                <th>الحالة (Status)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Vercel Postgres</strong></td>
+                <td>Relational (SQL)</td>
+                <td>الذاكرة الهيكلية (Entities)، الذاكرة العرضية (Chats)، إعدادات النظام.</td>
+                <td><span class="status-badge status-active">مفعلة بالكامل (Primary)</span></td>
+            </tr>
+            <tr>
+                <td><strong>Pinecone</strong></td>
+                <td>Vector Database</td>
+                <td>الذاكرة الدلالية (Semantic Memory)، تخزين المعرفة العامة.</td>
+                <td><span class="status-badge status-active">مفعلة (Core)</span></td>
+            </tr>
+            <tr>
+                <td><strong>Vercel KV (Redis)</strong></td>
+                <td>Key-Value Store</td>
+                <td>الذاكرة العاملة (Working Memory)، التخزين المؤقت، الملاحظات السريعة.</td>
+                <td><span class="status-badge status-active">مفعلة (Utility)</span></td>
+            </tr>
+            <tr>
+                <td><strong>Vercel Blob</strong></td>
+                <td>Object Storage</td>
+                <td>تخزين الملفات والمرفقات.</td>
+                <td><span class="status-badge status-active">مفعلة</span></td>
+            </tr>
+            <tr>
+                <td><strong>Upstash Vector</strong></td>
+                <td>Vector Database</td>
+                <td>ذاكرة المتجهات للكيانات (Entity Vectors).</td>
+                <td><span class="status-badge status-partial">مفعلة جزئياً (Secondary)</span></td>
+            </tr>
+            <tr>
+                <td><strong>EdgeDB</strong></td>
+                <td>Graph-Relational</td>
+                <td>ذاكرة الرسم البياني (Graph Memory) للعلاقات المعقدة.</td>
+                <td><span class="status-badge status-inactive">غير مستخدمة (Dormant)</span></td>
+            </tr>
+            <tr>
+                <td><strong>MongoDB</strong></td>
+                <td>NoSQL (Document)</td>
+                <td>تخزين السجلات الخام (Logs) والبيانات غير المهيكلة.</td>
+                <td><span class="status-badge status-inactive">غير مستخدمة (Placeholder)</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Section 2: Detailed Breakdown -->
+    <div class="section-title">2. تفاصيل الاستخدام والتقنيات الخاملة</div>
+    
+    <div class="card-grid">
+        <div class="card">
+            <h3>🟢 التقنيات المفعلة (Active)</h3>
+            <ul>
+                <li><strong>Postgres:</strong> هي العمود الفقري للنظام. تحتوي على جداول <code>messages</code>, <code>conversations</code>, <code>entity_definitions</code>, <code>relationships</code>.</li>
+                <li><strong>Pinecone:</strong> تستخدم في <code>ContextAssemblyPipeline</code> لاسترجاع النصوص ذات الصلة (RAG).</li>
+                <li><strong>Vercel KV:</strong> تستخدم لتخزين حالة الـ Dashboard والملاحظات السريعة (Quick Notes).</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3>🔴 التقنيات الخاملة (Inactive)</h3>
+            <ul>
+                <li><strong>EdgeDB:</strong> يوجد كود لها في <code>core/memory/modules/graph.ts</code> ومكتبة اتصال <code>lib/graphdb.ts</code>، لكنها غير مربوطة بـ Pipeline المحادثة الفعلي. يتم استخدام Postgres حالياً لتخزين العلاقات بدلاً منها.</li>
+                <li><strong>MongoDB:</strong> يوجد ملف <code>lib/mongodb.ts</code> لكنه فارغ أو غير مستخدم. النظام الحالي يستخدم Postgres لتخزين الـ Logs، وهو ما قد يسبب ضغطاً على قاعدة البيانات الرئيسية مستقبلاً.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Section 3: Architecture Proposal -->
+    <div class="section-title">3. مقترح الهيكلة الموحدة (Unified Cognitive Architecture)</div>
+    <p>لتحقيق أقصى استفادة من جميع وسائل التخزين المتاحة، نقترح إعادة توزيع الأدوار لخلق "دماغ" متكامل، حيث تتخصص كل تقنية فيما تبرع فيه:</p>
+
+    <div class="mermaid">
+    graph TD
+        UserInput[محادثة المستخدم] --> ContextPipeline
+        
+        subgraph "طبقة المعالجة (Core Engine)"
+            ContextPipeline[تجميع السياق]
+            MemoryExtraction[استخراج الذاكرة]
+        end
+
+        subgraph "طبقة التخزين المتخصصة (Unified Memory)"
+            Postgres[(Postgres: الذاكرة الصلبة)]
+            Pinecone[(Pinecone: الذاكرة المعرفية)]
+            Redis[(KV: الذاكرة العاملة)]
+            EdgeDB[(EdgeDB: الذاكرة العلائقية)]
+            Mongo[(MongoDB: السجل التاريخي)]
+        end
+
+        ContextPipeline -- قراءة السياق الحالي --> Redis
+        ContextPipeline -- استرجاع الحقائق --> Postgres
+        ContextPipeline -- استرجاع المعرفة المشابهة --> Pinecone
+        ContextPipeline -- استنتاج العلاقات المعقدة --> EdgeDB
+
+        MemoryExtraction -- تخزين الكيانات --> Postgres
+        MemoryExtraction -- تخزين النصوص --> Pinecone
+        MemoryExtraction -- بناء الجراف --> EdgeDB
+        MemoryExtraction -- أرشفة السجلات --> Mongo
+    </div>
+
+    <div class="proposal-box">
+        <h3>🚀 خطة التنفيذ المقترحة:</h3>
+        <ol>
+            <li>
+                <strong>تفعيل EdgeDB (ذاكرة العلاقات):</strong> 
+                نقل جدول <code>entity_relationships</code> من Postgres إلى EdgeDB. 
+                <br><em>الفائدة:</em> EdgeDB متفوقة جداً في استعلامات الجراف (مثل: "اعثر على جميع أصدقاء أصدقاء X"). هذا سيجعل استنتاجات الذكاء الاصطناعي أعمق وأسرع.
+            </li>
+            <li>
+                <strong>تفعيل MongoDB (الذاكرة الأرشيفية):</strong>
+                نقل جدول <code>logs</code> و <code>endpoint_test_logs</code> من Postgres إلى MongoDB.
+                <br><em>الفائدة:</em> السجلات تنمو بسرعة هائلة ولا تحتاج إلى علاقات معقدة. نقلها سيخفف الحمل عن Postgres ويسمح بتخزين كائنات JSON ضخمة (مثل استجابات الـ API الكاملة) دون قلق.
+            </li>
+            <li>
+                <strong>تخصيص Upstash Vector (الذاكرة الشخصية):</strong>
+                استخدام Pinecone للمعرفة العامة (كتب، مقالات)، وتخصيص Upstash Vector لـ "بصمات المستخدم" (User Persona Embeddings) والذكريات الشخصية جداً. هذا الفصل يحسن دقة البحث.
+            </li>
+            <li>
+                <strong>تعزيز Vercel KV (الذاكرة قصيرة المدى):</strong>
+                استخدامها لتخزين "سياق المحادثة الحالية" (Last 10 turns) بدلاً من الاستعلام عنها من Postgres في كل رسالة، مما يقلل زمن الاستجابة (Latency).
+            </li>
+        </ol>
+    </div>
+
+    <div class="section-title">4. الخلاصة</div>
+    <p>المشروع يمتلك حالياً <strong>أقوى بنية تحتية ممكنة</strong> لتطبيق ذكاء اصطناعي حديث. التحدي الحالي ليس في "إضافة" تقنيات جديدة، بل في "تفعيل" التقنيات الخاملة (EdgeDB & Mongo) وربطها بذكاء ضمن الـ Pipelines الحالية.</p>
+
+</div>
+
+</body>
+</html>
