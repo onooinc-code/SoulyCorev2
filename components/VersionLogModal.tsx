@@ -111,7 +111,7 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
                         )}
                     </div>
 
-                    {/* Content Area (LTR for Technical English) */}
+                    {/* Content Area (Forced LTR for technical English logs) */}
                     <div className="w-2/3 bg-gray-900 p-8 overflow-y-auto">
                         {selectedVersion ? (
                             <div className="space-y-6">
