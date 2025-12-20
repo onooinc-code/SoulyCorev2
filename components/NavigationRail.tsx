@@ -1,4 +1,3 @@
-// components/NavigationRail.tsx
 "use client";
 
 import React from 'react';
@@ -11,11 +10,10 @@ import {
     UsersIcon, 
     PromptsIcon,
     ToolsIcon,
-    CircleStackIcon,
     CodeIcon,
     ChatBubbleLeftRightIcon,
     SearchIcon,
-    ClipboardDocumentListIcon, // Changed from TasksIcon
+    ClipboardDocumentListIcon,
     RssIcon,
     LightbulbIcon,
     ScissorsIcon,
@@ -24,10 +22,15 @@ import {
 } from '@/components/Icons';
 
 const NavigationRail = () => {
-    const { activeView, setActiveView } = useUIState();
+    const { activeView, setActiveView, setConversationPanelOpen } = useUIState();
+
+    const handleChatClick = () => {
+        setActiveView('chat');
+        setConversationPanelOpen(true);
+    };
 
     const navItems = [
-        { view: 'chat', icon: ChatBubbleLeftRightIcon, label: 'Chat' },
+        { view: 'chat', icon: ChatBubbleLeftRightIcon, label: 'Chat', action: handleChatClick },
         { view: 'dashboard', icon: DashboardIcon, label: 'Dashboard' },
         { view: 'search', icon: SearchIcon, label: 'Global Search' },
         { view: 'agent_center', icon: RocketLaunchIcon, label: 'Agent Center' },
@@ -38,28 +41,27 @@ const NavigationRail = () => {
         { view: 'contacts_hub', icon: UsersIcon, label: 'Contacts Hub' },
         { view: 'prompts_hub', icon: PromptsIcon, label: 'Prompts Hub' },
         { view: 'tools_hub', icon: ToolsIcon, label: 'Tools Hub' },
-        { view: 'projects_hub', icon: ClipboardDocumentListIcon, label: 'Projects Hub' }, // Consolidated Hub
+        { view: 'projects_hub', icon: ClipboardDocumentListIcon, label: 'Projects Hub' },
         { view: 'experiences_hub', icon: LightbulbIcon, label: 'Experiences Hub' },
         { view: 'comm_hub', icon: RssIcon, label: 'Comm Hub' },
-        { view: 'data_hub', icon: CircleStackIcon, label: 'Data Hub' },
         { view: 'dev_center', icon: CodeIcon, label: 'Dev Center' },
         { view: 'reports_hub', icon: ClipboardPasteIcon, label: 'Reports Hub' },
-    ] as const;
+    ];
 
     return (
-        <nav className="flex flex-col items-center gap-2 p-2 bg-gray-900/50 border-r border-gray-700/50 rail-scrollbar overflow-y-auto">
+        <nav className="flex flex-col items-center gap-2 p-2 bg-gray-900 border-r border-white/5 rail-scrollbar overflow-y-auto w-16 flex-shrink-0 z-50">
             {navItems.map(item => (
                 <button
                     key={item.view}
-                    onClick={() => setActiveView(item.view)}
+                    onClick={item.action || (() => setActiveView(item.view as any))}
                     title={item.label}
-                    className={`p-3 rounded-lg transition-colors w-full ${
+                    className={`p-3 rounded-xl transition-all duration-200 w-full flex justify-center ${
                         activeView === item.view
-                            ? 'bg-indigo-600 text-white'
-                            : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50'
+                            : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
                     }`}
                 >
-                    <item.icon className="w-6 h-6 mx-auto" />
+                    <item.icon className="w-5 h-5" />
                 </button>
             ))}
         </nav>

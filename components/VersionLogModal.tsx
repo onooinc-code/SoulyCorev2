@@ -39,37 +39,39 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
 
     const selectedVersion = history.find(v => v.id === selectedVersionId);
 
-    // Using z-[9999] to ensure it is above absolutely everything
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
-            onClick={onClose}
-        >
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center isolate">
+            {/* Backdrop */}
             <motion.div
-                initial={{ scale: 0.95, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.95, y: 20 }}
-                className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-5xl h-[80vh] max-h-[800px] flex flex-col overflow-hidden relative"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                onClick={onClose}
+            />
+
+            {/* Modal Content */}
+            <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="relative bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-[90vw] max-w-5xl h-[85vh] flex flex-col overflow-hidden z-10"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex justify-between items-center p-5 border-b border-gray-800 bg-gray-900 shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-500/20 rounded-lg">
+                <div className="flex justify-between items-center p-6 border-b border-gray-800 bg-gray-900 shrink-0">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
                             <CodeIcon className="w-6 h-6 text-indigo-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-white">System Updates</h2>
-                            <p className="text-xs text-gray-400">Track changes and new features</p>
+                            <h2 className="text-xl font-bold text-white tracking-tight">سجل التحديثات</h2>
+                            <p className="text-sm text-gray-400">تاريخ الإصدارات والمميزات الجديدة</p>
                         </div>
                     </div>
                     <button 
                         onClick={onClose} 
-                        className="p-2 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white transition-colors cursor-pointer"
-                        aria-label="Close modal"
+                        className="p-2 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
                     >
                         <XIcon className="w-6 h-6" />
                     </button>
@@ -77,26 +79,30 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
 
                 <div className="flex flex-1 overflow-hidden">
                     {/* Sidebar: Version List */}
-                    <div className="w-1/3 border-r border-gray-800 bg-gray-900/50 overflow-y-auto">
+                    <div className="w-1/3 border-r border-gray-800 bg-gray-950/30 overflow-y-auto">
                         {isLoading ? (
-                            <div className="p-6 text-center text-gray-500">Loading...</div>
+                            <div className="p-8 text-center text-gray-500 text-sm">جاري التحميل...</div>
                         ) : (
-                            <div className="flex flex-col">
+                            <div className="flex flex-col p-2 gap-1">
                                 {history.map((version) => (
                                     <button
                                         key={version.id}
                                         onClick={() => setSelectedVersionId(version.id)}
-                                        className={`p-4 text-left border-b border-gray-800 transition-colors hover:bg-gray-800/80 ${
-                                            selectedVersionId === version.id ? 'bg-gray-800 border-l-4 border-l-indigo-500' : 'border-l-4 border-l-transparent'
+                                        className={`p-3 rounded-lg text-right transition-all duration-200 group ${
+                                            selectedVersionId === version.id 
+                                            ? 'bg-indigo-600/10 border border-indigo-500/30' 
+                                            : 'hover:bg-gray-800/50 border border-transparent'
                                         }`}
                                     >
                                         <div className="flex justify-between items-center mb-1">
-                                            <span className={`font-bold ${selectedVersionId === version.id ? 'text-white' : 'text-gray-300'}`}>v{version.version}</span>
+                                            <span className={`font-mono font-bold text-sm ${selectedVersionId === version.id ? 'text-indigo-400' : 'text-gray-300'}`}>v{version.version}</span>
                                             {history.indexOf(version) === 0 && (
-                                                <span className="px-2 py-0.5 bg-indigo-600 text-white text-[10px] rounded-full">LATEST</span>
+                                                <span className="px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] font-bold rounded">JADID</span>
                                             )}
                                         </div>
-                                        <span className="text-xs text-gray-500">{new Date(version.releaseDate).toLocaleDateString()}</span>
+                                        <span className="text-xs text-gray-500 group-hover:text-gray-400">
+                                            {new Date(version.releaseDate).toLocaleDateString('ar-EG')}
+                                        </span>
                                     </button>
                                 ))}
                             </div>
@@ -104,28 +110,29 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
                     </div>
 
                     {/* Content Area */}
-                    <div className="w-2/3 bg-gray-900 p-6 overflow-y-auto">
+                    <div className="w-2/3 bg-gray-900 p-8 overflow-y-auto">
                         {selectedVersion ? (
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 text-sm text-gray-400 border-b border-gray-800 pb-4">
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-2 text-sm text-indigo-300 pb-4 border-b border-gray-800">
                                     <ClockIcon className="w-4 h-4" />
-                                    <span>Released on {new Date(selectedVersion.releaseDate).toLocaleString()}</span>
+                                    <span>تم الإصدار في {new Date(selectedVersion.releaseDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                 </div>
-                                <div className="prose-custom text-gray-300">
+                                <div className="prose-custom text-gray-300 leading-relaxed text-right" dir="rtl">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                         {selectedVersion.changes}
                                     </ReactMarkdown>
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex items-center justify-center h-full text-gray-500">
-                                Select a version to view details.
+                            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                                <CodeIcon className="w-12 h-12 mb-4 opacity-20" />
+                                <p>اختر إصداراً لعرض التفاصيل</p>
                             </div>
                         )}
                     </div>
                 </div>
             </motion.div>
-        </motion.div>
+        </div>
     );
 };
 
