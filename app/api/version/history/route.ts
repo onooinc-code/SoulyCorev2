@@ -8,9 +8,31 @@ export const dynamic = 'force-dynamic';
 // Static source of truth for versions to ensure UI works even if DB seed fails
 const staticHistory: VersionHistory[] = [
     {
+        id: 'v-0.4.9',
+        version: '0.4.9',
+        releaseDate: new Date(),
+        createdAt: new Date(),
+        changes: `
+### 🎨 UI & Functional Refinement (v0.4.9)
+
+**UI Enhancements:**
+- **Toolbar Uniformity:** Standardized the size of the top and bottom toolbars in the chat input for a cleaner, more consistent look.
+
+**New Chat Features:**
+- **Text Formatting Tools:** Replaced technical developer tools with rich text formatting options in the bottom toolbar:
+  - **Bold**, **Italic**, **Strikethrough**
+  - **List creation**, **Block Quotes**, **Inline Code**
+  - **Link insertion**
+
+**Context Menu Upgrade:**
+- **Quick Actions Redesign:** Removed generic edit actions (Select All, Cut, Delete) from the context menu header.
+- **New Shortcuts:** Added instant access buttons for **New Chat**, **Refresh App**, and **Global Settings** directly within the right-click menu.
+`
+    },
+    {
         id: 'v-0.4.8',
         version: '0.4.8',
-        releaseDate: new Date(),
+        releaseDate: new Date('2024-07-29T10:00:00Z'),
         createdAt: new Date(),
         changes: `
 ### 🚀 Fixes & Stability (v0.4.8)

@@ -4,9 +4,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    CopyIcon, ClipboardPasteIcon, TrashIcon, 
-    ScissorsIcon, CheckIcon
+    CopyIcon, ClipboardPasteIcon, PlusIcon, 
+    RefreshIcon, CogIcon
 } from './Icons';
+import { useAppContext } from '@/lib/hooks/useAppContext';
 
 export interface MenuItem {
     label?: string;
@@ -89,6 +90,7 @@ const ContextMenuItem: React.FC<ContextMenuItemProps> = ({ item, onClose }) => {
 
 const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
     const menuRef = useRef<HTMLDivElement>(null);
+    const { createNewConversation, setGlobalSettingsModalOpen } = useAppContext();
 
     // --- Quick Action Handlers ---
     const handleCopy = async () => {
@@ -119,6 +121,21 @@ const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
         } catch (e) { 
             console.error("Paste failed:", e);
         }
+    };
+
+    const handleNewChat = () => {
+        createNewConversation();
+        onClose();
+    };
+
+    const handleRefresh = () => {
+        window.location.reload();
+        onClose();
+    };
+
+    const handleSettings = () => {
+        setGlobalSettingsModalOpen(true);
+        onClose();
     };
 
     useEffect(() => {
@@ -157,10 +174,10 @@ const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
             <div className="flex justify-between items-center gap-1 p-1 mb-1 border-b border-white/10 pb-2">
                 <button onClick={handleCopy} className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors" title="Copy"><CopyIcon className="w-4 h-4" /></button>
                 <button onClick={handlePaste} className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors" title="Paste"><ClipboardPasteIcon className="w-4 h-4" /></button>
-                <button className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors" title="Cut"><ScissorsIcon className="w-4 h-4" /></button>
                 <div className="w-px h-4 bg-white/10"></div>
-                <button className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors" title="Select All"><CheckIcon className="w-4 h-4" /></button>
-                <button className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-red-400 transition-colors" title="Delete"><TrashIcon className="w-4 h-4" /></button>
+                <button onClick={handleNewChat} className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors" title="New Chat"><PlusIcon className="w-4 h-4" /></button>
+                <button onClick={handleRefresh} className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors" title="Refresh App"><RefreshIcon className="w-4 h-4" /></button>
+                <button onClick={handleSettings} className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors" title="Settings"><CogIcon className="w-4 h-4" /></button>
             </div>
 
             {items.map((item, index) => {

@@ -8,7 +8,7 @@ import {
     SummarizeIcon, BeakerIcon, ArrowsRightLeftIcon, LightbulbIcon,
     DocumentTextIcon, WrenchScrewdriverIcon, CommandLineIcon,
     LinkIcon, CubeIcon, BookmarkIcon, ClipboardPasteIcon, CopyIcon, TrashIcon, CheckIcon, EditIcon,
-    ScissorsIcon, ClockIcon
+    ScissorsIcon, ClockIcon, MinusIcon, Bars3Icon, ChatBubbleLeftRightIcon
 } from '@/components/Icons';
 import { useConversation } from './providers/ConversationProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
@@ -41,11 +41,11 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon: Icon, label, onClic
     <div className="relative group">
         <button 
             onClick={onClick} 
-            className="flex flex-col items-center justify-center min-w-[72px] h-[64px] p-1 rounded-xl bg-gray-800/40 hover:bg-gray-800 border border-transparent hover:border-indigo-500/30 transition-all duration-200 relative"
+            className="flex flex-col items-center justify-center min-w-[60px] h-[50px] p-1 rounded-xl bg-gray-800/40 hover:bg-gray-800 border border-transparent hover:border-indigo-500/30 transition-all duration-200 relative"
             title={label}
         >
-            <Icon className={`w-5 h-5 mb-1.5 transition-colors ${COLORS[colorIndex % COLORS.length]}`} />
-            <span className="text-[9px] text-gray-500 group-hover:text-gray-200 font-medium leading-none text-center px-1 line-clamp-2">{label}</span>
+            <Icon className={`w-4 h-4 mb-1 transition-colors ${COLORS[colorIndex % COLORS.length]}`} />
+            <span className="text-[8px] text-gray-500 group-hover:text-gray-200 font-medium leading-none text-center px-1 line-clamp-2">{label}</span>
             
         </button>
         {isEditing && onEdit && (
@@ -165,19 +165,21 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     };
 
     const bottomToolbarActions = [
-        { icon: CheckIcon, label: 'Select All', action: () => textareaRef.current?.select() },
         { icon: TrashIcon, label: 'Clear', action: () => setContent('') },
         { icon: CopyIcon, label: 'Copy', action: () => navigator.clipboard.writeText(content).then(() => addNotification({type:'success', title:'Copied'})) },
         { icon: ClipboardPasteIcon, label: 'Paste', action: () => navigator.clipboard.readText().then(t => handleAction(t)) },
         { icon: DocumentTextIcon, label: 'Uppercase', action: () => modifyText(t => t.toUpperCase()) },
         { icon: DocumentTextIcon, label: 'Lowercase', action: () => modifyText(t => t.toLowerCase()) },
-        { icon: ScissorsIcon, label: 'Trim', action: () => setContent(c => c.trim()) },
-        { icon: CodeIcon, label: 'Code Block', action: () => modifyText(t => "```\n" + t + "\n```") },
-        { icon: LinkIcon, label: 'Encode URL', action: () => modifyText(t => encodeURIComponent(t)) },
-        { icon: LinkIcon, label: 'Decode URL', action: () => modifyText(t => decodeURIComponent(t)) },
-        { icon: SparklesIcon, label: 'Remove Lines', action: () => modifyText(t => t.replace(/(\r\n|\n|\r)/gm, " ")) },
-        { icon: BeakerIcon, label: 'Base64 Enc', action: () => modifyText(t => btoa(t)) },
-        { icon: BeakerIcon, label: 'Base64 Dec', action: () => { try { modifyText(t => atob(t)) } catch(e) { addNotification({type:'error', title:'Invalid Base64'}) } } },
+        
+        // New formatting tools
+        { icon: DocumentTextIcon, label: 'Bold', action: () => modifyText(t => `**${t}**`) },
+        { icon: DocumentTextIcon, label: 'Italic', action: () => modifyText(t => `*${t}*`) },
+        { icon: MinusIcon, label: 'Strike', action: () => modifyText(t => `~~${t}~~`) },
+        { icon: Bars3Icon, label: 'List', action: () => modifyText(t => t.split('\n').map(l => `- ${l}`).join('\n')) },
+        { icon: ChatBubbleLeftRightIcon, label: 'Quote', action: () => modifyText(t => t.split('\n').map(l => `> ${l}`).join('\n')) },
+        { icon: CodeIcon, label: 'Code', action: () => modifyText(t => `\`${t}\``) },
+        { icon: LinkIcon, label: 'Link', action: () => modifyText(t => `[${t}](url)`) },
+
         { icon: DocumentTextIcon, label: 'Indent', action: () => modifyText(t => "\t" + t) },
         { icon: ClockIcon, label: 'Time', action: () => handleAction(new Date().toLocaleTimeString()) },
         { icon: WrenchScrewdriverIcon, label: 'JSON Fmt', action: () => { try { modifyText(t => JSON.stringify(JSON.parse(t), null, 2)) } catch(e) { addNotification({type:'error', title:'Invalid JSON'}) } } },
