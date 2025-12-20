@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -73,8 +74,8 @@ const ConversationPanel = ({ isMinimized }: { isMinimized: boolean }) => {
                 </div>
             </div>
 
-            {/* List Area */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-hide">
+            {/* List Area - REMOVED scrollbar-hide to allow custom scrollbar */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 {filteredConversations.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 text-gray-500 gap-2 opacity-60">
                         <ChatBubbleLeftRightIcon className="w-8 h-8" />

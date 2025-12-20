@@ -25,12 +25,11 @@
     --prose-link: #60a5fa;
 
     /* Scrollbar Variables */
-    --scrollbar-width: 14px;
-    --scrollbar-track-bg: #0f1218;
-    --scrollbar-thumb-bg: #374151;
-    --scrollbar-thumb-hover: #4f46e5;
-    --scrollbar-thumb-active: #6366f1;
-    --scrollbar-glow: rgba(79, 70, 229, 0.4);
+    --scrollbar-width: 8px;
+    --scrollbar-track-bg: transparent; /* Transparent track to fit any background */
+    --scrollbar-thumb-bg: #4b5563;
+    --scrollbar-thumb-hover: #6b7280;
+    --scrollbar-thumb-active: #4f46e5;
   }
 
   html,
@@ -70,17 +69,15 @@
 }
 
 .glass-panel {
-  background-color: rgb(31 41 55 / 0.7);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  background-color: rgb(31 41 55 / 0.9);
   border-width: 1px;
-  border-color: rgb(255 255 255 / 0.1);
+  border-color: rgb(255 255 255 / 0.05);
 }
 
 .safe-top { padding-top: env(safe-area-inset-top); }
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 
-/* --- 15+ Feature Ultra Custom Scrollbar --- */
+/* --- Modern Minimalist Scrollbar --- */
 
 /* 1. Base Width & Height */
 ::-webkit-scrollbar {
@@ -88,67 +85,45 @@
   height: var(--scrollbar-width);
 }
 
-/* 2. Track Background */
+/* 2. Track (Background) - Transparent to blend in */
 ::-webkit-scrollbar-track {
-  background-color: var(--scrollbar-track-bg);
-  /* 3. Track Inner Shadow for depth */
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
-  /* 4. Track Border Radius */
-  border-radius: 0px; 
+  background-color: transparent; 
+  border-radius: 4px;
 }
 
-/* 5. Thumb Styling */
+/* 3. Thumb (The moving part) */
 ::-webkit-scrollbar-thumb {
-  /* 6. Gradient Background */
-  background: linear-gradient(135deg, var(--scrollbar-thumb-bg), #4b5563);
-  /* 7. Rounded Edges */
-  border-radius: 9999px;
-  /* 8. Border to simulate "floating" thumb */
-  border: 3px solid var(--scrollbar-track-bg);
-  /* 9. Background Clip for crisp borders */
-  background-clip: padding-box;
-  /* 10. Initial Shadow */
-  box-shadow: 0 0 2px rgba(0,0,0,0.2);
+  background-color: rgba(75, 85, 99, 0.5); /* Semi-transparent gray */
+  border-radius: 4px;
+  border: 2px solid transparent; /* Creates padding around the thumb */
+  background-clip: content-box; /* Ensures the border acts as padding */
+  transition: background-color 0.2s ease;
 }
 
-/* 11. Thumb Hover State */
+/* 4. Hover State */
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, var(--scrollbar-thumb-hover), #4338ca);
-  border: 2px solid var(--scrollbar-track-bg); /* Thinner border makes thumb look 'larger' on hover */
-  /* 12. Glow Effect on Hover */
-  box-shadow: 0 0 8px var(--scrollbar-glow), inset 0 0 2px rgba(255,255,255,0.2);
+  background-color: rgba(99, 102, 241, 0.8); /* Indigo on hover */
 }
 
-/* 13. Thumb Active (Click) State */
+/* 5. Active/Click State */
 ::-webkit-scrollbar-thumb:active {
-  background: var(--scrollbar-thumb-active);
-  border: 1px solid var(--scrollbar-track-bg);
-  box-shadow: 0 0 12px var(--scrollbar-glow), inset 0 0 4px rgba(255,255,255,0.3);
+  background-color: var(--scrollbar-thumb-active);
 }
 
-/* 14. Corner Styling */
-::-webkit-scrollbar-corner {
-  background-color: var(--scrollbar-track-bg);
-  border: 1px solid #374151;
-}
-
-/* 15. Firefox Support */
+/* 6. Firefox Support */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
+  scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
 }
-
-/* Utility to hide scrollbar but keep functionality */
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* Specific rail scrollbar tweak for navigation */
 .rail-scrollbar::-webkit-scrollbar {
     width: 4px;
 }
 .rail-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
     border: none;
-    border-radius: 0;
+    border-radius: 2px;
 }
 
 @media (max-width: 768px) {

@@ -34,13 +34,6 @@ const versionData = [
 - **UX:** The application is now more stable, with layout shifts on load being eliminated for a smoother user experience.`
     },
     {
-        version: '0.3.1',
-        releaseDate: '2024-07-24T10:00:00Z',
-        changes: `
-- **Bug Fix: Keyboard Shortcuts:** Resolved a critical bug where keyboard shortcuts would not work until the user interacted with the app. The app now automatically focuses itself when entering fullscreen mode, ensuring shortcuts are always responsive.
-- **Improvement: Fullscreen Mode:** Enhanced the fullscreen experience by removing mobile view constraints, allowing the application to utilize the entire screen space as intended.`
-    },
-    {
         version: '0.4.0',
         releaseDate: '2024-07-25T10:00:00Z',
         changes: `
@@ -71,26 +64,18 @@ const versionData = [
 - **Stability:** These changes significantly improve the stability and usability of the deployed application.`
     },
     {
-        version: '0.4.2',
-        releaseDate: '2024-07-27T10:00:00Z',
-        changes: `
-- **UI/UX Polish:**
-  - **Custom Scrollbars:** Implemented a sleek, modern scrollbar design across the entire application, replacing the default browser scrollbars for a premium feel.
-  - **Layout Fix:** Fixed the bottom Status Bar (Footer) layout. It now correctly respects the sidebar width and sits naturally within the page flow, eliminating overlap issues.
-  - **Readability:** The Version History / Changelog modal now forces Left-to-Right (LTR) text direction for the content area, ensuring that technical English logs are easy to read.
-- **Bug Fixes:**
-  - Resolved issues where message bubbles could become hidden or cut off by ensuring proper overflow handling and container sizing.`
-    },
-    {
-        version: '0.4.3',
+        version: '0.4.4',
         releaseDate: new Date().toISOString(),
         changes: `
-- **UX: The Ultimate Scrollbar:**
-  - Implemented a highly advanced, 15-feature CSS scrollbar design. Features include gradient thumbs, hover glow effects, "floating" appearance via transparent borders, rounded pills, and cross-browser compatibility (Firefox/Webkit).
-- **Bug Fix: Hidden Messages:**
-  - Fixed a critical layout bug where the first message in the chat was partially or completely hidden behind the top header. Added layout compensation (\`pt-16\`) to the chat window to respect the absolute positioning of the header.
-- **Visual Polish:**
-  - Refined message list container scrolling behavior.`
+- **UI Overhaul: Scrollbars**
+  - Completely replaced the scrollbar design with a modern, transparent-track implementation.
+  - The scrollbar now floats cleanly over content without creating ugly high-contrast backgrounds in dark mode.
+  - Restored missing scrollbars in the Sidebar and other panels.
+- **System: Versioning**
+  - Updated the versioning pipeline to ensure the Changelog accurately reflects the latest deployed code.
+  - Fixed issues where the version modal was showing stale data.
+- **Layout:**
+  - Fixed layout padding issues in the Chat Window to prevent messages from being hidden behind the header.`
     }
 ];
 
