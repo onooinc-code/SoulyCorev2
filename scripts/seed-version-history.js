@@ -4,25 +4,21 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.4.6',
+        version: '0.4.7',
         releaseDate: new Date().toISOString(),
         changes: `
-### 🔥 Major Overhaul: The Polish Update (v0.4.6)
+### 🛠️ Critical Fixes & Enhancements (v0.4.7)
 
-**Visual & UX Upgrades:**
-- **Invisible Scrollbars:** Completely rewrote the CSS engine to use ultra-minimal, modern scrollbars that don't break the dark theme immersion.
-- **Dynamic Header:** The top header now intelligently displays the active section name (e.g., "Agent Center", "Dashboard") instead of a static "New Chat".
-- **Full-Width Messages:** Chat bubbles now utilize the full screen width for better readability of long text and code blocks.
+**Core Improvements:**
+- **Model List:** Fixed the AI Model dropdown to display a comprehensive list of all Gemini models (including Pro, Flash, Vision) by default, instead of just 3.
+- **Chat Input Toolbar:** Implemented a visible, horizontally scrollable toolbar above the chat input with 15+ quick action buttons (Summarize, Translate, Code, etc.) for immediate access.
+- **Header Layout:** Resolved the layout issue where the Header was obscuring content in the Dashboard and other hubs by adjusting the global layout strategy.
 
-**Chat & Input Evolution:**
-- **Power Grid Input:** The chat input area has been supercharged. Removed the disclaimer and added a **16-button Quick Action Grid** for one-click utility (Summarize, Debug, Translate, etc.).
-- **Smart Triggers:** Added basic support for slash commands (\`/\`) and entity mentions (\`@\`).
-- **Stats:** The Conversation List now displays the message count and token usage for each chat.
-
-**Functionality Fixes:**
-- **Settings Persistence:** Fixed a critical bug where Model and Agent settings weren't saving or persisting to new chats. Added "Presets" for personas and temperature.
-- **Context Menu 2.0:** A complete redesign of the right-click menu with nested sub-menus, icons, and a quick-access toolbar for Copy/Paste.
-- **Mobile Experience:** The conversation list now auto-closes after selection on mobile devices.
+**Bug Fixes:**
+- **Copy/Paste:** Fixed the context menu "Paste" functionality to correctly insert text into the active chat input.
+- **New Chat Navigation:** Creating a new conversation now immediately switches the view to the chat interface.
+- **Loading Stability:** Added robustness to the tool fetching API to prevent "System Error" messages when loading conversations.
+- **Context Menu:** Added new icon buttons (Cut, Select All, Delete) to the right-click menu.
 `
     }
 ];

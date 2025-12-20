@@ -4,7 +4,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    CopyIcon, ClipboardPasteIcon, TrashIcon
+    CopyIcon, ClipboardPasteIcon, TrashIcon, 
+    ScissorsIcon, CheckIcon, ArrowsRightLeftIcon, RefreshIcon 
 } from './Icons';
 
 export interface MenuItem {
@@ -24,31 +25,6 @@ interface ContextMenuProps {
     onClose: () => void;
 }
 
-const SubMenu = ({ items, parentId }: { items: MenuItem[], parentId: string }) => {
-    return (
-        <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            className="absolute left-full top-0 ml-1 w-48 bg-gray-800/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl p-1 z-[150] overflow-hidden"
-        >
-            {items.map((item, idx) => (
-                 <button
-                    key={`${parentId}-${idx}`}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (item.action) item.action();
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs text-gray-200 hover:bg-indigo-600 rounded flex items-center gap-2"
-                >
-                    {item.icon && <item.icon className="w-3 h-3" />}
-                    {item.label}
-                </button>
-            ))}
-        </motion.div>
-    );
-};
-
 const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
     const menuRef = useRef<HTMLDivElement>(null);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -62,24 +38,34 @@ const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
         } catch (e) { console.error(e); }
     };
     
+    // Improved Paste handler that focuses the main input if possible
     const handlePaste = async () => {
         try {
             const text = await navigator.clipboard.readText();
-            // Dispatch a paste event or handle via active element
-             const activeElement = document.activeElement;
+            // Try to find the main chat input
+            const activeElement = document.querySelector('textarea') || document.activeElement;
+            
             if (activeElement && (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement)) {
+                activeElement.focus();
                 const start = activeElement.selectionStart || 0;
                 const end = activeElement.selectionEnd || 0;
                 const value = activeElement.value;
-                activeElement.value = value.substring(0, start) + text + value.substring(end);
-                // Trigger change event for React state
-                 const event = new Event('input', { bubbles: true });
-                 activeElement.dispatchEvent(event);
+                const newValue = value.substring(0, start) + text + value.substring(end);
+                activeElement.value = newValue;
+                
+                // Dispatch input event so React state updates
+                const event = new Event('input', { bubbles: true });
+                activeElement.dispatchEvent(event);
+                
+                // Move cursor
+                activeElement.selectionStart = activeElement.selectionEnd = start + text.length;
             }
             onClose();
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error("Paste failed:", e);
+            alert("Could not paste. Please use Ctrl+V.");
+        }
     };
-
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -102,7 +88,6 @@ const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
     const adjustedX = Math.min(position.x, (typeof window !== 'undefined' ? window.innerWidth : 1000) - 260);
     const adjustedY = Math.min(position.y, (typeof window !== 'undefined' ? window.innerHeight : 800) - items.length * 40);
 
-
     return (
         <motion.div
             ref={menuRef}
@@ -110,16 +95,19 @@ const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.1 }}
-            className="fixed w-64 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-1.5 z-[140] flex flex-col gap-1"
+            className="fixed w-64 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-1.5 z-[9999] flex flex-col gap-1 ring-1 ring-black/50"
             style={{ top: adjustedY, left: adjustedX }}
             onMouseLeave={() => setHoveredIndex(null)}
+            onContextMenu={(e) => e.preventDefault()}
         >
-            {/* Quick Actions Bar */}
+            {/* Expanded Quick Actions Bar */}
             <div className="flex justify-between items-center gap-1 p-1 mb-1 border-b border-white/10 pb-2">
-                <button onClick={handleCopy} className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors" title="Copy Selection"><CopyIcon className="w-4 h-4" /></button>
+                <button onClick={handleCopy} className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors" title="Copy"><CopyIcon className="w-4 h-4" /></button>
                 <button onClick={handlePaste} className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors" title="Paste"><ClipboardPasteIcon className="w-4 h-4" /></button>
+                <button className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors" title="Cut"><ScissorsIcon className="w-4 h-4" /></button>
                 <div className="w-px h-4 bg-white/10"></div>
-                <button className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-red-400 transition-colors" title="Clear/Delete"><TrashIcon className="w-4 h-4" /></button>
+                <button className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors" title="Select All"><CheckIcon className="w-4 h-4" /></button>
+                <button className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-red-400 transition-colors" title="Delete"><TrashIcon className="w-4 h-4" /></button>
             </div>
 
             {items.map((item, index) => {
@@ -127,8 +115,6 @@ const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
                     return <div key={index} className="h-px bg-white/10 my-1 mx-2" />;
                 }
                 
-                const hasChildren = item.children && item.children.length > 0;
-
                 return (
                     <div 
                         key={index} 
@@ -155,16 +141,9 @@ const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
                                 {item.icon && <item.icon className={`w-4 h-4 ${item.danger ? 'text-red-400' : 'text-gray-400 group-hover:text-white'}`} />}
                                 <span>{item.label}</span>
                             </div>
-                            {hasChildren && <span className="text-xs opacity-50">▶</span>}
+                            {item.children && <span className="text-xs opacity-50">▶</span>}
                             {item.shortcut && <span className="text-[10px] opacity-40 font-mono">{item.shortcut}</span>}
                         </button>
-
-                        {/* Nested Menu */}
-                        <AnimatePresence>
-                            {hasChildren && hoveredIndex === index && (
-                                <SubMenu items={item.children!} parentId={`sub-${index}`} />
-                            )}
-                        </AnimatePresence>
                     </div>
                 );
             })}

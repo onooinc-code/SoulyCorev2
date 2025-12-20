@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
 import ChatWindow from '@/components/chat/ChatWindow';
 import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header'; // Import Header
+import Header from '@/components/Header'; 
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { AnimatePresence, motion } from 'framer-motion';
 import NavigationRail from './NavigationRail';
@@ -30,7 +31,7 @@ export const App = () => {
         activeView,
         setCommandPaletteOpen,
         isMobileView,
-        isZenMode // Use ZenMode to toggle Header visibility
+        isZenMode 
     } = useUIState();
 
     const { menuItems, contextMenu, handleContextMenu, closeContextMenu } = useAppContextMenu();
@@ -84,7 +85,6 @@ export const App = () => {
                 <AnimatePresence mode="wait">
                     {isConversationPanelOpen && (
                         <>
-                            {/* Backdrop for Mobile Overlay */}
                             {isMobileView && (
                                 <motion.div 
                                     initial={{ opacity: 0 }}
@@ -114,12 +114,14 @@ export const App = () => {
                     )}
                 </AnimatePresence>
 
-                {/* Main Dynamic View Area with Header */}
+                {/* Main Dynamic View Area */}
                 <div className="flex-1 flex flex-col min-w-0 h-full relative bg-gray-900">
-                    {/* Header is now here, persistent across all views unless Zen Mode is active */}
+                    
+                    {/* Header: Absolute but managed via padding in content */}
                     {!isZenMode && <Header />}
 
-                    <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
+                    {/* Content Area: Added pt-16 (64px) to account for the header height */}
+                    <div className={`flex-1 flex flex-col min-h-0 relative overflow-hidden ${!isZenMode ? 'pt-16' : ''}`}>
                         {renderMainContent()}
                     </div>
                     

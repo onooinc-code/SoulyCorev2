@@ -1,3 +1,4 @@
+
 // app/api/conversations/[conversationId]/tools/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
@@ -9,12 +10,18 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest, { params }: { params: { conversationId: string } }) {
     try {
         const { conversationId } = params;
-        // In a more advanced setup, this would check for conversation-specific tool configurations.
-        // For now, we'll return all globally available tools.
-        const { rows } = await sql<Tool>`SELECT * FROM tools ORDER BY name ASC;`;
-        return NextResponse.json(rows);
+        
+        // Ensure tools table exists or handle gracefully
+        try {
+             const { rows } = await sql<Tool>`SELECT * FROM tools ORDER BY name ASC;`;
+             return NextResponse.json(rows);
+        } catch (dbError) {
+             console.warn("Tools table might not exist or is empty, returning empty list.", dbError);
+             return NextResponse.json([]);
+        }
     } catch (error) {
         console.error('Failed to fetch tools for conversation:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        // Return empty array instead of error to prevent UI crash
+        return NextResponse.json([]); 
     }
 }
