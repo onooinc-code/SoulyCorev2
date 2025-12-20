@@ -3,6 +3,8 @@
 
 import React from 'react';
 import type { IStatus } from '@/lib/types';
+import { XIcon, WarningIcon } from '@/components/Icons';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ErrorDisplayProps {
     status: IStatus;
@@ -13,33 +15,40 @@ interface ErrorDisplayProps {
 const ErrorDisplay = ({ status, isDbError, clearError }: ErrorDisplayProps) => {
     if (!status.error) return null;
 
+    const isQuotaError = status.error.includes('429') || status.error.includes('quota') || status.error.includes('RESOURCE_EXHAUSTED');
+
     return (
-        <div className="p-4 bg-red-800/50 text-red-200 text-sm border-t border-red-700 flex-shrink-0">
-            <div className="max-w-4xl mx-auto text-left">
-                <div className="flex justify-between items-center">
-                    <p className="font-bold text-base mb-2">An Error Occurred</p>
-                    <button onClick={clearError} className="text-xs underline hover:text-white">Dismiss</button>
-                </div>
-                <p className="mb-4 bg-red-900/50 p-2 rounded-md font-mono">{status.error}</p>
-                
-                {isDbError && (
-                     <div className="mt-4 p-4 bg-red-900/50 rounded-lg text-xs">
-                        <p className="font-bold mb-2">How to Fix This Deployment Error:</p>
-                        <ol className="list-decimal list-inside space-y-2">
-                            <li>
-                                <strong>Check Vercel Integration:</strong> Go to your project dashboard on Vercel, navigate to the "Storage" tab, and ensure your Postgres database is successfully connected to this project.
-                            </li>
-                            <li>
-                                <strong>Create Database Tables:</strong> In the Vercel "Storage" tab, click your database, then go to the "Query" tab. You must run the table creation script there. You can find the necessary SQL commands in the `scripts/create-tables.js` file in your project.
-                            </li>
-                            <li>
-                                <strong>Redeploy:</strong> After confirming the steps above, go to the "Deployments" tab for your project and redeploy the latest version to apply the changes.
-                            </li>
-                        </ol>
+        <AnimatePresence>
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: 20 }}
+                className="mx-4 mb-2"
+            >
+                <div className={`rounded-lg p-3 border shadow-lg flex items-start gap-3 ${isQuotaError ? 'bg-orange-900/90 border-orange-500/50 text-orange-100' : 'bg-red-900/90 border-red-500/50 text-red-100'}`}>
+                    <WarningIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-sm">
+                            {isQuotaError ? 'AI Rate Limit Reached' : 'System Error'}
+                        </h4>
+                        <p className="text-xs mt-1 opacity-90 break-words">
+                            {isQuotaError 
+                                ? "You've hit the free tier limit for the AI model. Please wait a minute before trying again." 
+                                : status.error.substring(0, 300) + (status.error.length > 300 ? '...' : '')
+                            }
+                        </p>
+                        {isDbError && (
+                            <div className="mt-2 text-[10px] bg-black/20 p-2 rounded">
+                                <strong>Tip:</strong> Check Vercel Storage settings and ensure database tables are created (npm run db:create).
+                            </div>
+                        )}
                     </div>
-                )}
-            </div>
-        </div>
+                    <button onClick={clearError} className="p-1 hover:bg-white/10 rounded">
+                        <XIcon className="w-4 h-4" />
+                    </button>
+                </div>
+            </motion.div>
+        </AnimatePresence>
     );
 };
 

@@ -54,15 +54,14 @@ const ChatWindow = () => {
         }
     };
 
-    // FIX: Added `pt-16` (64px) to the main container. 
-    // The Header component uses `absolute` positioning with a height of `h-16`, 
-    // so this padding pushes the MessageList down to prevent the first message from being hidden behind the header.
-    // Also ensuring `h-full` and `overflow-hidden` are set correctly to contain the scrollbar within this view.
+    // FIX: 
+    // 1. Used `pt-20` (80px) to ensure plenty of clearance for the absolute header.
+    // 2. Used `relative` on the outer container to manage stacking contexts properly.
     return (
-        <div className={`flex flex-col h-full bg-gray-900/50 ${!isZenMode ? 'pt-16' : ''}`}>
+        <div className={`flex flex-col h-full bg-gray-900/50 relative ${!isZenMode ? 'pt-20' : ''}`}>
             
-            {/* Message List takes available space */}
-            <div className="flex-1 min-h-0 relative">
+            {/* Message List - Takes all remaining space */}
+            <div className="flex-1 min-h-0 relative overflow-hidden">
                 <MessageList 
                     messages={messages}
                     currentConversation={currentConversation}
@@ -91,9 +90,14 @@ const ChatWindow = () => {
                 />
             </div>
 
+            {/* Error Display - Rendered above inputs but below messages if possible, or as overlay */}
+            <div className="flex-shrink-0 z-40">
+                 <ErrorDisplay status={status} isDbError={!!(status.error && /database|postgres/i.test(status.error))} clearError={clearError} />
+            </div>
+
             {/* Status Bar (Settings/Stats) */}
             {!isZenMode && currentConversation && (
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 z-30">
                     <StatusBar 
                         onSettingsClick={() => setSettingsModalOpen(true)}
                         onAgentConfigClick={() => setAgentConfigModalOpen(true)}
@@ -101,11 +105,9 @@ const ChatWindow = () => {
                 </div>
             )}
 
-            {/* Error Display */}
-            <ErrorDisplay status={status} isDbError={!!(status.error && /database|postgres/i.test(status.error))} clearError={clearError} />
             
             {/* Input Area */}
-            <div className="flex-shrink-0 z-20">
+            <div className="flex-shrink-0 z-30 bg-gray-900">
                 <ChatFooter 
                     proactiveSuggestion={proactiveSuggestion}
                     onSuggestionClick={() => { proactiveSuggestion && alert(`Action: ${proactiveSuggestion}`); setProactiveSuggestion(null); }}

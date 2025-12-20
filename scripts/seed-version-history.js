@@ -64,18 +64,17 @@ const versionData = [
 - **Stability:** These changes significantly improve the stability and usability of the deployed application.`
     },
     {
-        version: '0.4.4',
+        version: '0.4.5',
         releaseDate: new Date().toISOString(),
         changes: `
-- **UI Overhaul: Scrollbars**
-  - Completely replaced the scrollbar design with a modern, transparent-track implementation.
-  - The scrollbar now floats cleanly over content without creating ugly high-contrast backgrounds in dark mode.
-  - Restored missing scrollbars in the Sidebar and other panels.
-- **System: Versioning**
-  - Updated the versioning pipeline to ensure the Changelog accurately reflects the latest deployed code.
-  - Fixed issues where the version modal was showing stale data.
-- **Layout:**
-  - Fixed layout padding issues in the Chat Window to prevent messages from being hidden behind the header.`
+- **Visual Polish: The Invisible Scrollbar:**
+  - Redesigned the scrollbar to be ultra-minimalist with a transparent track. This eliminates the "ugly block" effect on the right side of the screen, creating a true full-screen immersion feel.
+- **UX: Layout fixes:**
+  - Increased top padding for the chat window (\`pt-20\`) to ensure the first message bubble is never hidden behind the header glass, fixing the "cut off" message issue.
+- **Error Handling:**
+  - Completely redesigned the error display. Instead of a massive red wall that blocks the chat, errors (like API Rate Limits) now appear as a small, dismissible notification banner that doesn't obstruct your view.
+- **Internationalization:**
+  - Fixed the Version Log text direction. English technical logs now correctly display Left-to-Right (LTR) for better readability.`
     }
 ];
 

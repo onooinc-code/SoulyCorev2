@@ -124,7 +124,7 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
                                     CRITICAL CHANGE: Added 'dir-ltr' class and forced 'text-left' and 'direction: ltr' 
                                     style to properly render the markdown changelog which is in English.
                                 */}
-                                <div className="prose-custom text-gray-300 leading-relaxed text-left" style={{ direction: 'ltr', textAlign: 'left' }}>
+                                <div className="prose-custom text-gray-300 leading-relaxed text-left" style={{ direction: 'ltr', textAlign: 'left' }} dir="ltr">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                         {selectedVersion.changes}
                                     </ReactMarkdown>
