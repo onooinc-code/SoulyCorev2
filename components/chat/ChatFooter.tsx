@@ -41,14 +41,12 @@ const ChatFooter = ({
     const isCognitiveStatus = (action: any): action is CognitiveStatus => 
         typeof action === 'object' && action !== null && 'phase' in action;
 
-    // Use sticky positioning instead of fixed to stay within the flex container logic
-    // but typically it just sits at the bottom of the flex column in ChatWindow.
     return (
         <div className="bg-gray-950 border-t border-white/5 relative z-30">
             <AnimatePresence>
                 {replyToMessage && (
                      <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="bg-indigo-500/10 p-2 text-xs overflow-hidden border-b border-indigo-500/20">
-                        <div className="flex justify-between items-center max-w-4xl mx-auto px-4">
+                        <div className="flex justify-between items-center w-full px-4">
                             <button onClick={onCancelReply} className="p-1 hover:bg-white/10 rounded-full"><XIcon className="w-4 h-4" /></button>
                             <div className="text-indigo-300 truncate text-right">
                                 الرد على: <em className="ml-1 opacity-70">"{replyToMessage.content.substring(0, 40)}..."</em>
@@ -83,7 +81,7 @@ const ChatFooter = ({
                 )}
             </AnimatePresence>
             
-            <div className="max-w-5xl mx-auto">
+            <div className="w-full">
                 <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} replyToMessage={replyToMessage} />
             </div>
         </div>

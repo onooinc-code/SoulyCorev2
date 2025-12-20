@@ -13,6 +13,22 @@ const getClient = () => {
 // @google/genai-api-guideline-fix: Use 'gemini-2.5-flash' for general text tasks.
 const modelName = 'gemini-2.5-flash';
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Helper function to execute API calls with exponential backoff retry
+async function executeWithRetry<T>(operation: () => Promise<T>, retries = 3, initialDelay = 2000): Promise<T> {
+    try {
+        return await operation();
+    } catch (error: any) {
+        if (retries > 0 && (error.status === 429 || error?.message?.includes('429') || error?.message?.includes('Quota exceeded'))) {
+            console.warn(`Gemini API 429 hit. Retrying in ${initialDelay}ms... (${retries} retries left)`);
+            await delay(initialDelay);
+            return executeWithRetry(operation, retries - 1, initialDelay * 2);
+        }
+        throw error;
+    }
+}
+
 // Custom error handling function to provide user-friendly messages
 const handleGeminiError = (error: unknown) => {
     const errorMessage = (error as Error).message || 'An unknown error occurred';
@@ -20,6 +36,10 @@ const handleGeminiError = (error: unknown) => {
 
     if (errorMessage.includes('API key was reported as leaked')) {
         throw new Error("Your API key has been compromised and revoked by Google. Please generate a new API key and update your project's environment variables.");
+    }
+    
+    if (errorMessage.includes('429') || errorMessage.includes('Quota exceeded')) {
+        throw new Error("AI service is currently busy (Rate Limit). Please try again in a few moments.");
     }
 
     throw error; // Re-throw original or other errors
@@ -29,15 +49,17 @@ const handleGeminiError = (error: unknown) => {
 export async function generateChatResponse(history: Content[], systemInstruction: string, modelOverride?: string) {
     const ai = getClient();
     try {
-        const response = await ai.models.generateContent({
-            model: modelOverride || modelName,
-            contents: history,
-            config: {
-                systemInstruction: systemInstruction,
-            },
+        return await executeWithRetry(async () => {
+            const response = await ai.models.generateContent({
+                model: modelOverride || modelName,
+                contents: history,
+                config: {
+                    systemInstruction: systemInstruction,
+                },
+            });
+            // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text and functionCalls properties directly from the response object.
+            return { text: response.text, functionCalls: response.functionCalls };
         });
-        // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text and functionCalls properties directly from the response object.
-        return { text: response.text, functionCalls: response.functionCalls };
     } catch (error) {
         handleGeminiError(error);
     }
@@ -45,14 +67,29 @@ export async function generateChatResponse(history: Content[], systemInstruction
 
 export async function generateProactiveSuggestion(history: Content[]): Promise<string | null> {
     const systemInstruction = `You are an assistant that suggests the next logical step. Based on the last two turns of conversation, suggest a concise, actionable next step for the user. Phrase it as a question or a command. Respond with only the suggestion text.`;
-    const response = await generateChatResponse(history, systemInstruction);
-    return response?.text?.trim() || null;
+    // We use fewer retries for background tasks like suggestions to avoid hanging the UI
+    try {
+         const ai = getClient();
+         const response = await executeWithRetry<GenerateContentResponse>(() => ai.models.generateContent({
+            model: modelName,
+            contents: history,
+            config: { systemInstruction }
+         }), 1, 1000);
+         return response?.text?.trim() || null;
+    } catch (e) {
+        console.warn("Failed to generate proactive suggestion (non-critical):", e);
+        return null;
+    }
 }
 
 export async function generateTitleFromHistory(history: Content[]): Promise<string | null> {
     const systemInstruction = `Based on the following conversation, generate a concise, descriptive title of 5 words or less. Respond with only the title.`;
-    const response = await generateChatResponse(history, systemInstruction);
-    return response?.text?.trim().replace(/"/g, '') || null;
+    try {
+        const response = await generateChatResponse(history, systemInstruction);
+        return response?.text?.trim().replace(/"/g, '') || null;
+    } catch (e) {
+        return null;
+    }
 }
 
 export async function generateSummary(text: string): Promise<string | null> {
@@ -85,14 +122,14 @@ export async function generateEmbedding(content: string): Promise<number[]> {
 export async function generateAgentContent(history: Content[], systemInstruction: string, tools: Tool[]): Promise<GenerateContentResponse | undefined> {
     const ai = getClient();
      try {
-        const response = await ai.models.generateContent({
+        const response = await executeWithRetry(() => ai.models.generateContent({
             model: modelName,
             contents: history,
             config: {
                 systemInstruction: systemInstruction,
                 tools: tools,
             },
-        });
+        }));
         return response;
     } catch (error) {
         handleGeminiError(error);
@@ -101,7 +138,6 @@ export async function generateAgentContent(history: Content[], systemInstruction
 
 export async function summarizeForContext(content: string): Promise<string | null> {
     const systemInstruction = `Summarize the following text into a very short, dense paragraph suitable for providing context to an AI in a future conversation. Focus on key facts, entities, and decisions.`;
-    // FIX: The variable in scope is `content`, not `text`. Changed to correctly pass the content to the AI model.
     const response = await generateChatResponse([{ role: 'user', parts: [{ text: content }] }], systemInstruction);
     return response?.text?.trim() || null;
 }
@@ -115,11 +151,15 @@ export async function generateConversationSummary(history: Content[]): Promise<s
 export async function shouldExtractMemory(history: Content[]): Promise<boolean> {
     const systemInstruction = `Analyze the last user message and the AI's response. Does this exchange contain significant new information, facts, entities, or relationships that are worth remembering for the long term? Answer with only 'yes' or 'no'.`;
     try {
-        const response = await generateChatResponse(history, systemInstruction);
+        const response = await executeWithRetry<GenerateContentResponse>(() => getClient().models.generateContent({
+            model: modelName,
+            contents: history,
+            config: { systemInstruction }
+        }), 1, 1000);
         return response?.text?.toLowerCase().includes('yes') || false;
     } catch (error) {
         // Don't use handleGeminiError here, as this check should fail silently.
-        console.error("Error in shouldExtractMemory check:", error);
+        console.warn("Error in shouldExtractMemory check (skipping):", error);
         return false;
     }
 }

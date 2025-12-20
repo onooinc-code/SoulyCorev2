@@ -7,6 +7,8 @@ import { ILLMProvider, HistoryContent, IModelConfig } from '../types';
 // @google/genai-api-guideline-fix: Use 'gemini-2.5-flash' for general text tasks.
 const defaultModelName = 'gemini-2.5-flash';
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export class GeminiProvider implements ILLMProvider {
     private ai: GoogleGenAI | null = null;
 
@@ -28,6 +30,19 @@ export class GeminiProvider implements ILLMProvider {
         return this.ai;
     }
 
+    private async executeWithRetry<T>(operation: () => Promise<T>, retries = 3, initialDelay = 2000): Promise<T> {
+        try {
+            return await operation();
+        } catch (error: any) {
+            if (retries > 0 && (error.status === 429 || error?.message?.includes('429') || error?.message?.includes('Quota exceeded'))) {
+                console.warn(`GeminiProvider 429 hit. Retrying in ${initialDelay}ms...`);
+                await delay(initialDelay);
+                return this.executeWithRetry(operation, retries - 1, initialDelay * 2);
+            }
+            throw error;
+        }
+    }
+
 
     /**
      * @inheritdoc
@@ -35,14 +50,17 @@ export class GeminiProvider implements ILLMProvider {
     async generateContent(history: HistoryContent[], systemInstruction: string, config?: IModelConfig, model?: string): Promise<string> {
         try {
             const client = this.getClient();
-            const result = await client.models.generateContent({
-                model: model || defaultModelName,
-                contents: history,
-                config: {
-                    systemInstruction: systemInstruction || "You are a helpful AI assistant.",
-                    temperature: config?.temperature ?? 0.7,
-                    topP: config?.topP ?? 0.95,
-                }
+            
+            const result = await this.executeWithRetry(async () => {
+                return await client.models.generateContent({
+                    model: model || defaultModelName,
+                    contents: history,
+                    config: {
+                        systemInstruction: systemInstruction || "You are a helpful AI assistant.",
+                        temperature: config?.temperature ?? 0.7,
+                        topP: config?.topP ?? 0.95,
+                    }
+                });
             });
 
             // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
