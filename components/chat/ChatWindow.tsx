@@ -7,7 +7,6 @@ import type { Message as MessageType, Contact, ILinkPredictionProposal } from '@
 import { AnimatePresence } from 'framer-motion';
 import { useNotification } from '@/lib/hooks/use-notifications';
 
-import Header from '@/components/Header';
 import MessageList from '@/components/chat/MessageList';
 import ErrorDisplay from '@/components/chat/ErrorDisplay';
 import ChatFooter from '@/components/chat/ChatFooter';
@@ -23,7 +22,7 @@ const ChatWindow = () => {
         updateCurrentConversation,
     } = useConversation();
     
-    const { isZenMode, isLogPanelOpen, setExtractionTarget, setActiveView, isMobileView } = useUIState();
+    const { isZenMode, isLogPanelOpen, setExtractionTarget, setActiveView } = useUIState();
     const { addNotification } = useNotification();
     
     const [proactiveSuggestion, setProactiveSuggestion] = useState<string | null>(null);
@@ -48,17 +47,17 @@ const ChatWindow = () => {
         if (aiResponse) setProactiveSuggestion(suggestion);
         if (memoryProposal) {
           addNotification({
-            type: 'info', title: 'فرصة تعلم جديدة', message: "تعلمت شيئاً جديداً من محادثتنا. هل تود مراجعته؟",
-            action: { label: 'مراجعة وحفظ', onClick: () => { setExtractionTarget({ type: 'conversation', id: memoryProposal.conversationId }); setActiveView('memory_extraction_hub'); }}
+            type: 'info', title: 'New Learning', message: "I've learned something new. Review and save?",
+            action: { label: 'Review', onClick: () => { setExtractionTarget({ type: 'conversation', id: memoryProposal.conversationId }); setActiveView('memory_extraction_hub'); }}
           });
         }
     };
 
+    // ChatWindow now takes 100% height of its container in App.tsx
     return (
-        <div className="flex flex-col h-full bg-gray-950 overflow-hidden chat-container">
-            {!isZenMode && <Header />}
-            
-            <div className="flex-1 min-h-0 flex flex-col relative overflow-hidden">
+        <div className="flex flex-col h-full bg-gray-900/50">
+            {/* Message List takes available space */}
+            <div className="flex-1 min-h-0 relative">
                 <MessageList 
                     messages={messages}
                     currentConversation={currentConversation}
@@ -87,18 +86,32 @@ const ChatWindow = () => {
                 />
             </div>
 
+            {/* Status Bar (Settings/Stats) */}
+            {!isZenMode && currentConversation && (
+                <div className="flex-shrink-0">
+                    <StatusBar 
+                        onSettingsClick={() => setSettingsModalOpen(true)}
+                        onAgentConfigClick={() => setAgentConfigModalOpen(true)}
+                    />
+                </div>
+            )}
+
+            {/* Error Display */}
             <ErrorDisplay status={status} isDbError={!!(status.error && /database|postgres/i.test(status.error))} clearError={clearError} />
             
-            <ChatFooter 
-                proactiveSuggestion={proactiveSuggestion}
-                onSuggestionClick={() => { proactiveSuggestion && alert(`Action: ${proactiveSuggestion}`); setProactiveSuggestion(null); }}
-                onDismissSuggestion={() => setProactiveSuggestion(null)}
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                replyToMessage={replyToMessage}
-                onCancelReply={() => setReplyToMessage(null)}
-                onInspectClick={(id) => setInspectorModalState({ isOpen: true, messageId: id as any })}
-            />
+            {/* Input Area */}
+            <div className="flex-shrink-0 z-20">
+                <ChatFooter 
+                    proactiveSuggestion={proactiveSuggestion}
+                    onSuggestionClick={() => { proactiveSuggestion && alert(`Action: ${proactiveSuggestion}`); setProactiveSuggestion(null); }}
+                    onDismissSuggestion={() => setProactiveSuggestion(null)}
+                    onSendMessage={handleSendMessage}
+                    isLoading={isLoading}
+                    replyToMessage={replyToMessage}
+                    onCancelReply={() => setReplyToMessage(null)}
+                    onInspectClick={(id) => setInspectorModalState({ isOpen: true, messageId: id as any })}
+                />
+            </div>
             
             <AnimatePresence>{isLogPanelOpen && <LogOutputPanel />}</AnimatePresence>
 

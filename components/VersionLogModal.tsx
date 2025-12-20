@@ -39,23 +39,24 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
 
     const selectedVersion = history.find(v => v.id === selectedVersionId);
 
+    // Using z-[9999] to ensure it is above absolutely everything
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[300] p-4"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
             onClick={onClose}
         >
             <motion.div
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
-                className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden"
+                className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-5xl h-[80vh] max-h-[800px] flex flex-col overflow-hidden relative"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex justify-between items-center p-5 border-b border-gray-800 bg-gray-900">
+                <div className="flex justify-between items-center p-5 border-b border-gray-800 bg-gray-900 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-indigo-500/20 rounded-lg">
                             <CodeIcon className="w-6 h-6 text-indigo-400" />
@@ -65,7 +66,11 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
                             <p className="text-xs text-gray-400">Track changes and new features</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
+                    <button 
+                        onClick={onClose} 
+                        className="p-2 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                        aria-label="Close modal"
+                    >
                         <XIcon className="w-6 h-6" />
                     </button>
                 </div>

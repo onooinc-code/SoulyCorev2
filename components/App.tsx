@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ChatWindow from '@/components/chat/ChatWindow';
 import Sidebar from '@/components/Sidebar';
+import Header from '@/components/Header'; // Import Header
 import { useUIState } from '@/components/providers/UIStateProvider';
 import { AnimatePresence, motion } from 'framer-motion';
 import NavigationRail from './NavigationRail';
@@ -29,6 +30,7 @@ export const App = () => {
         activeView,
         setCommandPaletteOpen,
         isMobileView,
+        isZenMode // Use ZenMode to toggle Header visibility
     } = useUIState();
 
     const { menuItems, contextMenu, handleContextMenu, closeContextMenu } = useAppContextMenu();
@@ -53,7 +55,7 @@ export const App = () => {
         if (activeView === 'chat') {
             if (currentConversation) return <ChatWindow />;
             return (
-                <div className="w-full h-full flex items-center justify-center p-8">
+                <div className="w-full h-full flex items-center justify-center p-8 bg-gray-900">
                     <EmptyState
                         icon={ChatBubbleLeftRightIcon}
                         title="ابدأ محادثة جديدة"
@@ -112,14 +114,19 @@ export const App = () => {
                     )}
                 </AnimatePresence>
 
-                {/* Main Dynamic View Area */}
-                <div className="flex-1 flex flex-col min-w-0 h-full relative">
-                    <div className="flex-1 flex flex-col min-h-0 relative">
+                {/* Main Dynamic View Area with Header */}
+                <div className="flex-1 flex flex-col min-w-0 h-full relative bg-gray-900">
+                    {/* Header is now here, persistent across all views unless Zen Mode is active */}
+                    {!isZenMode && <Header />}
+
+                    <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
                         {renderMainContent()}
                     </div>
                     
-                    {/* Navigation System */}
-                    {isMobileView ? <MobileBottomNav /> : <AppStatusBar />}
+                    {/* Navigation System (Footer) */}
+                    <div className="flex-shrink-0 z-40">
+                        {isMobileView ? <MobileBottomNav /> : <AppStatusBar />}
+                    </div>
                 </div>
             </div>
 

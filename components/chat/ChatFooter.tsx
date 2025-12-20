@@ -41,8 +41,10 @@ const ChatFooter = ({
     const isCognitiveStatus = (action: any): action is CognitiveStatus => 
         typeof action === 'object' && action !== null && 'phase' in action;
 
+    // Use sticky positioning instead of fixed to stay within the flex container logic
+    // but typically it just sits at the bottom of the flex column in ChatWindow.
     return (
-        <div className="flex-shrink-0 bg-gray-950/80 backdrop-blur-xl border-t border-white/5 safe-bottom z-30">
+        <div className="bg-gray-950 border-t border-white/5 relative z-30">
             <AnimatePresence>
                 {replyToMessage && (
                      <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="bg-indigo-500/10 p-2 text-xs overflow-hidden border-b border-indigo-500/20">
