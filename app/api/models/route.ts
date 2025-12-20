@@ -25,14 +25,16 @@ export async function GET(req: NextRequest) {
         const models: string[] = [];
 
         for await (const m of pager) {
+            // Cast to any to avoid TypeScript error regarding 'supportedGenerationMethods'
+            const modelAny = m as any;
             if (
-                m.name && // Check if name exists
-                m.name.toLowerCase().includes('gemini') && 
-                m.supportedGenerationMethods?.includes('generateContent')
+                modelAny.name && 
+                modelAny.name.toLowerCase().includes('gemini') && 
+                modelAny.supportedGenerationMethods?.includes('generateContent')
             ) {
                 // The API returns names like "models/gemini-1.5-flash"
                 // We typically just want the ID part "gemini-1.5-flash"
-                models.push(m.name.replace('models/', ''));
+                models.push(modelAny.name.replace('models/', ''));
             }
         }
         
