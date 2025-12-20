@@ -1,3 +1,4 @@
+
 import { EpisodicMemoryModule } from '../memory/modules/episodic';
 import { SemanticMemoryModule, ISemanticQueryResult } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
@@ -140,48 +141,52 @@ Respond with ONLY the JSON array.`;
             });
 
 
-            // Step 3: Proactive Entity Retrieval with Salience
-            const proactiveEntities = await this.logStep(runId, 3, 'Proactive Entity Retrieval w/ Salience', { userQuery, topK: 3, candidates: 10 }, async () => {
+            // Step 3: Proactive Entity Retrieval with Enhanced Salience
+            const proactiveEntities = await this.logStep(runId, 3, 'Proactive Entity Retrieval w/ Salience', { userQuery, topK: 3, candidates: 15 }, async () => {
                 if (!conversation.useStructuredMemory) return [];
             
-                // 1. Fetch more candidates from vector search
-                const vectorResults: IVectorQueryResult[] = await this.entityVectorMemory.query({ queryText: userQuery, topK: 10 });
+                // 1. Fetch more candidates from vector search to allow for re-ranking
+                const vectorResults: IVectorQueryResult[] = await this.entityVectorMemory.query({ queryText: userQuery, topK: 15 });
                 if (vectorResults.length === 0) return [];
             
                 const entityIds = vectorResults.map(e => e.id);
                 const vectorScores = new Map(vectorResults.map(e => [e.id, e.score]));
             
                 // 2. Fetch full entity details including salience data
-                // FIX: Removed the generic type argument from `db.query`. The wrapper function in `lib/db.ts` is not generic, and calling it with a type argument causes a TypeScript error "Expected 0 type arguments, but got 1."
+                // FIX: Removed the generic type argument from `db.query`. The wrapper function in `lib/db.ts` is not generic.
                 const { rows: candidateEntities } = await db.query(
                     'SELECT * FROM entity_definitions WHERE id = ANY($1::uuid[])',
                     [entityIds]
                 );
             
                 // 3. Calculate salience and re-rank
+                // Formula: FinalScore = VectorMatch * (1 + RecencyBoost + FrequencyBoost)
                 const now = new Date().getTime();
                 const rankedEntities = candidateEntities.map(entity => {
                     const vectorScore = vectorScores.get(entity.id) || 0;
                     
-                    const lastAccessed = entity.lastAccessedAt ? new Date(entity.lastAccessedAt).getTime() : now;
-                    const daysSinceAccess = (now - lastAccessed) / (1000 * 3600 * 24);
-                    const recencyWeight = 1 / (1 + Math.log(1 + daysSinceAccess));
+                    // Recency Boost: Higher boost for very recent access (decay over 7 days)
+                    const lastAccessed = entity.lastAccessedAt ? new Date(entity.lastAccessedAt).getTime() : now - (1000 * 3600 * 24 * 30);
+                    const hoursSinceAccess = (now - lastAccessed) / (1000 * 3600);
+                    const recencyWeight = 1 / (1 + Math.log(1 + hoursSinceAccess)); // Decays quickly then flattens
             
-                    const frequencyWeight = Math.log(1 + (entity.accessCount || 0));
+                    // Frequency Boost: Logarithmic scale to prevent old frequent items from dominating forever
+                    const frequencyWeight = Math.log10((entity.accessCount || 0) + 1);
             
-                    const finalScore = vectorScore * (1 + 0.5 * recencyWeight + 0.5 * frequencyWeight);
+                    // Combined Score: Vector similarity is the base, boosted by cognitive salience
+                    const finalScore = vectorScore * (1 + (0.7 * recencyWeight) + (0.3 * frequencyWeight));
             
                     return { ...entity, finalScore };
                 });
             
+                // Sort by final score descending
                 rankedEntities.sort((a, b) => b.finalScore - a.finalScore);
                 
-                const topEntities = rankedEntities.slice(0, 3);
-            
-                return topEntities;
+                // Return top 3 most salient entities
+                return rankedEntities.slice(0, 3);
             }) as EntityDefinition[];
             
-            // Fire-and-forget salience update for the entities that were actually used
+            // Fire-and-forget salience update for the entities that were actually chosen
             this.updateEntitySalience(proactiveEntities.map(e => e.id));
 
 
@@ -202,7 +207,7 @@ Respond with ONLY the JSON array.`;
                         context += "\n";
                     }
                     if (proactiveEntities.length > 0) {
-                        context += "--- Relevant Entities from Memory ---\n";
+                        context += "--- Relevant Entities from Memory (Ranked by Salience) ---\n";
                         context += proactiveEntities.map(e => `Entity: ${e.name} (${e.type}) - ${e.description}`).join('\n');
                         context += "\n";
                     }
@@ -214,8 +219,8 @@ Respond with ONLY the JSON array.`;
             const { systemInstruction, history } = await this.logStep(runId, 6, 'Assemble Context', { semanticResults, structuredContext, recentMessages }, () => {
                 let contextBlock = "";
                 if (semanticResults.length > 0) {
-                    contextBlock += "--- Relevant Knowledge ---\n";
-                    contextBlock += semanticResults.map(r => r.text).join('\n');
+                    contextBlock += "--- Relevant Knowledge (Semantic Memory) ---\n";
+                    contextBlock += semanticResults.map(r => `> ${r.text}`).join('\n');
                     contextBlock += "\n--------------------------\n";
                 }
                 if (structuredContext) {
