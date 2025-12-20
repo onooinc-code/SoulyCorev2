@@ -72,7 +72,7 @@ const versionData = [
     },
     {
         version: '0.4.2',
-        releaseDate: new Date().toISOString(),
+        releaseDate: '2024-07-27T10:00:00Z',
         changes: `
 - **UI/UX Polish:**
   - **Custom Scrollbars:** Implemented a sleek, modern scrollbar design across the entire application, replacing the default browser scrollbars for a premium feel.
@@ -80,6 +80,17 @@ const versionData = [
   - **Readability:** The Version History / Changelog modal now forces Left-to-Right (LTR) text direction for the content area, ensuring that technical English logs are easy to read.
 - **Bug Fixes:**
   - Resolved issues where message bubbles could become hidden or cut off by ensuring proper overflow handling and container sizing.`
+    },
+    {
+        version: '0.4.3',
+        releaseDate: new Date().toISOString(),
+        changes: `
+- **UX: The Ultimate Scrollbar:**
+  - Implemented a highly advanced, 15-feature CSS scrollbar design. Features include gradient thumbs, hover glow effects, "floating" appearance via transparent borders, rounded pills, and cross-browser compatibility (Firefox/Webkit).
+- **Bug Fix: Hidden Messages:**
+  - Fixed a critical layout bug where the first message in the chat was partially or completely hidden behind the top header. Added layout compensation (\`pt-16\`) to the chat window to respect the absolute positioning of the header.
+- **Visual Polish:**
+  - Refined message list container scrolling behavior.`
     }
 ];
 
