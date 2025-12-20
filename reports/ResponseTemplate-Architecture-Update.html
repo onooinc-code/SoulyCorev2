@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تحديث البنية التحتية: تفعيل الذاكرة الكاملة</title>
+    <style>
+        body { font-family: sans-serif; background: #111; color: #eee; padding: 20px; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1, h2 { color: #a450e8; }
+        .card { background: #1e1e2e; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; }
+        .active { color: #4caf50; font-weight: bold; }
+        code { background: #333; padding: 2px 5px; border-radius: 4px; color: #ff79c6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>تحديث البنية التحتية: تفعيل الذاكرة الكاملة</h1>
+        <p>بناءً على تأكيدكم، تم تحديث النظام للتعامل مع جميع قواعد البيانات كأنظمة نشطة وفعالة.</p>
+
+        <div class="card">
+            <h2>1. تحديث حالة الأنظمة (System Status Update)</h2>
+            <ul>
+                <li><strong>EdgeDB (Graph Memory):</strong> <span class="active">نشط (Active)</span> - تم ربطه الآن بـ <code>ContextAssemblyPipeline</code> لاسترجاع العلاقات المعقدة أثناء المحادثة.</li>
+                <li><strong>MongoDB (Document Memory):</strong> <span class="active">نشط (Active)</span> - تم تفعيل <code>DocumentMemoryModule</code> لأرشفة سجلات الاستخراج والبيانات الخام.</li>
+                <li><strong>Postgres (Structured/Profile):</strong> <span class="active">نشط (Active)</span> - تم إضافة <code>ProfileMemoryModule</code> لتخزين تفضيلات المستخدم.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>2. استخراج التفضيلات (User Preferences)</h2>
+            <p>تم إضافة منطق جديد في <code>MemoryExtractionPipeline</code>:</p>
+            <ul>
+                <li>يقوم النموذج الآن بالبحث تحديداً عن جمل مثل "أنا أحب كذا" أو "اسمي كذا".</li>
+                <li>يتم تخزين هذه التفضيلات في جدول <code>settings</code> تحت المفتاح <code>user_profile_data</code>.</li>
+                <li>عند بدء أي محادثة جديدة، يتم تحميل هذا الملف الشخصي وحقنه في سياق النظام (System Prompt).</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>3. كيف يعمل النظام الآن؟</h2>
+            <p>عندما تسأل سؤالاً:</p>
+            <ol>
+                <li><strong>Postgres:</strong> يجلب تاريخ المحادثة + ملفك الشخصي (تفضيلاتك).</li>
+                <li><strong>Pinecone:</strong> يجلب النصوص المشابهة (Knowledge).</li>
+                <li><strong>EdgeDB:</strong> يجلب علاقات الكيانات المذكورة (Graph lookup).</li>
+                <li><strong>Gemini:</strong> يجمع كل هذا ويجيبك بدقة متناهية.</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
