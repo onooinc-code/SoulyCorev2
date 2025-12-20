@@ -4,8 +4,23 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.4.10',
+        version: '0.4.11',
         releaseDate: new Date().toISOString(),
+        changes: `
+### 🖌️ Visual Refresh & Compact Mode (v0.4.11)
+
+**Toolbar Redesign:**
+- **Minimalist Aesthetic:** Removed text labels from both top and bottom toolbars for a cleaner, modern look, relying purely on iconography and tooltips.
+- **Optimized Layout:** Buttons are now intelligently distributed to fill the available screen width, ensuring better spacing and touch targets.
+- **Increased Input Space:** Leveraged the saved vertical space to expand the main chat input area, making it easier to write and review longer messages (defaulting to 3 rows).
+
+**UX Improvements:**
+- **Fluid Responsiveness:** The new toolbar layout adapts better to different screen sizes, providing a consistent experience on desktop and mobile.
+`
+    },
+    {
+        version: '0.4.10',
+        releaseDate: new Date('2024-07-29T14:00:00Z'),
         changes: `
 ### 🛠️ Customization & Productivity (v0.4.10)
 
@@ -51,22 +66,6 @@ const versionData = [
 - Solving the "3 Models Only" issue.
 - Restoring the Chat Input Toolbar.
 - Fixing Copy/Paste functionality.
-`
-    },
-    {
-        version: '0.4.7',
-        releaseDate: new Date('2024-07-28T10:00:00Z'),
-        changes: `
-### 🛠️ Critical Fixes & Enhancements (v0.4.7)
-
-**Core Improvements:**
-- **Model List:** Fixed the AI Model dropdown to display a comprehensive list of all Gemini models (including Pro, Flash, Vision) by default.
-- **Chat Input Toolbar:** Implemented a visible, horizontally scrollable toolbar above the chat input with 15+ quick action buttons.
-- **Header Layout:** Resolved the layout issue where the Header was obscuring content.
-
-**Bug Fixes:**
-- **Copy/Paste:** Fixed the context menu "Paste" functionality.
-- **New Chat Navigation:** Creating a new conversation now immediately switches the view.
 `
     }
 ];

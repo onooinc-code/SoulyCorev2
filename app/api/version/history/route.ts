@@ -8,9 +8,26 @@ export const dynamic = 'force-dynamic';
 // Static source of truth for versions to ensure UI works even if DB seed fails
 const staticHistory: VersionHistory[] = [
     {
+        id: 'v-0.4.11',
+        version: '0.4.11',
+        releaseDate: new Date(),
+        createdAt: new Date(),
+        changes: `
+### 🖌️ Visual Refresh & Compact Mode (v0.4.11)
+
+**Toolbar Redesign:**
+- **Minimalist Aesthetic:** Removed text labels from both top and bottom toolbars for a cleaner, modern look, relying purely on iconography and tooltips.
+- **Optimized Layout:** Buttons are now intelligently distributed to fill the available screen width, ensuring better spacing and touch targets.
+- **Increased Input Space:** Leveraged the saved vertical space to expand the main chat input area, making it easier to write and review longer messages (defaulting to 3 rows).
+
+**UX Improvements:**
+- **Fluid Responsiveness:** The new toolbar layout adapts better to different screen sizes, providing a consistent experience on desktop and mobile.
+`
+    },
+    {
         id: 'v-0.4.10',
         version: '0.4.10',
-        releaseDate: new Date(),
+        releaseDate: new Date('2024-07-29T14:00:00Z'),
         createdAt: new Date(),
         changes: `
 ### 🛠️ Customization & Productivity (v0.4.10)

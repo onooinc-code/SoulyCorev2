@@ -36,26 +36,25 @@ interface ToolbarButtonProps {
     colorIndex: number;
     onEdit?: () => void;
     isEditing?: boolean;
+    className?: string;
 }
 
-const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon: Icon, label, onClick, onContextMenu, colorIndex, onEdit, isEditing }) => (
-    <div className="relative group">
+const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon: Icon, label, onClick, onContextMenu, colorIndex, onEdit, isEditing, className }) => (
+    <div className={`relative group ${className || ''}`}>
         <button 
             onClick={onClick} 
             onContextMenu={onContextMenu}
-            className="flex flex-col items-center justify-center min-w-[60px] h-[50px] p-1 rounded-xl bg-gray-800/40 hover:bg-gray-800 border border-transparent hover:border-indigo-500/30 transition-all duration-200 relative"
+            className="flex items-center justify-center w-full h-10 rounded-lg bg-gray-800/40 hover:bg-gray-800 border border-transparent hover:border-indigo-500/30 transition-all duration-200 relative"
             title={label}
         >
-            <Icon className={`w-4 h-4 mb-1 transition-colors ${COLORS[colorIndex % COLORS.length]}`} />
-            <span className="text-[8px] text-gray-500 group-hover:text-gray-200 font-medium leading-none text-center px-1 line-clamp-2">{label}</span>
-            
+            <Icon className={`w-5 h-5 transition-colors ${COLORS[colorIndex % COLORS.length]}`} />
         </button>
         {isEditing && onEdit && (
             <button 
                 onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                className="absolute -top-1 -right-1 bg-gray-900 text-gray-300 rounded-full p-1 border border-gray-600 hover:text-white hover:bg-indigo-600 shadow-md z-10"
+                className="absolute -top-1 -right-1 bg-gray-900 text-gray-300 rounded-full p-0.5 border border-gray-600 hover:text-white hover:bg-indigo-600 shadow-md z-10"
             >
-                <EditIcon className="w-3 h-3" />
+                <EditIcon className="w-2.5 h-2.5" />
             </button>
         )}
     </div>
@@ -85,7 +84,8 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 160)}px`;
+            // Increase max height to accommodate larger default size
+            textareaRef.current.style.height = `${Math.min(Math.max(textareaRef.current.scrollHeight, 80), 300)}px`;
         }
     }, [content]);
     
@@ -170,8 +170,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         { icon: TrashIcon, label: 'Clear', action: () => setContent('') },
         { icon: CopyIcon, label: 'Copy', action: () => navigator.clipboard.writeText(content).then(() => addNotification({type:'success', title:'Copied'})) },
         { icon: ClipboardPasteIcon, label: 'Paste', action: () => navigator.clipboard.readText().then(t => handleAction(t)) },
-        { icon: DocumentTextIcon, label: 'Uppercase', action: () => modifyText(t => t.toUpperCase()) },
-        { icon: DocumentTextIcon, label: 'Lowercase', action: () => modifyText(t => t.toLowerCase()) },
+        // { icon: DocumentTextIcon, label: 'Uppercase', action: () => modifyText(t => t.toUpperCase()) }, // Reduced count for better spacing
         
         // New formatting tools
         { icon: DocumentTextIcon, label: 'Bold', action: () => modifyText(t => `**${t}**`) },
@@ -182,7 +181,6 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         { icon: CodeIcon, label: 'Code', action: () => modifyText(t => `\`${t}\``) },
         { icon: LinkIcon, label: 'Link', action: () => modifyText(t => `[${t}](url)`) },
 
-        { icon: DocumentTextIcon, label: 'Indent', action: () => modifyText(t => "\t" + t) },
         { icon: ClockIcon, label: 'Time', action: () => handleAction(new Date().toLocaleTimeString()) },
         { icon: WrenchScrewdriverIcon, label: 'JSON Fmt', action: () => { try { modifyText(t => JSON.stringify(JSON.parse(t), null, 2)) } catch(e) { addNotification({type:'error', title:'Invalid JSON'}) } } },
     ];
@@ -271,20 +269,21 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 )}
             </AnimatePresence>
 
-            {/* 1. Top Toolbar (Prompt Macros) */}
+            {/* 1. Top Toolbar (Prompt Macros) - Scaled Down & Distributed */}
             <div className="flex items-center gap-2 px-2 mb-2 relative">
-                <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-2 pb-2 mask-linear-fade justify-center">
+                <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-1.5 pb-1 mask-linear-fade">
                     {topActions.map((action, idx) => (
-                        <ToolbarButton 
-                            key={action.key}
-                            icon={action.icon}
-                            label={action.label}
-                            onClick={() => handleAction(action.prompt, action.replace)}
-                            onContextMenu={(e) => handleContextMenu(e, action.key, action.label, action.prompt)}
-                            colorIndex={idx}
-                            isEditing={isEditMode}
-                            onEdit={() => handleEditButton(action.key, action.label, action.prompt)}
-                        />
+                        <div key={action.key} className="flex-shrink-0 min-w-[36px]">
+                            <ToolbarButton 
+                                icon={action.icon}
+                                label={action.label}
+                                onClick={() => handleAction(action.prompt, action.replace)}
+                                onContextMenu={(e) => handleContextMenu(e, action.key, action.label, action.prompt)}
+                                colorIndex={idx}
+                                isEditing={isEditMode}
+                                onEdit={() => handleEditButton(action.key, action.label, action.prompt)}
+                            />
+                        </div>
                     ))}
                 </div>
                 <button 
@@ -307,23 +306,23 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 )}
             </AnimatePresence>
 
-            {/* 3. Input Area */}
-            <div className="px-4 pb-2">
-                <div className="flex items-end gap-2 bg-gray-900 border border-white/10 p-2 rounded-2xl shadow-inner focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500/50 transition-all">
+            {/* 3. Input Area - Height Increased */}
+            <div className="px-4 pb-3">
+                <div className="flex items-end gap-2 bg-gray-900 border border-white/10 p-3 rounded-2xl shadow-inner focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500/50 transition-all min-h-[80px]">
                     <input type="file" ref={fileInputRef} className="hidden" onChange={e => setAttachment(e.target.files?.[0] || null)} />
                     
-                    <button onClick={() => fileInputRef.current?.click()} className="p-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl h-[44px] w-[44px] flex justify-center items-center flex-shrink-0 transition-colors" title="Attach File">
+                    <button onClick={() => fileInputRef.current?.click()} className="p-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl h-[44px] w-[44px] flex justify-center items-center flex-shrink-0 transition-colors mb-1" title="Attach File">
                         <PaperclipIcon className="w-5 h-5" />
                     </button>
 
-                    <div className="flex-1 relative">
+                    <div className="flex-1 relative h-full">
                         <textarea
                             ref={textareaRef}
                             value={content}
                             onChange={handleInputChange}
                             placeholder="اكتب رسالتك، استخدم / للأوامر، @ للإشارة..."
-                            className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-3 text-sm leading-relaxed max-h-[200px]"
-                            rows={1}
+                            className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-2 text-base leading-relaxed min-h-[60px] max-h-[300px]"
+                            rows={3}
                             dir="auto"
                             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                         />
@@ -339,7 +338,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                     <button 
                         onClick={handleSend} 
                         disabled={(!content.trim() && !attachment) || isLoading} 
-                        className={`p-3 rounded-xl h-[44px] w-[44px] flex justify-center items-center shadow-lg transition-all duration-200 flex-shrink-0 ${
+                        className={`p-3 rounded-xl h-[44px] w-[44px] flex justify-center items-center shadow-lg transition-all duration-200 flex-shrink-0 mb-1 ${
                             (!content.trim() && !attachment) || isLoading 
                             ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
                             : 'bg-indigo-600 hover:bg-indigo-500 text-white hover:scale-105 active:scale-95'
@@ -350,19 +349,19 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 </div>
             </div>
 
-            {/* 4. Bottom Toolbar (Text Manipulation) */}
+            {/* 4. Bottom Toolbar (Text Manipulation) - Justified & Flexible */}
             <div className="px-4 pb-2">
-                <div className="overflow-x-auto no-scrollbar flex items-center gap-2 justify-center py-1">
+                <div className="flex items-center justify-between gap-1.5 w-full">
                     {bottomToolbarActions.map((action, idx) => (
-                        <button
-                            key={idx}
-                            onClick={action.action}
-                            className={`flex flex-col items-center justify-center min-w-[60px] h-[50px] p-1 rounded-lg bg-gray-900 hover:bg-gray-800 border border-white/5 hover:border-white/10 transition-all group`}
-                            title={action.label}
-                        >
-                            <action.icon className={`w-4 h-4 mb-1 ${COLORS[(idx + 5) % COLORS.length]}`} />
-                            <span className="text-[8px] text-gray-500 group-hover:text-gray-300">{action.label}</span>
-                        </button>
+                        <div key={idx} className="flex-1">
+                             <ToolbarButton 
+                                icon={action.icon}
+                                label={action.label}
+                                onClick={action.action}
+                                onContextMenu={(e) => e.preventDefault()} // No right click edit for bottom bar
+                                colorIndex={idx + 5}
+                            />
+                        </div>
                     ))}
                 </div>
             </div>
