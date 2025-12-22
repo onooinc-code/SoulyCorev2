@@ -162,7 +162,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setMemoryMonitorState('graph', 'executing', null, undefined, q);
         setMemoryMonitorState('episodic', 'executing', null, undefined, q);
 
-        const result = await baseAddMessage(msgData, mentioned, history, parent);
+        const result = await baseAddMessage(msgData, mentioned, history, parent, isAgentEnabled, isLinkPredictionEnabled);
         
         if (result.aiResponse && (result as any).monitorMetadata) {
             const meta = (result as any).monitorMetadata;
@@ -170,6 +170,9 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             // Record usage from retrieval calls
             recordUsage({ origin: 'retrieval', model: 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
             recordUsage({ origin: 'generation', model: currentConversation?.model || 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
+
+            if (isAgentEnabled) recordUsage({ origin: 'agent_thought', model: 'gemini-3-pro-preview', timestamp: new Date().toISOString() });
+            if (isLinkPredictionEnabled) recordUsage({ origin: 'link_prediction', model: 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
 
             const getStatus = (data: any): ExecutionStatus => {
                 if (!data) return 'null';
@@ -184,7 +187,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
         
         return result;
-    }, [baseAddMessage, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation]);
+    }, [baseAddMessage, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled]);
 
     const runCognitiveSynthesis = useCallback(async () => {
         setAppStatus({ currentAction: { phase: 'reasoning', details: 'Synthesizing knowledge nexus...' }});

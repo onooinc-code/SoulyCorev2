@@ -1,15 +1,10 @@
+
 "use client";
 
 import React from 'react';
 import { motion } from 'framer-motion';
 import { BeakerIcon } from '../Icons';
-
-type CognitivePhase = 'idle' | 'retrieving' | 'assembling' | 'prompting' | 'generating';
-
-interface CognitiveStatus {
-    phase: CognitivePhase;
-    details: string;
-}
+import { CognitiveStatus, CognitivePhase } from '@/lib/types';
 
 interface CognitiveStatusBarProps {
     status: CognitiveStatus;
@@ -17,7 +12,8 @@ interface CognitiveStatusBarProps {
 }
 
 const CognitiveStatusBar = ({ status, onInspect }: CognitiveStatusBarProps) => {
-    const phases: CognitivePhase[] = ['retrieving', 'assembling', 'prompting', 'generating'];
+    // All available phases including the new reasoning and acting states
+    const phases: CognitivePhase[] = ['retrieving', 'assembling', 'reasoning', 'acting', 'prompting', 'generating'];
     const currentPhaseIndex = phases.indexOf(status.phase);
 
     return (
@@ -29,22 +25,24 @@ const CognitiveStatusBar = ({ status, onInspect }: CognitiveStatusBarProps) => {
                         <div key={phase} className="flex-1 flex flex-col items-center">
                             <div className="relative w-full h-1 bg-gray-700 rounded-full">
                                 <motion.div
-                                    className="absolute top-0 left-0 h-full bg-indigo-500 rounded-full"
+                                    className={`absolute top-0 left-0 h-full rounded-full ${index === currentPhaseIndex ? 'bg-yellow-400' : 'bg-indigo-500'}`}
                                     initial={{ width: 0 }}
-                                    animate={{ width: index < currentPhaseIndex ? '100%' : index === currentPhaseIndex ? '50%' : '0%' }}
+                                    animate={{ 
+                                        width: index < currentPhaseIndex ? '100%' : index === currentPhaseIndex ? '50%' : '0%' 
+                                    }}
                                     transition={{ duration: 0.5, ease: 'easeInOut' }}
                                 />
                             </div>
-                            <span className={`mt-1 text-xs ${index <= currentPhaseIndex ? 'text-gray-300' : 'text-gray-500'}`}>{phase}</span>
+                            <span className={`mt-1 text-[8px] uppercase tracking-tighter ${index <= currentPhaseIndex ? 'text-gray-300 font-bold' : 'text-gray-600'}`}>{phase}</span>
                         </div>
                     ))}
                 </div>
             </div>
             <div className="flex items-center gap-4 ml-4">
-                <p className="text-gray-400 italic animate-pulse">{status.details}</p>
+                <p className="text-gray-400 italic animate-pulse truncate max-w-[200px]">{status.details}</p>
                 <button 
                     onClick={onInspect}
-                    className="flex items-center gap-1.5 px-3 py-1 bg-gray-700 rounded-md hover:bg-gray-600 text-gray-300"
+                    className="flex items-center gap-1.5 px-3 py-1 bg-gray-700 rounded-md hover:bg-gray-600 text-gray-300 shrink-0"
                     title="Inspect the detailed cognitive process for this response"
                 >
                     <BeakerIcon className="w-4 h-4"/>
