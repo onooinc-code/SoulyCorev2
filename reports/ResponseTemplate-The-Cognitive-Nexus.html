@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>SoulyCore | تقرير ملتقى المعرفة (The Nexus)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        body { font-family: 'Cairo', sans-serif; background: #05050a; color: #f1f1f1; padding: 40px; margin: 0; }
+        .nexus-container { max-width: 1200px; margin: 0 auto; border: 1px solid #1a1a3a; border-radius: 30px; background: linear-gradient(180deg, #0a0a1a 0%, #05050a 100%); overflow: hidden; box-shadow: 0 0 100px rgba(99, 102, 241, 0.1); }
+        .hero { padding: 80px 40px; text-align: center; border-bottom: 1px solid #1a1a3a; background: radial-gradient(circle at center, #1e1e3e 0%, transparent 70%); }
+        .hero h1 { font-size: 4em; margin: 0; background: linear-gradient(90deg, #6366f1, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; background: #1a1a3a; }
+        .tier { background: #0a0a1a; padding: 30px; text-align: center; }
+        .tier h2 { color: #6366f1; font-size: 1.2em; margin-bottom: 10px; }
+        .tier p { color: #888; font-size: 0.9em; }
+        .mermaid-section { padding: 60px; background: #000; border-bottom: 1px solid #1a1a3a; }
+        .final-word { padding: 60px; text-align: center; color: #aaa; font-style: italic; }
+    </style>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'dark', direction: 'rtl' });
+    </script>
+</head>
+<body>
+    <div class="nexus-container">
+        <div class="hero">
+            <h1>ملتقى المعرفة: SoulyCore V2.5</h1>
+            <p>تم إتمام التكامل بين الأبعاد الخمسة للذاكرة. النظام الآن يبحث، يستنتج، ويؤرشف ككيان واحد.</p>
+        </div>
+
+        <div class="grid">
+            <div class="tier">
+                <h2>Postgres</h2>
+                <p>الذاكرة الصلبة: المحادثات والكيانات الأساسية.</p>
+            </div>
+            <div class="tier">
+                <h2>Pinecone</h2>
+                <p>الذاكرة الدلالية: البحث في المعاني والمفاهيم.</p>
+            </div>
+            <div class="tier">
+                <h2>EdgeDB</h2>
+                <p>الذاكرة العلائقية: استنتاج الروابط بين البشر والمشاريع.</p>
+            </div>
+            <div class="tier">
+                <h2>MongoDB</h2>
+                <p>الذاكرة الأرشيفية: سجل التفكير والتاريخ الخام.</p>
+            </div>
+        </div>
+
+        <div class="mermaid-section">
+            <h2 style="text-align: center; margin-bottom: 40px; color: #10b981;">بنية البحث المعرفي (Cognitive Search Flow)</h2>
+            <div class="mermaid">
+            graph TD
+                Search[إدخال بحث المستخدم] --> Dispatcher{Cognitive Dispatcher}
+                
+                Dispatcher -->|Query| PG[(Postgres: SQL)]
+                Dispatcher -->|Embed & Query| PC[(Pinecone: Vectors)]
+                Dispatcher -->|Graph Query| EDB[(EdgeDB: Graph)]
+                Dispatcher -->|Regex Search| MON[(MongoDB: Archive)]
+                
+                PG & PC & EDB & MON --> Aggregator[مجمع النتائج الموحد]
+                Aggregator --> UI[واجهة البحث الذكية]
+                
+                style Aggregator fill:#1e1e3e,stroke:#6366f1
+                style Dispatcher fill:#1e1e3e,stroke:#10b981
+            </div>
+        </div>
+
+        <div class="final-word">
+            <p>"المعرفة ليست مجرد بيانات مخزنة، بل هي شبكة من العلاقات والتجارب. مع SoulyCore، كل كلمة تنطقها تصبح جزءاً من هذا النسيج الرقمي الخالد."</p>
+        </div>
+    </div>
+</body>
+</html>

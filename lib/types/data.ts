@@ -425,6 +425,14 @@ export interface ILinkPredictionProposal {
     suggestedPredicate: string;
 }
 
+// FIX: Added SearchResult type definition to resolve import errors in unified search features.
+export interface SearchResult {
+    id: string;
+    type: 'conversation' | 'contact' | 'relationship' | 'archive' | string;
+    title: string;
+    content: string | null;
+    source: string;
+}
 
 // For Nivo charts
 export interface FeatureStatusChartData {
