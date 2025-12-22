@@ -17,6 +17,7 @@ const HardResetModal = dynamic(() => import('@/components/HardResetModal'));
 const ResponseViewerModal = dynamic(() => import('@/components/ResponseViewerModal'));
 const ToolInspectorModal = dynamic(() => import('@/components/modals/ToolInspectorModal'));
 const MemoryInspectorModal = dynamic(() => import('@/components/modals/MemoryInspectorModal'));
+const ProfileModal = dynamic(() => import('@/components/modals/ProfileModal'));
 
 
 const GlobalModals = () => {
@@ -37,6 +38,8 @@ const GlobalModals = () => {
         setResponseViewerModalOpen,
         isToolInspectorOpen,
         setToolInspectorOpen,
+        isProfileModalOpen,
+        setProfileModalOpen,
         activeMemoryInspector,
         setMemoryInspector
     } = useUIState();
@@ -66,6 +69,9 @@ const GlobalModals = () => {
             </AnimatePresence>
             <AnimatePresence>
                 {isToolInspectorOpen && <ToolInspectorModal onClose={() => setToolInspectorOpen(false)} />}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isProfileModalOpen && <ProfileModal onClose={() => setProfileModalOpen(false)} />}
             </AnimatePresence>
             <AnimatePresence>
                 {activeMemoryInspector && (

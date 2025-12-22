@@ -6,22 +6,21 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.4.18',
-    version: '0.4.18',
+    id: 'v-0.4.19',
+    version: '0.4.19',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🚦 Multimodal Cognitive Monitoring (v0.4.18)
+### 🕵️ Full Cognitive Transparency (v0.4.19)
 
-**New Real-time Monitoring:**
-- **Tiered Memory Buttons:** Added dedicated monitors for Semantic, Structured, Graph, and Episodic memory in the Status Bar.
-- **Dynamic State Visualization:** Buttons now pulse Yellow during retrieval, Green on success, and Red on error.
-- **Deep Inspection Modals:** Click any memory button to see the raw data retrieved for the last conversation turn.
-- **Auto-Reset Logic:** Monitoring states now automatically reset when you send a new message.
+**Memory Monitor Upgrades:**
+- **Null Result State:** Added an Amber status color to indicate successful queries that returned no matches, distinguishing them from errors.
+- **Input Query Tracking:** The Memory Inspector now displays the exact query sent to each memory tier for full auditability.
 
-**Architectural Improvements:**
-- **Metadata Feedback Loop:** Enhanced Context Assembly Pipeline and Chat API to return retrieval metadata for frontend transparency.
-- **Monitor Sync:** Fixed tool status persistence across different conversation turns.
+**Static Memory Integration:**
+- **Identity Button:** Added a dedicated "Identity" button to the Status Bar to access static user data.
+- **Profile Modal:** New centralized view for User Preferences, Digital Identity, and Harvested Personal Facts.
+- **Static vs dynamic Toggle:** Clearer visual separation between turn-based memory and long-term user profile facts.
 `
 };
 

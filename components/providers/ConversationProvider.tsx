@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -45,7 +46,7 @@ interface ExtendedConversationContextType extends Omit<ConversationContextType, 
     
     setStatus: (status: Partial<IStatus>) => void;
     setToolState: (state: Partial<ToolState>) => void;
-    setMemoryMonitorState: (tier: keyof MemoryMonitorState, status: ExecutionStatus, data?: any, error?: string) => void;
+    setMemoryMonitorState: (tier: keyof MemoryMonitorState, status: ExecutionStatus, data?: any, error?: string, query?: string) => void;
     clearError: () => void;
     
     setScrollToMessageId: (messageId: string | null) => void;
@@ -79,10 +80,10 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setBaseToolState(prev => ({ ...prev, ...newState }));
     }, []);
 
-    const setMemoryMonitorState = useCallback((tier: keyof MemoryMonitorState, status: ExecutionStatus, data?: any, error?: string) => {
+    const setMemoryMonitorState = useCallback((tier: keyof MemoryMonitorState, status: ExecutionStatus, data?: any, error?: string, query?: string) => {
         setMemoryMonitor(prev => ({
             ...prev,
-            [tier]: { status, data, error }
+            [tier]: { status, data, error, query }
         }));
     }, []);
 
@@ -109,7 +110,6 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
     }, [log, currentConversationId]);
 
-    // FIX: Corrected the destructuring from useConversationList to not alias createNewConversation, resolving a reference error on line 219.
     const { conversations, loadConversations, createNewConversation, deleteConversation, updateConversationTitle, generateConversationTitle } = useConversationList({ 
         setIsLoading, 
         setStatus, 
@@ -133,26 +133,35 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const addMessage = useCallback(async (msgData: any, mentioned: any, history: any, parent: any) => {
         resetMonitors();
         
-        // Initial transition to executing
-        setMemoryMonitorState('semantic', 'executing');
-        setMemoryMonitorState('structured', 'executing');
-        setMemoryMonitorState('graph', 'executing');
-        setMemoryMonitorState('episodic', 'executing');
+        const q = msgData.content;
+        // Initial transition to executing with query tracking
+        setMemoryMonitorState('semantic', 'executing', null, undefined, q);
+        setMemoryMonitorState('structured', 'executing', null, undefined, q);
+        setMemoryMonitorState('graph', 'executing', null, undefined, q);
+        setMemoryMonitorState('episodic', 'executing', null, undefined, q);
 
         const result = await baseAddMessage(msgData, mentioned, history, parent);
         
         // Populate monitor data from API results
         if (result.aiResponse && (result as any).monitorMetadata) {
             const meta = (result as any).monitorMetadata;
-            setMemoryMonitorState('semantic', 'success', meta.semantic);
-            setMemoryMonitorState('structured', 'success', meta.structured);
-            setMemoryMonitorState('graph', 'success', meta.graph);
-            setMemoryMonitorState('episodic', 'success', meta.episodic);
+            
+            const getStatus = (data: any): ExecutionStatus => {
+                if (!data) return 'null';
+                if (Array.isArray(data) && data.length === 0) return 'null';
+                if (typeof data === 'number' && data === 0) return 'null';
+                return 'success';
+            };
+
+            setMemoryMonitorState('semantic', getStatus(meta.semantic), meta.semantic, undefined, q);
+            setMemoryMonitorState('structured', getStatus(meta.structured), meta.structured, undefined, q);
+            setMemoryMonitorState('graph', getStatus(meta.graph), meta.graph, undefined, q);
+            setMemoryMonitorState('episodic', getStatus(meta.episodic), meta.episodic, undefined, q);
         } else if (!result.aiResponse) {
-             setMemoryMonitorState('semantic', 'error', null, 'Failed to fetch AI response');
-             setMemoryMonitorState('structured', 'error', null, 'Retrieval interrupted');
-             setMemoryMonitorState('graph', 'error', null, 'Retrieval interrupted');
-             setMemoryMonitorState('episodic', 'error', null, 'Retrieval interrupted');
+             setMemoryMonitorState('semantic', 'error', null, 'Failed to fetch AI response', q);
+             setMemoryMonitorState('structured', 'error', null, 'Retrieval interrupted', q);
+             setMemoryMonitorState('graph', 'error', null, 'Retrieval interrupted', q);
+             setMemoryMonitorState('episodic', 'error', null, 'Retrieval interrupted', q);
         }
         
         return result;

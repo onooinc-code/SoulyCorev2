@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
-import { CogIcon, ClockIcon, WrenchScrewdriverIcon, LogIcon, RocketLaunchIcon, BrainIcon, CircleStackIcon, LinkIcon } from '@/components/Icons';
+import { CogIcon, ClockIcon, WrenchScrewdriverIcon, LogIcon, RocketLaunchIcon, BrainIcon, CircleStackIcon, LinkIcon, UserCircleIcon } from '@/components/Icons';
 import { ChatBubbleLeftRightIcon } from '@/components/Icons';
 import type { CognitiveStatus, ExecutionStatus } from '@/lib/types';
 
@@ -15,7 +15,7 @@ interface StatusBarProps {
 
 const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
     const { status, currentConversation, messages, toolState, memoryMonitor } = useConversation();
-    const { setLogPanelOpen, isLogPanelOpen, setToolInspectorOpen, setActiveView, setMemoryInspector } = useUIState();
+    const { setLogPanelOpen, isLogPanelOpen, setToolInspectorOpen, setActiveView, setMemoryInspector, setProfileModalOpen } = useUIState();
     
     const model = useMemo(() => currentConversation?.model || 'gemini-2.5-flash', [currentConversation]);
 
@@ -24,6 +24,7 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
         switch (status) {
             case 'executing': return base + "bg-yellow-500/20 text-yellow-400 border-yellow-500/50 animate-pulse";
             case 'success': return base + "bg-green-500/20 text-green-400 border-green-500/50 animate-pulse";
+            case 'null': return base + "bg-amber-500/20 text-amber-400 border-amber-500/50";
             case 'error': return base + "bg-red-500/20 text-red-400 border-red-500/50 animate-pulse";
             default: return base + "text-gray-500 border-transparent hover:text-white";
         }
@@ -78,6 +79,12 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
                 </button>
 
                 <div className="h-3 w-px bg-white/10 mx-1 hidden md:block" />
+
+                {/* Static Memory Buttons */}
+                <button onClick={() => setProfileModalOpen(true)} className="flex items-center gap-1 text-gray-500 hover:text-white transition-colors" title="User Profile (Static Memory)">
+                    <UserCircleIcon className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">Identity</span>
+                </button>
 
                  <button onClick={() => setActiveView('agent_center')} className="flex items-center gap-1 hover:text-white transition-colors">
                     <RocketLaunchIcon className="w-3.5 h-3.5" />

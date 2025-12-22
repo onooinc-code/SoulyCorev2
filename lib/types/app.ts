@@ -11,10 +11,11 @@ export interface CognitiveStatus {
     details: string;
 }
 
-export type ExecutionStatus = 'idle' | 'executing' | 'success' | 'error';
+export type ExecutionStatus = 'idle' | 'executing' | 'success' | 'null' | 'error';
 
 export interface ExecutionState {
     status: ExecutionStatus;
+    query?: string;
     data?: any;
     error?: string;
 }

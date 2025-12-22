@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { XIcon, BrainIcon, CircleStackIcon, LinkIcon, ClockIcon, InfoIcon, CheckIcon, ErrorIcon } from '@/components/Icons';
+import { XIcon, BrainIcon, CircleStackIcon, LinkIcon, ClockIcon, InfoIcon, CheckIcon, ErrorIcon, CommandLineIcon } from '@/components/Icons';
 import { useConversation } from '@/components/providers/ConversationProvider';
 
 interface MemoryInspectorModalProps {
@@ -26,6 +26,7 @@ const MemoryInspectorModal = ({ tier, onClose }: MemoryInspectorModalProps) => {
         idle: { label: 'Idle', icon: InfoIcon, color: 'text-gray-400' },
         executing: { label: 'Querying...', icon: config.icon, color: 'text-yellow-400 animate-pulse' },
         success: { label: 'Retrieval Successful', icon: CheckIcon, color: 'text-green-400' },
+        null: { label: 'No Match Found', icon: InfoIcon, color: 'text-amber-400' },
         error: { label: 'Retrieval Failed', icon: ErrorIcon, color: 'text-red-400' },
     }[tierState.status];
 
@@ -59,7 +60,7 @@ const MemoryInspectorModal = ({ tier, onClose }: MemoryInspectorModalProps) => {
                     </button>
                 </header>
 
-                <main className="p-6 space-y-6 overflow-y-auto custom-scrollbar h-[50vh]">
+                <main className="p-6 space-y-6 overflow-y-auto custom-scrollbar h-[60vh]">
                     <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/5">
                         <statusConfig.icon className={`w-8 h-8 ${statusConfig.color}`} />
                         <div>
@@ -69,14 +70,23 @@ const MemoryInspectorModal = ({ tier, onClose }: MemoryInspectorModalProps) => {
                     </div>
 
                     <div className="space-y-2">
+                         <h4 className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1"><CommandLineIcon className="w-3 h-3"/> Input Query</h4>
+                         <div className="bg-black/40 p-3 rounded-lg border border-white/5 font-mono text-sm text-indigo-200 italic">
+                            {tierState.query || "No query recorded."}
+                         </div>
+                    </div>
+
+                    <div className="space-y-2">
                         <h4 className="text-xs font-bold text-gray-400 uppercase">Retrieved Content / Metadata</h4>
-                        <div className="bg-black/40 rounded-xl p-4 font-mono text-xs text-gray-300 min-h-[200px] border border-white/5">
+                        <div className="bg-black/40 rounded-xl p-4 font-mono text-xs text-gray-300 min-h-[200px] border border-white/5 overflow-x-auto">
                             {tierState.data ? (
                                 <pre className="whitespace-pre-wrap">{JSON.stringify(tierState.data, null, 2)}</pre>
                             ) : tierState.status === 'executing' ? (
                                 <span className="italic text-yellow-500/50 animate-pulse">Wait, retrieving from nexus...</span>
+                            ) : tierState.status === 'null' ? (
+                                <span className="italic text-amber-500/50">Tier was queried successfully but returned no relevant matches for this specific input.</span>
                             ) : (
-                                <span className="italic text-gray-600">No data retrieved in the last turn or tier was not queried.</span>
+                                <span className="italic text-gray-600">No data retrieved or tier was not queried.</span>
                             )}
                         </div>
                     </div>

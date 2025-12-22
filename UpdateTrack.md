@@ -3,14 +3,14 @@
 
 ---
 
-### Update #30: Multimodal Cognitive Monitoring (v0.4.18)
+### Update #31: Full Cognitive Transparency & Static Memory (v0.4.19)
 
 **Details:**
-Implemented a granular monitoring system for each memory dimension (Semantic, Structured, Graph, Episodic) with live status indicators and detail inspectors.
+Enhanced the Memory Quadrant Monitor with deeper transparency tools and integrated static memory (User Profile) access directly into the status bar.
 
 **Changes Made:**
-- **Context API Enhancement:** Modified `app/api/chat/route.ts` and `ContextAssemblyPipeline` to return retrieval metadata.
-- **Memory Monitor State:** Extended `ConversationProvider` to store retrieved data chunks in `memoryMonitor`.
-- **Status Bar Integration:** Added four new interactive buttons for each memory tier with dynamic CSS states (Pulse/Yellow, Green, Red).
-- **Memory Inspector Modal:** Created a unified modal (`MemoryInspectorModal.tsx`) that displays raw retrieval results for each tier.
-- **Navigation Sync:** Ensured monitors reset on new prompts and persist correctly after AI generation.
+- **Status 'Null':** Added a new state for memory monitors (Amber color) representing "Successful query, 0 results found".
+- **Query Tracking:** Modified `ConversationProvider` to store the `query` text sent to each tier, now visible in `MemoryInspectorModal`.
+- **Identity Monitor:** Added a new button in `StatusBar` to open the `ProfileModal`.
+- **Profile Modal:** Created a new UI component to display permanent user data, preferences, and long-term harvested facts.
+- **Metadata Logic:** Refined the metadata processing to automatically determine and set 'null' vs 'success' status based on result payloads.
