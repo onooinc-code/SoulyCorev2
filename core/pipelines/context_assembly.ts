@@ -43,10 +43,14 @@ export class ContextAssemblyPipeline {
             const duration = Date.now() - startTime;
             if (runId) {
                 try {
-                    await sql`
-                        INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status)
-                        VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
-                    `;
+                    // Use a fire-and-forget approach for logging to avoid blocking the critical path
+                    // providing connection is available
+                    if (process.env.POSTGRES_URL) {
+                        sql`
+                            INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status)
+                            VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
+                        `.catch(e => console.warn(`DB Log Step ${name} failed silently:`, e));
+                    }
                 } catch (logErr) {
                     console.warn(`Failed to log successful pipeline step [${name}] to DB:`, logErr);
                 }
@@ -56,17 +60,17 @@ export class ContextAssemblyPipeline {
             const duration = Date.now() - startTime;
             const errorMessage = (error as Error).message;
             console.error(`Pipeline step [${name}] failed:`, errorMessage);
-            if (runId) {
+            if (runId && process.env.POSTGRES_URL) {
                 try {
-                    await sql`
+                    sql`
                         INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "durationMs", status, "errorMessage")
                         VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${duration}, 'failed', ${errorMessage});
-                    `;
+                    `.catch(e => console.warn(`DB Log Error Step ${name} failed silently:`, e));
                 } catch (innerError) {
                     console.error("Failed to log step failure to DB:", innerError);
                 }
             }
-            // For retrieval steps, we return a fallback instead of crashing the whole chain
+            // Fail-safe returns for retrieval steps
             if (name.includes('Retrieve') || name.includes('Search') || name.includes('Lookup')) {
                 if (name.includes('Episodic')) return [];
                 if (name.includes('Profile')) return { name: 'User', aiName: 'SoulyCore' };
@@ -102,6 +106,8 @@ export class ContextAssemblyPipeline {
             // 1. Episodic Retrieval (History)
             const recentMessages = await this.logStep(runId, 1, 'Retrieve Episodic Memory', { conversationId: conversation.id }, async () => {
                 if (!hasDb) return [];
+                // Only fetch recent messages, excluding the current user message which is passed in params
+                // But we need context, so fetching last N messages is correct.
                 return this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth });
             }) as Message[] || [];
             
@@ -176,6 +182,7 @@ export class ContextAssemblyPipeline {
 Your Name: ${userProfile.aiName || 'SoulyCore'}
 User Name: ${userProfile.name || 'User'}
 Communication Style: ${userProfile.preferences?.join(', ') || 'Helpful Assistant'}
+Role/Persona: ${userProfile.role || 'Assistant'}
 
 === RELEVANT EXPERIENCES ===
 ${matchedExperiences.map(exp => `- Goal: "${exp.goalTemplate}" -> Solution: ${JSON.stringify(exp.stepsJson)}`).join('\n') || 'None'}
@@ -191,15 +198,16 @@ ${graphContext.join('\n') || 'None'}
                 const existingIds = new Set(recentMessages.map(m => m.id));
                 const formattedHistory = recentMessages.map(m => ({
                     role: m.role as 'user' | 'model',
-                    parts: [{ text: m.content }]
+                    parts: [{ text: m.content || "" }] // Ensure text is never undefined/null
                 }));
                 
+                // Add the current user query if it's not already in the history (it usually isn't in episodic memory yet)
                 if (!existingIds.has(userMessageId)) {
                     formattedHistory.push({ role: 'user', parts: [{ text: userQuery }] });
                 }
                 
-                // Truncate instruction if extremely long
-                const safeInstruction = finalInstruction.substring(0, 20000);
+                // Truncate instruction if extremely long to avoid context window issues
+                const safeInstruction = finalInstruction.substring(0, 30000);
                 
                 return Promise.resolve({ systemInstruction: safeInstruction, history: formattedHistory });
             });
@@ -207,16 +215,28 @@ ${graphContext.join('\n') || 'None'}
             const { systemInstruction, history } = assembledData;
 
             // 8. LLM Execution
-            const llmResponse = await llmProvider.generateContent(history, systemInstruction, { temperature: conversation.temperature }, conversation.model || undefined);
+            let llmResponse = "";
+            try {
+                llmResponse = await llmProvider.generateContent(
+                    history, 
+                    systemInstruction, 
+                    { temperature: conversation.temperature }, 
+                    conversation.model || undefined
+                );
+            } catch (llmError) {
+                console.error("LLM Execution Failed:", llmError);
+                throw new Error(`LLM Generation Failed: ${(llmError as Error).message}`);
+            }
             
             if (runId && hasDb) {
                 const totalDuration = Date.now() - startTime;
                 try {
-                    await sql`
+                    // Update async
+                    sql`
                         UPDATE pipeline_runs 
                         SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${llmResponse}
                         WHERE id = ${runId};
-                    `;
+                    `.catch(e => console.warn("Failed to update pipeline run status (async):", e));
                 } catch (updateErr) {
                     console.warn("Failed to update final pipeline run status in DB:", updateErr);
                 }
@@ -234,11 +254,12 @@ ${graphContext.join('\n') || 'None'}
             };
 
         } catch (error) {
-             console.error("Critical ContextAssembly failure:", error);
+             const finalErrorMessage = (error as Error).message;
+             console.error("Critical ContextAssembly failure:", finalErrorMessage);
              if (runId && hasDb) {
                  const totalDuration = Date.now() - startTime;
                  try {
-                     await sql`UPDATE pipeline_runs SET status = 'failed', "durationMs" = ${totalDuration}, "finalOutput" = ${(error as Error).message} WHERE id = ${runId};`;
+                     await sql`UPDATE pipeline_runs SET status = 'failed', "durationMs" = ${totalDuration}, "finalOutput" = ${finalErrorMessage} WHERE id = ${runId};`;
                  } catch (innerUpdateErr) {
                      console.error("Failed to log critical pipeline failure to DB:", innerUpdateErr);
                  }
