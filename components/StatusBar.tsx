@@ -59,6 +59,16 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
                     <span className="hidden lg:inline font-bold">Routes</span>
                 </button>
 
+                {/* Agent Config Button (NEW/RESTORED) */}
+                <button 
+                    onClick={onAgentConfigClick}
+                    className="flex items-center gap-1 text-gray-500 hover:text-orange-400 bg-white/5 px-2 py-0.5 rounded-full border border-white/5 transition-all"
+                    title="Configure Agent Persona & Brain"
+                >
+                    <UserCircleIcon className="w-3.5 h-3.5" />
+                    <span className="hidden lg:inline font-bold">Agent Setup</span>
+                </button>
+
                  {/* Synthesis Trigger */}
                 <button 
                     onClick={runCognitiveSynthesis}
@@ -136,12 +146,12 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
 
                 <div className="h-3 w-px bg-white/10 mx-1 hidden md:block" />
 
-                <button onClick={() => setProfileModalOpen(true)} className="flex items-center gap-1 text-gray-500 hover:text-white transition-colors" title="User Persona">
-                    <UserCircleIcon className="w-3.5 h-3.5" />
+                <button onClick={() => setProfileModalOpen(true)} className="flex items-center gap-1 text-gray-500 hover:text-white transition-colors" title="User Persona (Global Identity)">
+                    <BrainIcon className="w-3.5 h-3.5" />
                     <span className="hidden md:inline">Identity</span>
                 </button>
 
-                <button onClick={onSettingsClick} className="flex items-center gap-1 hover:text-white transition-colors">
+                <button onClick={onSettingsClick} className="flex items-center gap-1 hover:text-white transition-colors" title="Conversation Model Settings">
                      <CogIcon className="w-3.5 h-3.5" />
                     <span>{model.split('-').slice(0,2).join(' ')}</span>
                 </button>
