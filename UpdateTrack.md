@@ -3,13 +3,13 @@
 
 ---
 
-### Update #21: The Cognitive Nexus - Full 5-Tier Memory Integration
+### Update #22: Experience Linkage & Cognitive Analytics
 
 **Details:**
-Completed the final phase of the V2.5 Cognitive Architecture. This update unifies all 5 data stores (Postgres, Pinecone, EdgeDB, MongoDB, Upstash) into a single operational brain.
+Enhanced the Cognitive Core by bridging the gap between stored experiences and real-time conversation. Introduced a visual analytics suite for Brain data management.
 
 **Changes Made:**
-- **Cognitive Search Backend:** Re-implemented the `/api/search` route to perform federated queries across Postgres, EdgeDB, and MongoDB. Search results now include graph relationships and historical archives alongside core chat data.
-- **Enhanced Search UI:** Updated `GlobalSearch.tsx` with a multi-source results display, featuring distinct icons and source tags for each memory provider.
-- **Final Architecture Report:** Created `ResponseTemplate-The-Cognitive-Nexus.html` as the definitive documentation of the 5-tier system.
-- **System Stability:** Finalized all database connections and ensured graceful fallbacks for missing environment variables.
+- **Experience Linkage:** `ContextAssemblyPipeline` now proactively matches current user queries against `Experiences` (learned task patterns) and provides them as 'How-To' context to Gemini.
+- **Brain Visualizer:** Added a new "Brain Analytics" tab to the Brain Center, featuring Nivo pie and bar charts to visualize knowledge density and distribution across different memory brains.
+- **Agent Mode Shortcut:** Added a dedicated "Agent Trigger" button in the `ChatFooter` for instant transition to autonomous operation.
+- **API Expansion:** Implemented `/api/brains/stats` to aggregate entity and relationship metrics.

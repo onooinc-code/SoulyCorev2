@@ -2,12 +2,12 @@
 import { EpisodicMemoryModule } from '../memory/modules/episodic';
 import { SemanticMemoryModule, ISemanticQueryResult } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
-import { EntityVectorMemoryModule, IVectorQueryResult } from '../memory/modules/entity_vector';
+import { EntityVectorMemoryModule } from '../memory/modules/entity_vector';
 import { GraphMemoryModule } from '../memory/modules/graph';
 import { ProfileMemoryModule } from '../memory/modules/profile';
 import llmProvider from '@/core/llm';
 import { db, sql } from '@/lib/db';
-import type { Conversation, Contact, PipelineRun, Message, EntityDefinition } from '@/lib/types';
+import type { Conversation, Contact, PipelineRun, Message, EntityDefinition, Experience } from '@/lib/types';
 import { IContextAssemblyConfig } from '../memory/types';
 
 interface IContextAssemblyParams {
@@ -56,12 +56,6 @@ export class ContextAssemblyPipeline {
         }
     }
 
-    private async extractPotentialNames(query: string): Promise<string[]> {
-         // (Implementation same as before, abbreviated for brevity)
-         // In a real scenario we'd reuse the logic, but for this XML update I'm keeping the method structure valid.
-         return []; 
-    }
-
     async run(params: IContextAssemblyParams) {
         const { conversation, userQuery, mentionedContacts, userMessageId, config } = params;
 
@@ -73,19 +67,31 @@ export class ContextAssemblyPipeline {
         const startTime = Date.now();
 
         try {
-            // 1. Episodic
+            // 1. Episodic Retrieval
             const recentMessages = await this.logStep(runId, 1, 'Retrieve Episodic Memory', { conversationId: conversation.id }, () =>
                 this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth })
             ) as Message[];
             
-            // 2. Profile (User Preferences) - NEW
+            // 2. Profile Retrieval
             const userProfile = await this.logStep(runId, 2, 'Retrieve User Profile', {}, () => 
                 this.profileMemory.query({})
             );
 
-            // 3. Proactive Entities (Vector Search)
-            // Note: Simplified logic here for brevity, assumes vector search works as previously defined
-            const proactiveEntities = await this.logStep(runId, 3, 'Vector Search Entities', { userQuery }, async () => {
+            // 3. Experience Retrieval (Learned Patterns) - NEW
+            const matchedExperiences = await this.logStep(runId, 3, 'Retrieve Learned Experiences', { userQuery }, async () => {
+                // Simplified matching: search keywords in query
+                const queryWords = userQuery.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+                if (queryWords.length === 0) return [];
+                const { rows } = await db.query(`
+                    SELECT * FROM experiences 
+                    WHERE "triggerKeywords" && $1::text[]
+                    LIMIT 2
+                `, [queryWords]);
+                return rows as Experience[];
+            }) as Experience[];
+
+            // 4. Proactive Entity Similarity Search
+            const proactiveEntities = await this.logStep(runId, 4, 'Vector Search Entities', { userQuery }, async () => {
                  const results = await this.entityVectorMemory.query({ queryText: userQuery, topK: 5 });
                  if (results.length === 0) return [];
                  const ids = results.map(r => r.id);
@@ -93,9 +99,8 @@ export class ContextAssemblyPipeline {
                  return rows;
             }) as EntityDefinition[];
 
-            // 4. Graph Memory (EdgeDB) - NEW
-            // Check for relationships specifically for the proactive entities found
-            const graphContext = await this.logStep(runId, 4, 'Graph Memory Lookup', { entities: proactiveEntities.map(e => e.name) }, async () => {
+            // 5. Graph Relationship Retrieval
+            const graphContext = await this.logStep(runId, 5, 'Graph Memory Lookup', { entities: proactiveEntities.map(e => e.name) }, async () => {
                 const relationships = [];
                 for (const entity of proactiveEntities) {
                     try {
@@ -106,28 +111,30 @@ export class ContextAssemblyPipeline {
                 return relationships;
             });
 
-            // 5. Semantic Memory
-            const semanticResults = await this.logStep(runId, 5, 'Semantic Search', { userQuery }, () =>
+            // 6. Semantic Retrieval
+            const semanticResults = await this.logStep(runId, 6, 'Semantic Search', { userQuery }, () =>
                  this.semanticMemory.query({ queryText: userQuery, topK: 3 })
             ) as ISemanticQueryResult[];
 
-            // 6. Assembly
-            const { systemInstruction, history } = await this.logStep(runId, 6, 'Assemble Prompt', {}, () => {
+            // 7. Context Assembly
+            const { systemInstruction, history } = await this.logStep(runId, 7, 'Assemble Final Prompt', {}, () => {
                 let context = `
 === USER PROFILE & PREFERENCES ===
 Preferences: ${userProfile.preferences?.join(', ') || 'None'}
-Facts: ${userProfile.facts?.join(', ') || 'None'}
 
-=== STRUCTURED MEMORY (ENTITIES) ===
+=== RELEVANT LEARNED EXPERIENCES (HOW-TO) ===
+${matchedExperiences.map(exp => `- For goals like "${exp.goalTemplate}", the plan was: ${JSON.stringify(exp.stepsJson)}`).join('\n') || 'None'}
+
+=== STRUCTURED KNOWLEDGE (ENTITIES) ===
 ${proactiveEntities.map(e => `- ${e.name} (${e.type}): ${e.description}`).join('\n')}
 
-=== GRAPH MEMORY (DEEP RELATIONSHIPS) ===
+=== GRAPH RELATIONSHIPS ===
 ${graphContext.join('\n')}
 
-=== SEMANTIC KNOWLEDGE ===
+=== SEMANTIC CONTEXT ===
 ${semanticResults.map(r => `> ${r.text}`).join('\n')}
 `;
-                const finalInstruction = `${conversation.systemPrompt}\n\nCONTEXT:\n${context}`;
+                const finalInstruction = `${conversation.systemPrompt}\n\nUSE THE FOLLOWING CONTEXT TO INFORM YOUR RESPONSE:\n${context}`;
                 
                 const formattedHistory = recentMessages.map(m => ({
                     role: m.role,
@@ -138,7 +145,7 @@ ${semanticResults.map(r => `> ${r.text}`).join('\n')}
                 return Promise.resolve({ systemInstruction: finalInstruction, history: formattedHistory });
             });
 
-            // 7. LLM Call
+            // 8. LLM Execution
             const llmResponse = await llmProvider.generateContent(history, systemInstruction, { temperature: conversation.temperature }, conversation.model || undefined);
             
             const totalDuration = Date.now() - startTime;
@@ -148,7 +155,7 @@ ${semanticResults.map(r => `> ${r.text}`).join('\n')}
                 WHERE id = ${runId};
             `;
             
-            return { llmResponse, llmResponseTime: totalDuration }; // Approx
+            return { llmResponse, llmResponseTime: totalDuration };
 
         } catch (error) {
              const totalDuration = Date.now() - startTime;
