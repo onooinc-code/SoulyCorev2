@@ -1,30 +1,40 @@
+
 // scripts/seed-version-history.js
 const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.4.14',
+        version: '0.4.16',
         releaseDate: new Date().toISOString(),
         changes: `
-### 📏 Scrolling & UI Integrity (v0.4.14)
+### 🕵️ Memory Transparency & Deep Logging (v0.4.16)
 
-**UI/UX Fixes:**
-- **Scrollbar Restoration:** Fixed a critical CSS layout issue preventing message list scrolling.
-- **Flexbox min-h-0:** Applied architectural flex fixes to ensure the chat window respects viewport bounds.
-- **Improved Thumbnails:** Enhanced scrollbar visibility in Dark Mode.
+**New Cognitive Features:**
+- **Extracted Badge:** Every AI message now has a "Extracted" badge in the footer. Click it to see exactly what facts, entities, and preferences were harvested from that turn.
+- **Deep-Step Logging:** Added granular logging for every internal pipeline step. You can now see the detailed "Behind the Scenes" of memory extraction in the Debug Log panel.
+- **Unified Inspector:** The Cognitive Inspector now displays both "Context Retrieval" (What I read) and "Memory Extraction" (What I learned).
 
-**System:**
-- **Version Sync:** Hardened versioning system to prevent mismatch between DB and code.
+**Bug Fixes:**
+- **Pipeline Visibility:** Fixed an issue where background extraction results were hidden from the user.
 `
     },
     {
-        version: '0.4.13',
-        releaseDate: new Date('2024-07-31T12:00:00Z'),
+        version: '0.4.15',
+        releaseDate: '2025-12-22T14:00:00Z',
         changes: `
-### 🛠️ Persistence & Build Integrity (v0.4.13)
-- Modified database initialization to use IF NOT EXISTS.
-- Fixed critical TypeScript type errors.
-- Added "Logs" toggle button in the chat status bar.
+### 🧠 Cognitive Identity Sync (v0.4.15)
+- Automated background memory extraction for identity sync.
+- Enhanced Arabic support for extracting names, roles, and preferences.
+- Fixed duplicate messages bug in short-term memory assembly.
+`
+    },
+    {
+        version: '0.4.14',
+        releaseDate: '2025-12-21T12:00:00Z',
+        changes: `
+### 📏 Scrolling & UI Integrity (v0.4.14)
+- Fixed critical scrolling issue in the message list.
+- Improved scrollbar visibility and layout stability.
 `
     }
 ];
