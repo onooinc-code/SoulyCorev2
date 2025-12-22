@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 
@@ -7,15 +8,15 @@ export async function GET(req: NextRequest, { params }: { params: { messageId: s
     try {
         const { messageId } = params;
 
-        // 1. Find the pipeline run associated with this message
+        // Fetch all pipeline runs (ContextAssembly and MemoryExtraction) for this message
         const { rows: runRows } = await sql`
-            SELECT * FROM pipeline_runs WHERE "messageId" = ${messageId} LIMIT 1;
+            SELECT * FROM pipeline_runs WHERE "messageId" = ${messageId} ORDER BY "createdAt" ASC;
         `;
 
         if (runRows.length === 0) {
             return NextResponse.json({
                 pipelineRun: { 
-                    finalOutput: 'No pipeline run found for this message. This may be an older message, a message generated from a regeneration, or the pipeline is still running.',
+                    finalOutput: 'No pipeline run found.',
                     pipelineType: 'N/A',
                     status: 'not_found'
                 },
@@ -23,29 +24,21 @@ export async function GET(req: NextRequest, { params }: { params: { messageId: s
             });
         }
         
-        const pipelineRun = runRows[0];
-
-        // 2. Find the steps for that run
+        // Fetch all steps for all runs associated with this message
+        const runIds = runRows.map(r => r.id);
         const { rows: stepRows } = await sql`
-            SELECT * FROM pipeline_run_steps WHERE "runId" = ${pipelineRun.id} ORDER BY "stepOrder" ASC;
+            SELECT * FROM pipeline_run_steps WHERE "runId" = ANY(${runIds as any}) ORDER BY "runId", "stepOrder" ASC;
         `;
         
-        // Sanitize sensitive info if needed in the future
-        const { finalLlmPrompt, finalSystemInstruction, modelConfigJson, ...restOfRun } = pipelineRun;
-
+        // Return structured data
         return NextResponse.json({
-            pipelineRun: {
-                ...restOfRun,
-                finalLlmPrompt,
-                finalSystemInstruction,
-                modelConfigJson,
-            },
+            pipelineRun: runRows[0], // For legacy compatibility
+            allRuns: runRows,
             pipelineSteps: stepRows,
         });
 
     } catch (error) {
-        console.error(`Failed to fetch inspection data for message ${params.messageId}:`, error);
-        const errorDetails = { message: (error as Error).message, stack: (error as Error).stack };
-        return NextResponse.json({ error: 'Internal Server Error', details: errorDetails }, { status: 500 });
+        console.error(`Failed to fetch inspection data:`, error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

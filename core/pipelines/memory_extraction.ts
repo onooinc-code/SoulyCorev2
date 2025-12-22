@@ -7,6 +7,7 @@ import { ProfileMemoryModule } from '../memory/modules/profile';
 import { DocumentMemoryModule } from '../memory/modules/document';
 import { EntityVectorMemoryModule } from '../memory/modules/entity_vector';
 import { GoogleGenAI, Type } from "@google/genai";
+import { sql } from '@/lib/db';
 import type { EntityDefinition } from '@/lib/types';
 
 interface IMemoryExtractionParams {
@@ -39,30 +40,32 @@ export class MemoryExtractionPipeline {
         this.ai = new GoogleGenAI({ apiKey });
     }
 
+    private async logEvent(message: string, payload?: any, level: 'info' | 'warn' | 'error' = 'info') {
+        await sql`INSERT INTO logs (message, payload, level) VALUES (${message}, ${JSON.stringify(payload)}, ${level})`;
+    }
+
     async run(params: IMemoryExtractionParams) {
         const { text, messageId, conversationId, brainId } = params;
+        const startTime = Date.now();
 
-        await this.documentMemory.store({ 
-            data: { text, source: 'extraction_pipeline', messageId, conversationId, brainId, timestamp: new Date() }, 
-            type: 'extraction_log' 
-        });
+        await this.logEvent(`[Extraction] Starting pipeline for message ${messageId.slice(0,8)}`, { text });
 
-        // ENHANCED PROMPT: Stronger instructions for Arabic and Personal Identity
-        const prompt = `Analyze the conversation turn: "${text}"
-        Extract structured knowledge in JSON format. 
-        IMPORTANT: The text might be in Arabic (Egyptian/Standard). Handle it correctly.
-
-        Categories to extract:
-        1. "aiIdentity": { "name": string } - If the user tells the AI its name (e.g. "اسمك سولي").
-        2. "userProfile": { "name": string, "role": string, "preferences": string[] } - If user shares their info.
-        3. "entities": { "name": string, "type": string, "description": string }[] - People, tech, locations.
-        4. "relationships": { "source": string, "predicate": string, "target": string }[]
-        5. "facts": string[] - General knowledge or business facts.
-
-        Return ONLY JSON.`;
+        // Create a pipeline run record for the "Write Path"
+        const { rows: runRows } = await sql`
+            INSERT INTO pipeline_runs ("messageId", "pipelineType", status)
+            VALUES (${messageId}, 'MemoryExtraction', 'running') RETURNING id;
+        `;
+        const runId = runRows[0].id;
 
         try {
-             const response = await this.ai.models.generateContent({
+            const prompt = `Analyze: "${text}"
+            Extract structured knowledge. Text is likely in Arabic. 
+            Categories: aiIdentity (name), userProfile (name, role, preferences), entities (name, type, desc), relationships (source, predicate, target), facts (statements).
+            Return ONLY JSON.`;
+
+            await this.logEvent(`[Extraction] Calling LLM for analysis...`);
+            
+            const response = await this.ai.models.generateContent({
                 model: 'gemini-3-flash-preview',
                 contents: [{ role: 'user', parts: [{ text: prompt }] }],
                 config: {
@@ -87,39 +90,39 @@ export class MemoryExtractionPipeline {
                 }
             });
 
-            if (!response.text) return;
-            const data = JSON.parse(response.text.trim());
+            const data = JSON.parse(response.text?.trim() || '{}');
+            await this.logEvent(`[Extraction] LLM returned data`, data);
 
-            // A. Identity Sync (Auto-Save)
+            // Syncing steps with individual logs
             if (data.aiIdentity?.name) {
+                await this.logEvent(`[Extraction] Syncing AI Name: ${data.aiIdentity.name}`);
                 await this.profileMemory.store({ aiName: data.aiIdentity.name });
             }
+
             if (data.userProfile) {
-                await this.profileMemory.store({ 
-                    name: data.userProfile.name, 
-                    role: data.userProfile.role, 
-                    preferences: data.userProfile.preferences 
-                });
+                await this.logEvent(`[Extraction] Syncing User Profile`, data.userProfile);
+                await this.profileMemory.store(data.userProfile);
             }
 
-            // B. Semantic & Entities (Standard extraction)
-            if (data.facts?.length > 0) {
-                for(const fact of data.facts) {
-                    await this.semanticMemory.store({ text: fact, metadata: { conversationId, brainId, type: 'fact' } });
-                }
+            for (const fact of (data.facts || [])) {
+                await this.logEvent(`[Extraction] Storing Fact: ${fact}`);
+                await this.semanticMemory.store({ text: fact, metadata: { conversationId, type: 'fact' } });
             }
 
-            if (data.entities?.length > 0) {
-                for(const entity of data.entities) {
-                    const saved: EntityDefinition = await this.structuredMemory.store({ type: 'entity', data: { ...entity, brainId } });
-                    if (saved?.id) {
-                        await this.entityVectorMemory.store({ id: saved.id, text: `${saved.name}: ${saved.description}`, metadata: { brainId } });
-                    }
-                }
+            for (const entity of (data.entities || [])) {
+                await this.logEvent(`[Extraction] Defining Entity: ${entity.name}`);
+                const saved = await this.structuredMemory.store({ type: 'entity', data: { ...entity, brainId } });
+                if (saved?.id) await this.entityVectorMemory.store({ id: saved.id, text: `${saved.name}: ${saved.description}`, metadata: { brainId } });
             }
+
+            const duration = Date.now() - startTime;
+            await sql`UPDATE pipeline_runs SET status = 'completed', "durationMs" = ${duration}, "finalOutput" = ${JSON.stringify(data)} WHERE id = ${runId}`;
+            await this.logEvent(`[Extraction] Pipeline completed in ${duration}ms`);
 
         } catch (error) {
-            console.error("MemoryExtractionPipeline failed:", error);
+            const err = error as Error;
+            await this.logEvent(`[Extraction] Pipeline failed`, { error: err.message }, 'error');
+            await sql`UPDATE pipeline_runs SET status = 'failed', "finalOutput" = ${err.message} WHERE id = ${runId}`;
         }
     }
 }

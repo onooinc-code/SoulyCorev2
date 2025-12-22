@@ -2,13 +2,13 @@
 
 ---
 
-### Update #27: Scrolling & Layout Integrity (v0.4.14)
+### Update #28: Memory Transparency & Deep Logging (v0.4.16)
 
 **Details:**
-Resolved a critical UI issue where the message list would expand beyond the viewport instead of scrolling, and the scrollbar was effectively invisible or non-functional.
+Enhanced the observability of the AI's cognitive processes by providing real-time feedback on knowledge extraction and detailed logging of internal pipeline steps.
 
 **Changes Made:**
-- **Version Management:** Synchronized version 0.4.14 across all metadata, database seeders, and API fallback routes.
-- **Flexbox min-h-0 Fix:** Applied `min-h-0` to the message container in `ChatWindow.tsx` to enable proper inner scrolling.
-- **Scrollbar Visibility:** Enhanced the global scrollbar styles in `globals.css` and added a `custom-scrollbar` utility class.
-- **Positioning Fix:** Changed `MessageList.tsx` container to use `absolute inset-0` to guarantee it stays within its parent's bounds.
+- **Extracted Knowledge Badge:** Added a new UI element in `MessageFooter.tsx` that displays the specific JSON output of the `MemoryExtractionPipeline` for each turn.
+- **Granular Server Logging:** Injected `sql` logging calls into `MemoryExtractionPipeline` to record every sub-step (LLM call, DB store, profile sync) in the system logs.
+- **Enhanced API Inspection:** Updated the `/api/inspect` route to consolidate all pipeline runs (Context and Extraction) for a message, enabling a complete audit trail.
+- **UI/UX Refinement:** The "Harvesting Knowledge" indicator now stays active until the background extraction is fully archived in the database.

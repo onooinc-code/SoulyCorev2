@@ -6,20 +6,20 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.4.15',
-    version: '0.4.15',
+    id: 'v-0.4.16',
+    version: '0.4.16',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🧠 Cognitive Identity Sync (v0.4.15)
+### 🕵️ Memory Transparency & Deep Logging (v0.4.16)
 
-**Core Improvements:**
-- **Auto-Identity Sync:** The system now automatically learns your name, role, and preferences in the background without requiring manual "Review".
-- **Multilingual Extraction:** Enhanced the memory extraction engine to support Arabic (Egyptian and MSA) identity facts.
-- **Context Fix:** Resolved a bug in the Context Assembly Pipeline that caused duplicate messages in the AI's short-term memory.
+**New Cognitive Features:**
+- **Extracted Badge:** Every AI message now has a "Extracted" badge in the footer. Click it to see exactly what facts, entities, and preferences were harvested from that turn.
+- **Deep-Step Logging:** Added granular logging for every internal pipeline step. You can now see the detailed "Behind the Scenes" of memory extraction in the Debug Log panel.
+- **Unified Inspector:** The Cognitive Inspector now displays both "Context Retrieval" (What I read) and "Memory Extraction" (What I learned).
 
-**Profile Module:**
-- Added support for tracking both AI Identity (Souly) and User Identity (Hadra) within the persistent profile.
+**Bug Fixes:**
+- **Pipeline Visibility:** Fixed an issue where background extraction results were hidden from the user.
 `
 };
 
@@ -38,18 +38,10 @@ function compareVersions(v1: string, v2: string): number {
 
 export async function GET() {
     try {
-        const { rows } = await sql<VersionHistory>`
-            SELECT * FROM version_history 
-            ORDER BY "releaseDate" DESC
-            LIMIT 1;
-        `;
+        const { rows } = await sql<VersionHistory>`SELECT * FROM version_history ORDER BY "releaseDate" DESC LIMIT 1;`;
         if (rows.length === 0) return NextResponse.json(staticCurrentVersion);
         const dbVersion = rows[0];
-        if (compareVersions(dbVersion.version, staticCurrentVersion.version) < 0) {
-             return NextResponse.json(staticCurrentVersion);
-        }
+        if (compareVersions(dbVersion.version, staticCurrentVersion.version) < 0) return NextResponse.json(staticCurrentVersion);
         return NextResponse.json(dbVersion);
-    } catch (error) {
-        return NextResponse.json(staticCurrentVersion);
-    }
+    } catch (error) { return NextResponse.json(staticCurrentVersion); }
 }
