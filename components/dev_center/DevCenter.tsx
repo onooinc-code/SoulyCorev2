@@ -3,7 +3,6 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-// FIX: Corrected a relative import path for the `XIcon` component to use the absolute path alias `@`, resolving a module resolution error during the build process.
 import { XIcon } from '@/components/Icons';
 import Dashboard from './Dashboard';
 import Roadmap from './Roadmap';
@@ -25,17 +24,21 @@ const APICommandCenterTab = dynamic(() => import('./api_command_center/APIComman
     loading: () => <div className="flex items-center justify-center h-full"><p className="text-white">Loading API Command Center...</p></div>
 });
 
+const CognitiveDiagnostics = dynamic(() => import('./CognitiveDiagnostics'), {
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center h-full"><p className="text-white">Loading Diagnostics...</p></div>
+});
 
-type Tab = 'api' | 'health' | 'features' | 'dashboard' | 'roadmap' | 'docs';
+type Tab = 'api' | 'health' | 'features' | 'diagnostics' | 'dashboard' | 'roadmap' | 'docs';
 
 const DevCenter = () => {
-    const [activeTab, setActiveTab] = useState<Tab>('api');
+    const [activeTab, setActiveTab] = useState<Tab>('diagnostics');
 
     const TabButton = ({ tabName, label }: { tabName: Tab; label: string }) => (
         <button
             onClick={() => setActiveTab(tabName)}
             className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                activeTab === tabName ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'
+                activeTab === tabName ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-300 hover:bg-gray-700'
             }`}
         >
             {label}
@@ -47,6 +50,7 @@ const DevCenter = () => {
             case 'api': return <APICommandCenterTab />;
             case 'health': return <FeatureHealthDashboard />;
             case 'features': return <FeaturesDictionary />;
+            case 'diagnostics': return <CognitiveDiagnostics />;
             case 'dashboard': return <Dashboard />;
             case 'roadmap': return <Roadmap />;
             case 'docs': return <Documentation />;
@@ -60,16 +64,16 @@ const DevCenter = () => {
                 <h2 className="text-xl font-bold">SoulyDev Center</h2>
             </div>
 
-            <div className="flex items-center gap-2 mb-4 flex-shrink-0">
-                <TabButton tabName="api" label="API Command Center" />
+            <div className="flex items-center gap-2 mb-4 flex-shrink-0 overflow-x-auto no-scrollbar pb-2">
+                <TabButton tabName="diagnostics" label="Cognitive Diagnostics" />
+                <TabButton tabName="api" label="API Commander" />
                 <TabButton tabName="health" label="Feature Health" />
-                <TabButton tabName="features" label="Features Dictionary" />
-                <TabButton tabName="dashboard" label="Dashboard" />
-                <TabButton tabName="roadmap" label="Roadmap & Ideas" />
-                <TabButton tabName="docs" label="Smart Documentation" />
+                <TabButton tabName="features" label="Feature Library" />
+                <TabButton tabName="dashboard" label="Stats" />
+                <TabButton tabName="docs" label="Docs" />
             </div>
             
-            <div className="flex-1 bg-gray-800 rounded-lg p-4 overflow-y-auto min-h-0">
+            <div className="flex-1 bg-gray-800 rounded-xl p-6 overflow-y-auto min-h-0 border border-white/5">
                 {renderContent()}
             </div>
         </div>

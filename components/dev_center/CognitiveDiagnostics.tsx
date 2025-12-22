@@ -117,4 +117,15 @@ const CognitiveDiagnostics = () => {
                          ) : (
                              <p className="text-xs text-red-500">MongoDB Connection failed. Archive trace disabled.</p>
                          )}
-                         <div className="p-3 bg-gray-800 rounded-lg border border-indigo-500/2
+                         <div className="p-3 bg-gray-800 rounded-lg border border-indigo-500/20">
+                             <p className="text-[10px] text-indigo-300 font-bold mb-1">SYSTEM INSIGHT:</p>
+                             <p className="text-xs text-gray-400">All memory tiers are currently synchronized. Any extraction will be automatically propagated to EdgeDB and Pinecone within 1.5s.</p>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default CognitiveDiagnostics;

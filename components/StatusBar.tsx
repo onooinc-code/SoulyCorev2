@@ -1,10 +1,9 @@
 
-
 "use client";
 
 import React, { useMemo } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
-import { CogIcon, UserCircleIcon, BookmarkIcon, CpuChipIcon, ClockIcon, DocumentTextIcon } from '@/components/Icons';
+import { CogIcon, UserCircleIcon, BookmarkIcon, CpuChipIcon, ClockIcon, DocumentTextIcon, BeakerIcon } from '@/components/Icons';
 import { ChatBubbleLeftRightIcon } from '@/components/Icons';
 import type { CognitiveStatus } from '@/lib/types';
 
@@ -18,100 +17,51 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
     
     const model = useMemo(() => {
         if (!currentConversation) return 'gemini-2.5-flash';
-        
-        // The conversation's `model` property is the source of truth.
-        const modelFromConversation = currentConversation.model;
-        if (typeof modelFromConversation === 'string' && modelFromConversation) {
-            return modelFromConversation;
-        }
-        
-        return 'gemini-2.5-flash';
+        return currentConversation.model || 'gemini-2.5-flash';
     }, [currentConversation]);
 
     const conversationStats = useMemo(() => {
         if (!currentConversation || messages.length === 0) return null;
-        
-        const messageCount = messages.length;
-        const totalTokens = messages.reduce((acc, msg) => acc + (msg.tokenCount || 0), 0);
-        const bookmarkedCount = messages.filter(msg => msg.isBookmarked).length;
-        const wordCount = messages.reduce((acc, msg) => acc + (msg.content.split(/\s+/).filter(Boolean).length || 0), 0);
-
         const modelMessages = messages.filter(m => m.role === 'model' && m.responseTime);
         const totalResponseTime = modelMessages.reduce((acc, msg) => acc + (msg.responseTime || 0), 0);
-        const avgResponseTime = modelMessages.length > 0 ? Math.round(totalResponseTime / modelMessages.length) : 0;
-        
-        return { messageCount, totalTokens, bookmarkedCount, wordCount, avgResponseTime };
+        return { 
+            messageCount: messages.length, 
+            avgResponseTime: modelMessages.length > 0 ? Math.round(totalResponseTime / modelMessages.length) : 0 
+        };
     }, [currentConversation, messages]);
 
-    // FIX: The status.currentAction can be a CognitiveStatus object, which is not a valid React child.
-    // This was causing a type error. The logic has been refactored to explicitly handle the different types
-    // of `status.currentAction` (object, string, or null) to ensure that only a string is ever rendered.
     const currentActionText = useMemo(() => {
         const action = status.currentAction;
-        if (!action) {
-            return 'Ready';
-        }
-        if (typeof action === 'string') {
-            return action;
-        }
-        if (typeof action === 'object' && 'details' in action && typeof (action as CognitiveStatus).details === 'string') {
-            return (action as CognitiveStatus).details;
-        }
-        // Fallback for any other unexpected object shape
-        return 'Processing...';
+        if (!action) return 'System Ready';
+        if (typeof action === 'string') return action;
+        return (action as CognitiveStatus).details || 'Processing...';
     }, [status.currentAction]);
 
     return (
-        <div className="bg-gray-800/60 backdrop-blur-xl text-gray-400 text-xs p-2 border-t border-white/10 flex justify-between items-center gap-4">
-            <div className="flex-1 italic truncate min-w-0">
-                <span>
-                    {currentActionText}
-                </span>
+        <div className="bg-gray-800/60 backdrop-blur-xl text-gray-400 text-[10px] p-2 border-t border-white/10 flex justify-between items-center gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-indigo-500/10 text-indigo-400 rounded-full border border-indigo-500/20">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                    <span className="font-bold uppercase tracking-widest">Live Trace</span>
+                </div>
+                <span className="italic truncate">{currentActionText}</span>
             </div>
 
             {currentConversation && conversationStats && (
-                <div className="flex items-center gap-4 flex-shrink-0 text-gray-400">
-                    <div className="flex items-center gap-1.5" title="Messages in this conversation">
-                        <ChatBubbleLeftRightIcon className="w-4 h-4" />
-                        <span>{conversationStats.messageCount}</span>
-                    </div>
-                     <div className="flex items-center gap-1.5" title="Total words in this conversation">
-                        <DocumentTextIcon className="w-4 h-4" />
-                        <span>{conversationStats.wordCount}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5" title="Total tokens used in this conversation">
-                        <CpuChipIcon className="w-4 h-4" />
-                        <span>{conversationStats.totalTokens}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5" title="Bookmarked messages in this conversation">
-                        <BookmarkIcon className="w-4 h-4" />
-                        <span>{conversationStats.bookmarkedCount}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5" title="Average AI response time">
-                        <ClockIcon className="w-4 h-4" />
-                        <span>{conversationStats.avgResponseTime} ms</span>
-                    </div>
+                <div className="hidden md:flex items-center gap-4 text-gray-500">
+                    <span className="flex items-center gap-1"><ChatBubbleLeftRightIcon className="w-3.5 h-3.5" /> {conversationStats.messageCount}</span>
+                    <span className="flex items-center gap-1"><ClockIcon className="w-3.5 h-3.5" /> {conversationStats.avgResponseTime}ms</span>
                 </div>
             )}
 
-            <div className="flex items-center gap-3 flex-shrink-0">
-                 <button 
-                    onClick={onAgentConfigClick} 
-                    disabled={!currentConversation} 
-                    className="flex items-center gap-1 hover:text-white disabled:text-gray-600 disabled:cursor-not-allowed" 
-                    title="Configure Agent: Set system instructions and memory preferences for this conversation."
-                >
-                    <UserCircleIcon className="w-4 h-4" />
+            <div className="flex items-center gap-3">
+                 <button onClick={onAgentConfigClick} className="flex items-center gap-1 hover:text-white transition-colors">
+                    <UserCircleIcon className="w-3.5 h-3.5" />
                     <span>Agent</span>
                 </button>
-                <button 
-                    onClick={onSettingsClick} 
-                    disabled={!currentConversation} 
-                    className="flex items-center gap-1 hover:text-white disabled:text-gray-600 disabled:cursor-not-allowed" 
-                    title="Configure Model: Adjust model parameters like temperature for this conversation."
-                >
-                     <CogIcon className="w-4 h-4" />
-                    <span className="truncate max-w-28">{model}</span>
+                <button onClick={onSettingsClick} className="flex items-center gap-1 hover:text-white transition-colors">
+                     <CogIcon className="w-3.5 h-3.5" />
+                    <span>{model}</span>
                 </button>
             </div>
         </div>
