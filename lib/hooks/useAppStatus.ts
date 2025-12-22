@@ -10,7 +10,12 @@ import type { IStatus } from '@/lib/types';
  */
 export const useAppStatus = () => {
     const [isLoading, setIsLoading] = useState(false);
-    const [status, setBaseStatus] = useState<IStatus>({ currentAction: '', error: null });
+    const [status, setBaseStatus] = useState<IStatus>({ 
+        currentAction: '', 
+        error: null,
+        aiCallCount: 0,
+        callLog: []
+    });
     const [backgroundTaskCount, setBackgroundTaskCount] = useState(0);
 
     /**
