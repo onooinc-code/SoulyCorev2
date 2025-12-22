@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getKnowledgeBaseIndex } from '@/lib/pinecone';

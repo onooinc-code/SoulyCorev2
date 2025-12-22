@@ -1,11 +1,11 @@
+
 "use client";
 
-// components/dashboard/panels/SystemHealthPanel.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardPanel from '../DashboardPanel';
 import { useLog } from '../../providers/LogProvider';
 import { motion } from 'framer-motion';
-import { CheckIcon, WarningIcon, ServerIcon, BrainIcon, CpuChipIcon } from '../../Icons';
+import { CheckIcon, WarningIcon } from '../../Icons';
 
 interface SystemStatus {
     label: string;
@@ -57,14 +57,6 @@ const SystemHealthPanel = () => {
         Degraded: { icon: WarningIcon, color: 'text-yellow-400', ring: 'ring-yellow-500' },
         Error: { icon: WarningIcon, color: 'text-red-400', ring: 'ring-red-500' },
     };
-    
-    const Indicator = ({ icon: Icon, label, status }: { icon: React.FC<any>, label: string, status: 'Operational' | 'Degraded' | 'Error' }) => (
-        <div className="flex items-center gap-2 text-sm">
-            <Icon className={`w-4 h-4 ${statusInfo[status].color}`} />
-            <span className="text-gray-300">{label}</span>
-        </div>
-    );
-
 
     if (isLoading || !status) {
         return <DashboardPanel title="System Health"><div className="animate-pulse p-4 text-center">Checking system status...</div></DashboardPanel>;
