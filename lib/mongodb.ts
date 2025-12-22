@@ -1,4 +1,3 @@
-
 import { MongoClient } from 'mongodb';
 
 if (!process.env.MONGODB_URI) {
@@ -14,7 +13,8 @@ let clientPromise: Promise<MongoClient>;
 if (process.env.NODE_ENV === 'development') {
   // In development mode, use a global variable so that the value
   // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  let globalWithMongo = global as typeof globalThis & {
+  // FIX: Replaced Node-specific 'global' with 'globalThis' to resolve 'Cannot find name "global"' error and ensure compatibility across modern JS runtimes.
+  let globalWithMongo = globalThis as typeof globalThis & {
     _mongoClientPromise?: Promise<MongoClient>
   }
 
