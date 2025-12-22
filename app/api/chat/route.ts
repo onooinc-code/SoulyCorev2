@@ -55,22 +55,32 @@ export async function POST(req: NextRequest) {
             },
         });
 
+        if (!savedAiMessage) {
+            console.error("Critical: Failed to save AI response to episodic memory.");
+        }
+
         // 2. Proactive Link Prediction
         let linkProposal = null;
         if (isLinkPredictionEnabled) {
-            const linkPipeline = new LinkPredictionPipeline();
-            linkProposal = await linkPipeline.run({ conversationId: conversation.id, brainId: conversation.brainId || null });
+            try {
+                const linkPipeline = new LinkPredictionPipeline();
+                linkProposal = await linkPipeline.run({ conversationId: conversation.id, brainId: conversation.brainId || null });
+            } catch (lpError) {
+                console.warn("Link prediction failed (non-critical):", lpError);
+            }
         }
 
         // 3. BACKGROUND WRITE PATH
-        const extractionPipeline = new MemoryExtractionPipeline();
-        extractionPipeline.run({
-            text: `User: ${userQuery}\nAI: ${llmResponse}`,
-            messageId: savedAiMessage.id,
-            conversationId: conversation.id,
-            brainId: conversation.brainId || null,
-            config: {}
-        }).catch(e => console.error("Auto-extraction failed:", e));
+        if (savedAiMessage) {
+            const extractionPipeline = new MemoryExtractionPipeline();
+            extractionPipeline.run({
+                text: `User: ${userQuery}\nAI: ${llmResponse}`,
+                messageId: savedAiMessage.id,
+                conversationId: conversation.id,
+                brainId: conversation.brainId || null,
+                config: {}
+            }).catch(e => console.error("Auto-extraction failed (background):", e));
+        }
 
         const historyForSuggestion = messages.slice(-1).map(m => ({role: m.role, parts: [{text: m.content}]}));
         historyForSuggestion.push({role: 'model', parts: [{text: llmResponse}]});
@@ -84,7 +94,10 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error) {
-        console.error('Error in chat API route:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        console.error('CRITICAL ERROR in chat API route:', error);
+        return NextResponse.json({ 
+            error: 'Internal Server Error',
+            details: (error as Error).message 
+        }, { status: 500 });
     }
 }

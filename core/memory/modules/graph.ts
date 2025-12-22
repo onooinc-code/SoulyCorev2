@@ -22,7 +22,17 @@ interface IGraphMemoryQueryParams {
 
 export class GraphMemoryModule implements ISingleMemoryModule {
     
+    private isConfigured(): boolean {
+        // Simple check for EdgeDB instance config
+        return !!process.env.EDGEDB_INSTANCE || !!process.env.EDGEDB_DSN;
+    }
+
     async store(params: IGraphMemoryStoreParams): Promise<any> {
+        if (!this.isConfigured()) {
+            console.warn("GraphMemoryModule: EdgeDB not configured. Skipping store.");
+            return params.relationship;
+        }
+
         if (!params.relationship) throw new Error('Relationship object required.');
         const { subject, predicate, object, brainId } = params.relationship;
         const client = getEdgeDBClient();
@@ -44,7 +54,8 @@ export class GraphMemoryModule implements ISingleMemoryModule {
     }
 
     async query(params: IGraphMemoryQueryParams): Promise<string[]> {
-        if (!params.entityName) return [];
+        if (!this.isConfigured() || !params.entityName) return [];
+        
         const client = getEdgeDBClient();
         
         // Brain Isolation: Filter by brain_id if provided, otherwise only global
@@ -58,14 +69,19 @@ export class GraphMemoryModule implements ISingleMemoryModule {
             AND (.brain_id = <optional str>$brainId OR (NOT EXISTS .brain_id AND <optional str>$brainId IS EMPTY));
         `;
 
-        const results = await client.queryJSON(query, { 
-            entityName: params.entityName, 
-            brainId: params.brainId || null 
-        });
-        const relationships = JSON.parse(results);
-        
-        return Array.isArray(relationships) ? relationships.map((rel: any) => 
-            `${rel.subject.name} ${rel.predicate.replace(/_/g, ' ')} ${rel.object.name}`
-        ) : [];
+        try {
+            const results = await client.queryJSON(query, { 
+                entityName: params.entityName, 
+                brainId: params.brainId || null 
+            });
+            const relationships = JSON.parse(results);
+            
+            return Array.isArray(relationships) ? relationships.map((rel: any) => 
+                `${rel.subject.name} ${rel.predicate.replace(/_/g, ' ')} ${rel.object.name}`
+            ) : [];
+        } catch (e) {
+            console.error("GraphMemoryModule query error:", e);
+            return [];
+        }
     }
 }

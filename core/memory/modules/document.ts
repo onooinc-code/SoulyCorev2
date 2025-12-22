@@ -6,7 +6,16 @@ export class DocumentMemoryModule implements ISingleMemoryModule {
     private dbName = 'soulycore_data';
     private collectionName = 'archives';
 
+    private isConfigured(): boolean {
+        return !!process.env.MONGODB_URI;
+    }
+
     async store(params: { data: any, type?: string }): Promise<any> {
+        if (!this.isConfigured()) {
+            console.warn("DocumentMemoryModule: MongoDB not configured. Skipping store.");
+            return null;
+        }
+
         try {
             const client = await clientPromise;
             const db = client.db(this.dbName);
@@ -27,6 +36,8 @@ export class DocumentMemoryModule implements ISingleMemoryModule {
     }
 
     async query(params: { type?: string, limit?: number }): Promise<any[]> {
+        if (!this.isConfigured()) return [];
+
         try {
             const client = await clientPromise;
             const db = client.db(this.dbName);

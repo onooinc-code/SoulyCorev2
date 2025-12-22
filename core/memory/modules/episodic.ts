@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Implements the Episodic Memory Module for conversation history.
  */
@@ -62,17 +63,8 @@ export class EpisodicMemoryModule implements ISingleMemoryModule {
         
         const savedMessage = rows[0];
 
-        // If the message content is large, trigger a background task to summarize it.
-        const wordCount = savedMessage.content.split(/\s+/).length;
-        if (wordCount > 500) {
-            // Fire-and-forget, no need to await this.
-            fetch(`/api/messages/${savedMessage.id}/summarize-for-context`, {
-                method: 'POST'
-            }).catch(err => {
-                // Log the error but don't let it affect the main flow.
-                console.error(`Failed to trigger background summarization for message ${savedMessage.id}:`, err);
-            });
-        }
+        // NOTE: Summarization logic removed from direct store call to prevent server-side fetch errors.
+        // Background summarization should be handled by a dedicated pipeline or a cron job.
 
         return savedMessage;
     }
