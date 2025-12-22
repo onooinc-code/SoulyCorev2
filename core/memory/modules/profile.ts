@@ -7,9 +7,13 @@ export class ProfileMemoryModule implements ISingleMemoryModule {
     private readonly KEY = 'user_profile_data';
 
     async query(params: Record<string, any>): Promise<any> {
-        const { rows } = await sql`SELECT value FROM settings WHERE key = ${this.KEY}`;
-        if (rows.length > 0) {
-            return rows[0].value;
+        try {
+            const { rows } = await sql`SELECT value FROM settings WHERE key = ${this.KEY}`;
+            if (rows && rows.length > 0) {
+                return rows[0].value;
+            }
+        } catch (e) {
+            console.warn("ProfileMemoryModule.query: Settings table may not exist yet.", e);
         }
         return { name: 'User', aiName: 'SoulyCore', role: null, preferences: [], facts: [] };
     }
@@ -31,13 +35,17 @@ export class ProfileMemoryModule implements ISingleMemoryModule {
             currentProfile.facts = [...new Set([...(currentProfile.facts || []), params.fact])];
         }
 
-        await sql`
-            INSERT INTO settings (key, value, "lastUpdatedAt")
-            VALUES (${this.KEY}, ${JSON.stringify(currentProfile)}, NOW())
-            ON CONFLICT (key) DO UPDATE SET
-                value = EXCLUDED.value,
-                "lastUpdatedAt" = NOW();
-        `;
+        try {
+            await sql`
+                INSERT INTO settings (key, value, "lastUpdatedAt")
+                VALUES (${this.KEY}, ${JSON.stringify(currentProfile)}, NOW())
+                ON CONFLICT (key) DO UPDATE SET
+                    value = EXCLUDED.value,
+                    "lastUpdatedAt" = NOW();
+            `;
+        } catch (e) {
+            console.error("ProfileMemoryModule.store failed:", e);
+        }
         
         return currentProfile;
     }

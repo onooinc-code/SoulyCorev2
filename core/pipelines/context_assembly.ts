@@ -41,18 +41,33 @@ export class ContextAssemblyPipeline {
         try {
             const output = await execution();
             const duration = Date.now() - startTime;
-            await sql`
-                INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status)
-                VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
-            `;
+            if (runId) {
+                await sql`
+                    INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status)
+                    VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
+                `;
+            }
             return output;
         } catch (error) {
             const duration = Date.now() - startTime;
             const errorMessage = (error as Error).message;
-            await sql`
-                INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "durationMs", status, "errorMessage")
-                VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${duration}, 'failed', ${errorMessage});
-            `;
+            console.error(`Pipeline step [${name}] failed:`, errorMessage);
+            if (runId) {
+                try {
+                    await sql`
+                        INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "durationMs", status, "errorMessage")
+                        VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${duration}, 'failed', ${errorMessage});
+                    `;
+                } catch (innerError) {
+                    console.error("Failed to log step failure to DB:", innerError);
+                }
+            }
+            // For retrieval steps, we return a fallback instead of crashing the whole chain
+            if (name.includes('Retrieve') || name.includes('Search') || name.includes('Lookup')) {
+                if (name.includes('Episodic')) return [];
+                if (name.includes('Profile')) return { name: 'User', aiName: 'SoulyCore' };
+                return [];
+            }
             throw error;
         }
     }
@@ -61,48 +76,62 @@ export class ContextAssemblyPipeline {
         const { conversation, userQuery, mentionedContacts, userMessageId, config } = params;
         const brainId = conversation.brainId || null;
 
-        const { rows: runRows } = await sql<PipelineRun>`
-            INSERT INTO pipeline_runs ("messageId", "pipelineType", status)
-            VALUES (${userMessageId}, 'ContextAssembly', 'running') RETURNING id;
-        `;
-        const runId = runRows[0].id;
+        let runId: string = '';
         const startTime = Date.now();
+
+        try {
+            const { rows: runRows } = await sql<PipelineRun>`
+                INSERT INTO pipeline_runs ("messageId", "pipelineType", status)
+                VALUES (${userMessageId}, 'ContextAssembly', 'running') RETURNING id;
+            `;
+            runId = runRows[0].id;
+        } catch (e) {
+            console.error("Failed to create pipeline run record:", e);
+        }
 
         try {
             // 1. Episodic Retrieval (History)
             const recentMessages = await this.logStep(runId, 1, 'Retrieve Episodic Memory', { conversationId: conversation.id }, () =>
                 this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth })
-            ) as Message[];
+            ) as Message[] || [];
             
             // 2. Profile Retrieval (Preferences)
             const userProfile = await this.logStep(runId, 2, 'Retrieve User Profile', {}, () => 
                 this.profileMemory.query({})
-            );
+            ) || { name: 'User', aiName: 'SoulyCore' };
 
             // 3. Experience Retrieval (Learned Patterns)
             const matchedExperiences = await this.logStep(runId, 3, 'Retrieve Learned Experiences', { userQuery, brainId }, async () => {
                 const queryWords = userQuery.toLowerCase().split(/\s+/).filter(w => w.length > 3);
                 if (queryWords.length === 0) return [];
-                const { rows } = await db.query(`
-                    SELECT * FROM experiences 
-                    WHERE "triggerKeywords" && $1::text[]
-                    LIMIT 3
-                `, [queryWords]);
-                return rows as Experience[];
-            }) as Experience[];
+                try {
+                    const { rows } = await db.query(`
+                        SELECT * FROM experiences 
+                        WHERE "triggerKeywords" && $1::text[]
+                        LIMIT 3
+                    `, [queryWords]);
+                    return rows as Experience[];
+                } catch (e) {
+                    return [];
+                }
+            }) as Experience[] || [];
 
             // 4. Entity Search
             const proactiveEntities = await this.logStep(runId, 4, 'Vector Search Entities', { userQuery, brainId }, async () => {
-                 const results = await this.entityVectorMemory.query({ queryText: userQuery, topK: 5 });
-                 if (results.length === 0) return [];
-                 const ids = results.map(r => r.id);
-                 const { rows } = await db.query(`
-                    SELECT * FROM entity_definitions 
-                    WHERE id = ANY($1::uuid[]) 
-                    AND ("brainId" = $2 OR ("brainId" IS NULL AND $2 IS NULL))
-                 `, [ids, brainId]);
-                 return rows;
-            }) as EntityDefinition[];
+                 try {
+                     const results = await this.entityVectorMemory.query({ queryText: userQuery, topK: 5 });
+                     if (!results || results.length === 0) return [];
+                     const ids = results.map(r => r.id);
+                     const { rows } = await db.query(`
+                        SELECT * FROM entity_definitions 
+                        WHERE id = ANY($1::uuid[]) 
+                        AND ("brainId" = $2 OR ("brainId" IS NULL AND $2 IS NULL))
+                     `, [ids, brainId]);
+                     return rows;
+                 } catch (e) {
+                     return [];
+                 }
+            }) as EntityDefinition[] || [];
 
             // 5. Graph Lookup
             const graphContext = await this.logStep(runId, 5, 'Graph Memory Lookup', { entities: proactiveEntities.map(e => e.name) }, async () => {
@@ -110,23 +139,25 @@ export class ContextAssemblyPipeline {
                 for (const entity of proactiveEntities) {
                     try {
                         const rels = await this.graphMemory.query({ entityName: entity.name, brainId });
-                        relationships.push(...rels);
+                        if (rels) relationships.push(...rels);
                     } catch (e) { console.warn('Graph Query failed', e); }
                 }
                 return relationships;
-            });
+            }) || [];
 
             // 6. Tool Discovery
             const discoveredTools = await this.logStep(runId, 6, 'Semantic Tool Selection', { userQuery }, async () => {
-                const { rows: allTools } = await db.query('SELECT name, description FROM tools');
-                return allTools.filter((t: Tool) => 
-                    userQuery.toLowerCase().includes(t.name.toLowerCase()) || 
-                    t.description.toLowerCase().split(' ').some(word => userQuery.toLowerCase().includes(word))
-                );
-            }) as Tool[];
+                try {
+                    const { rows: allTools } = await db.query('SELECT name, description FROM tools');
+                    return allTools.filter((t: Tool) => 
+                        userQuery.toLowerCase().includes(t.name.toLowerCase()) || 
+                        t.description.toLowerCase().split(' ').some(word => userQuery.toLowerCase().includes(word))
+                    );
+                } catch (e) { return []; }
+            }) as Tool[] || [];
 
             // 7. Context Assembly
-            const { systemInstruction, history } = await this.logStep(runId, 7, 'Assemble Final Prompt', {}, () => {
+            const assembledData = await this.logStep(runId, 7, 'Assemble Final Prompt', {}, () => {
                 let context = `
 === IDENTITY & PREFERENCES ===
 Your Name: ${userProfile.aiName || 'SoulyCore'}
@@ -137,16 +168,16 @@ Communication Style: ${userProfile.preferences?.join(', ') || 'Helpful Assistant
 ${matchedExperiences.map(exp => `- Goal: "${exp.goalTemplate}" -> Solution: ${JSON.stringify(exp.stepsJson)}`).join('\n') || 'None'}
 
 === KNOWLEDGE ENTITIES ===
-${proactiveEntities.map(e => `- ${e.name} (${e.type}): ${e.description}`).join('\n')}
+${proactiveEntities.map(e => `- ${e.name} (${e.type}): ${e.description}`).join('\n') || 'None'}
 
 === GRAPH RELATIONSHIPS ===
-${graphContext.join('\n')}
+${graphContext.join('\n') || 'None'}
 `;
-                const finalInstruction = `${conversation.systemPrompt}\n\nUSE THE FOLLOWING CONTEXT TO INFORM YOUR RESPONSE:\n${context}`;
+                const finalInstruction = `${conversation.systemPrompt || "You are a helpful AI assistant."}\n\nUSE THE FOLLOWING CONTEXT TO INFORM YOUR RESPONSE:\n${context}`;
                 
                 const existingIds = new Set(recentMessages.map(m => m.id));
                 const formattedHistory = recentMessages.map(m => ({
-                    role: m.role,
+                    role: m.role as 'user' | 'model',
                     parts: [{ text: m.content }]
                 }));
                 
@@ -157,20 +188,23 @@ ${graphContext.join('\n')}
                 return Promise.resolve({ systemInstruction: finalInstruction, history: formattedHistory });
             });
 
+            const { systemInstruction, history } = assembledData;
+
             // 8. LLM Execution
             const llmResponse = await llmProvider.generateContent(history, systemInstruction, { temperature: conversation.temperature }, conversation.model || undefined);
             
-            const totalDuration = Date.now() - startTime;
-             await sql`
-                UPDATE pipeline_runs 
-                SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${llmResponse}
-                WHERE id = ${runId};
-            `;
+            if (runId) {
+                const totalDuration = Date.now() - startTime;
+                await sql`
+                    UPDATE pipeline_runs 
+                    SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${llmResponse}
+                    WHERE id = ${runId};
+                `;
+            }
             
             return { 
                 llmResponse, 
-                llmResponseTime: totalDuration,
-                // New: Metadata summary for monitors
+                llmResponseTime: Date.now() - startTime,
                 metadata: {
                     semantic: matchedExperiences,
                     structured: proactiveEntities,
@@ -180,8 +214,11 @@ ${graphContext.join('\n')}
             };
 
         } catch (error) {
-             const totalDuration = Date.now() - startTime;
-             await sql`UPDATE pipeline_runs SET status = 'failed', "durationMs" = ${totalDuration}, "finalOutput" = ${(error as Error).message} WHERE id = ${runId};`;
+             console.error("Critical ContextAssembly failure:", error);
+             if (runId) {
+                 const totalDuration = Date.now() - startTime;
+                 await sql`UPDATE pipeline_runs SET status = 'failed', "durationMs" = ${totalDuration}, "finalOutput" = ${(error as Error).message} WHERE id = ${runId};`;
+             }
              throw error;
         }
     }
