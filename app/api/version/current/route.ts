@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { VersionHistory } from '@/lib/types';
@@ -6,19 +5,20 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.4.13',
-    version: '0.4.13',
+    id: 'v-0.4.14',
+    version: '0.4.14',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🛠️ Persistence & Build Integrity (v0.4.13)
+### 📏 Scrolling & UI Integrity (v0.4.14)
 
-**Architecture Fixes:**
-- **Zero Data Loss:** Data now persists across deployments.
-- **Vercel Build Stability:** Fixed critical TypeScript errors.
+**UI/UX Fixes:**
+- **Scrollbar Restoration:** Fixed a critical CSS layout issue preventing message list scrolling.
+- **Flexbox min-h-0:** Applied architectural flex fixes to ensure the chat window respects viewport bounds.
+- **Improved Thumbnails:** Enhanced scrollbar visibility in Dark Mode.
 
-**UI Restorations:**
-- **Debug Log Access:** Added "Logs" toggle in the status bar.
+**System:**
+- **Version Sync:** Hardened versioning system to prevent mismatch between DB and code.
 `
 };
 
@@ -44,12 +44,12 @@ export async function GET() {
         `;
         if (rows.length === 0) return NextResponse.json(staticCurrentVersion);
         const dbVersion = rows[0];
+        // If DB version is older than code version, use code version
         if (compareVersions(dbVersion.version, staticCurrentVersion.version) < 0) {
              return NextResponse.json(staticCurrentVersion);
         }
         return NextResponse.json(dbVersion);
     } catch (error) {
-        console.warn('Failed to fetch current version from DB, using static fallback:', error);
         return NextResponse.json(staticCurrentVersion);
     }
 }

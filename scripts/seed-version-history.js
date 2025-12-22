@@ -1,30 +1,30 @@
-
 // scripts/seed-version-history.js
 const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.4.13',
+        version: '0.4.14',
         releaseDate: new Date().toISOString(),
         changes: `
-### 🛠️ Persistence & Build Integrity (v0.4.13)
+### 📏 Scrolling & UI Integrity (v0.4.14)
 
-**Architecture Fixes:**
-- **Zero Data Loss:** Modified database initialization to use \`IF NOT EXISTS\` without dropping tables. Your data now persists across deployments.
-- **Vercel Build Stability:** Fixed critical TypeScript type errors in processing pipelines that were causing deployment failures.
+**UI/UX Fixes:**
+- **Scrollbar Restoration:** Fixed a critical CSS layout issue preventing message list scrolling.
+- **Flexbox min-h-0:** Applied architectural flex fixes to ensure the chat window respects viewport bounds.
+- **Improved Thumbnails:** Enhanced scrollbar visibility in Dark Mode.
 
-**UI Restorations:**
-- **Debug Log Access:** Added a dedicated "Logs" toggle button in the chat status bar for instant access to the developer console.
-- **Improved Type Safety:** Hardened pipelines against empty AI responses.
+**System:**
+- **Version Sync:** Hardened versioning system to prevent mismatch between DB and code.
 `
     },
     {
-        version: '0.4.12',
-        releaseDate: new Date('2024-07-30T10:00:00Z'),
+        version: '0.4.13',
+        releaseDate: new Date('2024-07-31T12:00:00Z'),
         changes: `
-### 📐 Symmetric Interface Update (v0.4.12)
-- **Symmetric Toolbars:** Both toolbars now have exactly 12 buttons.
-- **Curated Actions:** Reduced top toolbar actions to the most essential items.
+### 🛠️ Persistence & Build Integrity (v0.4.13)
+- Modified database initialization to use IF NOT EXISTS.
+- Fixed critical TypeScript type errors.
+- Added "Logs" toggle button in the chat status bar.
 `
     }
 ];
@@ -39,7 +39,7 @@ async function seedVersionHistory() {
                 ON CONFLICT ("version") DO UPDATE SET
                     "releaseDate" = EXCLUDED."releaseDate",
                     "changes" = EXCLUDED."changes";
-            `;
+        `;
         }
         console.log(`Successfully seeded ${versionData.length} version history entries.`);
     } catch (error) {
