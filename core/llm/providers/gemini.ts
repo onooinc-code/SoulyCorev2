@@ -60,7 +60,7 @@ export class GeminiProvider implements ILLMProvider {
             // Validate history to ensure no empty parts which can crash the API
             const validHistory = history.map(h => ({
                 role: h.role,
-                parts: h.parts.filter(p => p.text && p.text.trim().length > 0)
+                parts: (h.parts || []).filter(p => p.text && p.text.trim().length > 0)
             })).filter(h => h.parts.length > 0);
 
             // If history becomes empty after validation (e.g. only had empty messages), preserve at least the last user message if possible or throw
