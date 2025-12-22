@@ -7,6 +7,7 @@ import { useDisplayModeManager } from '@/lib/hooks/useDisplayModeManager';
 import { usePanelManager } from '@/lib/hooks/usePanelManager';
 
 type ActiveView = 'chat' | 'dashboard' | 'search' | 'agent_center' | 'brain_center' | 'memory_center' | 'contacts_hub' | 'prompts_hub' | 'tools_hub' | 'projects_hub' | 'data_hub' | 'dev_center' | 'comm_hub' | 'experiences_hub' | 'tasks_hub' | 'memory_extraction_hub' | 'contextual_analyzer' | 'reports_hub';
+type MemoryTier = 'semantic' | 'structured' | 'graph' | 'episodic' | null;
 
 interface UIStateContextType {
     activeView: ActiveView;
@@ -44,6 +45,8 @@ interface UIStateContextType {
     setResponseViewerModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isToolInspectorOpen: boolean;
     setToolInspectorOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    activeMemoryInspector: MemoryTier;
+    setMemoryInspector: (tier: MemoryTier) => void;
     isContextMenuEnabled: boolean;
     toggleContextMenu: () => void;
     extractionTarget: { type: string; id: string } | null;
@@ -67,6 +70,7 @@ export const UIStateProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [isHardResetModalOpen, setHardResetModalOpen] = useState(false);
     const [isResponseViewerModalOpen, setResponseViewerModalOpen] = useState(false);
     const [isToolInspectorOpen, setToolInspectorOpen] = useState(false);
+    const [activeMemoryInspector, setMemoryInspector] = useState<MemoryTier>(null);
 
     const panelManager = usePanelManager();
     const { setConversationPanelOpen } = panelManager;
@@ -118,6 +122,7 @@ export const UIStateProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isHardResetModalOpen, setHardResetModalOpen,
         isResponseViewerModalOpen, setResponseViewerModalOpen,
         isToolInspectorOpen, setToolInspectorOpen,
+        activeMemoryInspector, setMemoryInspector,
         extractionTarget, setExtractionTarget,
     };
 

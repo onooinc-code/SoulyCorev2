@@ -3,14 +3,14 @@
 
 ---
 
-### Update #29: Multimodal Memory Monitoring & Navigation Fix (v0.4.17)
+### Update #30: Multimodal Cognitive Monitoring (v0.4.18)
 
 **Details:**
-Introduced a granular monitoring system for all memory tiers (Semantic, Structured, Graph, Episodic) and fixed navigation issues in the Context Menu.
+Implemented a granular monitoring system for each memory dimension (Semantic, Structured, Graph, Episodic) with live status indicators and detail inspectors.
 
 **Changes Made:**
-- **Memory Monitor State:** Added `MemoryMonitorState` to `ConversationProvider` to track the execution status of each memory tier independently.
-- **Status Bar Integration:** Added four new interactive buttons to `StatusBar.tsx` representing each memory dimension.
-- **Visual Feedback:** Implemented a three-color state system (Yellow/Green/Red) with pulse animations for all monitors.
-- **Navigation Fix:** Refactored `setCurrentConversation` to ensure immediate view switching when triggered from secondary UI elements like context menus.
-- **Auto-Reset Mechanism:** Integrated `resetMonitors` into the `addMessage` flow to ensure a clean state for every interaction.
+- **Context API Enhancement:** Modified `app/api/chat/route.ts` and `ContextAssemblyPipeline` to return retrieval metadata.
+- **Memory Monitor State:** Extended `ConversationProvider` to store retrieved data chunks in `memoryMonitor`.
+- **Status Bar Integration:** Added four new interactive buttons for each memory tier with dynamic CSS states (Pulse/Yellow, Green, Red).
+- **Memory Inspector Modal:** Created a unified modal (`MemoryInspectorModal.tsx`) that displays raw retrieval results for each tier.
+- **Navigation Sync:** Ensured monitors reset on new prompts and persist correctly after AI generation.

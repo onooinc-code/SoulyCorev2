@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Conversation, Message, Contact } from '@/lib/types';
 import { ContextAssemblyPipeline } from '@/core/pipelines/context_assembly';
-import { generateProactiveSuggestion, shouldExtractMemory } from '@/lib/gemini-server';
+import { generateProactiveSuggestion } from '@/lib/gemini-server';
 import { sql } from '@/lib/db';
 import { EpisodicMemoryModule } from '@/core/memory/modules/episodic';
 import { MemoryExtractionPipeline } from '@/core/pipelines/memory_extraction';
@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
 
         // 1. READ PATH: Context Assembly
         const pipeline = new ContextAssemblyPipeline();
-        const { llmResponse, llmResponseTime } = await pipeline.run({
+        // Updated pipeline to return metadata for the monitor
+        const { llmResponse, llmResponseTime, metadata } = await pipeline.run({
             conversation,
             userQuery,
             mentionedContacts: mentionedContacts || [],
@@ -53,10 +54,9 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        // 2. BACKGROUND WRITE PATH: Trigger extraction automatically for identity sync
+        // 2. BACKGROUND WRITE PATH
         if (featureFlags.enableMemoryExtraction) {
             const extractionPipeline = new MemoryExtractionPipeline();
-            // Fire and forget
             extractionPipeline.run({
                 text: `User: ${userQuery}\nAI: ${llmResponse}`,
                 messageId: savedAiMessage.id,
@@ -73,7 +73,12 @@ export async function POST(req: NextRequest) {
             suggestion = await generateProactiveSuggestion(historyForSuggestion);
         }
         
-        return NextResponse.json({ response: llmResponse, suggestion });
+        return NextResponse.json({ 
+            response: llmResponse, 
+            suggestion,
+            // Return metadata for live monitoring
+            monitorMetadata: metadata 
+        });
 
     } catch (error) {
         console.error('Error in chat API route:', error);

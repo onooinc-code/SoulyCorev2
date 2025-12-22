@@ -7,7 +7,7 @@ import { useUIState } from '@/components/providers/UIStateProvider';
 import { useAppControls } from '@/lib/hooks/useAppControls';
 import { AnimatePresence } from 'framer-motion';
 
-// Dynamically import all global modals to avoid pulling them all into the initial bundle.
+// Dynamically import all global modals
 const CommandPalette = dynamic(() => import('@/components/CommandPalette'));
 const BookmarksModal = dynamic(() => import('@/components/BookmarksModal'));
 const GlobalSettingsModal = dynamic(() => import('@/components/GlobalSettingsModal'));
@@ -16,6 +16,7 @@ const AddKnowledgeModal = dynamic(() => import('@/components/AddKnowledgeModal')
 const HardResetModal = dynamic(() => import('@/components/HardResetModal'));
 const ResponseViewerModal = dynamic(() => import('@/components/ResponseViewerModal'));
 const ToolInspectorModal = dynamic(() => import('@/components/modals/ToolInspectorModal'));
+const MemoryInspectorModal = dynamic(() => import('@/components/modals/MemoryInspectorModal'));
 
 
 const GlobalModals = () => {
@@ -35,68 +36,42 @@ const GlobalModals = () => {
         isResponseViewerModalOpen,
         setResponseViewerModalOpen,
         isToolInspectorOpen,
-        setToolInspectorOpen
+        setToolInspectorOpen,
+        activeMemoryInspector,
+        setMemoryInspector
     } = useUIState();
-
-    const { restartApp } = useAppControls({ setHardResetModalOpen });
-
 
     return (
         <>
             <AnimatePresence>
-                {isCommandPaletteOpen && (
-                    <CommandPalette
-                        onClose={() => setCommandPaletteOpen(false)}
-                    />
-                )}
+                {isCommandPaletteOpen && <CommandPalette onClose={() => setCommandPaletteOpen(false)} />}
             </AnimatePresence>
             <AnimatePresence>
-                {isBookmarksModalOpen && (
-                    <BookmarksModal
-                        onClose={() => setBookmarksModalOpen(false)}
-                    />
-                )}
+                {isBookmarksModalOpen && <BookmarksModal onClose={() => setBookmarksModalOpen(false)} />}
             </AnimatePresence>
             <AnimatePresence>
-                {isGlobalSettingsModalOpen && (
-                    <GlobalSettingsModal
-                        setIsOpen={setGlobalSettingsModalOpen}
-                    />
-                )}
+                {isGlobalSettingsModalOpen && <GlobalSettingsModal setIsOpen={setGlobalSettingsModalOpen} />}
             </AnimatePresence>
             <AnimatePresence>
-                 {isShortcutsModalOpen && (
-                    <ShortcutsModal
-                        onClose={() => setShortcutsModalOpen(false)}
-                    />
-                )}
+                 {isShortcutsModalOpen && <ShortcutsModal onClose={() => setShortcutsModalOpen(false)} />}
             </AnimatePresence>
             <AnimatePresence>
-                {isAddKnowledgeModalOpen && (
-                     <AddKnowledgeModal
-                        onClose={() => setAddKnowledgeModalOpen(false)}
-                    />
-                )}
+                {isAddKnowledgeModalOpen && <AddKnowledgeModal onClose={() => setAddKnowledgeModalOpen(false)} />}
             </AnimatePresence>
             <AnimatePresence>
-                 {isHardResetModalOpen && (
-                    <HardResetModal
-                        onClose={() => setHardResetModalOpen(false)}
-                        onComplete={() => window.location.reload()}
-                    />
-                )}
+                 {isHardResetModalOpen && <HardResetModal onClose={() => setHardResetModalOpen(false)} onComplete={() => window.location.reload()} />}
             </AnimatePresence>
             <AnimatePresence>
-                {isResponseViewerModalOpen && (
-                    <ResponseViewerModal
-                        onClose={() => setResponseViewerModalOpen(false)}
-                    />
-                )}
+                {isResponseViewerModalOpen && <ResponseViewerModal onClose={() => setResponseViewerModalOpen(false)} />}
             </AnimatePresence>
             <AnimatePresence>
-                {isToolInspectorOpen && (
-                    <ToolInspectorModal
-                        onClose={() => setToolInspectorOpen(false)}
+                {isToolInspectorOpen && <ToolInspectorModal onClose={() => setToolInspectorOpen(false)} />}
+            </AnimatePresence>
+            <AnimatePresence>
+                {activeMemoryInspector && (
+                    <MemoryInspectorModal 
+                        tier={activeMemoryInspector} 
+                        onClose={() => setMemoryInspector(null)} 
                     />
                 )}
             </AnimatePresence>

@@ -15,7 +15,7 @@ interface StatusBarProps {
 
 const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
     const { status, currentConversation, messages, toolState, memoryMonitor } = useConversation();
-    const { setLogPanelOpen, isLogPanelOpen, setToolInspectorOpen, setActiveView } = useUIState();
+    const { setLogPanelOpen, isLogPanelOpen, setToolInspectorOpen, setActiveView, setMemoryInspector } = useUIState();
     
     const model = useMemo(() => currentConversation?.model || 'gemini-2.5-flash', [currentConversation]);
 
@@ -60,19 +60,19 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
                 <div className="h-3 w-px bg-white/10 mx-1 hidden md:block" />
 
                 {/* Memory Tier Monitors */}
-                <button className={getStatusStyles(memoryMonitor.semantic.status)} title="Semantic Memory (Pinecone)">
+                <button onClick={() => setMemoryInspector('semantic')} className={getStatusStyles(memoryMonitor.semantic.status)} title="Semantic Memory (Pinecone)">
                     <BrainIcon className="w-3.5 h-3.5" />
                     <span className="hidden xl:inline">Semantic</span>
                 </button>
-                <button className={getStatusStyles(memoryMonitor.structured.status)} title="Structured Memory (Postgres)">
+                <button onClick={() => setMemoryInspector('structured')} className={getStatusStyles(memoryMonitor.structured.status)} title="Structured Memory (Postgres)">
                     <CircleStackIcon className="w-3.5 h-3.5" />
                     <span className="hidden xl:inline">Structured</span>
                 </button>
-                <button className={getStatusStyles(memoryMonitor.graph.status)} title="Graph Memory (EdgeDB)">
+                <button onClick={() => setMemoryInspector('graph')} className={getStatusStyles(memoryMonitor.graph.status)} title="Graph Memory (EdgeDB)">
                     <LinkIcon className="w-3.5 h-3.5" />
                     <span className="hidden xl:inline">Graph</span>
                 </button>
-                <button className={getStatusStyles(memoryMonitor.episodic.status)} title="Episodic Memory (History)">
+                <button onClick={() => setMemoryInspector('episodic')} className={getStatusStyles(memoryMonitor.episodic.status)} title="Episodic Memory (History)">
                     <ClockIcon className="w-3.5 h-3.5" />
                     <span className="hidden xl:inline">Episodic</span>
                 </button>

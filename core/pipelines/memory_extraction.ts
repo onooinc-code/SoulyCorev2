@@ -1,4 +1,3 @@
-
 // core/pipelines/memory_extraction.ts
 import { SemanticMemoryModule } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
@@ -35,9 +34,8 @@ export class MemoryExtractionPipeline {
         this.documentMemory = new DocumentMemoryModule();
         this.entityVectorMemory = new EntityVectorMemoryModule();
         
-        const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-        if (!apiKey) throw new Error("API key not found.");
-        this.ai = new GoogleGenAI({ apiKey });
+        // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
+        this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
     }
 
     private async logEvent(message: string, payload?: any, level: 'info' | 'warn' | 'error' = 'info') {

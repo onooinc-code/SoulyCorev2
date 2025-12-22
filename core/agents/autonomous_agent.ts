@@ -19,10 +19,8 @@ export class AutonomousAgent {
         this.mainGoal = mainGoal;
         this.plan = plan;
 
-        const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-        if (!apiKey) throw new Error("API key not found for AutonomousAgent.");
-        // @google/genai-api-guideline-fix: Initialize GoogleGenAI with a named apiKey parameter.
-        this.ai = new GoogleGenAI({ apiKey });
+        // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
+        this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
     }
 
     public async run() {
@@ -61,7 +59,7 @@ export class AutonomousAgent {
             stepCount++;
             
             // 2. Generate thought and action
-            const { thought, action, action_input, is_final_answer } = await this.generateNextStep(phaseDef.goal, lastObservation);
+            const { thought, action, action_input, is_final_answer } = await this.generateNextStep(phaseId, phaseDef.goal, lastObservation);
 
             // 3. Log the step (thought process)
             const { rows: stepRows } = await sql`
@@ -92,7 +90,7 @@ export class AutonomousAgent {
         throw new Error(`Phase ${phaseDef.phaseOrder} exceeded max steps.`);
     }
 
-    private async generateNextStep(phaseGoal: string, lastObservation: string): Promise<{ thought: string, action: string, action_input: any, is_final_answer: boolean }> {
+    private async generateNextStep(phaseId: string, phaseGoal: string, lastObservation: string): Promise<{ thought: string, action: string, action_input: any, is_final_answer: boolean }> {
         const prompt = `
             You are an autonomous agent executing a phase of a larger plan.
             Your Main Goal: ${this.mainGoal}
@@ -112,8 +110,8 @@ export class AutonomousAgent {
         `;
         
         const result = await this.ai.models.generateContent({
-            // @google/genai-api-guideline-fix: Use 'gemini-2.5-flash' for this task.
-            model: 'gemini-2.5-flash',
+            // @google/genai-api-guideline-fix: Use 'gemini-3-flash-preview' for general agent decision tasks.
+            model: 'gemini-3-flash-preview',
             contents: prompt,
         });
 

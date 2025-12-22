@@ -7,9 +7,10 @@ export const dynamic = 'force-dynamic';
 const SETTINGS_KEY = 'app_settings';
 
 // Default settings as a fallback if nothing is in the DB
+// @google/genai-api-guideline-fix: Use 'gemini-3-flash-preview' for basic text tasks.
 const defaultSettings: AppSettings = {
     defaultModelConfig: {
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         temperature: 0.7,
         topP: 0.95,
     },

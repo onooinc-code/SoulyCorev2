@@ -144,7 +144,6 @@ ${graphContext.join('\n')}
 `;
                 const finalInstruction = `${conversation.systemPrompt}\n\nUSE THE FOLLOWING CONTEXT TO INFORM YOUR RESPONSE:\n${context}`;
                 
-                // FIX: Filter out the current user message if it's already in recentMessages to prevent duplication
                 const existingIds = new Set(recentMessages.map(m => m.id));
                 const formattedHistory = recentMessages.map(m => ({
                     role: m.role,
@@ -168,7 +167,17 @@ ${graphContext.join('\n')}
                 WHERE id = ${runId};
             `;
             
-            return { llmResponse, llmResponseTime: totalDuration };
+            return { 
+                llmResponse, 
+                llmResponseTime: totalDuration,
+                // New: Metadata summary for monitors
+                metadata: {
+                    semantic: matchedExperiences,
+                    structured: proactiveEntities,
+                    graph: graphContext,
+                    episodic: recentMessages.length
+                }
+            };
 
         } catch (error) {
              const totalDuration = Date.now() - startTime;

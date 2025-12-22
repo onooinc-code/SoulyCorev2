@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Conversation, AppSettings } from '@/lib/types';
@@ -57,8 +56,9 @@ export async function POST(req: NextRequest) {
             SELECT value FROM settings WHERE "key" = 'app_settings';
         `;
 
+        // @google/genai-api-guideline-fix: Use 'gemini-3-flash-preview' for basic text tasks.
         let defaultModelConfig = {
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-flash-preview',
             temperature: 0.7,
             topP: 0.95
         };

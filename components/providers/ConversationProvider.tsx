@@ -102,7 +102,6 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setActiveView('chat');
     }, [log, setActiveView]);
 
-    // @google/genai-api-guideline-fix: Define the required callback for handling deleted conversations.
     const onConversationDeleted = useCallback((conversationId: string) => {
         log('Conversation deleted, clearing state if active...', { id: conversationId });
         if (currentConversationId === conversationId) {
@@ -110,12 +109,13 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
     }, [log, currentConversationId]);
 
-    const { conversations, loadConversations, createNewConversation: apiCreateConversation, deleteConversation, updateConversationTitle, generateConversationTitle } = useConversationList({ 
+    // FIX: Corrected the destructuring from useConversationList to not alias createNewConversation, resolving a reference error on line 219.
+    const { conversations, loadConversations, createNewConversation, deleteConversation, updateConversationTitle, generateConversationTitle } = useConversationList({ 
         setIsLoading, 
         setStatus, 
         activeSegmentId, 
         onConversationCreated,
-        onConversationDeleted // FIX: Pass the newly defined callback
+        onConversationDeleted
     });
 
     const currentConversation = useMemo(() => conversations.find(c => c.id === currentConversationId) || null, [conversations, currentConversationId]);
@@ -124,7 +124,6 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         currentConversation, setStatus, setIsLoading, startBackgroundTask, endBackgroundTask, onNewMessageWhileHidden: (id) => setUnreadConversations(prev => new Set(prev).add(id))
     });
 
-    // FIX: Ensure messages are cleared when the current conversation is deleted or deselected.
     useEffect(() => {
         if (!currentConversationId) {
             setMessages([]);
@@ -133,7 +132,8 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const addMessage = useCallback(async (msgData: any, mentioned: any, history: any, parent: any) => {
         resetMonitors();
-        // Update monitor UI based on phase transitions
+        
+        // Initial transition to executing
         setMemoryMonitorState('semantic', 'executing');
         setMemoryMonitorState('structured', 'executing');
         setMemoryMonitorState('graph', 'executing');
@@ -141,14 +141,18 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         const result = await baseAddMessage(msgData, mentioned, history, parent);
         
-        // Finalize monitors if success
-        if (result.aiResponse) {
-            setMemoryMonitorState('semantic', 'success');
-            setMemoryMonitorState('structured', 'success');
-            setMemoryMonitorState('graph', 'success');
-            setMemoryMonitorState('episodic', 'success');
-        } else {
-             setMemoryMonitorState('semantic', 'error');
+        // Populate monitor data from API results
+        if (result.aiResponse && (result as any).monitorMetadata) {
+            const meta = (result as any).monitorMetadata;
+            setMemoryMonitorState('semantic', 'success', meta.semantic);
+            setMemoryMonitorState('structured', 'success', meta.structured);
+            setMemoryMonitorState('graph', 'success', meta.graph);
+            setMemoryMonitorState('episodic', 'success', meta.episodic);
+        } else if (!result.aiResponse) {
+             setMemoryMonitorState('semantic', 'error', null, 'Failed to fetch AI response');
+             setMemoryMonitorState('structured', 'error', null, 'Retrieval interrupted');
+             setMemoryMonitorState('graph', 'error', null, 'Retrieval interrupted');
+             setMemoryMonitorState('episodic', 'error', null, 'Retrieval interrupted');
         }
         
         return result;

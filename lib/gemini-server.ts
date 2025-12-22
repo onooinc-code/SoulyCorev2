@@ -2,16 +2,12 @@ import { GoogleGenAI, Content, Tool, GenerateContentResponse } from "@google/gen
 
 // Helper to get client
 const getClient = () => {
-    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-    if (!apiKey) {
-        throw new Error("API key not found. Please set GEMINI_API_KEY or API_KEY in your environment variables.");
-    }
-    // @google/genai-api-guideline-fix: Initialize GoogleGenAI with a named apiKey parameter.
-    return new GoogleGenAI({ apiKey });
+    // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
+    return new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 };
 
-// @google/genai-api-guideline-fix: Use 'gemini-2.5-flash' for general text tasks.
-const modelName = 'gemini-2.5-flash';
+// @google/genai-api-guideline-fix: Use 'gemini-3-flash-preview' for basic text tasks.
+const modelName = 'gemini-3-flash-preview';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

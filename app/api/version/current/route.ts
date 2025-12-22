@@ -6,20 +6,21 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.4.17',
-    version: '0.4.17',
+    id: 'v-0.4.18',
+    version: '0.4.18',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🚦 Multimodal Memory Monitoring (v0.4.17)
+### 🚦 Multimodal Cognitive Monitoring (v0.4.18)
 
 **New Real-time Monitoring:**
 - **Tiered Memory Buttons:** Added dedicated monitors for Semantic, Structured, Graph, and Episodic memory in the Status Bar.
 - **Dynamic State Visualization:** Buttons now pulse Yellow during retrieval, Green on success, and Red on error.
+- **Deep Inspection Modals:** Click any memory button to see the raw data retrieved for the last conversation turn.
 - **Auto-Reset Logic:** Monitoring states now automatically reset when you send a new message.
 
-**Bug Fixes:**
-- **Navigation Integrity:** Fixed a critical bug where "New Chat" actions from the Context Menu failed to switch views.
+**Architectural Improvements:**
+- **Metadata Feedback Loop:** Enhanced Context Assembly Pipeline and Chat API to return retrieval metadata for frontend transparency.
 - **Monitor Sync:** Fixed tool status persistence across different conversation turns.
 `
 };

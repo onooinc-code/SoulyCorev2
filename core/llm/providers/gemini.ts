@@ -4,8 +4,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { ILLMProvider, HistoryContent, IModelConfig } from '../types';
 
-// @google/genai-api-guideline-fix: Use 'gemini-2.5-flash' for general text tasks.
-const defaultModelName = 'gemini-2.5-flash';
+// @google/genai-api-guideline-fix: Use 'gemini-3-flash-preview' for basic text tasks.
+const defaultModelName = 'gemini-3-flash-preview';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -21,11 +21,8 @@ export class GeminiProvider implements ILLMProvider {
      */
     private getClient(): GoogleGenAI {
         if (!this.ai) {
-            const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-            if (!apiKey) {
-                throw new Error("API key not found. Please set GEMINI_API_KEY or API_KEY in your environment variables.");
-            }
-            this.ai = new GoogleGenAI({ apiKey });
+            // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
+            this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
         }
         return this.ai;
     }
