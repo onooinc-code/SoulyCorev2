@@ -4,9 +4,9 @@
 import React, { useMemo } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
-import { CogIcon, UserCircleIcon, ClockIcon, BeakerIcon, LogIcon } from '@/components/Icons';
+import { CogIcon, UserCircleIcon, ClockIcon, WrenchScrewdriverIcon, LogIcon, RocketLaunchIcon } from '@/components/Icons';
 import { ChatBubbleLeftRightIcon } from '@/components/Icons';
-import type { CognitiveStatus } from '@/lib/types';
+import type { CognitiveStatus, ToolExecutionStatus } from '@/lib/types';
 
 interface StatusBarProps {
     onSettingsClick: () => void;
@@ -14,8 +14,8 @@ interface StatusBarProps {
 }
 
 const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
-    const { status, currentConversation, messages } = useConversation();
-    const { setLogPanelOpen, isLogPanelOpen } = useUIState();
+    const { status, currentConversation, messages, toolState } = useConversation();
+    const { setLogPanelOpen, isLogPanelOpen, setToolInspectorOpen, setActiveView } = useUIState();
     
     const model = useMemo(() => {
         if (!currentConversation) return 'gemini-2.5-flash';
@@ -38,6 +38,16 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
         if (typeof action === 'string') return action;
         return (action as CognitiveStatus).details || 'Processing...';
     }, [status.currentAction]);
+
+    const toolButtonStyles = useMemo(() => {
+        const base = "flex items-center gap-1 transition-all duration-300 px-2 py-0.5 rounded-full border ";
+        switch (toolState.status) {
+            case 'executing': return base + "bg-yellow-500/20 text-yellow-400 border-yellow-500/50 animate-pulse";
+            case 'success': return base + "bg-green-500/20 text-green-400 border-green-500/50 animate-pulse";
+            case 'error': return base + "bg-red-500/20 text-red-400 border-red-500/50 animate-pulse";
+            default: return base + "text-gray-400 border-transparent hover:text-white";
+        }
+    }, [toolState.status]);
 
     return (
         <div className="bg-gray-800/60 backdrop-blur-xl text-gray-400 text-[10px] p-2 border-t border-white/10 flex justify-between items-center gap-4">
@@ -65,8 +75,16 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
                     <LogIcon className="w-3.5 h-3.5" />
                     <span>Logs</span>
                 </button>
-                 <button onClick={onAgentConfigClick} className="flex items-center gap-1 hover:text-white transition-colors">
-                    <UserCircleIcon className="w-3.5 h-3.5" />
+                 <button 
+                    onClick={() => setToolInspectorOpen(true)} 
+                    className={toolButtonStyles}
+                    title="Live Tool Monitor"
+                >
+                    <WrenchScrewdriverIcon className="w-3.5 h-3.5" />
+                    <span>Tools</span>
+                </button>
+                 <button onClick={() => setActiveView('agent_center')} className="flex items-center gap-1 hover:text-white transition-colors">
+                    <RocketLaunchIcon className="w-3.5 h-3.5" />
                     <span>Agent</span>
                 </button>
                 <button onClick={onSettingsClick} className="flex items-center gap-1 hover:text-white transition-colors">

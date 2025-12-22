@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -14,6 +15,7 @@ const ShortcutsModal = dynamic(() => import('@/components/ShortcutsModal'));
 const AddKnowledgeModal = dynamic(() => import('@/components/AddKnowledgeModal'));
 const HardResetModal = dynamic(() => import('@/components/HardResetModal'));
 const ResponseViewerModal = dynamic(() => import('@/components/ResponseViewerModal'));
+const ToolInspectorModal = dynamic(() => import('@/components/modals/ToolInspectorModal'));
 
 
 const GlobalModals = () => {
@@ -32,6 +34,8 @@ const GlobalModals = () => {
         setHardResetModalOpen,
         isResponseViewerModalOpen,
         setResponseViewerModalOpen,
+        isToolInspectorOpen,
+        setToolInspectorOpen
     } = useUIState();
 
     const { restartApp } = useAppControls({ setHardResetModalOpen });
@@ -86,6 +90,13 @@ const GlobalModals = () => {
                 {isResponseViewerModalOpen && (
                     <ResponseViewerModal
                         onClose={() => setResponseViewerModalOpen(false)}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isToolInspectorOpen && (
+                    <ToolInspectorModal
+                        onClose={() => setToolInspectorOpen(false)}
                     />
                 )}
             </AnimatePresence>

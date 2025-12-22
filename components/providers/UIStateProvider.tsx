@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -41,6 +42,8 @@ interface UIStateContextType {
     setHardResetModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isResponseViewerModalOpen: boolean;
     setResponseViewerModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isToolInspectorOpen: boolean;
+    setToolInspectorOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isContextMenuEnabled: boolean;
     toggleContextMenu: () => void;
     extractionTarget: { type: string; id: string } | null;
@@ -63,6 +66,7 @@ export const UIStateProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [isAddKnowledgeModalOpen, setAddKnowledgeModalOpen] = useState(false);
     const [isHardResetModalOpen, setHardResetModalOpen] = useState(false);
     const [isResponseViewerModalOpen, setResponseViewerModalOpen] = useState(false);
+    const [isToolInspectorOpen, setToolInspectorOpen] = useState(false);
 
     const panelManager = usePanelManager();
     const { setConversationPanelOpen } = panelManager;
@@ -83,7 +87,6 @@ export const UIStateProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const appControls = useAppControls({ setHardResetModalOpen });
     const displayMode = useDisplayModeManager();
     
-    // Destructure displayMode to avoid conflict with local isMobileView state
     const { isMobileView: _, toggleMobileView: __, ...restDisplayMode } = displayMode;
 
     const toggleMobileView = useCallback(() => {
@@ -114,6 +117,7 @@ export const UIStateProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isAddKnowledgeModalOpen, setAddKnowledgeModalOpen,
         isHardResetModalOpen, setHardResetModalOpen,
         isResponseViewerModalOpen, setResponseViewerModalOpen,
+        isToolInspectorOpen, setToolInspectorOpen,
         extractionTarget, setExtractionTarget,
     };
 

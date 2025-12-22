@@ -11,6 +11,16 @@ export interface CognitiveStatus {
     details: string;
 }
 
+export type ToolExecutionStatus = 'idle' | 'executing' | 'success' | 'error';
+
+export interface ToolState {
+    status: ToolExecutionStatus;
+    toolName?: string;
+    input?: any;
+    output?: any;
+    error?: string;
+}
+
 // A generic status object used throughout the app
 export interface IStatus {
     currentAction: string | CognitiveStatus | null;

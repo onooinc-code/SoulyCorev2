@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import type { Conversation, Message, Contact, IStatus, ActiveWorkflowState, Prompt, ConversationContextType, ILinkPredictionProposal } from '@/lib/types';
+import type { Conversation, Message, Contact, IStatus, ActiveWorkflowState, Prompt, ConversationContextType, ILinkPredictionProposal, ToolState } from '@/lib/types';
 import { useAppStatus } from '@/lib/hooks/useAppStatus';
 import { useConversationList } from '@/lib/hooks/useConversationList';
 import { useMessageManager } from '@/lib/hooks/useMessageManager';
@@ -16,6 +16,7 @@ interface ExtendedConversationContextType extends Omit<ConversationContextType, 
     messages: Message[];
     isLoading: boolean;
     status: IStatus;
+    toolState: ToolState;
     backgroundTaskCount: number;
     activeWorkflow: ActiveWorkflowState | null;
     unreadConversations: Set<string>;
@@ -43,6 +44,7 @@ interface ExtendedConversationContextType extends Omit<ConversationContextType, 
     startAgentRun: (goal: string) => Promise<void>;
     
     setStatus: (status: Partial<IStatus>) => void;
+    setToolState: (state: Partial<ToolState>) => void;
     clearError: () => void;
     
     setScrollToMessageId: (messageId: string | null) => void;
@@ -62,6 +64,13 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const [scrollToMessageId, setScrollToMessageId] = useState<string | null>(null);
     const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
     const [activeRunId, setActiveRunId] = useState<string | null>(null);
+    
+    // Live Tool State
+    const [toolState, setBaseToolState] = useState<ToolState>({ status: 'idle' });
+
+    const setToolState = useCallback((newState: Partial<ToolState>) => {
+        setBaseToolState(prev => ({ ...prev, ...newState }));
+    }, []);
 
     const onConversationDeleted = (deletedId: string) => {
         if (currentConversationId === deletedId) {
@@ -69,19 +78,17 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
     };
     
-    const onConversationCreated = (newConversation: Conversation) => {
-        // Force state update immediately
+    const onConversationCreated = useCallback((newConversation: Conversation) => {
+        log('New conversation created, navigating...', { id: newConversation.id });
         setCurrentConversationId(newConversation.id);
         setActiveView('chat');
-    };
+    }, [log, setActiveView]);
 
     const { conversations, loadConversations, createNewConversation: apiCreateConversation, deleteConversation, updateConversationTitle, generateConversationTitle } = useConversationList({ setIsLoading, setStatus, activeSegmentId, onConversationDeleted, onConversationCreated });
 
     // Wrapper to ensure context functions are called
     const createNewConversation = useCallback(async () => {
         await apiCreateConversation();
-        // The apiCreateConversation calls onConversationCreated which sets the ID and View.
-        // We add this manual set just in case of timing issues.
         setActiveView('chat');
     }, [apiCreateConversation, setActiveView]);
 
@@ -91,9 +98,14 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setUnreadConversations(prev => new Set(prev).add(conversationId));
     };
 
-    const { messages, setMessages, fetchMessages, addMessage, toggleBookmark, deleteMessage, updateMessage, regenerateAiResponse, regenerateUserPromptAndGetResponse, clearMessages } = useMessageManager({
+    const { messages, setMessages, fetchMessages, addMessage: baseAddMessage, toggleBookmark, deleteMessage, updateMessage, regenerateAiResponse, regenerateUserPromptAndGetResponse, clearMessages } = useMessageManager({
         currentConversation, setStatus, setIsLoading, startBackgroundTask, endBackgroundTask, onNewMessageWhileHidden
     });
+
+    const addMessage = useCallback(async (...args: any[]) => {
+        setToolState({ status: 'idle', toolName: undefined, input: undefined, output: undefined, error: undefined });
+        return (baseAddMessage as any)(...args);
+    }, [baseAddMessage, setToolState]);
 
     const { activeWorkflow, startWorkflow } = useWorkflowManager({ currentConversation, setStatus, addMessage, setMessages });
 
@@ -167,6 +179,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         messages,
         isLoading,
         status,
+        toolState,
         backgroundTaskCount,
         activeWorkflow,
         unreadConversations,
@@ -194,6 +207,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         startAgentRun,
         
         setStatus,
+        setToolState,
         clearError,
         
         setScrollToMessageId,
