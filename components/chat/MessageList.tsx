@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useRef, useEffect, useMemo } from 'react';
@@ -75,16 +73,15 @@ const MessageList = ({
                 element.classList.add('animate-pulse', 'bg-indigo-900/50', 'rounded-lg');
                 setTimeout(() => {
                     element.classList.remove('animate-pulse', 'bg-indigo-900/50', 'rounded-lg');
-                }, 2500); // Highlight for 2.5 seconds
+                }, 2500);
             }
-            setScrollToMessageId(null); // Reset after scrolling
+            setScrollToMessageId(null);
         } else {
-            // Default scroll to bottom behavior
             const timer = setTimeout(() => {
                 if (scrollContainerRef.current) {
                     scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
                 }
-            }, 0);
+            }, 100); // Increased delay to ensure DOM is ready
             return () => clearTimeout(timer);
         }
     }, [messages, scrollToMessageId, setScrollToMessageId]);
@@ -117,16 +114,18 @@ const MessageList = ({
     }
 
     return (
-        <div ref={scrollContainerRef} className="flex flex-col flex-1 p-6 overflow-y-auto">
+        <div 
+            ref={scrollContainerRef} 
+            className="absolute inset-0 flex flex-col p-6 custom-scrollbar"
+        >
             {threadedMessages.length > 0 ? (
-                <div className="w-full mt-auto">
-                    <div className="space-y-4">
+                <div className="w-full">
+                    <div className="space-y-4 pb-20"> {/* Padding bottom to ensure last message is visible above input */}
                         {threadedMessages.map((msg, index) => {
-                            // Find the user message ID that triggered this turn for inspection purposes
                             let userMessageIdForInspection: string | null = null;
                             if (msg.role === 'user') {
                                 userMessageIdForInspection = msg.id;
-                            } else { // It's a model message, find the last user message before it
+                            } else {
                                 for (let i = index; i >= 0; i--) {
                                     if (threadedMessages[i].role === 'user') {
                                         userMessageIdForInspection = threadedMessages[i].id;
@@ -167,7 +166,6 @@ const MessageList = ({
                                 className="flex items-center justify-center py-4 gap-4 text-sm text-gray-400"
                             >
                                 <LoadingIndicator />
-                                {/* FIX: Corrected a property name from `chain_definition` to `chainDefinition` to match the `Prompt` type, resolving a TypeScript error related to active workflow state. */}
                                 <span>Executing workflow step {activeWorkflow.currentStepIndex + 1} of {activeWorkflow.prompt.chainDefinition?.length}...</span>
                             </motion.div>
                         )}

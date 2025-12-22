@@ -53,10 +53,13 @@ const ChatWindow = () => {
         }
     };
 
-    // ChatWindow now takes 100% height of its container in App.tsx
     return (
         <div className="flex flex-col h-full bg-gray-900/50">
-            {/* Message List takes available space */}
+            {/* 
+                CRITICAL FIX: Added 'min-h-0' to the container. 
+                In a flexbox environment, a child must have 'min-h-0' to be allowed to 
+                be smaller than its content, which is what enables inner scrolling.
+            */}
             <div className="flex-1 min-h-0 relative">
                 <MessageList 
                     messages={messages}
@@ -86,6 +89,9 @@ const ChatWindow = () => {
                 />
             </div>
 
+            {/* Error Display */}
+            <ErrorDisplay status={status} isDbError={!!(status.error && /database|postgres/i.test(status.error))} clearError={clearError} />
+
             {/* Status Bar (Settings/Stats) */}
             {!isZenMode && currentConversation && (
                 <div className="flex-shrink-0">
@@ -95,9 +101,6 @@ const ChatWindow = () => {
                     />
                 </div>
             )}
-
-            {/* Error Display */}
-            <ErrorDisplay status={status} isDbError={!!(status.error && /database|postgres/i.test(status.error))} clearError={clearError} />
             
             {/* Input Area */}
             <div className="flex-shrink-0 z-20">

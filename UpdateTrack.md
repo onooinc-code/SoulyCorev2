@@ -1,15 +1,14 @@
-
 ... (Existing entries) ...
 
 ---
 
-### Update #26: Cognitive Trace & War Room (Turn Inspection)
+### Update #27: Scrolling & Layout Integrity (v0.4.14)
 
 **Details:**
-Developed a suite of debugging and inspection tools that allow a developer to see exactly how the AI "thinks" during each turn of the conversation.
+Resolved a critical UI issue where the message list would expand beyond the viewport instead of scrolling, and the scrollbar was effectively invisible or non-functional.
 
 **Changes Made:**
-- **War Room UI:** Redesigned the `CognitiveInspectorModal` to show the full data flow: Retrieval -> Assembly -> Generation.
-- **Payload Visibility:** Added detailed toggles to view the raw JSON data retrieved from each memory module (Episodic, Semantic, Graph, Profile) for any specific message.
-- **Prompt Inspection:** Users can now see the final, fully-resolved system instruction sent to the LLM, including all injected memory context.
-- **Live Trace Status:** Updated `StatusBar` to include a "Live Trace" indicator, providing real-time feedback on current backend pipeline operations.
+- **Flexbox min-h-0 Fix:** Applied `min-h-0` to the message container in `ChatWindow.tsx` to enable proper inner scrolling in nested flex layouts.
+- **Scrollbar Visibility:** Enhanced the global scrollbar styles in `globals.css` and added a `custom-scrollbar` utility class with `scrollbar-gutter: stable` to prevent layout shift.
+- **Positioning Fix:** Changed `MessageList.tsx` container to use `absolute inset-0` to guarantee it stays within its parent's bounds.
+- **Bottom Padding:** Added `pb-20` to the message list content to ensure the last message isn't obscured by the fixed input area.
