@@ -1,4 +1,7 @@
+
 import { GoogleGenAI, Content, Tool, GenerateContentResponse } from "@google/genai";
+import { sql } from '@/lib/db';
+import { AppSettings, CognitiveTask } from '@/lib/types';
 
 // Helper to get client
 const getClient = () => {
@@ -6,8 +9,26 @@ const getClient = () => {
     return new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 };
 
-// @google/genai-api-guideline-fix: Use 'gemini-3-flash-preview' for basic text tasks.
-const modelName = 'gemini-3-flash-preview';
+// Default fallback model
+const defaultModelName = 'gemini-3-flash-preview';
+
+/**
+ * Utility to fetch effective model for a specific cognitive task from DB settings.
+ */
+async function getEffectiveModel(task: CognitiveTask, override?: string): Promise<string> {
+    if (override) return override;
+    try {
+        const { rows } = await sql`SELECT value FROM settings WHERE "key" = 'app_settings';`;
+        if (rows.length > 0) {
+            const settings = rows[0].value as AppSettings;
+            const provider = settings.apiRouting?.[task];
+            if (provider && provider !== 'external') return provider;
+        }
+    } catch (e) {
+        console.warn(`Failed to fetch routing for ${task}, using default.`);
+    }
+    return defaultModelName;
+}
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -42,12 +63,13 @@ const handleGeminiError = (error: unknown) => {
 };
 
 
-export async function generateChatResponse(history: Content[], systemInstruction: string, modelOverride?: string) {
+export async function generateChatResponse(history: Content[], systemInstruction: string, modelOverride?: string, task: CognitiveTask = 'main_response') {
     const ai = getClient();
+    const model = await getEffectiveModel(task, modelOverride);
     try {
         return await executeWithRetry(async () => {
             const response = await ai.models.generateContent({
-                model: modelOverride || modelName,
+                model: model,
                 contents: history,
                 config: {
                     systemInstruction: systemInstruction,
@@ -63,11 +85,11 @@ export async function generateChatResponse(history: Content[], systemInstruction
 
 export async function generateProactiveSuggestion(history: Content[]): Promise<string | null> {
     const systemInstruction = `You are an assistant that suggests the next logical step. Based on the last two turns of conversation, suggest a concise, actionable next step for the user. Phrase it as a question or a command. Respond with only the suggestion text.`;
-    // We use fewer retries for background tasks like suggestions to avoid hanging the UI
+    const model = await getEffectiveModel('proactive_suggestions');
     try {
          const ai = getClient();
          const response = await executeWithRetry<GenerateContentResponse>(() => ai.models.generateContent({
-            model: modelName,
+            model: model,
             contents: history,
             config: { systemInstruction }
          }), 1, 1000);
@@ -81,7 +103,7 @@ export async function generateProactiveSuggestion(history: Content[]): Promise<s
 export async function generateTitleFromHistory(history: Content[]): Promise<string | null> {
     const systemInstruction = `Based on the following conversation, generate a concise, descriptive title of 5 words or less. Respond with only the title.`;
     try {
-        const response = await generateChatResponse(history, systemInstruction);
+        const response = await generateChatResponse(history, systemInstruction, undefined, 'title_generation');
         return response?.text?.trim().replace(/"/g, '') || null;
     } catch (e) {
         return null;
@@ -102,8 +124,6 @@ export async function regenerateUserPrompt(promptToRewrite: string, history: Con
 }
 
 export async function generateEmbedding(content: string): Promise<number[]> {
-    // This is a placeholder since the SDK doesn't have a direct embedding endpoint.
-    // In a real app, this would call the embedding model endpoint.
     console.warn("`generateEmbedding` is a placeholder. Using a simulated text-hash-based embedding.");
     let hash = 0;
     for (let i = 0; i < content.length; i++) {
@@ -119,7 +139,7 @@ export async function generateAgentContent(history: Content[], systemInstruction
     const ai = getClient();
      try {
         const response = await executeWithRetry(() => ai.models.generateContent({
-            model: modelName,
+            model: 'gemini-3-pro-preview', // Force pro for agent logic
             contents: history,
             config: {
                 systemInstruction: systemInstruction,
@@ -148,21 +168,18 @@ export async function shouldExtractMemory(history: Content[]): Promise<boolean> 
     const systemInstruction = `Analyze the last user message and the AI's response. Does this exchange contain significant new information, facts, entities, or relationships that are worth remembering for the long term? Answer with only 'yes' or 'no'.`;
     try {
         const response = await executeWithRetry<GenerateContentResponse>(() => getClient().models.generateContent({
-            model: modelName,
+            model: defaultModelName,
             contents: history,
             config: { systemInstruction }
         }), 1, 1000);
         return response?.text?.toLowerCase().includes('yes') || false;
     } catch (error) {
-        // Don't use handleGeminiError here, as this check should fail silently.
         console.warn("Error in shouldExtractMemory check (skipping):", error);
         return false;
     }
 }
 
 export function shouldPredictLink(history: Content[]): boolean {
-    // Simple probabilistic check to avoid running on every turn.
-    // A more sophisticated check could analyze conversation length or entity density.
-    if (history.length < 4) return false; // Don't run on very short conversations
-    return Math.random() < 0.2; // 20% chance
+    if (history.length < 4) return false;
+    return Math.random() < 0.2;
 }

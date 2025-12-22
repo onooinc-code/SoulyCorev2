@@ -12,6 +12,9 @@ export interface CognitiveStatus {
 
 export type ExecutionStatus = 'idle' | 'executing' | 'success' | 'null' | 'error';
 
+export type CognitiveTask = 'main_response' | 'memory_extraction' | 'context_assembly' | 'proactive_suggestions' | 'synthesis' | 'title_generation';
+export type AiProvider = 'gemini-3-flash-preview' | 'gemini-3-pro-preview' | 'external';
+
 export interface UsageMetric {
     origin: 'retrieval' | 'generation' | 'agent_thought' | 'link_prediction' | 'synthesis';
     model: string;
@@ -90,6 +93,7 @@ export interface AppSettings {
     };
     savedEntityHubFilters?: SavedFilterSet[];
     customToolbarPrompts?: Record<string, string>; 
+    apiRouting?: Record<CognitiveTask, AiProvider>;
 }
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';

@@ -18,6 +18,7 @@ const ResponseViewerModal = dynamic(() => import('@/components/ResponseViewerMod
 const ToolInspectorModal = dynamic(() => import('@/components/modals/ToolInspectorModal'));
 const MemoryInspectorModal = dynamic(() => import('@/components/modals/MemoryInspectorModal'));
 const ProfileModal = dynamic(() => import('@/components/modals/ProfileModal'));
+const CognitiveRoutingModal = dynamic(() => import('@/components/modals/CognitiveRoutingModal'));
 
 
 const GlobalModals = () => {
@@ -41,7 +42,9 @@ const GlobalModals = () => {
         isProfileModalOpen,
         setProfileModalOpen,
         activeMemoryInspector,
-        setMemoryInspector
+        setMemoryInspector,
+        isRoutingModalOpen,
+        setIsRoutingModalOpen
     } = useUIState();
 
     return (
@@ -72,6 +75,9 @@ const GlobalModals = () => {
             </AnimatePresence>
             <AnimatePresence>
                 {isProfileModalOpen && <ProfileModal onClose={() => setProfileModalOpen(false)} />}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isRoutingModalOpen && <CognitiveRoutingModal onClose={() => setIsRoutingModalOpen(false)} />}
             </AnimatePresence>
             <AnimatePresence>
                 {activeMemoryInspector && (

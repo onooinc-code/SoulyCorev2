@@ -15,7 +15,7 @@ interface StatusBarProps {
 
 const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
     const { status, currentConversation, toolState, memoryMonitor, runCognitiveSynthesis } = useConversation();
-    const { setLogPanelOpen, isLogPanelOpen, setToolInspectorOpen, setActiveView, setMemoryInspector, setProfileModalOpen } = useUIState();
+    const { setLogPanelOpen, isLogPanelOpen, setToolInspectorOpen, setActiveView, setMemoryInspector, setProfileModalOpen, setIsRoutingModalOpen } = useUIState();
     const [showUsageLog, setShowUsageLog] = useState(false);
     
     const model = useMemo(() => currentConversation?.model || 'gemini-3-flash-preview', [currentConversation]);
@@ -49,6 +49,16 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
             </div>
 
             <div className="flex items-center gap-3">
+                 {/* Cognitive Routing Button */}
+                 <button 
+                    onClick={() => setIsRoutingModalOpen(true)}
+                    className="flex items-center gap-1 text-gray-500 hover:text-indigo-400 bg-white/5 px-2 py-0.5 rounded-full border border-white/5 transition-all"
+                    title="Cognitive Routing (Model Paths)"
+                >
+                    <span className="w-3.5 h-3.5 flex items-center justify-center">🗺️</span>
+                    <span className="hidden lg:inline font-bold">Routes</span>
+                </button>
+
                  {/* Synthesis Trigger */}
                 <button 
                     onClick={runCognitiveSynthesis}

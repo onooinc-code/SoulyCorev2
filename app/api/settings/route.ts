@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import type { AppSettings } from '@/lib/types';
@@ -24,7 +25,6 @@ const defaultSettings: AppSettings = {
         enableMemoryExtraction: true,
         enableProactiveSuggestions: true,
         enableAutoSummarization: true,
-        // FIX: Added missing feature flags to match the AppSettings type definition in lib/types/app.ts
         enableReActAgent: false,
         enableLinkPrediction: true,
     },
@@ -39,6 +39,14 @@ const defaultSettings: AppSettings = {
         showTags: false,
     },
     savedEntityHubFilters: [],
+    apiRouting: {
+        main_response: 'gemini-3-flash-preview',
+        memory_extraction: 'gemini-3-flash-preview',
+        context_assembly: 'gemini-3-flash-preview',
+        proactive_suggestions: 'gemini-3-flash-preview',
+        synthesis: 'gemini-3-pro-preview',
+        title_generation: 'gemini-3-flash-preview',
+    }
 };
 
 // GET the application settings
@@ -62,6 +70,7 @@ export async function GET() {
                 global_ui_settings: { ...defaultSettings.global_ui_settings, ...dbSettings.global_ui_settings },
                 entityGridSettings: { ...defaultSettings.entityGridSettings, ...dbSettings.entityGridSettings },
                 savedEntityHubFilters: dbSettings.savedEntityHubFilters ?? defaultSettings.savedEntityHubFilters,
+                apiRouting: { ...defaultSettings.apiRouting, ...dbSettings.apiRouting },
             };
             return NextResponse.json(mergedSettings);
         }
