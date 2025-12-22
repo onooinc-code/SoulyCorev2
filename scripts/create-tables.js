@@ -1,3 +1,4 @@
+
 // scripts/create-tables.js
 const { db } = require('@vercel/postgres');
 
@@ -5,41 +6,8 @@ const statements = [
   `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`,
   `CREATE EXTENSION IF NOT EXISTS "pg_trgm";`,
 
-  // FIX: Force a clean state for ALL tables on every build to prevent errors from stale,
-  // incomplete table structures persisting in the Vercel build cache. This is the definitive
-  // solution to the recurring build errors.
-  `DROP TABLE IF EXISTS "conversations" CASCADE;`,
-  `DROP TABLE IF EXISTS "messages" CASCADE;`,
-  `DROP TABLE IF EXISTS "contacts" CASCADE;`,
-  `DROP TABLE IF EXISTS "entity_definitions" CASCADE;`,
-  `DROP TABLE IF EXISTS "segments" CASCADE;`,
-  `DROP TABLE IF EXISTS "prompts" CASCADE;`,
-  `DROP TABLE IF EXISTS "tools" CASCADE;`,
-  `DROP TABLE IF EXISTS "agent_runs" CASCADE;`,
-  `DROP TABLE IF EXISTS "experiences" CASCADE;`,
-  `DROP TABLE IF EXISTS "comm_channels" CASCADE;`,
-  `DROP TABLE IF EXISTS "projects" CASCADE;`,
-  `DROP TABLE IF EXISTS "tasks" CASCADE;`,
-  `DROP TABLE IF EXISTS "pipeline_runs" CASCADE;`,
-  `DROP TABLE IF EXISTS "features" CASCADE;`,
-  `DROP TABLE IF EXISTS "api_endpoints" CASCADE;`,
-  `DROP TABLE IF EXISTS "documentations" CASCADE;`,
-  `DROP TABLE IF EXISTS "hedra_goals" CASCADE;`,
-  `DROP TABLE IF EXISTS "subsystems" CASCADE;`,
-  `DROP TABLE IF EXISTS "version_history" CASCADE;`,
-  `DROP TABLE IF EXISTS "logs" CASCADE;`,
-  `DROP TABLE IF EXISTS "brains" CASCADE;`,
-  `DROP TABLE IF EXISTS "documents" CASCADE;`,
-  `DROP TABLE IF EXISTS "data_sources" CASCADE;`,
-  `DROP TABLE IF EXISTS "settings" CASCADE;`,
-  `DROP TABLE IF EXISTS "predicate_definitions" CASCADE;`,
-  `DROP TABLE IF EXISTS "entity_history" CASCADE;`,
-  `DROP TABLE IF EXISTS "entity_relationships" CASCADE;`,
-  `DROP TABLE IF EXISTS "events" CASCADE;`,
-  `DROP TABLE IF EXISTS "event_participants" CASCADE;`,
-  `DROP TABLE IF EXISTS "entity_type_validation_rules" CASCADE;`,
-  `DROP MATERIALIZED VIEW IF EXISTS "vw_detailed_relationships" CASCADE;`,
-
+  // FIX: Removed DROP TABLE statements to ensure data persistence across deployments.
+  // Tables will now only be created if they don't already exist.
 
   `CREATE TABLE IF NOT EXISTS "settings" (
     "key" VARCHAR(255) PRIMARY KEY,
@@ -457,6 +425,8 @@ const statements = [
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
 
+  // Note: Materialized views are slightly different, we drop them to ensure fresh definitions if they change.
+  `DROP MATERIALIZED VIEW IF EXISTS "vw_detailed_relationships" CASCADE;`,
   `CREATE MATERIALIZED VIEW "vw_detailed_relationships" AS
     SELECT
         r.id,
@@ -478,19 +448,14 @@ const statements = [
     JOIN predicate_definitions p ON r."predicateId" = p.id
     LEFT JOIN brains b ON r."brainId" = b.id;`,
 
-  // Create indexes for faster queries
   `CREATE UNIQUE INDEX IF NOT EXISTS "idx_vw_detailed_relationships_id" ON "vw_detailed_relationships"(id);`,
   `CREATE INDEX IF NOT EXISTS "idx_messages_conversation_id" ON "messages"("conversationId");`,
   `CREATE INDEX IF NOT EXISTS "idx_conversations_lastupdatedat" ON "conversations"("lastUpdatedAt");`,
   `CREATE INDEX IF NOT EXISTS "idx_pipeline_runs_message_id" ON "pipeline_runs"("messageId");`,
-  `CREATE INDEX IF NOT EXISTS "idx_entity_history_entity_id" ON "entity_history"("entityId");`,
-  `CREATE INDEX IF NOT EXISTS "idx_relationships_brain_id" ON "entity_relationships"("brainId");`,
-  `CREATE INDEX IF NOT EXISTS "idx_event_participants_event_id" ON "event_participants"("eventId");`,
-  `CREATE INDEX IF NOT EXISTS "idx_event_participants_entity_id" ON "event_participants"("entityId");`,
 ];
 
 async function createTables() {
-  console.log('Starting database schema creation...');
+  console.log('Checking and creating database schema...');
   const client = await db.connect();
   try {
     await client.query('BEGIN');
@@ -498,11 +463,10 @@ async function createTables() {
       await client.query(statement);
     }
     await client.query('COMMIT');
-    console.log('Successfully created all tables.');
+    console.log('Successfully initialized database schema.');
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Error creating tables:', error);
-    // Vercel build will fail if we exit with 1, which is what we want.
+    console.error('Error during schema initialization:', error);
     process.exit(1);
   } finally {
     client.release();

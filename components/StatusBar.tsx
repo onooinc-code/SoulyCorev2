@@ -3,7 +3,8 @@
 
 import React, { useMemo } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
-import { CogIcon, UserCircleIcon, BookmarkIcon, CpuChipIcon, ClockIcon, DocumentTextIcon, BeakerIcon } from '@/components/Icons';
+import { useUIState } from '@/components/providers/UIStateProvider';
+import { CogIcon, UserCircleIcon, ClockIcon, BeakerIcon, LogIcon } from '@/components/Icons';
 import { ChatBubbleLeftRightIcon } from '@/components/Icons';
 import type { CognitiveStatus } from '@/lib/types';
 
@@ -14,6 +15,7 @@ interface StatusBarProps {
 
 const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
     const { status, currentConversation, messages } = useConversation();
+    const { setLogPanelOpen, isLogPanelOpen } = useUIState();
     
     const model = useMemo(() => {
         if (!currentConversation) return 'gemini-2.5-flash';
@@ -55,6 +57,14 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
             )}
 
             <div className="flex items-center gap-3">
+                 <button 
+                    onClick={() => setLogPanelOpen(!isLogPanelOpen)} 
+                    className={`flex items-center gap-1 transition-colors ${isLogPanelOpen ? 'text-indigo-400' : 'hover:text-white'}`}
+                    title="Toggle Debug Log Panel"
+                >
+                    <LogIcon className="w-3.5 h-3.5" />
+                    <span>Logs</span>
+                </button>
                  <button onClick={onAgentConfigClick} className="flex items-center gap-1 hover:text-white transition-colors">
                     <UserCircleIcon className="w-3.5 h-3.5" />
                     <span>Agent</span>

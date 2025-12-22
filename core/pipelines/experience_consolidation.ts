@@ -28,13 +28,11 @@ export class ExperienceConsolidationPipeline {
             `;
             if (stepRows.length === 0) return;
 
-            const formattedSteps = stepRows.map(s => `Thought: ${s.thought}\nAction: ${s.action}\nObs: ${s.observation}`).join('\n\n');
-
             const prompt = `Analyze this agent run for goal: "${goal}"
             1. Create a "goalTemplate" with placeholders.
             2. Extract "triggerKeywords".
             3. Formulate "abstractPlan" (JSON array).
-            4. **NEW**: Extract "learnedInsights" - general wisdom or heuristics learned (e.g., "Always check X before Y").
+            4. **NEW**: Extract "learnedInsights" - general wisdom or heuristics learned.
             
             Return JSON.`;
 
@@ -55,6 +53,12 @@ export class ExperienceConsolidationPipeline {
                 }
             });
             
+            // FIX: Added explicit null check for response.text to prevent build errors.
+            if (!response.text) {
+                console.error("[ExperienceConsolidation] AI returned empty response.");
+                return;
+            }
+
             const data = JSON.parse(response.text.trim());
 
             // 1. Store the Experience Plan (Postgres)
@@ -63,7 +67,7 @@ export class ExperienceConsolidationPipeline {
                 VALUES (${runId}, ${data.goalTemplate}, ${data.triggerKeywords as any}, ${JSON.stringify(data.stepsJson)});
             `;
 
-            // 2. Store Insights in Semantic Memory (Pinecone) - AUTONOMOUS LEARNING
+            // 2. Store Insights in Semantic Memory (Pinecone)
             if (data.learnedInsights?.length > 0) {
                 for (const insight of data.learnedInsights) {
                     await this.semanticMemory.store({

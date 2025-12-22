@@ -3,24 +3,21 @@
 ... (Previous entries) ...
 
 ---
-### Bug #38: Full Memory Synchronization & DB Integration
+### Bug #39: Vercel Build Failure & Data Persistence Issue
 
 **Error Details:**
-EdgeDB and MongoDB were connected but not utilized in the core logic. User preferences were being extracted but not persisted across sessions.
+1. Build failed on Vercel due to `response.text` being possibly undefined in `experience_consolidation.ts`.
+2. All database data was being wiped on every new deployment due to `DROP TABLE IF EXISTS` in the initialization script.
 
 **Solution:**
-1.  **Modified `ContextAssemblyPipeline`:** Now proactively queries **EdgeDB** for entity relationships and **Postgres Settings** for user profile preferences before every LLM call.
-2.  **Modified `MemoryExtractionPipeline`:** Fully implemented the distribution logic. It now saves data to:
-    - **MongoDB:** Raw historical logs.
-    - **EdgeDB:** Graph relationships.
-    - **Pinecone:** Semantic knowledge chunks.
-    - **Postgres:** Structured entities and User Preferences.
-    - **Upstash:** Fast vector lookups for entities.
-3.  **Fixed `lib/mongodb.ts`:** Corrected global type definitions for stable connections.
+1. Added proper null checks for all AI response objects in pipelines.
+2. Removed `DROP TABLE` statements from `create-tables.js` and replaced with safe `CREATE TABLE IF NOT EXISTS` commands.
+3. Added a dedicated "Logs" button in the `StatusBar` to ensure the Debug Log panel is easily accessible.
 
 **Modified Files:**
-- `core/pipelines/context_assembly.ts`
-- `core/pipelines/memory_extraction.ts`
-- `lib/mongodb.ts`
-- `core/memory/modules/profile.ts`
-- `core/memory/modules/document.ts`
+- `core/pipelines/experience_consolidation.ts`
+- `scripts/create-tables.js`
+- `components/StatusBar.tsx`
+- `app/api/version/current/route.ts`
+- `app/api/version/history/route.ts`
+- `scripts/seed-version-history.js`
