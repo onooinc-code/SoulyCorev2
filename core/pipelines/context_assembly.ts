@@ -36,16 +36,20 @@ export class ContextAssemblyPipeline {
         this.profileMemory = new ProfileMemoryModule();
     }
 
-    private async logStep(runId: string, order: number, name: string, input: any, execution: () => Promise<any>) {
+    private async logStep(runId: string | null, order: number, name: string, input: any, execution: () => Promise<any>) {
         const startTime = Date.now();
         try {
             const output = await execution();
             const duration = Date.now() - startTime;
             if (runId) {
-                await sql`
-                    INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status)
-                    VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
-                `;
+                try {
+                    await sql`
+                        INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status)
+                        VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
+                    `;
+                } catch (logErr) {
+                    console.warn(`Failed to log successful pipeline step [${name}] to DB:`, logErr);
+                }
             }
             return output;
         } catch (error) {
@@ -76,32 +80,40 @@ export class ContextAssemblyPipeline {
         const { conversation, userQuery, mentionedContacts, userMessageId, config } = params;
         const brainId = conversation.brainId || null;
 
-        let runId: string = '';
+        let runId: string | null = null;
         const startTime = Date.now();
 
-        try {
-            const { rows: runRows } = await sql<PipelineRun>`
-                INSERT INTO pipeline_runs ("messageId", "pipelineType", status)
-                VALUES (${userMessageId}, 'ContextAssembly', 'running') RETURNING id;
-            `;
-            runId = runRows[0].id;
-        } catch (e) {
-            console.error("Failed to create pipeline run record:", e);
+        // Check if database is even connected
+        const hasDb = !!process.env.POSTGRES_URL;
+
+        if (hasDb) {
+            try {
+                const { rows: runRows } = await sql<PipelineRun>`
+                    INSERT INTO pipeline_runs ("messageId", "pipelineType", status)
+                    VALUES (${userMessageId}, 'ContextAssembly', 'running') RETURNING id;
+                `;
+                runId = runRows[0].id;
+            } catch (e) {
+                console.warn("Failed to create pipeline run record in DB (table might be missing):", e);
+            }
         }
 
         try {
             // 1. Episodic Retrieval (History)
-            const recentMessages = await this.logStep(runId, 1, 'Retrieve Episodic Memory', { conversationId: conversation.id }, () =>
-                this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth })
-            ) as Message[] || [];
+            const recentMessages = await this.logStep(runId, 1, 'Retrieve Episodic Memory', { conversationId: conversation.id }, async () => {
+                if (!hasDb) return [];
+                return this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth });
+            }) as Message[] || [];
             
             // 2. Profile Retrieval (Preferences)
-            const userProfile = await this.logStep(runId, 2, 'Retrieve User Profile', {}, () => 
-                this.profileMemory.query({})
-            ) || { name: 'User', aiName: 'SoulyCore' };
+            const userProfile = await this.logStep(runId, 2, 'Retrieve User Profile', {}, async () => {
+                if (!hasDb) return { name: 'User', aiName: 'SoulyCore' };
+                return this.profileMemory.query({});
+            }) || { name: 'User', aiName: 'SoulyCore' };
 
             // 3. Experience Retrieval (Learned Patterns)
             const matchedExperiences = await this.logStep(runId, 3, 'Retrieve Learned Experiences', { userQuery, brainId }, async () => {
+                if (!hasDb) return [];
                 const queryWords = userQuery.toLowerCase().split(/\s+/).filter(w => w.length > 3);
                 if (queryWords.length === 0) return [];
                 try {
@@ -120,7 +132,7 @@ export class ContextAssemblyPipeline {
             const proactiveEntities = await this.logStep(runId, 4, 'Vector Search Entities', { userQuery, brainId }, async () => {
                  try {
                      const results = await this.entityVectorMemory.query({ queryText: userQuery, topK: 5 });
-                     if (!results || results.length === 0) return [];
+                     if (!results || results.length === 0 || !hasDb) return [];
                      const ids = results.map(r => r.id);
                      const { rows } = await db.query(`
                         SELECT * FROM entity_definitions 
@@ -147,6 +159,7 @@ export class ContextAssemblyPipeline {
 
             // 6. Tool Discovery
             const discoveredTools = await this.logStep(runId, 6, 'Semantic Tool Selection', { userQuery }, async () => {
+                if (!hasDb) return [];
                 try {
                     const { rows: allTools } = await db.query('SELECT name, description FROM tools');
                     return allTools.filter((t: Tool) => 
@@ -185,7 +198,10 @@ ${graphContext.join('\n') || 'None'}
                     formattedHistory.push({ role: 'user', parts: [{ text: userQuery }] });
                 }
                 
-                return Promise.resolve({ systemInstruction: finalInstruction, history: formattedHistory });
+                // Truncate instruction if extremely long
+                const safeInstruction = finalInstruction.substring(0, 20000);
+                
+                return Promise.resolve({ systemInstruction: safeInstruction, history: formattedHistory });
             });
 
             const { systemInstruction, history } = assembledData;
@@ -193,13 +209,17 @@ ${graphContext.join('\n') || 'None'}
             // 8. LLM Execution
             const llmResponse = await llmProvider.generateContent(history, systemInstruction, { temperature: conversation.temperature }, conversation.model || undefined);
             
-            if (runId) {
+            if (runId && hasDb) {
                 const totalDuration = Date.now() - startTime;
-                await sql`
-                    UPDATE pipeline_runs 
-                    SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${llmResponse}
-                    WHERE id = ${runId};
-                `;
+                try {
+                    await sql`
+                        UPDATE pipeline_runs 
+                        SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${llmResponse}
+                        WHERE id = ${runId};
+                    `;
+                } catch (updateErr) {
+                    console.warn("Failed to update final pipeline run status in DB:", updateErr);
+                }
             }
             
             return { 
@@ -215,9 +235,13 @@ ${graphContext.join('\n') || 'None'}
 
         } catch (error) {
              console.error("Critical ContextAssembly failure:", error);
-             if (runId) {
+             if (runId && hasDb) {
                  const totalDuration = Date.now() - startTime;
-                 await sql`UPDATE pipeline_runs SET status = 'failed', "durationMs" = ${totalDuration}, "finalOutput" = ${(error as Error).message} WHERE id = ${runId};`;
+                 try {
+                     await sql`UPDATE pipeline_runs SET status = 'failed', "durationMs" = ${totalDuration}, "finalOutput" = ${(error as Error).message} WHERE id = ${runId};`;
+                 } catch (innerUpdateErr) {
+                     console.error("Failed to log critical pipeline failure to DB:", innerUpdateErr);
+                 }
              }
              throw error;
         }
