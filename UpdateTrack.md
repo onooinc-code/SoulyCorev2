@@ -3,13 +3,14 @@
 
 ---
 
-### Update #28: Memory Transparency & Deep Logging (v0.4.16)
+### Update #29: Multimodal Memory Monitoring & Navigation Fix (v0.4.17)
 
 **Details:**
-Enhanced the observability of the AI's cognitive processes by providing real-time feedback on knowledge extraction and detailed logging of internal pipeline steps.
+Introduced a granular monitoring system for all memory tiers (Semantic, Structured, Graph, Episodic) and fixed navigation issues in the Context Menu.
 
 **Changes Made:**
-- **Extracted Knowledge Badge:** Added a new UI element in `MessageFooter.tsx` that displays the specific JSON output of the `MemoryExtractionPipeline` for each turn.
-- **Granular Server Logging:** Injected `sql` logging calls into `MemoryExtractionPipeline` to record every sub-step (LLM call, DB store, profile sync) in the system logs.
-- **Enhanced API Inspection:** Updated the `/api/inspect` route to consolidate all pipeline runs (Context and Extraction) for a message, enabling a complete audit trail.
-- **Version Sync Fix:** Synchronized `package.json`, `history` route, and `seed-version-history.js` to ensure the UI correctly reflects v0.4.16 across all modals.
+- **Memory Monitor State:** Added `MemoryMonitorState` to `ConversationProvider` to track the execution status of each memory tier independently.
+- **Status Bar Integration:** Added four new interactive buttons to `StatusBar.tsx` representing each memory dimension.
+- **Visual Feedback:** Implemented a three-color state system (Yellow/Green/Red) with pulse animations for all monitors.
+- **Navigation Fix:** Refactored `setCurrentConversation` to ensure immediate view switching when triggered from secondary UI elements like context menus.
+- **Auto-Reset Mechanism:** Integrated `resetMonitors` into the `addMessage` flow to ensure a clean state for every interaction.

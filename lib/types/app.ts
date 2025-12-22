@@ -11,14 +11,25 @@ export interface CognitiveStatus {
     details: string;
 }
 
-export type ToolExecutionStatus = 'idle' | 'executing' | 'success' | 'error';
+export type ExecutionStatus = 'idle' | 'executing' | 'success' | 'error';
 
-export interface ToolState {
-    status: ToolExecutionStatus;
+export interface ExecutionState {
+    status: ExecutionStatus;
+    data?: any;
+    error?: string;
+}
+
+export interface ToolState extends ExecutionState {
     toolName?: string;
     input?: any;
     output?: any;
-    error?: string;
+}
+
+export interface MemoryMonitorState {
+    semantic: ExecutionState;
+    structured: ExecutionState;
+    graph: ExecutionState;
+    episodic: ExecutionState;
 }
 
 // A generic status object used throughout the app
@@ -70,7 +81,7 @@ export interface AppSettings {
         showTags: boolean;
     };
     savedEntityHubFilters?: SavedFilterSet[];
-    // NEW: Store custom prompts for the ChatInput toolbar
+    // Store custom prompts for the ChatInput toolbar
     customToolbarPrompts?: Record<string, string>; 
 }
 
@@ -78,7 +89,6 @@ export interface AppSettings {
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
 export interface ConversationContextType {
-    // ... other properties
     activeRunId: string | null;
     startAgentRun: (goal: string) => Promise<void>;
     startWorkflow: (prompt: import('./data').Prompt, userInputs: Record<string, string>) => void;

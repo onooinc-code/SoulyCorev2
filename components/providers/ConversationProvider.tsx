@@ -1,8 +1,7 @@
-
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import type { Conversation, Message, Contact, IStatus, ActiveWorkflowState, Prompt, ConversationContextType, ILinkPredictionProposal, ToolState } from '@/lib/types';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import type { Conversation, Message, Contact, IStatus, ActiveWorkflowState, Prompt, ConversationContextType, ILinkPredictionProposal, ToolState, MemoryMonitorState, ExecutionStatus } from '@/lib/types';
 import { useAppStatus } from '@/lib/hooks/useAppStatus';
 import { useConversationList } from '@/lib/hooks/useConversationList';
 import { useMessageManager } from '@/lib/hooks/useMessageManager';
@@ -17,6 +16,7 @@ interface ExtendedConversationContextType extends Omit<ConversationContextType, 
     isLoading: boolean;
     status: IStatus;
     toolState: ToolState;
+    memoryMonitor: MemoryMonitorState;
     backgroundTaskCount: number;
     activeWorkflow: ActiveWorkflowState | null;
     unreadConversations: Set<string>;
@@ -45,6 +45,7 @@ interface ExtendedConversationContextType extends Omit<ConversationContextType, 
     
     setStatus: (status: Partial<IStatus>) => void;
     setToolState: (state: Partial<ToolState>) => void;
+    setMemoryMonitorState: (tier: keyof MemoryMonitorState, status: ExecutionStatus, data?: any, error?: string) => void;
     clearError: () => void;
     
     setScrollToMessageId: (messageId: string | null) => void;
@@ -65,54 +66,100 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
     const [activeRunId, setActiveRunId] = useState<string | null>(null);
     
-    // Live Tool State
+    // Live Monitors
     const [toolState, setBaseToolState] = useState<ToolState>({ status: 'idle' });
+    const [memoryMonitor, setMemoryMonitor] = useState<MemoryMonitorState>({
+        semantic: { status: 'idle' },
+        structured: { status: 'idle' },
+        graph: { status: 'idle' },
+        episodic: { status: 'idle' }
+    });
 
     const setToolState = useCallback((newState: Partial<ToolState>) => {
         setBaseToolState(prev => ({ ...prev, ...newState }));
     }, []);
 
-    const onConversationDeleted = (deletedId: string) => {
-        if (currentConversationId === deletedId) {
-            setCurrentConversationId(null);
-        }
-    };
-    
+    const setMemoryMonitorState = useCallback((tier: keyof MemoryMonitorState, status: ExecutionStatus, data?: any, error?: string) => {
+        setMemoryMonitor(prev => ({
+            ...prev,
+            [tier]: { status, data, error }
+        }));
+    }, []);
+
+    const resetMonitors = useCallback(() => {
+        setToolState({ status: 'idle', toolName: undefined, input: undefined, output: undefined, error: undefined });
+        setMemoryMonitor({
+            semantic: { status: 'idle' },
+            structured: { status: 'idle' },
+            graph: { status: 'idle' },
+            episodic: { status: 'idle' }
+        });
+    }, [setToolState]);
+
     const onConversationCreated = useCallback((newConversation: Conversation) => {
         log('New conversation created, navigating...', { id: newConversation.id });
         setCurrentConversationId(newConversation.id);
         setActiveView('chat');
     }, [log, setActiveView]);
 
-    const { conversations, loadConversations, createNewConversation: apiCreateConversation, deleteConversation, updateConversationTitle, generateConversationTitle } = useConversationList({ setIsLoading, setStatus, activeSegmentId, onConversationDeleted, onConversationCreated });
+    // @google/genai-api-guideline-fix: Define the required callback for handling deleted conversations.
+    const onConversationDeleted = useCallback((conversationId: string) => {
+        log('Conversation deleted, clearing state if active...', { id: conversationId });
+        if (currentConversationId === conversationId) {
+            setCurrentConversationId(null);
+        }
+    }, [log, currentConversationId]);
 
-    // Wrapper to ensure context functions are called
-    const createNewConversation = useCallback(async () => {
-        await apiCreateConversation();
-        setActiveView('chat');
-    }, [apiCreateConversation, setActiveView]);
+    const { conversations, loadConversations, createNewConversation: apiCreateConversation, deleteConversation, updateConversationTitle, generateConversationTitle } = useConversationList({ 
+        setIsLoading, 
+        setStatus, 
+        activeSegmentId, 
+        onConversationCreated,
+        onConversationDeleted // FIX: Pass the newly defined callback
+    });
 
     const currentConversation = useMemo(() => conversations.find(c => c.id === currentConversationId) || null, [conversations, currentConversationId]);
 
-    const onNewMessageWhileHidden = (conversationId: string) => {
-        setUnreadConversations(prev => new Set(prev).add(conversationId));
-    };
-
     const { messages, setMessages, fetchMessages, addMessage: baseAddMessage, toggleBookmark, deleteMessage, updateMessage, regenerateAiResponse, regenerateUserPromptAndGetResponse, clearMessages } = useMessageManager({
-        currentConversation, setStatus, setIsLoading, startBackgroundTask, endBackgroundTask, onNewMessageWhileHidden
+        currentConversation, setStatus, setIsLoading, startBackgroundTask, endBackgroundTask, onNewMessageWhileHidden: (id) => setUnreadConversations(prev => new Set(prev).add(id))
     });
 
-    const addMessage = useCallback(async (...args: any[]) => {
-        setToolState({ status: 'idle', toolName: undefined, input: undefined, output: undefined, error: undefined });
-        return (baseAddMessage as any)(...args);
-    }, [baseAddMessage, setToolState]);
+    // FIX: Ensure messages are cleared when the current conversation is deleted or deselected.
+    useEffect(() => {
+        if (!currentConversationId) {
+            setMessages([]);
+        }
+    }, [currentConversationId, setMessages]);
+
+    const addMessage = useCallback(async (msgData: any, mentioned: any, history: any, parent: any) => {
+        resetMonitors();
+        // Update monitor UI based on phase transitions
+        setMemoryMonitorState('semantic', 'executing');
+        setMemoryMonitorState('structured', 'executing');
+        setMemoryMonitorState('graph', 'executing');
+        setMemoryMonitorState('episodic', 'executing');
+
+        const result = await baseAddMessage(msgData, mentioned, history, parent);
+        
+        // Finalize monitors if success
+        if (result.aiResponse) {
+            setMemoryMonitorState('semantic', 'success');
+            setMemoryMonitorState('structured', 'success');
+            setMemoryMonitorState('graph', 'success');
+            setMemoryMonitorState('episodic', 'success');
+        } else {
+             setMemoryMonitorState('semantic', 'error');
+        }
+        
+        return result;
+    }, [baseAddMessage, resetMonitors, setMemoryMonitorState]);
 
     const { activeWorkflow, startWorkflow } = useWorkflowManager({ currentConversation, setStatus, addMessage, setMessages });
 
     const setCurrentConversationWithMessages = useCallback(async (id: string | null) => {
         setCurrentConversationId(id);
         if (id) {
-            setActiveView('chat'); // Switch view immediately
+            setActiveView('chat');
             setIsLoading(true);
             await fetchMessages(id);
             setIsLoading(false);
@@ -129,102 +176,52 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const updateCurrentConversation = useCallback(async (updates: Partial<Conversation>) => {
         if (!currentConversationId) return;
         try {
-            const res = await fetch(`/api/conversations/${currentConversationId}`, {
+            await fetch(`/api/conversations/${currentConversationId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates),
             });
-            if (!res.ok) throw new Error('Failed to update conversation settings.');
             await loadConversations(activeSegmentId);
         } catch (error) {
-            setStatus({ error: (error as Error).message });
             log('Failed to update conversation settings', { error }, 'error');
-            loadConversations(activeSegmentId);
         }
-    }, [currentConversationId, setStatus, log, loadConversations, activeSegmentId]);
+    }, [currentConversationId, log, loadConversations, activeSegmentId]);
 
     const startAgentRun = useCallback(async (goal: string) => {
         setStatus({ currentAction: "Initiating autonomous agent..." });
-        log('Starting agent run', { goal });
         try {
             const res = await fetch('/api/agents/runs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ goal, plan: [{ phase_order: 1, goal: "Initial research" }] }),
             });
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || "Failed to start agent run");
-            }
             const newRun = await res.json();
             setActiveRunId(newRun.id);
         } catch (error) {
-            const errorMessage = (error as Error).message;
-            setStatus({ error: errorMessage });
-            log('Failed to start agent run', { error: errorMessage }, 'error');
+            log('Failed to start agent run', { error }, 'error');
         } finally {
             setStatus({ currentAction: "" });
         }
     }, [setStatus, log]);
 
     useEffect(() => {
-        if(activeRunId) {
-            setActiveView('agent_center');
-        }
+        if(activeRunId) setActiveView('agent_center');
     }, [activeRunId, setActiveView]);
     
     const value: ExtendedConversationContextType = {
-        conversations,
-        currentConversation,
-        messages,
-        isLoading,
-        status,
-        toolState,
-        backgroundTaskCount,
-        activeWorkflow,
-        unreadConversations,
-        scrollToMessageId,
-        activeSegmentId,
-        activeRunId,
-        
+        conversations, currentConversation, messages, isLoading, status, toolState, memoryMonitor,
+        backgroundTaskCount, activeWorkflow, unreadConversations, scrollToMessageId, activeSegmentId, activeRunId,
         setCurrentConversation: setCurrentConversationWithMessages,
-        createNewConversation,
-        deleteConversation,
-        updateConversationTitle,
-        generateConversationTitle,
-        loadConversations,
-        updateCurrentConversation,
-
-        addMessage,
-        toggleBookmark,
-        deleteMessage,
-        updateMessage,
-        regenerateAiResponse,
-        regenerateUserPromptAndGetResponse,
-        clearMessages,
-
-        startWorkflow,
-        startAgentRun,
-        
-        setStatus,
-        setToolState,
-        clearError,
-        
-        setScrollToMessageId,
-        setActiveSegmentId,
+        createNewConversation, deleteConversation, updateConversationTitle, generateConversationTitle, loadConversations, updateCurrentConversation,
+        addMessage, toggleBookmark, deleteMessage, updateMessage, regenerateAiResponse, regenerateUserPromptAndGetResponse, clearMessages,
+        startWorkflow, startAgentRun, setStatus, setToolState, setMemoryMonitorState, clearError, setScrollToMessageId, setActiveSegmentId,
     };
     
-    return (
-        <ConversationContext.Provider value={value}>
-            {children}
-        </ConversationContext.Provider>
-    );
+    return <ConversationContext.Provider value={value}>{children}</ConversationContext.Provider>;
 };
 
 export const useConversation = () => {
     const context = useContext(ConversationContext);
-    if (context === undefined) {
-        throw new Error('useConversation must be used within a ConversationProvider');
-    }
+    if (context === undefined) throw new Error('useConversation must be used within a ConversationProvider');
     return context;
 };

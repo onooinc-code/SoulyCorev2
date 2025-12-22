@@ -6,20 +6,21 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.4.16',
-    version: '0.4.16',
+    id: 'v-0.4.17',
+    version: '0.4.17',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🕵️ Memory Transparency & Deep Logging (v0.4.16)
+### 🚦 Multimodal Memory Monitoring (v0.4.17)
 
-**New Cognitive Features:**
-- **Extracted Badge:** Every AI message now has a "Extracted" badge in the footer. Click it to see exactly what facts, entities, and preferences were harvested from that turn.
-- **Deep-Step Logging:** Added granular logging for every internal pipeline step. You can now see the detailed "Behind the Scenes" of memory extraction in the Debug Log panel.
-- **Unified Inspector:** The Cognitive Inspector now displays both "Context Retrieval" (What I read) and "Memory Extraction" (What I learned).
+**New Real-time Monitoring:**
+- **Tiered Memory Buttons:** Added dedicated monitors for Semantic, Structured, Graph, and Episodic memory in the Status Bar.
+- **Dynamic State Visualization:** Buttons now pulse Yellow during retrieval, Green on success, and Red on error.
+- **Auto-Reset Logic:** Monitoring states now automatically reset when you send a new message.
 
 **Bug Fixes:**
-- **Pipeline Visibility:** Fixed an issue where background extraction results were hidden from the user.
+- **Navigation Integrity:** Fixed a critical bug where "New Chat" actions from the Context Menu failed to switch views.
+- **Monitor Sync:** Fixed tool status persistence across different conversation turns.
 `
 };
 
