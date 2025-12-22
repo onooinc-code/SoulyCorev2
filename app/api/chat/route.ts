@@ -43,9 +43,12 @@ export async function POST(req: NextRequest) {
             });
         } catch (assemblyError) {
             console.error("Context Assembly Pipeline failed:", assemblyError);
+            const msg = (assemblyError as Error).message || "Unknown Pipeline Error";
+            const stack = (assemblyError as Error).stack;
             return NextResponse.json({ 
                 error: 'Cognitive Engine Failure', 
-                details: (assemblyError as Error).message 
+                details: msg,
+                stack: process.env.NODE_ENV === 'development' ? stack : undefined
             }, { status: 500 });
         }
 
