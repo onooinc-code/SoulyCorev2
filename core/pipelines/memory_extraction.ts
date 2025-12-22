@@ -41,25 +41,22 @@ export class MemoryExtractionPipeline {
     async run(params: IMemoryExtractionParams) {
         const { text, messageId, conversationId, brainId } = params;
 
-        // 1. Log raw interaction to MongoDB (Historical Archive)
+        // 1. Archive to MongoDB
         await this.documentMemory.store({ 
-            data: { text, source: 'extraction_pipeline', messageId, conversationId, timestamp: new Date() }, 
+            data: { text, source: 'extraction_pipeline', messageId, conversationId, brainId, timestamp: new Date() }, 
             type: 'extraction_log' 
         });
 
-        const prompt = `Analyze the following chat segment: "${text}"
-        
-        Extract and return a valid JSON object with:
-        1. "entities": Array of objects {name, type, description} for people, projects, or places.
-        2. "relationships": Array of {source, predicate, target} for connections.
-        3. "preferences": Array of strings for user-specific likes/dislikes/settings.
-        4. "facts": Array of strings for general reusable knowledge.
-        
-        Ensure the JSON is strictly valid.`;
+        const prompt = `Analyze this turn: "${text}"
+        Extract JSON:
+        1. "entities": {name, type, description}
+        2. "relationships": {source, predicate, target}
+        3. "preferences": string[] (user settings/habits)
+        4. "facts": string[] (knowledge chunks)`;
 
         try {
              const response = await this.ai.models.generateContent({
-                model: 'gemini-3-flash-preview', // High speed for background extraction
+                model: 'gemini-3-flash-preview',
                 contents: [{ role: 'user', parts: [{ text: prompt }] }],
                 config: {
                     responseMimeType: "application/json",
@@ -70,8 +67,7 @@ export class MemoryExtractionPipeline {
                             relationships: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { source: {type: Type.STRING}, predicate: {type: Type.STRING}, target: {type: Type.STRING} } } },
                             preferences: { type: Type.ARRAY, items: { type: Type.STRING } },
                             facts: { type: Type.ARRAY, items: { type: Type.STRING } }
-                        },
-                        required: ['entities', 'relationships', 'preferences', 'facts']
+                        }
                     }
                 }
             });
@@ -79,21 +75,24 @@ export class MemoryExtractionPipeline {
             if (!response.text) return;
             const data = JSON.parse(response.text.trim());
 
-            // A. Store User Preferences (Postgres Settings)
+            // A. Profile (Global settings/habits)
             if (data.preferences?.length > 0) {
                 for(const pref of data.preferences) {
                     await this.profileMemory.store({ preference: pref });
                 }
             }
 
-            // B. Store Knowledge Facts (Pinecone - Semantic Search)
+            // B. Semantic (Knowledge indexed by brain)
             if (data.facts?.length > 0) {
                 for(const fact of data.facts) {
-                    await this.semanticMemory.store({ text: fact, metadata: { conversationId, type: 'fact' } });
+                    await this.semanticMemory.store({ 
+                        text: fact, 
+                        metadata: { conversationId, brainId, type: 'fact' } 
+                    });
                 }
             }
 
-            // C. Store Entities (Postgres Structured + Upstash Vector)
+            // C. Entities (Structured & Isolated)
             if (data.entities?.length > 0) {
                 for(const entity of data.entities) {
                     const saved: EntityDefinition = await this.structuredMemory.store({ 
@@ -102,27 +101,26 @@ export class MemoryExtractionPipeline {
                     });
                     
                     if (saved?.id) {
-                        // Link Postgres ID to Upstash Vector for fast similarity lookup
                         await this.entityVectorMemory.store({ 
                             id: saved.id, 
-                            text: `${saved.name} (${saved.type}): ${saved.description}` 
+                            text: `${saved.name}: ${saved.description}`,
+                            metadata: { brainId }
                         });
                     }
                 }
             }
 
-            // D. Store Relationships (EdgeDB Graph)
+            // D. Graph (Relationships isolated)
             if (data.relationships?.length > 0) {
                 for(const rel of data.relationships) {
-                    try {
-                        await this.graphMemory.store({
-                            relationship: {
-                                subject: rel.source,
-                                predicate: rel.predicate,
-                                object: rel.target
-                            }
-                        });
-                    } catch (e) { console.error("EdgeDB link failed", e); }
+                    await this.graphMemory.store({
+                        relationship: {
+                            subject: rel.source,
+                            predicate: rel.predicate,
+                            object: rel.target,
+                            brainId // ENSURED
+                        }
+                    });
                 }
             }
 

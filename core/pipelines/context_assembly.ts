@@ -7,7 +7,7 @@ import { GraphMemoryModule } from '../memory/modules/graph';
 import { ProfileMemoryModule } from '../memory/modules/profile';
 import llmProvider from '@/core/llm';
 import { db, sql } from '@/lib/db';
-import type { Conversation, Contact, PipelineRun, Message, EntityDefinition, Experience } from '@/lib/types';
+import type { Conversation, Contact, PipelineRun, Message, EntityDefinition, Experience, Tool } from '@/lib/types';
 import { IContextAssemblyConfig } from '../memory/types';
 
 interface IContextAssemblyParams {
@@ -58,6 +58,7 @@ export class ContextAssemblyPipeline {
 
     async run(params: IContextAssemblyParams) {
         const { conversation, userQuery, mentionedContacts, userMessageId, config } = params;
+        const brainId = conversation.brainId || null;
 
         const { rows: runRows } = await sql<PipelineRun>`
             INSERT INTO pipeline_runs ("messageId", "pipelineType", status)
@@ -67,72 +68,81 @@ export class ContextAssemblyPipeline {
         const startTime = Date.now();
 
         try {
-            // 1. Episodic Retrieval
+            // 1. Episodic Retrieval (History)
             const recentMessages = await this.logStep(runId, 1, 'Retrieve Episodic Memory', { conversationId: conversation.id }, () =>
                 this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth })
             ) as Message[];
             
-            // 2. Profile Retrieval
+            // 2. Profile Retrieval (Preferences)
             const userProfile = await this.logStep(runId, 2, 'Retrieve User Profile', {}, () => 
                 this.profileMemory.query({})
             );
 
-            // 3. Experience Retrieval (Learned Patterns) - NEW
-            const matchedExperiences = await this.logStep(runId, 3, 'Retrieve Learned Experiences', { userQuery }, async () => {
-                // Simplified matching: search keywords in query
+            // 3. Experience Retrieval (Learned Patterns) - Restricted by Brain
+            const matchedExperiences = await this.logStep(runId, 3, 'Retrieve Learned Experiences', { userQuery, brainId }, async () => {
                 const queryWords = userQuery.toLowerCase().split(/\s+/).filter(w => w.length > 3);
                 if (queryWords.length === 0) return [];
                 const { rows } = await db.query(`
                     SELECT * FROM experiences 
                     WHERE "triggerKeywords" && $1::text[]
-                    LIMIT 2
+                    LIMIT 3
                 `, [queryWords]);
                 return rows as Experience[];
             }) as Experience[];
 
-            // 4. Proactive Entity Similarity Search
-            const proactiveEntities = await this.logStep(runId, 4, 'Vector Search Entities', { userQuery }, async () => {
+            // 4. Entity Search (Strict Brain Isolation)
+            const proactiveEntities = await this.logStep(runId, 4, 'Vector Search Entities', { userQuery, brainId }, async () => {
                  const results = await this.entityVectorMemory.query({ queryText: userQuery, topK: 5 });
                  if (results.length === 0) return [];
                  const ids = results.map(r => r.id);
-                 const { rows } = await db.query('SELECT * FROM entity_definitions WHERE id = ANY($1::uuid[])', [ids]);
+                 // Apply brain filtering in SQL
+                 const { rows } = await db.query(`
+                    SELECT * FROM entity_definitions 
+                    WHERE id = ANY($1::uuid[]) 
+                    AND ("brainId" = $2 OR ("brainId" IS NULL AND $2 IS NULL))
+                 `, [ids, brainId]);
                  return rows;
             }) as EntityDefinition[];
 
-            // 5. Graph Relationship Retrieval
+            // 5. Graph Lookup (Already Brain Isolated in module)
             const graphContext = await this.logStep(runId, 5, 'Graph Memory Lookup', { entities: proactiveEntities.map(e => e.name) }, async () => {
                 const relationships = [];
                 for (const entity of proactiveEntities) {
                     try {
-                        const rels = await this.graphMemory.query({ entityName: entity.name });
+                        const rels = await this.graphMemory.query({ entityName: entity.name, brainId });
                         relationships.push(...rels);
-                    } catch (e) { console.warn('EdgeDB Query failed', e); }
+                    } catch (e) { console.warn('Graph Query failed', e); }
                 }
                 return relationships;
             });
 
-            // 6. Semantic Retrieval
-            const semanticResults = await this.logStep(runId, 6, 'Semantic Search', { userQuery }, () =>
-                 this.semanticMemory.query({ queryText: userQuery, topK: 3 })
-            ) as ISemanticQueryResult[];
+            // 6. Tool Discovery (Semantic Tool Selection) - NEW
+            const discoveredTools = await this.logStep(runId, 6, 'Semantic Tool Selection', { userQuery }, async () => {
+                const { rows: allTools } = await db.query('SELECT name, description, "schemaJson" FROM tools');
+                // Select tools whose description matches the query keywords
+                return allTools.filter((t: Tool) => 
+                    userQuery.toLowerCase().includes(t.name.toLowerCase()) || 
+                    t.description.toLowerCase().split(' ').some(word => userQuery.toLowerCase().includes(word))
+                );
+            }) as Tool[];
 
             // 7. Context Assembly
             const { systemInstruction, history } = await this.logStep(runId, 7, 'Assemble Final Prompt', {}, () => {
                 let context = `
 === USER PROFILE & PREFERENCES ===
-Preferences: ${userProfile.preferences?.join(', ') || 'None'}
+${userProfile.preferences?.join(', ') || 'None'}
 
-=== RELEVANT LEARNED EXPERIENCES (HOW-TO) ===
-${matchedExperiences.map(exp => `- For goals like "${exp.goalTemplate}", the plan was: ${JSON.stringify(exp.stepsJson)}`).join('\n') || 'None'}
+=== RELEVANT EXPERIENCES (Success Patterns) ===
+${matchedExperiences.map(exp => `- Goal: "${exp.goalTemplate}" -> Solution: ${JSON.stringify(exp.stepsJson)}`).join('\n') || 'None'}
 
-=== STRUCTURED KNOWLEDGE (ENTITIES) ===
+=== KNOWLEDGE ENTITIES (Brain: ${conversation.brainId || 'Global'}) ===
 ${proactiveEntities.map(e => `- ${e.name} (${e.type}): ${e.description}`).join('\n')}
+
+=== ACTIVE TOOLS FOR THIS TURN ===
+${discoveredTools.map(t => `- ${t.name}: ${t.description}`).join('\n')}
 
 === GRAPH RELATIONSHIPS ===
 ${graphContext.join('\n')}
-
-=== SEMANTIC CONTEXT ===
-${semanticResults.map(r => `> ${r.text}`).join('\n')}
 `;
                 const finalInstruction = `${conversation.systemPrompt}\n\nUSE THE FOLLOWING CONTEXT TO INFORM YOUR RESPONSE:\n${context}`;
                 
