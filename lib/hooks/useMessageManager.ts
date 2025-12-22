@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from 'react';
@@ -50,7 +49,14 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
         }
     }, [setStatus, log]);
 
-    const addMessage = useCallback(async (message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, mentionedContacts?: Contact[], historyOverride?: Message[], parentMessageId?: string | null) => {
+    const addMessage = useCallback(async (
+        message: Omit<Message, 'id' | 'createdAt' | 'conversationId'>, 
+        mentionedContacts?: Contact[], 
+        historyOverride?: Message[], 
+        parentMessageId?: string | null,
+        isAgentEnabled?: boolean,
+        isLinkPredictionEnabled?: boolean
+    ) => {
         if (!currentConversation) {
             setStatus({ error: "Cannot send a message. No active conversation selected." });
             return { aiResponse: null, suggestion: null, memoryProposal: null, linkProposal: null };
@@ -88,12 +94,23 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
             // Replace optimistic message with the real one from the DB
             setMessages(prev => prev.map(m => m.id === optimisticUserMessage.id ? savedUserMessage : m));
 
-            const chatRes = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: messageHistory, conversation: currentConversation, mentionedContacts, userMessageId: savedUserMessage.id }) });
+            const chatRes = await fetch('/api/chat', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ 
+                    messages: messageHistory, 
+                    conversation: currentConversation, 
+                    mentionedContacts, 
+                    userMessageId: savedUserMessage.id,
+                    isAgentEnabled,
+                    isLinkPredictionEnabled
+                }) 
+            });
             if (!chatRes.ok) {
                 const errorData = await chatRes.json().catch(() => ({ error: "Failed to get AI response and could not parse error response." }));
                 throw new Error(errorData.details?.message || errorData.error || 'Failed to get AI response');
             }
-            const { response: aiResponse, suggestion, memoryProposal, linkProposal } = await chatRes.json();
+            const { response: aiResponse, suggestion, memoryProposal, linkProposal, monitorMetadata } = await chatRes.json();
             
             // Re-fetch messages to get the new AI response that was saved on the backend
             await fetchMessages(currentConversation.id);
@@ -102,10 +119,7 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
                 onNewMessageWhileHidden(currentConversation.id);
             }
             
-            // Note: The old memory extraction pipeline logic that was here has been replaced
-            // by the new proactive "intelligent trigger" system on the backend.
-
-            return { aiResponse, suggestion, memoryProposal, linkProposal };
+            return { aiResponse, suggestion, memoryProposal, linkProposal, monitorMetadata };
         } catch (error) {
             const errorMessage = (error as Error).message;
             setStatus({ error: errorMessage, currentAction: "Error" });
