@@ -18,10 +18,11 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
         try {
             const res = await fetch('/api/profile');
             if (res.ok) {
-                setProfile(await res.json());
+                const data = await res.json();
+                setProfile(data);
             }
         } catch (e) {
-            console.error(e);
+            console.error("Failed to load static memory profile:", e);
         } finally {
             setIsLoading(false);
         }
@@ -51,7 +52,10 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
                         <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400">
                             <UserCircleIcon className="w-5 h-5" />
                         </div>
-                        <h2 className="text-lg font-bold text-white">Identity & Static Memory</h2>
+                        <div>
+                             <h2 className="text-lg font-bold text-white">Identity & Static Memory</h2>
+                             <p className="text-[10px] text-gray-500 font-mono">Persistence: High (Global Across Sessions)</p>
+                        </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <button onClick={fetchProfile} className="p-1 hover:bg-white/10 rounded-full transition-colors text-gray-400">
@@ -65,34 +69,41 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
 
                 <main className="p-6 space-y-6 overflow-y-auto max-h-[70vh] custom-scrollbar">
                     {isLoading ? (
-                        <div className="py-20 text-center text-gray-500 animate-pulse font-mono">Syncing Personal Memory Vault...</div>
+                        <div className="py-20 text-center text-gray-500 animate-pulse font-mono">Syncing Unified User Memory...</div>
                     ) : profile ? (
                         <>
+                            {/* User Persona */}
                             <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Identity Card</h3>
+                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Core Identity</h3>
                                 <div className="space-y-2">
                                     <p className="text-sm"><strong>Name:</strong> <span className="text-indigo-300 ml-2">{profile.name}</span></p>
-                                    <p className="text-sm"><strong>Email:</strong> <span className="text-indigo-300 ml-2">{profile.email}</span></p>
+                                    <p className="text-sm"><strong>AI Alias:</strong> <span className="text-indigo-300 ml-2">{profile.aiName}</span></p>
+                                    <p className="text-sm"><strong>Role:</strong> <span className="text-indigo-300 ml-2">{profile.role || 'Partner'}</span></p>
                                 </div>
                             </div>
 
+                            {/* Preferences */}
                             <div className="space-y-3">
                                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                                    <CheckIcon className="w-3 h-3 text-green-400"/> System Preferences
+                                    <CheckIcon className="w-3.5 h-3.5 text-green-400"/> Communication Style
                                 </h3>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {Object.entries(profile.preferences || {}).map(([key, value]) => (
-                                        <div key={key} className="bg-black/40 p-3 rounded-lg border border-white/5">
-                                            <p className="text-[10px] text-gray-500 uppercase font-mono">{key}</p>
-                                            <p className="text-sm text-gray-200 capitalize">{String(value)}</p>
-                                        </div>
-                                    ))}
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.preferences?.length > 0 ? (
+                                        profile.preferences.map((pref: string, i: number) => (
+                                            <span key={i} className="bg-gray-800 border border-white/5 px-3 py-1 rounded-full text-xs text-gray-300">
+                                                {pref}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs text-gray-600 italic">No specific styles learned yet.</p>
+                                    )}
                                 </div>
                             </div>
 
+                            {/* Permanent Facts */}
                             <div className="space-y-3">
                                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                                    <BrainIcon className="w-3 h-3 text-purple-400"/> Extracted Personal Facts
+                                    <BrainIcon className="w-3.5 h-3.5 text-purple-400"/> Harvested Permanent Facts
                                 </h3>
                                 <div className="space-y-2">
                                     {profile.facts && profile.facts.length > 0 ? (
@@ -102,18 +113,18 @@ const ProfileModal = ({ onClose }: ProfileModalProps) => {
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-xs text-gray-600 italic">No permanent facts harvested yet.</p>
+                                        <p className="text-xs text-gray-600 italic">Static memory buffer is empty.</p>
                                     )}
                                 </div>
                             </div>
                         </>
                     ) : (
-                        <div className="py-20 text-center text-red-400 font-mono">Memory Retrieval Failure.</div>
+                        <div className="py-20 text-center text-red-400 font-mono">Memory Retrieval Failed.</div>
                     )}
                 </main>
 
                 <footer className="p-4 bg-gray-800/30 border-t border-white/5 text-center">
-                    <p className="text-[10px] text-gray-500 italic">This memory is persistent across all conversations and represents your user persona.</p>
+                    <p className="text-[10px] text-gray-500 italic">This profile represents the baseline context injected into every new conversation turn.</p>
                 </footer>
             </motion.div>
         </motion.div>

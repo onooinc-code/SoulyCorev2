@@ -5,7 +5,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChatInput from '@/components/ChatInput';
 import type { Contact, Message, CognitiveStatus } from '@/lib/types';
-import { XIcon, SparklesIcon, RocketLaunchIcon } from './Icons';
+import { XIcon, SparklesIcon, RocketLaunchIcon, LinkIcon, BeakerIcon } from './Icons';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
 import CognitiveStatusBar from './chat/CognitiveStatusBar';
@@ -31,8 +31,8 @@ const ChatFooter = ({
     onCancelReply,
     onInspectClick
 }: ChatFooterProps) => {
-    const { status, messages } = useConversation();
-    const { isMobileView, setActiveView } = useUIState();
+    const { status, messages, isAgentEnabled, setIsAgentEnabled, isLinkPredictionEnabled, setIsLinkPredictionEnabled } = useConversation();
+    const { setActiveView } = useUIState();
 
     const handleInspect = () => {
         const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
@@ -82,15 +82,35 @@ const ChatFooter = ({
                 )}
             </AnimatePresence>
             
-            <div className="w-full flex items-end">
-                {/* Agent Trigger Button */}
-                <button 
-                    onClick={() => setActiveView('agent_center')}
-                    className="mb-6 ml-4 p-3 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 rounded-xl text-indigo-400 hover:text-white transition-all shadow-lg hover:shadow-indigo-500/20 group"
-                    title="Switch to Autonomous Agent Mode"
-                >
-                    <RocketLaunchIcon className="w-6 h-6 group-hover:animate-bounce" />
-                </button>
+            <div className="w-full flex items-end px-4 gap-2">
+                {/* Cognitive Feature Controls */}
+                <div className="flex flex-col gap-2 mb-6">
+                    <button 
+                        onClick={() => setIsAgentEnabled(!isAgentEnabled)}
+                        className={`p-2.5 rounded-xl border transition-all shadow-lg flex items-center gap-2 group ${
+                            isAgentEnabled 
+                            ? 'bg-orange-600/20 border-orange-500/50 text-orange-400' 
+                            : 'bg-gray-800/40 border-white/5 text-gray-500 grayscale'
+                        }`}
+                        title={isAgentEnabled ? "Agent Mode Active (Reason+Act)" : "Enable Autonomous ReAct Agent"}
+                    >
+                        <RocketLaunchIcon className={`w-5 h-5 ${isAgentEnabled ? 'animate-bounce' : ''}`} />
+                        {isAgentEnabled && <span className="text-[10px] font-bold uppercase hidden md:inline">ReAct</span>}
+                    </button>
+                    
+                    <button 
+                        onClick={() => setIsLinkPredictionEnabled(!isLinkPredictionEnabled)}
+                        className={`p-2.5 rounded-xl border transition-all shadow-lg flex items-center gap-2 group ${
+                            isLinkPredictionEnabled 
+                            ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-400' 
+                            : 'bg-gray-800/40 border-white/5 text-gray-500 grayscale'
+                        }`}
+                        title={isLinkPredictionEnabled ? "Auto-Linker Active" : "Enable Proactive Link Prediction"}
+                    >
+                        <LinkIcon className="w-5 h-5" />
+                        {isLinkPredictionEnabled && <span className="text-[10px] font-bold uppercase hidden md:inline">Predict</span>}
+                    </button>
+                </div>
                 
                 <div className="flex-1">
                     <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} replyToMessage={replyToMessage} />

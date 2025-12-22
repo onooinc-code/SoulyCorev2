@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { Conversation, Message, Contact, IStatus, ActiveWorkflowState, Prompt, ConversationContextType, ILinkPredictionProposal, ToolState, MemoryMonitorState, ExecutionStatus } from '@/lib/types';
+import type { Conversation, Message, Contact, IStatus, ActiveWorkflowState, Prompt, ConversationContextType, ILinkPredictionProposal, ToolState, MemoryMonitorState, ExecutionStatus, UsageMetric } from '@/lib/types';
 import { useAppStatus } from '@/lib/hooks/useAppStatus';
 import { useConversationList } from '@/lib/hooks/useConversationList';
 import { useMessageManager } from '@/lib/hooks/useMessageManager';
@@ -25,6 +25,12 @@ interface ExtendedConversationContextType extends Omit<ConversationContextType, 
     activeSegmentId: string | null;
     activeRunId: string | null;
 
+    // Feature Flags & Controls
+    isAgentEnabled: boolean;
+    setIsAgentEnabled: (val: boolean) => void;
+    isLinkPredictionEnabled: boolean;
+    setIsLinkPredictionEnabled: (val: boolean) => void;
+
     setCurrentConversation: (id: string | null) => void;
     createNewConversation: () => void;
     deleteConversation: (id: string) => void;
@@ -43,10 +49,12 @@ interface ExtendedConversationContextType extends Omit<ConversationContextType, 
     
     startWorkflow: (prompt: Prompt, userInputs: Record<string, string>) => void;
     startAgentRun: (goal: string) => Promise<void>;
+    runCognitiveSynthesis: () => Promise<void>;
     
     setStatus: (status: Partial<IStatus>) => void;
     setToolState: (state: Partial<ToolState>) => void;
     setMemoryMonitorState: (tier: keyof MemoryMonitorState, status: ExecutionStatus, data?: any, error?: string, query?: string) => void;
+    recordUsage: (usage: UsageMetric) => void;
     clearError: () => void;
     
     setScrollToMessageId: (messageId: string | null) => void;
@@ -58,15 +66,23 @@ const ConversationContext = createContext<ExtendedConversationContextType | unde
 
 export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { log } = useLog();
-    const { setActiveView } = useUIState();
-    const { isLoading, setIsLoading, status, setStatus, clearError, backgroundTaskCount, startBackgroundTask, endBackgroundTask } = useAppStatus();
+    const { setActiveView, setResponseViewerModalOpen } = useUIState();
+    const { isLoading, setIsLoading, status: appStatus, setStatus: setAppStatus, clearError, backgroundTaskCount, startBackgroundTask, endBackgroundTask } = useAppStatus();
     
     const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
     const [unreadConversations, setUnreadConversations] = useState<Set<string>>(new Set());
     const [scrollToMessageId, setScrollToMessageId] = useState<string | null>(null);
     const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
     const [activeRunId, setActiveRunId] = useState<string | null>(null);
+
+    // Feature Toggles
+    const [isAgentEnabled, setIsAgentEnabled] = useState(false);
+    const [isLinkPredictionEnabled, setIsLinkPredictionEnabled] = useState(true);
     
+    // Usage Metrics & Extended Status
+    const [usageLog, setUsageLog] = useState<UsageMetric[]>([]);
+    const [aiCallCount, setAiCallCount] = useState(0);
+
     // Live Monitors
     const [toolState, setBaseToolState] = useState<ToolState>({ status: 'idle' });
     const [memoryMonitor, setMemoryMonitor] = useState<MemoryMonitorState>({
@@ -80,6 +96,11 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setBaseToolState(prev => ({ ...prev, ...newState }));
     }, []);
 
+    const recordUsage = useCallback((usage: UsageMetric) => {
+        setUsageLog(prev => [...prev, usage]);
+        setAiCallCount(prev => prev + 1);
+    }, []);
+
     const setMemoryMonitorState = useCallback((tier: keyof MemoryMonitorState, status: ExecutionStatus, data?: any, error?: string, query?: string) => {
         setMemoryMonitor(prev => ({
             ...prev,
@@ -88,7 +109,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, []);
 
     const resetMonitors = useCallback(() => {
-        setToolState({ status: 'idle', toolName: undefined, input: undefined, output: undefined, error: undefined });
+        setToolState({ status: 'idle', toolName: undefined, input: undefined, output: undefined, error: undefined, usage: undefined });
         setMemoryMonitor({
             semantic: { status: 'idle' },
             structured: { status: 'idle' },
@@ -112,7 +133,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const { conversations, loadConversations, createNewConversation, deleteConversation, updateConversationTitle, generateConversationTitle } = useConversationList({ 
         setIsLoading, 
-        setStatus, 
+        setStatus: setAppStatus, 
         activeSegmentId, 
         onConversationCreated,
         onConversationDeleted
@@ -121,20 +142,21 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const currentConversation = useMemo(() => conversations.find(c => c.id === currentConversationId) || null, [conversations, currentConversationId]);
 
     const { messages, setMessages, fetchMessages, addMessage: baseAddMessage, toggleBookmark, deleteMessage, updateMessage, regenerateAiResponse, regenerateUserPromptAndGetResponse, clearMessages } = useMessageManager({
-        currentConversation, setStatus, setIsLoading, startBackgroundTask, endBackgroundTask, onNewMessageWhileHidden: (id) => setUnreadConversations(prev => new Set(prev).add(id))
+        currentConversation, setStatus: setAppStatus, setIsLoading, startBackgroundTask, endBackgroundTask, onNewMessageWhileHidden: (id) => setUnreadConversations(prev => new Set(prev).add(id))
     });
 
     useEffect(() => {
         if (!currentConversationId) {
             setMessages([]);
+            setAiCallCount(0);
+            setUsageLog([]);
         }
     }, [currentConversationId, setMessages]);
 
     const addMessage = useCallback(async (msgData: any, mentioned: any, history: any, parent: any) => {
         resetMonitors();
-        
         const q = msgData.content;
-        // Initial transition to executing with query tracking
+        
         setMemoryMonitorState('semantic', 'executing', null, undefined, q);
         setMemoryMonitorState('structured', 'executing', null, undefined, q);
         setMemoryMonitorState('graph', 'executing', null, undefined, q);
@@ -142,14 +164,16 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         const result = await baseAddMessage(msgData, mentioned, history, parent);
         
-        // Populate monitor data from API results
         if (result.aiResponse && (result as any).monitorMetadata) {
             const meta = (result as any).monitorMetadata;
             
+            // Record usage from retrieval calls
+            recordUsage({ origin: 'retrieval', model: 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
+            recordUsage({ origin: 'generation', model: currentConversation?.model || 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
+
             const getStatus = (data: any): ExecutionStatus => {
                 if (!data) return 'null';
                 if (Array.isArray(data) && data.length === 0) return 'null';
-                if (typeof data === 'number' && data === 0) return 'null';
                 return 'success';
             };
 
@@ -157,17 +181,28 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             setMemoryMonitorState('structured', getStatus(meta.structured), meta.structured, undefined, q);
             setMemoryMonitorState('graph', getStatus(meta.graph), meta.graph, undefined, q);
             setMemoryMonitorState('episodic', getStatus(meta.episodic), meta.episodic, undefined, q);
-        } else if (!result.aiResponse) {
-             setMemoryMonitorState('semantic', 'error', null, 'Failed to fetch AI response', q);
-             setMemoryMonitorState('structured', 'error', null, 'Retrieval interrupted', q);
-             setMemoryMonitorState('graph', 'error', null, 'Retrieval interrupted', q);
-             setMemoryMonitorState('episodic', 'error', null, 'Retrieval interrupted', q);
         }
         
         return result;
-    }, [baseAddMessage, resetMonitors, setMemoryMonitorState]);
+    }, [baseAddMessage, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation]);
 
-    const { activeWorkflow, startWorkflow } = useWorkflowManager({ currentConversation, setStatus, addMessage, setMessages });
+    const runCognitiveSynthesis = useCallback(async () => {
+        setAppStatus({ currentAction: { phase: 'reasoning', details: 'Synthesizing knowledge nexus...' }});
+        recordUsage({ origin: 'synthesis', model: 'gemini-3-pro-preview', timestamp: new Date().toISOString() });
+        try {
+            const res = await fetch('/api/ai/synthesis', { method: 'POST' });
+            if (res.ok) {
+                log('Synthesis generated successfully');
+                setResponseViewerModalOpen(true);
+            }
+        } catch (error) {
+            log('Synthesis failed', { error }, 'error');
+        } finally {
+            setAppStatus({ currentAction: "" });
+        }
+    }, [setAppStatus, recordUsage, log, setResponseViewerModalOpen]);
+
+    const { activeWorkflow, startWorkflow } = useWorkflowManager({ currentConversation, setStatus: setAppStatus, addMessage, setMessages });
 
     const setCurrentConversationWithMessages = useCallback(async (id: string | null) => {
         setCurrentConversationId(id);
@@ -176,11 +211,6 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             setIsLoading(true);
             await fetchMessages(id);
             setIsLoading(false);
-            setUnreadConversations(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(id);
-                return newSet;
-            });
         } else {
             setMessages([]);
         }
@@ -195,39 +225,38 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 body: JSON.stringify(updates),
             });
             await loadConversations(activeSegmentId);
-        } catch (error) {
-            log('Failed to update conversation settings', { error }, 'error');
-        }
+        } catch (error) { log('Failed to update conversation settings', { error }, 'error'); }
     }, [currentConversationId, log, loadConversations, activeSegmentId]);
 
     const startAgentRun = useCallback(async (goal: string) => {
-        setStatus({ currentAction: "Initiating autonomous agent..." });
+        setAppStatus({ currentAction: "Initiating agent..." });
+        recordUsage({ origin: 'agent_thought', model: 'gemini-3-pro-preview', timestamp: new Date().toISOString() });
         try {
             const res = await fetch('/api/agents/runs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ goal, plan: [{ phase_order: 1, goal: "Initial research" }] }),
+                body: JSON.stringify({ goal, plan: [{ phase_order: 1, goal: "Reasoning loop" }] }),
             });
             const newRun = await res.json();
             setActiveRunId(newRun.id);
-        } catch (error) {
-            log('Failed to start agent run', { error }, 'error');
-        } finally {
-            setStatus({ currentAction: "" });
-        }
-    }, [setStatus, log]);
+        } catch (error) { log('Failed to start agent run', { error }, 'error'); }
+        finally { setAppStatus({ currentAction: "" }); }
+    }, [setAppStatus, log, recordUsage]);
 
-    useEffect(() => {
-        if(activeRunId) setActiveView('agent_center');
-    }, [activeRunId, setActiveView]);
-    
+    const status: IStatus = {
+        ...appStatus,
+        aiCallCount,
+        callLog: usageLog
+    };
+
     const value: ExtendedConversationContextType = {
         conversations, currentConversation, messages, isLoading, status, toolState, memoryMonitor,
         backgroundTaskCount, activeWorkflow, unreadConversations, scrollToMessageId, activeSegmentId, activeRunId,
+        isAgentEnabled, setIsAgentEnabled, isLinkPredictionEnabled, setIsLinkPredictionEnabled,
         setCurrentConversation: setCurrentConversationWithMessages,
         createNewConversation, deleteConversation, updateConversationTitle, generateConversationTitle, loadConversations, updateCurrentConversation,
         addMessage, toggleBookmark, deleteMessage, updateMessage, regenerateAiResponse, regenerateUserPromptAndGetResponse, clearMessages,
-        startWorkflow, startAgentRun, setStatus, setToolState, setMemoryMonitorState, clearError, setScrollToMessageId, setActiveSegmentId,
+        startWorkflow, startAgentRun, runCognitiveSynthesis, setStatus: setAppStatus, setToolState, setMemoryMonitorState, recordUsage, clearError, setScrollToMessageId, setActiveSegmentId,
     };
     
     return <ConversationContext.Provider value={value}>{children}</ConversationContext.Provider>;

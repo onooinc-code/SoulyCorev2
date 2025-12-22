@@ -6,21 +6,27 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.4.19',
-    version: '0.4.19',
+    id: 'v-0.5.0',
+    version: '0.5.0',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🕵️ Full Cognitive Transparency (v0.4.19)
+### 🤖 Autonomous Cognition & ReAct (v0.5.0)
 
-**Memory Monitor Upgrades:**
-- **Null Result State:** Added an Amber status color to indicate successful queries that returned no matches, distinguishing them from errors.
-- **Input Query Tracking:** The Memory Inspector now displays the exact query sent to each memory tier for full auditability.
+**True ReAct Agent Logic:**
+- **Dynamic Reasoning:** Added a ReAct toggle to enable autonomous tool selection and execution loops.
+- **Agent Monitor:** Live tracking of tool inputs and AI observations.
 
-**Static Memory Integration:**
-- **Identity Button:** Added a dedicated "Identity" button to the Status Bar to access static user data.
-- **Profile Modal:** New centralized view for User Preferences, Digital Identity, and Harvested Personal Facts.
-- **Static vs dynamic Toggle:** Clearer visual separation between turn-based memory and long-term user profile facts.
+**Cognitive Synthesis:**
+- **Nexus Summarizer:** New synthesis engine that links long-term semantic facts with current turn context.
+- **Reporting:** Automatic generation of "state-of-knowledge" reports.
+
+**AI Usage Metrics:**
+- **Call Counter:** Real-time tracking of AI model calls per session.
+- **Usage Tooltip:** Detailed log of which subsystem (Retrieval, Synthesis, etc) is accessing the AI.
+
+**Bug Fixes:**
+- **Build Integrity:** Resolved type mapping error in ToolInspectorModal.
 `
 };
 

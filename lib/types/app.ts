@@ -1,10 +1,9 @@
 
 /**
- * @fileoverview This file contains application-level types, such as UI state and settings,
- * that are not direct representations of database models.
+ * @fileoverview Application-level types for cognitive state and AI usage metrics.
  */
 
-export type CognitivePhase = 'idle' | 'retrieving' | 'assembling' | 'prompting' | 'generating';
+export type CognitivePhase = 'idle' | 'retrieving' | 'assembling' | 'prompting' | 'generating' | 'reasoning' | 'acting';
 
 export interface CognitiveStatus {
     phase: CognitivePhase;
@@ -13,11 +12,18 @@ export interface CognitiveStatus {
 
 export type ExecutionStatus = 'idle' | 'executing' | 'success' | 'null' | 'error';
 
+export interface UsageMetric {
+    origin: 'retrieval' | 'generation' | 'agent_thought' | 'link_prediction' | 'synthesis';
+    model: string;
+    timestamp: string;
+}
+
 export interface ExecutionState {
     status: ExecutionStatus;
     query?: string;
     data?: any;
     error?: string;
+    usage?: UsageMetric[];
 }
 
 export interface ToolState extends ExecutionState {
@@ -33,13 +39,13 @@ export interface MemoryMonitorState {
     episodic: ExecutionState;
 }
 
-// A generic status object used throughout the app
 export interface IStatus {
     currentAction: string | CognitiveStatus | null;
     error: string | null;
+    aiCallCount: number;
+    callLog: UsageMetric[];
 }
 
-// Represents the state of an active workflow (chained prompt)
 export interface ActiveWorkflowState {
     prompt: import('./data').Prompt;
     userInputs: Record<string, string>;
@@ -52,7 +58,6 @@ export interface SavedFilterSet {
     name: string;
     filters: any; 
 }
-
 
 export interface AppSettings {
     defaultModelConfig: {
@@ -70,6 +75,8 @@ export interface AppSettings {
         enableMemoryExtraction: boolean;
         enableProactiveSuggestions: boolean;
         enableAutoSummarization: boolean;
+        enableReActAgent: boolean;
+        enableLinkPrediction: boolean;
     };
     global_ui_settings?: {
         fontSize?: string;
@@ -82,11 +89,9 @@ export interface AppSettings {
         showTags: boolean;
     };
     savedEntityHubFilters?: SavedFilterSet[];
-    // Store custom prompts for the ChatInput toolbar
     customToolbarPrompts?: Record<string, string>; 
 }
 
-// For notification system
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
 export interface ConversationContextType {

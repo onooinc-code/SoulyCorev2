@@ -24,6 +24,9 @@ const defaultSettings: AppSettings = {
         enableMemoryExtraction: true,
         enableProactiveSuggestions: true,
         enableAutoSummarization: true,
+        // FIX: Added missing feature flags to match the AppSettings type definition in lib/types/app.ts
+        enableReActAgent: false,
+        enableLinkPrediction: true,
     },
     global_ui_settings: {
         fontSize: '16px',
