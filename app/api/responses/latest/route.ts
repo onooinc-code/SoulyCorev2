@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET() {
     try {
-        // FIX: Replaced `process.cwd()` with `path.resolve()` to resolve TypeScript error 'Property cwd does not exist on type Process'.
+        // FIX: Replaced `process.cwd()` with `path.resolve()` to resolve TypeScript error and ensure Vercel compatibility.
         const dirPath = path.join(path.resolve(), 'reports');
 
         // Ensure the directory exists before trying to read it
@@ -30,7 +31,6 @@ export async function GET() {
         const files = await fs.readdir(dirPath);
 
         // FIX: Relaxed regex to accept any file starting with 'ResponseTemplate-' and ending with '.html'.
-        // This supports both numbered (ResponseTemplate-1.html) and named (ResponseTemplate-Storage-Analysis.html) files.
         const responseFiles = files.filter(file => file.startsWith('ResponseTemplate-') && file.endsWith('.html'));
 
         if (responseFiles.length === 0) {
@@ -43,8 +43,7 @@ export async function GET() {
             return new NextResponse(notFoundMessage, { status: 404, headers: { 'Content-Type': 'text/html' } });
         }
 
-        // FIX: Improved sorting logic. Instead of parsing numbers from filenames (which fails on text suffixes),
-        // we fetch the file statistics (mtime) and sort by the most recently modified.
+        // FIX: Improved sorting logic based on mtime.
         const fileStats = await Promise.all(responseFiles.map(async (file) => {
             const filePath = path.join(dirPath, file);
             const stats = await fs.stat(filePath);

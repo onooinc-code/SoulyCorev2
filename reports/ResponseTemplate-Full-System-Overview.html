@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulyCore | تقرير النظام الشامل</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+        :root {
+            --bg-color: #12101c;
+            --surface-color: #1c182c;
+            --primary-color: #6366f1;
+            --secondary-color: #10b981;
+            --accent-color: #f59e0b;
+            --text-color: #e0e0e0;
+            --border-color: #3a3252;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 0;
+            border-bottom: 2px solid var(--primary-color);
+            margin-bottom: 40px;
+            background: radial-gradient(circle at top, #2d2a4a 0%, transparent 60%);
+        }
+
+        header h1 {
+            font-size: 3em;
+            margin: 0;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        header p {
+            font-size: 1.2em;
+            color: #a0aec0;
+            margin-top: 10px;
+        }
+
+        .section {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h3 {
+            color: var(--secondary-color);
+            margin-top: 25px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            background-color: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+
+        .feature-icon {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .mermaid {
+            background-color: #0d1117;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul li {
+            background: rgba(99, 102, 241, 0.1);
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 6px;
+            border-right: 3px solid var(--primary-color);
+        }
+
+        code {
+            background-color: #2d2a3d;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            color: #e090d0;
+            direction: ltr;
+            display: inline-block;
+        }
+
+        .badge {
+            background-color: var(--accent-color);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'dark', direction: 'rtl' });
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>نظرة شاملة على النظام</h1>
+        <p>تحليل فني لخطوط المعالجة، هيكلة الذاكرة، والمميزات النشطة - الإصدار 0.4.12</p>
+    </header>
+
+    <!-- 1. Context Assembly Pipeline -->
+    <div class="section">
+        <h2>1. كيف يعمل خط تجميع السياق (Context Assembly)؟</h2>
+        <p>هذا هو "العقل القارئ" للنظام. عند إرسال رسالة، يتم تفعيل هذا الخط لجمع المعلومات من كافة مصادر البيانات المتاحة (بما في ذلك EdgeDB و MongoDB التي تم تفعيلها) لبناء سياق غني قبل توليد الإجابة.</p>
+
+        <div class="mermaid">
+            graph TD
+            User[مستخدم] -->|سؤال| API[/api/chat]
+            API --> Pipeline[Context Assembly Pipeline]
+            
+            subgraph "مصادر الذاكرة (Memory Sources)"
+                Postgres[(Postgres: Episodic)]
+                Pinecone[(Pinecone: Semantic)]
+                EdgeDB[(EdgeDB: Graph)]
+                Profile[(Settings: Preferences)]
+            end
+
+            Pipeline -->|1. استرجاع آخر المحادثات| Postgres
+            Pipeline -->|2. تحميل تفضيلات المستخدم| Profile
+            Pipeline -->|3. البحث عن كيانات مشابهة| Pinecone
+            Pipeline -->|4. استنتاج العلاقات المعقدة| EdgeDB
+            
+            Postgres & Profile & Pinecone & EdgeDB -->|بيانات مجمعة| Context[سياق موحد]
+            Context -->|Prompt| LLM[Gemini 2.5 Flash]
+            LLM -->|إجابة ذكية| User
+        </div>
+
+        <h3>خطوات التنفيذ الفعلي:</h3>
+        <ul>
+            <li><strong>تفضيلات المستخدم (Profile):</strong> يتم جلبها من جدول <code>settings</code>. إذا كنت تفضل "الإجابات المختصرة" أو "أكواد بايثون"، سيراها النظام هنا.</li>
+            <li><strong>الذاكرة العرضية (Episodic):</strong> يتم جلب آخر 10-20 رسالة من <code>Postgres</code> للحفاظ على تسلسل الحديث.</li>
+            <li><strong>ذاكرة الرسم البياني (Graph - EdgeDB):</strong> يتم البحث عن الكيانات المذكورة في السؤال وجلب علاقاتها (مثلاً: إذا سألت عن "مشروع X"، سيجلب النظام "من يعمل عليه" و "تاريخ تسليمه").</li>
+            <li><strong>الذاكرة الدلالية (Semantic - Pinecone):</strong> يتم البحث عن نصوص مشابهة في المعرفة العامة المخزنة.</li>
+        </ul>
+    </div>
+
+    <!-- 2. Memory Extraction Pipeline -->
+    <div class="section">
+        <h2>2. كيف يعمل خط كتابة الذاكرة (Memory Extraction)؟</h2>
+        <p>هذا هو "العقل المتعلم". يعمل في الخلفية بعد انتهاء المحادثة لتحويل الكلام العابر إلى معرفة دائمة وتخزينها في القواعد المناسبة.</p>
+
+        <div class="mermaid">
+            graph TD
+            ChatLog[سجل المحادثة] -->|تحليل| Extractor[Gemini Extractor]
+            
+            Extractor -->|JSON| Findings
+            
+            subgraph Findings [النتائج المستخرجة]
+                Prefs[تفضيلات: أحب القهوة]
+                Rels[علاقات: أحمد يعمل مع سارة]
+                Facts[حقائق: المشروع ينتهي غداً]
+            end
+            
+            Prefs -->|تحديث| ProfileStore[(Postgres: User Profile)]
+            Rels -->|تخزين| GraphStore[(EdgeDB: Relationships)]
+            Facts -->|Embed & Store| VectorStore[(Pinecone: Knowledge)]
+            ChatLog -->|أرشفة| DocStore[(MongoDB: Logs)]
+        </div>
+
+        <h3>آلية التوزيع الذكي:</h3>
+        <ul>
+            <li><strong>التفضيلات (Preferences):</strong> جمل مثل "نادني بـ..." أو "أنا مبرمج" تذهب مباشرة لملفك الشخصي.</li>
+            <li><strong>العلاقات (Relationships):</strong> "سارة مديرة أحمد" تذهب لـ <code>EdgeDB</code> لبناء شبكة العلاقات.</li>
+            <li><strong>الحقائق (Facts):</strong> المعلومات العامة تذهب لـ <code>Pinecone</code> لتكون قابلة للبحث مستقبلاً.</li>
+            <li><strong>الأرشيف (Archives):</strong> النص الخام وسجلات المعالجة تذهب لـ <code>MongoDB</code> كمرجع تاريخي.</li>
+        </ul>
+    </div>
+
+    <!-- 3. Active Features -->
+    <div class="section">
+        <h2>3. المميزات المفعلة في المحادثة (Active Features)</h2>
+        <p>قائمة بالمميزات التفاعلية المتاحة لك الآن داخل واجهة المحادثة:</p>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <span class="feature-icon">🎛️</span>
+                <strong>أدوات الماكرو (Macros)</strong>
+                <p>شريط علوي بـ 12 أداة جاهزة (تلخيص، ترجمة، تحسين صياغة، شرح كود، إلخ).</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">📝</span>
+                <strong>تنسيق النصوص</strong>
+                <p>شريط سفلي للتنسيق (Bold, Italic, Lists, Code Blocks) لجعلك رسائلك أكثر وضوحاً.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">📎</span>
+                <strong>رفع الملفات</strong>
+                <p>دعم كامل لرفع وتحليل ملفات (PDF, TXT, MD) داخل السياق.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">⚡</span>
+                <strong>الأوامر السريعة</strong>
+                <p>استخدم <code>/</code> للوصول لأوامر مثل <code>/agent</code> لتشغيل وكيل مستقل أو <code>/workflow</code>.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🔬</span>
+                <strong>المفتش المعرفي</strong>
+                <p>زر "المجهر" (Inspect) يظهر لك كيف فكر النظام وما هي البيانات التي استرجعها للإجابة.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🔄</span>
+                <strong>تعديل وإعادة توليد</strong>
+                <p>إمكانية تعديل رسائلك السابقة أو طلب إعادة صياغة إجابة الذكاء الاصطناعي.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">💡</span>
+                <strong>الاقتراحات الاستباقية</strong>
+                <p>النظام يقترح عليك الخطوة التالية المنطقية (مثلاً: "هل تريد حفظ هذا كملخص؟").</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🏷️</span>
+                <strong>الإشارات (@Mentions)</strong>
+                <p>إمكانية الإشارة لجهات اتصال مخزنة (Contacts) لجلب تفاصيلهم للسياق.</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
