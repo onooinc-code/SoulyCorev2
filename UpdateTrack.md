@@ -3,14 +3,22 @@
 
 ---
 
-### Update #33: System Integrity & Cognitive Core (v0.5.1)
+### Update #34: UX Integrity & Version Sync (v0.5.2)
 
 **Details:**
-Resolved critical type errors hindering the build and fully implemented the cognitive synthesis and agent reasoning backends.
+Addressed user feedback regarding missing UI controls and outdated versioning. Moved Agent Setup to a global context for better accessibility and synchronized version history.
 
 **Changes Made:**
-- **FIX (Build):** Unified `CognitivePhase` across `@/lib/types` and `CognitiveStatusBar.tsx`. Now supports `reasoning` and `acting` phases visually.
-- **Cognitive Synthesis:** Implemented `/api/ai/synthesis`. It scans `MemoryExtraction` history and `entity_definitions` to generate a live "Knowledge Nexus Report".
-- **Agent Loop Integration:** Updated `ChatFooter` and `ConversationProvider` to communicate feature states (`isAgentEnabled`, `isLinkPredictionEnabled`) to the backend.
-- **Usage Metrics:** AI Call tracing is now persistent during the session, tracking origins like `synthesis` and `link_prediction`.
-- **Backend Chat Update:** The `/api/chat` route now handles conditional logic for ReAct reasoning and proactive link prediction.
+- **UI Architecture:** Lifted `AgentConfigModal` state to `UIStateProvider`, making it accessible globally.
+- **Sidebar:** Added `Agent Setup` button to `SidebarToolbar` for persistent access.
+- **Versioning:** Updated seed scripts and API route to reflect version **0.5.2**.
+- **Refactor:** Cleaned up `ChatWindow` and `ChatModals` to use global state for agent configuration.
+
+**Modified Files:**
+- `components/providers/UIStateProvider.tsx`
+- `components/modals/GlobalModals.tsx`
+- `components/SidebarToolbar.tsx`
+- `components/ChatWindow.tsx`
+- `components/chat/ChatModals.tsx`
+- `scripts/seed-version-history.js`
+- `app/api/version/current/route.ts`

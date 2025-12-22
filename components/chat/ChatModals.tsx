@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -7,7 +8,6 @@ import { AnimatePresence } from 'framer-motion';
 
 // Directly imported modals
 import ConversationSettingsModal from '@/components/ConversationSettingsModal';
-import AgentConfigModal from '@/components/AgentConfigModal';
 import SummaryModal from '@/components/modals/SummaryModal';
 
 // Dynamically imported modals for performance
@@ -28,8 +28,6 @@ const HtmlViewerModal = dynamic(() => import('@/components/HtmlViewerModal'), {
 interface ChatModalsProps {
     isSettingsModalOpen: boolean;
     setSettingsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    isAgentConfigModalOpen: boolean;
-    setAgentConfigModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
     currentConversation: Conversation | null;
     summaryModalState: { isOpen: boolean; text: string; isLoading: boolean; };
     setSummaryModalState: React.Dispatch<React.SetStateAction<{ isOpen: boolean; text: string; isLoading: boolean; }>>;
@@ -44,8 +42,6 @@ interface ChatModalsProps {
 const ChatModals = ({
     isSettingsModalOpen,
     setSettingsModalOpen,
-    isAgentConfigModalOpen,
-    setAgentConfigModalOpen,
     currentConversation,
     summaryModalState,
     setSummaryModalState,
@@ -62,14 +58,6 @@ const ChatModals = ({
                 {isSettingsModalOpen && currentConversation && (
                     <ConversationSettingsModal 
                         onClose={() => setSettingsModalOpen(false)} 
-                    />
-                )}
-            </AnimatePresence>
-            <AnimatePresence>
-                {isAgentConfigModalOpen && currentConversation && (
-                    <AgentConfigModal 
-                        onClose={() => setAgentConfigModalOpen(false)} 
-                        conversation={currentConversation}
                     />
                 )}
             </AnimatePresence>

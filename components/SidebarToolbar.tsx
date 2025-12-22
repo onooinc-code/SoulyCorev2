@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { useUIState } from '@/components/providers/UIStateProvider';
-import { PowerIcon, DevicePhoneMobileIcon, EyeSlashIcon, CircleStackIcon } from '@/components/Icons';
+import { PowerIcon, DevicePhoneMobileIcon, EyeSlashIcon, CircleStackIcon, UserCircleIcon } from '@/components/Icons';
 
 const SidebarToolbar = ({ isMinimized }: { isMinimized: boolean }) => {
     const { 
@@ -13,13 +13,26 @@ const SidebarToolbar = ({ isMinimized }: { isMinimized: boolean }) => {
         toggleMobileView,
         isZenMode,
         toggleZenMode,
-        setDataHubWidgetOpen
+        setDataHubWidgetOpen,
+        setAgentConfigModalOpen
     } = useUIState();
 
     const buttonClass = "w-full flex items-center gap-2 p-2 rounded-md text-sm transition-colors";
 
     return (
         <div className={`p-2 mt-auto border-t border-gray-700/50 ${isMinimized ? 'flex flex-col items-center gap-2' : 'space-y-1'}`}>
+            <button
+                onClick={() => setAgentConfigModalOpen(true)}
+                title="Agent Persona & Brain Configuration"
+                className={`${buttonClass} text-indigo-300 hover:bg-indigo-900/30`}
+            >
+                <UserCircleIcon className="w-5 h-5 flex-shrink-0" />
+                {!isMinimized && (
+                    <span className="flex-1 text-left font-semibold">
+                        Agent Setup
+                    </span>
+                )}
+            </button>
             <button
                 onClick={() => setDataHubWidgetOpen(true)}
                 title="Open Data Hub Status Widget"

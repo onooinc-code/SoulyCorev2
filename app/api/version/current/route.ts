@@ -6,27 +6,20 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.5.0',
-    version: '0.5.0',
+    id: 'v-0.5.2',
+    version: '0.5.2',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🤖 Autonomous Cognition & ReAct (v0.5.0)
+### 🛠️ UX Refinement & Agent Setup (v0.5.2)
 
-**True ReAct Agent Logic:**
-- **Dynamic Reasoning:** Added a ReAct toggle to enable autonomous tool selection and execution loops.
-- **Agent Monitor:** Live tracking of tool inputs and AI observations.
+**Navigation Upgrade:**
+- **Agent Config Button:** Moved the Agent Setup button to the **Sidebar Toolbar** for permanent visibility. You no longer need to be in an active chat to find it.
+- **Global Context:** Agent configuration state is now global, allowing access from any view.
 
-**Cognitive Synthesis:**
-- **Nexus Summarizer:** New synthesis engine that links long-term semantic facts with current turn context.
-- **Reporting:** Automatic generation of "state-of-knowledge" reports.
-
-**AI Usage Metrics:**
-- **Call Counter:** Real-time tracking of AI model calls per session.
-- **Usage Tooltip:** Detailed log of which subsystem (Retrieval, Synthesis, etc) is accessing the AI.
-
-**Bug Fixes:**
-- **Build Integrity:** Resolved type mapping error in ToolInspectorModal.
+**System Stability:**
+- **Version Sync:** Fixed discrepancy between reported version and internal build number.
+- **Cleanup:** Refactored modal handling to reduce code duplication between Chat and Global scopes.
 `
 };
 

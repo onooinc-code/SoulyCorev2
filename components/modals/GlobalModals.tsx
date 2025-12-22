@@ -4,7 +4,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { useUIState } from '@/components/providers/UIStateProvider';
-import { useAppControls } from '@/lib/hooks/useAppControls';
+import { useConversation } from '@/components/providers/ConversationProvider';
 import { AnimatePresence } from 'framer-motion';
 
 // Dynamically import all global modals
@@ -19,6 +19,7 @@ const ToolInspectorModal = dynamic(() => import('@/components/modals/ToolInspect
 const MemoryInspectorModal = dynamic(() => import('@/components/modals/MemoryInspectorModal'));
 const ProfileModal = dynamic(() => import('@/components/modals/ProfileModal'));
 const CognitiveRoutingModal = dynamic(() => import('@/components/modals/CognitiveRoutingModal'));
+const AgentConfigModal = dynamic(() => import('@/components/AgentConfigModal'));
 
 
 const GlobalModals = () => {
@@ -44,8 +45,12 @@ const GlobalModals = () => {
         activeMemoryInspector,
         setMemoryInspector,
         isRoutingModalOpen,
-        setIsRoutingModalOpen
+        setIsRoutingModalOpen,
+        isAgentConfigModalOpen,
+        setAgentConfigModalOpen
     } = useUIState();
+
+    const { currentConversation } = useConversation();
 
     return (
         <>
@@ -78,6 +83,14 @@ const GlobalModals = () => {
             </AnimatePresence>
             <AnimatePresence>
                 {isRoutingModalOpen && <CognitiveRoutingModal onClose={() => setIsRoutingModalOpen(false)} />}
+            </AnimatePresence>
+             <AnimatePresence>
+                {isAgentConfigModalOpen && (
+                    <AgentConfigModal 
+                        onClose={() => setAgentConfigModalOpen(false)} 
+                        conversation={currentConversation}
+                    />
+                )}
             </AnimatePresence>
             <AnimatePresence>
                 {activeMemoryInspector && (

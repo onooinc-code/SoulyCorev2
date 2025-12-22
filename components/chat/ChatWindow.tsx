@@ -22,14 +22,13 @@ const ChatWindow = () => {
         updateCurrentConversation,
     } = useConversation();
     
-    const { isZenMode, isLogPanelOpen, setExtractionTarget, setActiveView } = useUIState();
+    const { isZenMode, isLogPanelOpen, setExtractionTarget, setActiveView, setAgentConfigModalOpen } = useUIState();
     const { addNotification } = useNotification();
     
     const [proactiveSuggestion, setProactiveSuggestion] = useState<string | null>(null);
     const [replyToMessage, setReplyToMessage] = useState<MessageType | null>(null);
     
     const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
-    const [isAgentConfigModalOpen, setAgentConfigModalOpen] = useState(false);
     const [summaryModalState, setSummaryModalState] = useState({isOpen: false, text: '', isLoading: false});
     const [inspectorModalState, setInspectorModalState] = useState({ isOpen: false, messageId: null });
     const [contextViewerModalState, setContextViewerModalState] = useState({ isOpen: false, messageId: null, type: null });
@@ -120,7 +119,6 @@ const ChatWindow = () => {
 
             <ChatModals 
                 isSettingsModalOpen={isSettingsModalOpen} setSettingsModalOpen={setSettingsModalOpen}
-                isAgentConfigModalOpen={isAgentConfigModalOpen} setAgentConfigModalOpen={setAgentConfigModalOpen}
                 currentConversation={currentConversation}
                 summaryModalState={summaryModalState as any} setSummaryModalState={setSummaryModalState as any}
                 inspectorModalState={inspectorModalState as any} setInspectorModalState={setInspectorModalState as any}

@@ -49,6 +49,8 @@ interface UIStateContextType {
     setProfileModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
     isRoutingModalOpen: boolean;
     setIsRoutingModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isAgentConfigModalOpen: boolean;
+    setAgentConfigModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
     activeMemoryInspector: MemoryTier;
     setMemoryInspector: (tier: MemoryTier) => void;
     isContextMenuEnabled: boolean;
@@ -76,6 +78,7 @@ export const UIStateProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [isToolInspectorOpen, setToolInspectorOpen] = useState(false);
     const [isProfileModalOpen, setProfileModalOpen] = useState(false);
     const [isRoutingModalOpen, setIsRoutingModalOpen] = useState(false);
+    const [isAgentConfigModalOpen, setAgentConfigModalOpen] = useState(false);
     const [activeMemoryInspector, setMemoryInspector] = useState<MemoryTier>(null);
 
     const panelManager = usePanelManager();
@@ -130,6 +133,7 @@ export const UIStateProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isToolInspectorOpen, setToolInspectorOpen,
         isProfileModalOpen, setProfileModalOpen,
         isRoutingModalOpen, setIsRoutingModalOpen,
+        isAgentConfigModalOpen, setAgentConfigModalOpen,
         activeMemoryInspector, setMemoryInspector,
         extractionTarget, setExtractionTarget,
     };

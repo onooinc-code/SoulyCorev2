@@ -4,8 +4,26 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.4.16',
+        version: '0.5.2',
         releaseDate: new Date().toISOString(),
+        changes: `
+### 🛠️ UX Refinement & Agent Setup (v0.5.2)
+
+**Navigation Upgrade:**
+- **Agent Config Button:** Moved the Agent Setup button to the **Sidebar Toolbar** for permanent visibility. You no longer need to be in an active chat to find it.
+- **Global Context:** Agent configuration state is now global, allowing access from any view.
+
+**System Stability:**
+- **Version Sync:** Fixed discrepancy between reported version and internal build number.
+- **Cleanup:** Refactored modal handling to reduce code duplication between Chat and Global scopes.
+
+**Features:**
+- **Sidebar Shortcuts:** Added quick access to Data Hub and Agent Setup directly from the sidebar footer.
+`
+    },
+    {
+        version: '0.4.16',
+        releaseDate: '2025-12-23T14:00:00Z',
         changes: `
 ### 🕵️ Memory Transparency & Deep Logging (v0.4.16)
 

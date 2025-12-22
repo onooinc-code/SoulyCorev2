@@ -23,14 +23,14 @@ const ChatWindow = () => {
         updateCurrentConversation,
     } = useConversation();
     
-    const { isZenMode, isLogPanelOpen, setExtractionTarget, setActiveView } = useUIState();
+    const { isZenMode, isLogPanelOpen, setExtractionTarget, setActiveView, setAgentConfigModalOpen } = useUIState();
     const { addNotification } = useNotification();
     
     const [proactiveSuggestion, setProactiveSuggestion] = useState<string | null>(null);
     const [replyToMessage, setReplyToMessage] = useState<MessageType | null>(null);
     
     const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
-    const [isAgentConfigModalOpen, setAgentConfigModalOpen] = useState(false);
+    // Removed local isAgentConfigModalOpen state
     const [summaryModalState, setSummaryModalState] = useState({isOpen: false, text: '', isLoading: false});
     const [inspectorModalState, setInspectorModalState] = useState({ isOpen: false, messageId: null });
     const [contextViewerModalState, setContextViewerModalState] = useState({ isOpen: false, messageId: null, type: null });
@@ -54,14 +54,14 @@ const ChatWindow = () => {
         }
     };
 
-    // FIX: 
-    // 1. Used `pt-20` (80px) to ensure plenty of clearance for the absolute header.
-    // 2. Used `relative` on the outer container to manage stacking contexts properly.
     return (
-        <div className={`flex flex-col h-full bg-gray-900/50 relative ${!isZenMode ? 'pt-20' : ''}`}>
-            
-            {/* Message List - Takes all remaining space */}
-            <div className="flex-1 min-h-0 relative overflow-hidden">
+        <div className="flex flex-col h-full bg-gray-900/50">
+            {/* 
+                CRITICAL FIX: Added 'min-h-0' to the container. 
+                In a flexbox environment, a child must have 'min-h-0' to be allowed to 
+                be smaller than its content, which is what enables inner scrolling.
+            */}
+            <div className="flex-1 min-h-0 relative">
                 <MessageList 
                     messages={messages}
                     currentConversation={currentConversation}
@@ -90,24 +90,21 @@ const ChatWindow = () => {
                 />
             </div>
 
-            {/* Error Display - Rendered above inputs but below messages if possible, or as overlay */}
-            <div className="flex-shrink-0 z-40">
-                 <ErrorDisplay status={status} isDbError={!!(status.error && /database|postgres/i.test(status.error))} clearError={clearError} />
-            </div>
+            {/* Error Display */}
+            <ErrorDisplay status={status} isDbError={!!(status.error && /database|postgres/i.test(status.error))} clearError={clearError} />
 
             {/* Status Bar (Settings/Stats) */}
             {!isZenMode && currentConversation && (
-                <div className="flex-shrink-0 z-30">
+                <div className="flex-shrink-0">
                     <StatusBar 
                         onSettingsClick={() => setSettingsModalOpen(true)}
                         onAgentConfigClick={() => setAgentConfigModalOpen(true)}
                     />
                 </div>
             )}
-
             
             {/* Input Area */}
-            <div className="flex-shrink-0 z-30 bg-gray-900">
+            <div className="flex-shrink-0 z-20">
                 <ChatFooter 
                     proactiveSuggestion={proactiveSuggestion}
                     onSuggestionClick={() => { proactiveSuggestion && alert(`Action: ${proactiveSuggestion}`); setProactiveSuggestion(null); }}
@@ -124,7 +121,6 @@ const ChatWindow = () => {
 
             <ChatModals 
                 isSettingsModalOpen={isSettingsModalOpen} setSettingsModalOpen={setSettingsModalOpen}
-                isAgentConfigModalOpen={isAgentConfigModalOpen} setAgentConfigModalOpen={setAgentConfigModalOpen}
                 currentConversation={currentConversation}
                 summaryModalState={summaryModalState as any} setSummaryModalState={setSummaryModalState as any}
                 inspectorModalState={inspectorModalState as any} setInspectorModalState={setInspectorModalState as any}
