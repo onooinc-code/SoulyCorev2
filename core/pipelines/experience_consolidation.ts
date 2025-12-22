@@ -1,64 +1,45 @@
+
 // core/pipelines/experience_consolidation.ts
 import { sql } from '@/lib/db';
 import { GoogleGenAI, Type } from "@google/genai";
+import { SemanticMemoryModule } from '../memory/modules/semantic';
 import type { AgentRunStep } from '@/lib/types';
 
 export class ExperienceConsolidationPipeline {
     private ai: GoogleGenAI;
+    private semanticMemory: SemanticMemoryModule;
 
     constructor() {
         const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-        if (!apiKey) {
-            throw new Error("API key not found for ExperienceConsolidationPipeline.");
-        }
+        if (!apiKey) throw new Error("API key not found.");
         this.ai = new GoogleGenAI({ apiKey });
+        this.semanticMemory = new SemanticMemoryModule();
     }
 
     async run(runId: string) {
-        console.log(`[ExperienceConsolidation] Starting consolidation for runId: ${runId}`);
         try {
-            // 1. Fetch run goal and steps
             const { rows: runRows } = await sql`SELECT goal FROM agent_runs WHERE id = ${runId}`;
-            if (runRows.length === 0) throw new Error(`Agent run ${runId} not found.`);
+            if (runRows.length === 0) return;
             const goal = runRows[0].goal;
 
             const { rows: stepRows } = await sql<AgentRunStep>`
                 SELECT "stepOrder", thought, action, observation FROM agent_run_steps 
-                WHERE "runId" = ${runId} AND status = 'completed'
-                ORDER BY "stepOrder" ASC;
+                WHERE "runId" = ${runId} AND status = 'completed' ORDER BY "stepOrder" ASC;
             `;
-            if (stepRows.length === 0) {
-                console.log(`[ExperienceConsolidation] No completed steps found for run ${runId}. Aborting.`);
-                return;
-            }
+            if (stepRows.length === 0) return;
 
-            // 2. Format data for LLM analysis
-            const formattedSteps = stepRows.map(s => 
-                `Step ${s.stepOrder}:\n- Thought: ${s.thought}\n- Action: ${s.action}\n- Observation: ${s.observation}`
-            ).join('\n\n');
+            const formattedSteps = stepRows.map(s => `Thought: ${s.thought}\nAction: ${s.action}\nObs: ${s.observation}`).join('\n\n');
 
-            const prompt = `
-                You are an expert system that analyzes AI agent execution logs to create generalized, reusable "experiences".
-                Your task is to convert a specific, successful agent run into an abstract recipe.
+            const prompt = `Analyze this agent run for goal: "${goal}"
+            1. Create a "goalTemplate" with placeholders.
+            2. Extract "triggerKeywords".
+            3. Formulate "abstractPlan" (JSON array).
+            4. **NEW**: Extract "learnedInsights" - general wisdom or heuristics learned (e.g., "Always check X before Y").
+            
+            Return JSON.`;
 
-                **Original Goal:**
-                ${goal}
-
-                **Execution Steps:**
-                ${formattedSteps}
-
-                **Your Task:**
-                Based on the original goal and the steps taken, generate a JSON object representing a generalized experience.
-                1.  **goalTemplate**: Create a generic version of the original goal, using placeholders like "{topic}" or "{entity_name}".
-                2.  **triggerKeywords**: Provide an array of 5-7 lowercase keywords that would help find this experience for similar future goals.
-                3.  **stepsJson**: Create an abstract, simplified plan as a JSON array of objects. Each object should have a "step_goal" key describing the high-level objective of that step in the original run.
-
-                The final output must be ONLY the valid JSON object.
-            `;
-
-            // 3. Call LLM to generate the experience object
             const response = await this.ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-3-pro-preview',
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",
@@ -67,36 +48,33 @@ export class ExperienceConsolidationPipeline {
                         properties: {
                             goalTemplate: { type: Type.STRING },
                             triggerKeywords: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            stepsJson: {
-                                type: Type.ARRAY,
-                                items: {
-                                    type: Type.OBJECT,
-                                    properties: { step_goal: { type: Type.STRING } },
-                                    required: ['step_goal']
-                                }
-                            }
-                        },
-                        required: ['goalTemplate', 'triggerKeywords', 'stepsJson']
+                            stepsJson: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { step_goal: { type: Type.STRING } } } },
+                            learnedInsights: { type: Type.ARRAY, items: { type: Type.STRING } }
+                        }
                     }
                 }
             });
             
-            if (!response.text) {
-                throw new Error("AI failed to generate experience data. The response was empty.");
-            }
-            
-            const experienceData = JSON.parse(response.text.trim());
+            const data = JSON.parse(response.text.trim());
 
-            // 4. Store the new experience in the database
+            // 1. Store the Experience Plan (Postgres)
             await sql`
                 INSERT INTO experiences ("sourceRunId", "goalTemplate", "triggerKeywords", "stepsJson")
-                VALUES (${runId}, ${experienceData.goalTemplate}, ${experienceData.triggerKeywords as any}, ${JSON.stringify(experienceData.stepsJson)});
+                VALUES (${runId}, ${data.goalTemplate}, ${data.triggerKeywords as any}, ${JSON.stringify(data.stepsJson)});
             `;
-            console.log(`[ExperienceConsolidation] Successfully created and stored new experience from run ${runId}.`);
+
+            // 2. Store Insights in Semantic Memory (Pinecone) - AUTONOMOUS LEARNING
+            if (data.learnedInsights?.length > 0) {
+                for (const insight of data.learnedInsights) {
+                    await this.semanticMemory.store({
+                        text: `[Insight from goal: ${goal}]: ${insight}`,
+                        metadata: { type: 'learned_insight', sourceRunId: runId }
+                    });
+                }
+            }
 
         } catch (error) {
-            console.error(`[ExperienceConsolidation] Failed for runId ${runId}:`, error);
-            // We don't re-throw, as this is a background process. Errors are just logged.
+            console.error('[ExperienceConsolidation] Failed:', error);
         }
     }
 }

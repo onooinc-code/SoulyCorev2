@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getEdgeDBClient } from '@/lib/graphdb';
 import clientPromise from '@/lib/mongodb';
+import { SemanticMemoryModule } from '@/core/memory/modules/semantic';
+import { EntityVectorMemoryModule } from '@/core/memory/modules/entity_vector';
 import type { SearchResult } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +13,7 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const query = searchParams.get('q');
+        const brainId = searchParams.get('brainId') || 'none';
 
         if (!query || query.trim().length < 2) {
             return NextResponse.json({ results: [] });
@@ -19,63 +22,46 @@ export async function GET(req: NextRequest) {
         const searchTerm = `%${query}%`;
         const edgeClient = getEdgeDBClient();
         const mongoClient = await clientPromise;
+        const semanticMemory = new SemanticMemoryModule();
+        const entityVectorMemory = new EntityVectorMemoryModule();
 
-        // 1. Parallel Search across different memory tiers
-        const [pgResults, edgeResults, mongoResults] = await Promise.all([
-            // Postgres: Conversations & Contacts
+        // Federated Search across all 5 tiers
+        const [pgResults, edgeResults, mongoResults, semanticResults, vectorResults] = await Promise.all([
+            // 1. Postgres: SQL Search
             sql`
-                (SELECT id, title as name, 'conversation' as type, NULL as detail FROM conversations WHERE title ILIKE ${searchTerm} LIMIT 5)
+                (SELECT id, title as name, 'conversation' as type, NULL as detail FROM conversations WHERE title ILIKE ${searchTerm} LIMIT 3)
                 UNION ALL
-                (SELECT id, name, 'contact' as type, email as detail FROM contacts WHERE name ILIKE ${searchTerm} OR email ILIKE ${searchTerm} LIMIT 5)
+                (SELECT id, name, 'contact' as type, email as detail FROM contacts WHERE name ILIKE ${searchTerm} LIMIT 3)
             `,
-            // EdgeDB: Relationships (Graph)
+            // 2. EdgeDB: Graph Relationships
             edgeClient.queryJSON(`
                 SELECT Relationship {
-                    id,
-                    predicate,
-                    subject: { name },
-                    object: { name }
-                } FILTER .subject.name ILIKE <str>$q OR .object.name ILIKE <str>$q OR .predicate ILIKE <str>$q
-                LIMIT 5
+                    id, predicate, subject: { name }, object: { name }
+                } FILTER .subject.name ILIKE <str>$q OR .object.name ILIKE <str>$q
+                LIMIT 3
             `, { q: `%${query}%` }),
-            // MongoDB: Historical Archives
+            // 3. MongoDB: Archives
             mongoClient.db('soulycore_data').collection('archives').find({
-                $or: [
-                    { text: { $regex: query, $options: 'i' } },
-                    { source: { $regex: query, $options: 'i' } }
-                ]
-            }).limit(5).toArray()
+                $or: [{ text: { $regex: query, $options: 'i' } }]
+            }).limit(3).toArray(),
+            // 4. Pinecone: Semantic Concepts
+            semanticMemory.query({ queryText: query, topK: 3 }),
+            // 5. Upstash: Entity Similarity
+            entityVectorMemory.query({ queryText: query, topK: 3 })
         ]);
 
-        const unifiedResults: any[] = [];
+        const unifiedResults: SearchResult[] = [];
 
-        // Map Postgres Results
-        pgResults.rows.forEach(r => unifiedResults.push({
-            id: r.id,
-            type: r.type,
-            title: r.name,
-            content: r.detail,
-            source: 'Postgres (Core)'
-        }));
+        // Map Results...
+        pgResults.rows.forEach(r => unifiedResults.push({ id: r.id, type: r.type, title: r.name, content: r.detail, source: 'Postgres' }));
+        
+        JSON.parse(edgeResults).forEach((r: any) => unifiedResults.push({ id: r.id, type: 'relationship', title: `${r.subject.name} → ${r.predicate}`, content: `Connected to ${r.object.name}`, source: 'EdgeDB' }));
+        
+        mongoResults.forEach(r => unifiedResults.push({ id: r._id.toString(), type: 'archive', title: `Archive: ${r.source || 'Log'}`, content: r.text?.substring(0, 100), source: 'MongoDB' }));
 
-        // Map EdgeDB Results
-        const parsedEdge = JSON.parse(edgeResults);
-        parsedEdge.forEach((r: any) => unifiedResults.push({
-            id: r.id,
-            type: 'relationship',
-            title: `${r.subject.name} → ${r.predicate} → ${r.object.name}`,
-            content: 'Graph connection discovered in EdgeDB.',
-            source: 'EdgeDB (Graph)'
-        }));
+        semanticResults.forEach(r => unifiedResults.push({ id: r.id, type: 'knowledge', title: 'Conceptual Match', content: r.text, source: 'Pinecone' }));
 
-        // Map MongoDB Results
-        mongoResults.forEach(r => unifiedResults.push({
-            id: r._id.toString(),
-            type: 'archive',
-            title: `Log: ${r.source || 'Extraction'}`,
-            content: r.text?.substring(0, 100) + '...',
-            source: 'MongoDB (Archive)'
-        }));
+        vectorResults.forEach(r => unifiedResults.push({ id: r.id, type: 'entity_match', title: 'Similar Entity Found', content: r.text, source: 'Upstash' }));
 
         return NextResponse.json({ results: unifiedResults });
 
