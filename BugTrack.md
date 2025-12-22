@@ -3,21 +3,22 @@
 ... (Previous entries) ...
 
 ---
-### Bug #39: Vercel Build Failure & Data Persistence Issue
+### Bug #40: Identity Persistence & Duplicate History
 
 **Error Details:**
-1. Build failed on Vercel due to `response.text` being possibly undefined in `experience_consolidation.ts`.
-2. All database data was being wiped on every new deployment due to `DROP TABLE IF EXISTS` in the initialization script.
+1. AI failed to remember its name (Souly) or user details (Hadra) despite verbal confirmation.
+2. The `Cognitive Process Inspector` showed duplicate user messages in the `history` parts.
+3. Extraction was purely manual and failed to parse Arabic identity facts.
 
 **Solution:**
-1. Added proper null checks for all AI response objects in pipelines.
-2. Removed `DROP TABLE` statements from `create-tables.js` and replaced with safe `CREATE TABLE IF NOT EXISTS` commands.
-3. Added a dedicated "Logs" button in the `StatusBar` to ensure the Debug Log panel is easily accessible.
+1. Deduplicated history logic in `ContextAssemblyPipeline`.
+2. Automated the `MemoryExtractionPipeline` call in the chat route for background "Auto-Sync".
+3. Enhanced the extraction prompt with explicit instructions for Arabic and identity differentiation.
+4. Added `aiName` and `role` fields to `ProfileMemoryModule`.
 
 **Modified Files:**
-- `core/pipelines/experience_consolidation.ts`
-- `scripts/create-tables.js`
-- `components/StatusBar.tsx`
+- `core/pipelines/context_assembly.ts`
+- `core/pipelines/memory_extraction.ts`
+- `core/memory/modules/profile.ts`
+- `app/api/chat/route.ts`
 - `app/api/version/current/route.ts`
-- `app/api/version/history/route.ts`
-- `scripts/seed-version-history.js`

@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { VersionHistory } from '@/lib/types';
@@ -5,20 +6,20 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.4.14',
-    version: '0.4.14',
+    id: 'v-0.4.15',
+    version: '0.4.15',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 📏 Scrolling & UI Integrity (v0.4.14)
+### 🧠 Cognitive Identity Sync (v0.4.15)
 
-**UI/UX Fixes:**
-- **Scrollbar Restoration:** Fixed a critical CSS layout issue preventing message list scrolling.
-- **Flexbox min-h-0:** Applied architectural flex fixes to ensure the chat window respects viewport bounds.
-- **Improved Thumbnails:** Enhanced scrollbar visibility in Dark Mode.
+**Core Improvements:**
+- **Auto-Identity Sync:** The system now automatically learns your name, role, and preferences in the background without requiring manual "Review".
+- **Multilingual Extraction:** Enhanced the memory extraction engine to support Arabic (Egyptian and MSA) identity facts.
+- **Context Fix:** Resolved a bug in the Context Assembly Pipeline that caused duplicate messages in the AI's short-term memory.
 
-**System:**
-- **Version Sync:** Hardened versioning system to prevent mismatch between DB and code.
+**Profile Module:**
+- Added support for tracking both AI Identity (Souly) and User Identity (Hadra) within the persistent profile.
 `
 };
 
@@ -44,7 +45,6 @@ export async function GET() {
         `;
         if (rows.length === 0) return NextResponse.json(staticCurrentVersion);
         const dbVersion = rows[0];
-        // If DB version is older than code version, use code version
         if (compareVersions(dbVersion.version, staticCurrentVersion.version) < 0) {
              return NextResponse.json(staticCurrentVersion);
         }

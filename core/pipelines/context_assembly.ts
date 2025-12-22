@@ -1,6 +1,7 @@
 
+// core/pipelines/context_assembly.ts
 import { EpisodicMemoryModule } from '../memory/modules/episodic';
-import { SemanticMemoryModule, ISemanticQueryResult } from '../memory/modules/semantic';
+import { SemanticMemoryModule } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
 import { EntityVectorMemoryModule } from '../memory/modules/entity_vector';
 import { GraphMemoryModule } from '../memory/modules/graph';
@@ -78,7 +79,7 @@ export class ContextAssemblyPipeline {
                 this.profileMemory.query({})
             );
 
-            // 3. Experience Retrieval (Learned Patterns) - Restricted by Brain
+            // 3. Experience Retrieval (Learned Patterns)
             const matchedExperiences = await this.logStep(runId, 3, 'Retrieve Learned Experiences', { userQuery, brainId }, async () => {
                 const queryWords = userQuery.toLowerCase().split(/\s+/).filter(w => w.length > 3);
                 if (queryWords.length === 0) return [];
@@ -90,12 +91,11 @@ export class ContextAssemblyPipeline {
                 return rows as Experience[];
             }) as Experience[];
 
-            // 4. Entity Search (Strict Brain Isolation)
+            // 4. Entity Search
             const proactiveEntities = await this.logStep(runId, 4, 'Vector Search Entities', { userQuery, brainId }, async () => {
                  const results = await this.entityVectorMemory.query({ queryText: userQuery, topK: 5 });
                  if (results.length === 0) return [];
                  const ids = results.map(r => r.id);
-                 // Apply brain filtering in SQL
                  const { rows } = await db.query(`
                     SELECT * FROM entity_definitions 
                     WHERE id = ANY($1::uuid[]) 
@@ -104,7 +104,7 @@ export class ContextAssemblyPipeline {
                  return rows;
             }) as EntityDefinition[];
 
-            // 5. Graph Lookup (Already Brain Isolated in module)
+            // 5. Graph Lookup
             const graphContext = await this.logStep(runId, 5, 'Graph Memory Lookup', { entities: proactiveEntities.map(e => e.name) }, async () => {
                 const relationships = [];
                 for (const entity of proactiveEntities) {
@@ -116,10 +116,9 @@ export class ContextAssemblyPipeline {
                 return relationships;
             });
 
-            // 6. Tool Discovery (Semantic Tool Selection) - NEW
+            // 6. Tool Discovery
             const discoveredTools = await this.logStep(runId, 6, 'Semantic Tool Selection', { userQuery }, async () => {
-                const { rows: allTools } = await db.query('SELECT name, description, "schemaJson" FROM tools');
-                // Select tools whose description matches the query keywords
+                const { rows: allTools } = await db.query('SELECT name, description FROM tools');
                 return allTools.filter((t: Tool) => 
                     userQuery.toLowerCase().includes(t.name.toLowerCase()) || 
                     t.description.toLowerCase().split(' ').some(word => userQuery.toLowerCase().includes(word))
@@ -129,28 +128,32 @@ export class ContextAssemblyPipeline {
             // 7. Context Assembly
             const { systemInstruction, history } = await this.logStep(runId, 7, 'Assemble Final Prompt', {}, () => {
                 let context = `
-=== USER PROFILE & PREFERENCES ===
-${userProfile.preferences?.join(', ') || 'None'}
+=== IDENTITY & PREFERENCES ===
+Your Name: ${userProfile.aiName || 'SoulyCore'}
+User Name: ${userProfile.name || 'User'}
+Communication Style: ${userProfile.preferences?.join(', ') || 'Helpful Assistant'}
 
-=== RELEVANT EXPERIENCES (Success Patterns) ===
+=== RELEVANT EXPERIENCES ===
 ${matchedExperiences.map(exp => `- Goal: "${exp.goalTemplate}" -> Solution: ${JSON.stringify(exp.stepsJson)}`).join('\n') || 'None'}
 
-=== KNOWLEDGE ENTITIES (Brain: ${conversation.brainId || 'Global'}) ===
+=== KNOWLEDGE ENTITIES ===
 ${proactiveEntities.map(e => `- ${e.name} (${e.type}): ${e.description}`).join('\n')}
-
-=== ACTIVE TOOLS FOR THIS TURN ===
-${discoveredTools.map(t => `- ${t.name}: ${t.description}`).join('\n')}
 
 === GRAPH RELATIONSHIPS ===
 ${graphContext.join('\n')}
 `;
                 const finalInstruction = `${conversation.systemPrompt}\n\nUSE THE FOLLOWING CONTEXT TO INFORM YOUR RESPONSE:\n${context}`;
                 
+                // FIX: Filter out the current user message if it's already in recentMessages to prevent duplication
+                const existingIds = new Set(recentMessages.map(m => m.id));
                 const formattedHistory = recentMessages.map(m => ({
                     role: m.role,
                     parts: [{ text: m.content }]
                 }));
-                formattedHistory.push({ role: 'user', parts: [{ text: userQuery }] });
+                
+                if (!existingIds.has(userMessageId)) {
+                    formattedHistory.push({ role: 'user', parts: [{ text: userQuery }] });
+                }
                 
                 return Promise.resolve({ systemInstruction: finalInstruction, history: formattedHistory });
             });
