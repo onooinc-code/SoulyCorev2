@@ -6,20 +6,19 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.5.11',
-    version: '0.5.11',
+    id: 'v-0.5.12',
+    version: '0.5.12',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🚀 UX & Traceability Upgrade (v0.5.11)
+### 🛠️ Stability & Live Sync Patch (v0.5.12)
 
-**Core Experience:**
-- **Auto-Navigation:** Creating a new chat now automatically switches focus to it, clearing the previous view immediately.
-- **Smart Auto-Titling:** New conversations start as "محادثة جديدة" and automatically generate a descriptive title after the first AI response.
+**Critical Bug Fixes:**
+- **Extraction Pipeline Auth:** Fixed a critical 'API_KEY_INVALID' error in the background memory extraction process. The pipeline now uses the same robust key sanitization logic (stripping quotes, whitespace) as the main chat server.
+- **Chat UI Sync:** Fixed an issue where new messages and AI responses wouldn't appear immediately. Implemented stricter state management to ensure the UI updates instantly upon receiving data, regardless of DB latency.
 
 **System Observability:**
-- **Deep Trace Links:** System logs in the Dashboard and Log Panel are now clickable, jumping directly to the specific conversation context where the event occurred.
-- **Granular Pipeline Logging:** Added specific \`conversationId\` tracking to all memory extraction and context assembly steps.
+- **Live Log Polling:** The System Output panel now auto-refreshes every 2 seconds to capture background events (like memory extraction) in real-time without requiring a page reload.
 `
 };
 

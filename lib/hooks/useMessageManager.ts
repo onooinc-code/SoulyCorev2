@@ -106,14 +106,32 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
                     isLinkPredictionEnabled
                 }) 
             });
+            
             if (!chatRes.ok) {
                 const errorData = await chatRes.json().catch(() => ({ error: "Failed to get AI response and could not parse error response." }));
                 throw new Error(errorData.details?.message || errorData.error || 'Failed to get AI response');
             }
             const { response: aiResponse, suggestion, memoryProposal, linkProposal, monitorMetadata } = await chatRes.json();
             
-            // Re-fetch messages to get the new AI response that was saved on the backend
-            await fetchMessages(currentConversation.id);
+            // Critical Fix: Manually add the AI response to the state immediately.
+            // This ensures the UI updates even if the subsequent fetchMessages call is delayed or hits a race condition.
+            if (aiResponse) {
+                const aiMessage: Message = {
+                    id: crypto.randomUUID(), // Temporary ID until refresh
+                    role: 'model',
+                    content: aiResponse,
+                    conversationId: currentConversation.id,
+                    createdAt: new Date(),
+                    lastUpdatedAt: new Date(),
+                };
+                setMessages(prev => [...prev, aiMessage]);
+            }
+            
+            // Background fetch to sync proper IDs and any side effects
+            // We delay this slightly to let the database settle
+            setTimeout(() => {
+                fetchMessages(currentConversation.id);
+            }, 500);
 
             if (!isVisibleRef.current) {
                 onNewMessageWhileHidden(currentConversation.id);

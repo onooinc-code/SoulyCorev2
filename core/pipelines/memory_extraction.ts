@@ -35,12 +35,28 @@ export class MemoryExtractionPipeline {
         this.documentMemory = new DocumentMemoryModule();
         this.entityVectorMemory = new EntityVectorMemoryModule();
         
-        // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
-        const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-             throw new Error("MemoryExtractionPipeline: API Key not found in environment variables.");
+        // ROBUST API KEY SELECTION
+        // Iterates through candidates, cleans them, and picks the first one that looks valid (starts with AIza).
+        const candidates = [process.env.API_KEY, process.env.GEMINI_API_KEY];
+        let selectedKey: string | undefined = undefined;
+
+        for (const candidate of candidates) {
+            if (!candidate) continue;
+            let key = candidate.trim();
+            // Remove surrounding quotes if present
+            if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+                key = key.substring(1, key.length - 1);
+            }
+            if (key.startsWith('AIza')) {
+                selectedKey = key;
+                break;
+            }
         }
-        this.ai = new GoogleGenAI({ apiKey });
+
+        if (!selectedKey) {
+             throw new Error("MemoryExtractionPipeline: Valid API Key (starting with AIza) not found in environment variables.");
+        }
+        this.ai = new GoogleGenAI({ apiKey: selectedKey });
     }
 
     private async logEvent(message: string, payload?: any, level: 'info' | 'warn' | 'error' = 'info') {

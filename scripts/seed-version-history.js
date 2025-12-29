@@ -4,8 +4,22 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.11',
+        version: '0.5.12',
         releaseDate: new Date().toISOString(),
+        changes: `
+### 🛠️ Stability & Live Sync Patch (v0.5.12)
+
+**Critical Bug Fixes:**
+- **Extraction Pipeline Auth:** Fixed a critical 'API_KEY_INVALID' error in the background memory extraction process. The pipeline now uses the same robust key sanitization logic (stripping quotes, whitespace) as the main chat server.
+- **Chat UI Sync:** Fixed an issue where new messages and AI responses wouldn't appear immediately. Implemented stricter state management to ensure the UI updates instantly upon receiving data, regardless of DB latency.
+
+**System Observability:**
+- **Live Log Polling:** The System Output panel now auto-refreshes every 2 seconds to capture background events (like memory extraction) in real-time without requiring a page reload.
+`
+    },
+    {
+        version: '0.5.11',
+        releaseDate: new Date('2025-12-28T12:00:00Z').toISOString(),
         changes: `
 ### 🚀 UX & Traceability Upgrade (v0.5.11)
 

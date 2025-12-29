@@ -20,10 +20,9 @@ interface LogContextType {
 
 const LogContext = createContext<LogContextType | undefined>(undefined);
 
-// Forcing a re-sync for GitHub.
 export const LogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [logs, setLogs] = useState<LogEntry[]>([]);
-    const [loggingEnabled, setLoggingEnabled] = useState(true); // Default to on to capture initial logs
+    const [loggingEnabled, setLoggingEnabled] = useState(true);
 
     const loadLogs = useCallback(async () => {
         try {
@@ -36,16 +35,26 @@ export const LogProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     }, []);
 
+    // Initial load
     useEffect(() => {
         loadLogs();
     }, [loadLogs]);
+
+    // Polling for live logs (background tasks)
+    useEffect(() => {
+        if (!loggingEnabled) return;
+        const interval = setInterval(() => {
+            loadLogs();
+        }, 2500); // Poll every 2.5 seconds
+        return () => clearInterval(interval);
+    }, [loggingEnabled, loadLogs]);
 
     const log = useCallback(async (message: string, payload?: any, level: 'info' | 'warn' | 'error' = 'info') => {
         if (!loggingEnabled) {
             return;
         }
 
-        // Optimistic update
+        // Optimistic update for immediate feedback
         const tempId = crypto.randomUUID();
         const newLog: LogEntry = {
             id: tempId,
@@ -65,19 +74,14 @@ export const LogProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             });
             if (!res.ok) throw new Error("Failed to save log.");
             
-            const savedLog = await res.json();
-            // Replace optimistic log with the one from the DB to get the real ID and timestamp
-            setLogs(prev => prev.map(l => l.id === tempId ? savedLog : l));
-
+            // We don't replace here because the polling will catch up, 
+            // and replacing might cause jitter if the ID changes.
         } catch (error) {
             console.error("Failed to persist log:", error);
-            // Revert optimistic update on failure
-            setLogs(prev => prev.filter(l => l.id !== tempId));
         }
     }, [loggingEnabled]);
 
     const clearLogs = useCallback(async () => {
-        const oldLogs = [...logs];
         setLogs([]); // Optimistic update
 
         try {
@@ -85,9 +89,10 @@ export const LogProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             if (!res.ok) throw new Error("Failed to clear logs on the server.");
         } catch (error) {
             console.error(error);
-            setLogs(oldLogs); // Revert on failure
+            // Revert on failure (optional, but good practice)
+            loadLogs();
         }
-    }, [logs]);
+    }, [loadLogs]);
     
     return (
         <LogContext.Provider value={{ logs, log, clearLogs, setLoggingEnabled }}>
