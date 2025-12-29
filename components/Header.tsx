@@ -28,7 +28,8 @@ const VersionSystem = () => {
     useEffect(() => {
         const checkVersion = async () => {
             try {
-                const res = await fetch('/api/version/current');
+                // Add timestamp to prevent caching
+                const res = await fetch(`/api/version/current?t=${Date.now()}`);
                 if (res.ok) {
                     const data = await res.json();
                     setCurrentVersion(data);
@@ -55,19 +56,23 @@ const VersionSystem = () => {
 
     const handleForceUpdate = async () => {
         if (isSeeding) return;
-        if (!confirm("تحديث قاعدة البيانات والإصدار الآن؟ (سيتم إعادة تحميل الصفحة)")) return;
+        if (!confirm("هل تريد تحديث قاعدة البيانات وإصلاح الجداول؟ (قد يستغرق بضع ثوانٍ)")) return;
         
         setIsSeeding(true);
         try {
-            const res = await fetch('/api/admin/seed');
+            // Add timestamp to ensure fresh call
+            const res = await fetch(`/api/admin/seed?t=${Date.now()}`);
+            const data = await res.json();
+            
             if (res.ok) {
+                alert(`تم التحديث بنجاح!\n${data.message}`);
                 window.location.reload();
             } else {
-                alert("فشل التحديث. تحقق من السجلات.");
+                alert(`فشل التحديث: ${data.error}`);
             }
         } catch (e) {
             console.error("Update failed", e);
-            alert("حدث خطأ أثناء التحديث.");
+            alert("حدث خطأ في الاتصال.");
         } finally {
             setIsSeeding(false);
         }
@@ -92,7 +97,7 @@ const VersionSystem = () => {
                 onClick={handleForceUpdate}
                 disabled={isSeeding}
                 className="p-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 transition-all"
-                title="تحديث النظام (Seed Database)"
+                title="تحديث النظام (إصلاح الجداول والإصدار)"
             >
                 <RefreshIcon className={`w-3 h-3 ${isSeeding ? 'animate-spin' : ''}`} />
             </button>

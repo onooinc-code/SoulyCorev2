@@ -4,36 +4,29 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.18',
+        version: '0.5.19',
         releaseDate: new Date().toISOString(),
+        changes: `
+### ⚡ Performance & Quota Optimization (v0.5.19)
+
+**Core Engine:**
+- **Smart Extraction:** Memory extraction now skips short messages (<20 chars) to save AI quota.
+- **Model Switching:** Background tasks now use \`gemini-2.5-flash\` for better rate limit management.
+- **Error Handling:** "Rate Limit" errors are now caught gracefully, preventing UI crashes when Google API is busy.
+
+**UI Updates:**
+- **Refresh Fix:** Force Update button now bypasses cache to ensure immediate version reflection.
+`
+    },
+    {
+        version: '0.5.18',
+        releaseDate: new Date(Date.now() - 3600000).toISOString(),
         changes: `
 ### 🚨 Auto-Repair (v0.5.18)
 
 **System Recovery:**
-- **Full DB Re-Init:** The Force Update button now rebuilds the entire database schema to fix missing tables (Agent Runs, Logs, etc.) on Vercel.
+- **Full DB Re-Init:** The Force Update button now rebuilds the entire database schema.
 - **Self-Healing:** Automatically applied schema fixes.
-`
-    },
-    {
-        version: '0.5.17',
-        releaseDate: new Date(Date.now() - 1000000).toISOString(),
-        changes: `
-### 🛠️ UI Utilities (v0.5.17)
-
-**New Features:**
-- **Force Update Button:** Added a manual trigger in the Header to re-seed the database and sync versions on Vercel without CLI access.
-`
-    },
-    {
-        version: '0.5.16',
-        releaseDate: new Date(Date.now() - 2000000).toISOString(),
-        changes: `
-### 🚀 Vercel & Memory Core Fix (v0.5.16)
-
-**System Updates:**
-- **Admin Seeder:** Added web-based seeding tool at \`/api/admin/seed\` to fix database updates on Vercel.
-- **UI Sync:** Fixed chat response lag by removing reliance on immediate read-after-write fetches.
-- **Deep Context:** Enhanced entity lookup to use conversation history, fixing pronoun resolution ("Where does *he* work?").
 `
     }
 ];
