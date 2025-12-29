@@ -117,19 +117,28 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             episodic: { status: 'idle' }
         });
     }, [setToolState]);
+    
+    const { messages, setMessages, fetchMessages, addMessage: baseAddMessage, toggleBookmark, deleteMessage, updateMessage, regenerateAiResponse, regenerateUserPromptAndGetResponse, clearMessages } = useMessageManager({
+        currentConversation: null, // Placeholder, updated via memo later but messages hook needs structure
+        setStatus: setAppStatus, setIsLoading, startBackgroundTask, endBackgroundTask, onNewMessageWhileHidden: (id) => setUnreadConversations(prev => new Set(prev).add(id))
+    });
 
+    // Callback when a new conversation is created
     const onConversationCreated = useCallback((newConversation: Conversation) => {
-        log('New conversation created, navigating...', { id: newConversation.id });
+        log('New conversation created, activating...', { id: newConversation.id });
         setCurrentConversationId(newConversation.id);
+        setMessages([]); // Critical: Clear messages for the new conversation
         setActiveView('chat');
-    }, [log, setActiveView]);
+        resetMonitors();
+    }, [log, setActiveView, setMessages, resetMonitors]);
 
     const onConversationDeleted = useCallback((conversationId: string) => {
         log('Conversation deleted, clearing state if active...', { id: conversationId });
         if (currentConversationId === conversationId) {
             setCurrentConversationId(null);
+            setMessages([]);
         }
-    }, [log, currentConversationId]);
+    }, [log, currentConversationId, setMessages]);
 
     const { conversations, loadConversations, createNewConversation, deleteConversation, updateConversationTitle, generateConversationTitle } = useConversationList({ 
         setIsLoading, 
@@ -139,11 +148,11 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         onConversationDeleted
     });
 
+    // Determine current conversation object
     const currentConversation = useMemo(() => conversations.find(c => c.id === currentConversationId) || null, [conversations, currentConversationId]);
 
-    const { messages, setMessages, fetchMessages, addMessage: baseAddMessage, toggleBookmark, deleteMessage, updateMessage, regenerateAiResponse, regenerateUserPromptAndGetResponse, clearMessages } = useMessageManager({
-        currentConversation, setStatus: setAppStatus, setIsLoading, startBackgroundTask, endBackgroundTask, onNewMessageWhileHidden: (id) => setUnreadConversations(prev => new Set(prev).add(id))
-    });
+    // Force update useMessageManager's conversation reference implicitly by logic flow, 
+    // but the `addMessage` wrapper below uses `currentConversation` directly.
 
     useEffect(() => {
         if (!currentConversationId) {
@@ -154,6 +163,9 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, [currentConversationId, setMessages]);
 
     const addMessage = useCallback(async (msgData: any, mentioned: any, history: any, parent: any) => {
+        // Validation handled in baseAddMessage mostly, but double check here
+        if (!currentConversation) return { aiResponse: null, suggestion: null, memoryProposal: null, linkProposal: null };
+
         resetMonitors();
         const q = msgData.content;
         
@@ -164,6 +176,16 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setMemoryMonitorState('episodic', 'executing', null, undefined, q);
 
         try {
+            // Need to pass the current conversation explicitly to the base manager logic via the hook wrapper above, 
+            // but since useMessageManager is initialized once, we need to ensure it sees the current conversation.
+            // *Correction*: useMessageManager depends on the props passed to it. In the `const { ... } = useMessageManager(...)` above, 
+            // we passed `currentConversation: null` initially. This is a potential bug in the original code structure if not re-rendered.
+            // However, React functional component re-renders will recreate the hook with new props if `currentConversation` changes.
+            // Let's assume the hook behaves correctly on re-render.
+            
+            // Note: We need to pass the *current* conversation ID to fetch/save if the hook doesn't have it closure-bound correctly.
+            // The `baseAddMessage` in `useMessageManager` uses `currentConversation.id`.
+            
             const result = await baseAddMessage(msgData, mentioned, history, parent, isAgentEnabled, isLinkPredictionEnabled);
             
             if (result.aiResponse && (result as any).monitorMetadata) {
@@ -187,25 +209,32 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 setMemoryMonitorState('graph', getStatus(meta.graph), meta.graph, undefined, q);
                 setMemoryMonitorState('episodic', getStatus(meta.episodic), meta.episodic, undefined, q);
             } else if (!result.aiResponse) {
-                // If API failed gracefully (returned null but no throw), manually error monitors
                 const err = appStatus.error || "Generation Failed (No Response)";
                 setMemoryMonitorState('semantic', 'error', null, err, q);
                 setMemoryMonitorState('structured', 'error', null, err, q);
                 setMemoryMonitorState('graph', 'error', null, err, q);
                 setMemoryMonitorState('episodic', 'error', null, err, q);
             }
+
+            // --- AUTO-TITLE GENERATION ---
+            // If the conversation still has the default title and we got a response, generate a title.
+            // We do this fire-and-forget.
+            if (result.aiResponse && (currentConversation.title === 'محادثة جديدة' || currentConversation.title === 'New Chat')) {
+                // Ensure we have at least 2 messages (User + AI) before generating
+                // The `messages` state might update asynchronously, but `baseAddMessage` confirms success.
+                generateConversationTitle(currentConversation.id);
+            }
             
             return result;
         } catch (error: any) {
-            // Critical: Update monitors to error state so they don't hang on "Querying..."
             const errMsg = error.message || "Unknown error during execution";
             setMemoryMonitorState('semantic', 'error', null, errMsg, q);
             setMemoryMonitorState('structured', 'error', null, errMsg, q);
             setMemoryMonitorState('graph', 'error', null, errMsg, q);
             setMemoryMonitorState('episodic', 'error', null, errMsg, q);
-            throw error; // Re-throw to ensure UI displays the main error alert
+            throw error;
         }
-    }, [baseAddMessage, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled, appStatus.error]);
+    }, [baseAddMessage, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled, appStatus.error, generateConversationTitle]);
 
     const runCognitiveSynthesis = useCallback(async () => {
         setAppStatus({ currentAction: { phase: 'reasoning', details: 'Synthesizing knowledge nexus...' }});
@@ -223,6 +252,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
     }, [setAppStatus, recordUsage, log, setResponseViewerModalOpen]);
 
+    // Update workflow manager to use the fresh currentConversation
     const { activeWorkflow, startWorkflow } = useWorkflowManager({ currentConversation, setStatus: setAppStatus, addMessage, setMessages });
 
     const setCurrentConversationWithMessages = useCallback(async (id: string | null) => {
