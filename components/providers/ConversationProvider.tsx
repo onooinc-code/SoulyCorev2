@@ -187,9 +187,13 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 setMemoryMonitorState('graph', getStatus(meta.graph), meta.graph, undefined, q);
                 setMemoryMonitorState('episodic', getStatus(meta.episodic), meta.episodic, undefined, q);
             } else if (!result.aiResponse) {
-                // If no response (meaning failure in baseAddMessage caught internally), 
-                // we should check appStatus.error or infer failure.
-                // However, baseAddMessage throws on critical error, so we catch it below.
+                // FAIL SAFE: If no response and no error thrown, assume error to stop monitors hanging
+                // This typically happens if baseAddMessage catches an error and returns { aiResponse: null }
+                const fallbackError = appStatus.error || "Generation failed";
+                setMemoryMonitorState('semantic', 'error', null, fallbackError, q);
+                setMemoryMonitorState('structured', 'error', null, fallbackError, q);
+                setMemoryMonitorState('graph', 'error', null, fallbackError, q);
+                setMemoryMonitorState('episodic', 'error', null, fallbackError, q);
             }
             
             return result;
@@ -202,7 +206,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             setMemoryMonitorState('episodic', 'error', null, errMsg, q);
             throw error; // Re-throw to ensure UI displays the main error alert
         }
-    }, [baseAddMessage, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled]);
+    }, [baseAddMessage, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled, appStatus.error]);
 
     const runCognitiveSynthesis = useCallback(async () => {
         setAppStatus({ currentAction: { phase: 'reasoning', details: 'Synthesizing knowledge nexus...' }});

@@ -6,16 +6,16 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.5.3',
-    version: '0.5.3',
+    id: 'v-0.5.4',
+    version: '0.5.4',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🛡️ Resilience Update (v0.5.3)
+### 🛠️ Build & Stability Fixes (v0.5.4)
 
-**System Stability:**
-- **Monitor Recovery:** Fixed an issue where the Cognitive Monitors would get stuck in a "Querying..." state if the API call failed.
-- **Error Handling:** Improved error reporting for API authentication failures.
+**Core Reliability:**
+- **Deployment Fix:** Resolved a Vercel build failure caused by database connection timeouts during the install phase.
+- **Monitor UI:** Fixed an issue where the "Live Tool Monitor" and "Memory Inspector" would hang indefinitely if the backend API failed.
 `
 };
 

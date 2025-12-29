@@ -4,31 +4,28 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.3',
+        version: '0.5.4',
         releaseDate: new Date().toISOString(),
+        changes: `
+### 🛠️ Build & Stability Fixes (v0.5.4)
+
+**Core Reliability:**
+- **Deployment Fix:** Resolved a Vercel build failure caused by database connection timeouts during the install phase.
+- **Monitor UI:** Fixed an issue where the "Live Tool Monitor" and "Memory Inspector" would hang indefinitely if the backend API failed. They now correctly report errors.
+
+**Improvements:**
+- **Error Handling:** Enhanced error detection to catch null responses from the AI provider.
+`
+    },
+    {
+        version: '0.5.3',
+        releaseDate: '2025-12-25T10:00:00Z',
         changes: `
 ### 🛡️ Resilience Update (v0.5.3)
 
 **System Stability:**
-- **Monitor Recovery:** Fixed an issue where the Cognitive Monitors (Memory/Tools) would get stuck in a "Querying..." state if the main AI request failed. They now correctly report errors.
+- **Monitor Recovery:** Fixed an issue where the Cognitive Monitors would get stuck in a "Querying..." state if the API call failed.
 - **Error Handling:** Improved error reporting for API Key authentication failures.
-
-**Bug Fixes:**
-- **Version Sync:** Updated system version to reflect the latest hotfixes.
-`
-    },
-    {
-        version: '0.5.2',
-        releaseDate: '2025-12-24T10:00:00Z',
-        changes: `
-### 🛠️ UX Refinement & Agent Setup (v0.5.2)
-
-**Navigation Upgrade:**
-- **Agent Config Button:** Moved the Agent Setup button to the **Sidebar Toolbar** for permanent visibility.
-- **Global Context:** Agent configuration state is now global.
-
-**System Stability:**
-- **Version Sync:** Fixed discrepancy between reported version and internal build number.
 `
     },
     {

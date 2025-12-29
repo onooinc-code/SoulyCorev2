@@ -9,8 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "db:create": "node scripts/create-tables.js",
-    "db:seed": "node scripts/seed-features.js && node scripts/seed-api-endpoints.js && node scripts/seed-version-history.js && node scripts/seed-docs-and-goals.js && node scripts/seed-data-sources.js && node scripts/seed-subsystems.js",
-    "postinstall": "npm run db:create && npm run db:seed"
+    "db:seed": "node scripts/seed-features.js && node scripts/seed-api-endpoints.js && node scripts/seed-version-history.js && node scripts/seed-docs-and-goals.js && node scripts/seed-data-sources.js && node scripts/seed-subsystems.js"
   },
   "dependencies": {
     "@google/genai": "^1.15.0",

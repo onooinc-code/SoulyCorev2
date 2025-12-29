@@ -4,16 +4,18 @@
 
 ---
 
-### Update #35: System Resilience & Error Recovery (v0.5.3)
+### Update #36: Build Failure Remediation & UI Stability (v0.5.4)
 
 **Details:**
-Addressed a critical issue where UI monitors would hang if the backend API encountered an error (e.g., Auth failure). Implemented robust error handling in the `ConversationProvider` to ensure the UI state correctly reflects failures. Updated versioning.
+Corrected a deployment issue where database seeding during the build process caused timeouts on Vercel. Also hardened the frontend `ConversationProvider` to ensure UI monitors reset correctly when backend errors occur.
 
 **Changes Made:**
-- **ConversationProvider:** Wrapped `addMessage` in a `try/catch` block. On error, it now forces all memory monitors (Semantic, Structured, etc.) to an `'error'` state, ensuring the "Querying..." indicator stops.
-- **Versioning:** Bumped version to `0.5.3` in seed scripts and API route.
+- **Vercel Config:** Removed `postinstall` script from `package.json` to decouple DB operations from the build process.
+- **ConversationProvider:** Added fallback logic to set monitor states to `'error'` if the message manager returns a null response, preventing the UI from getting stuck in a loading state.
+- **Versioning:** Bumped version to `0.5.4`.
 
 **Modified Files:**
+- `package.json`
 - `components/providers/ConversationProvider.tsx`
 - `app/api/version/current/route.ts`
 - `scripts/seed-version-history.js`
