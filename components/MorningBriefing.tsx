@@ -8,6 +8,8 @@ import { XIcon } from '@/components/Icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+const MotionDiv = motion.div as any;
+
 interface MorningBriefingProps {
     onClose: () => void;
 }
@@ -42,20 +44,20 @@ const MorningBriefing = ({ onClose }: MorningBriefingProps) => {
     }, []);
 
     return (
-        <motion.div
+        <MotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100] p-4"
             onClick={onClose}
         >
-            <motion.div
+            <MotionDiv
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
                 transition={{ duration: 0.2 }}
                 className="bg-gray-800 rounded-lg shadow-xl w-11/12 md:max-w-2xl max-h-[90vh] flex flex-col border border-indigo-500/50"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center p-6 flex-shrink-0">
                     <h2 className="text-xl font-bold">Your Morning Briefing</h2>
@@ -73,8 +75,8 @@ const MorningBriefing = ({ onClose }: MorningBriefingProps) => {
                  <div className="p-6 pt-4 mt-auto flex-shrink-0">
                      <button onClick={onClose} className="w-full px-4 py-2 bg-indigo-600 rounded-lg hover:bg-indigo-500 text-sm">Continue</button>
                  </div>
-            </motion.div>
-        </motion.div>
+            </MotionDiv>
+        </MotionDiv>
     );
 };
 

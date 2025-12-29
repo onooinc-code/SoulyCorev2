@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -8,6 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PlusIcon, TrashIcon, EditIcon, XIcon, CopyIcon, CheckIcon, MagnifyingGlassIcon } from '@/components/Icons';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { ResponsivePie } from '@nivo/pie';
+
+const MotionDiv = motion.div as any;
 
 const statusOptions: FeatureStatus[] = ['✅ Completed', '🟡 Needs Improvement', '🔴 Needs Refactor', '⚪ Planned'];
 
@@ -93,8 +94,8 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ feature, onEdit, onDelete }) 
     const [isExpanded, setIsExpanded] = useState(false);
 
     return (
-        <motion.div layout className="bg-gray-800 rounded-lg overflow-hidden">
-            <motion.div layout className="flex justify-between items-center p-4 cursor-pointer" onClick={() => {
+        <MotionDiv layout className="bg-gray-800 rounded-lg overflow-hidden">
+            <MotionDiv layout className="flex justify-between items-center p-4 cursor-pointer" onClick={() => {
                 console.log(`User ${isExpanded ? 'collapsed' : 'expanded'} feature view`, { featureName: feature.name });
                 setIsExpanded(!isExpanded);
             }}>
@@ -110,10 +111,10 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ feature, onEdit, onDelete }) 
                         <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-2 rounded-lg text-gray-300 transition-colors hover:bg-white/10 hover:text-red-500" title="Permanently delete this feature from the dictionary."><TrashIcon className="w-5 h-5"/></button>
                     </div>
                 </div>
-            </motion.div>
+            </MotionDiv>
             <AnimatePresence>
                 {isExpanded && (
-                    <motion.div
+                    <MotionDiv
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -135,10 +136,10 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ feature, onEdit, onDelete }) 
                             </div>
                             {feature.notes && <div><strong className="text-gray-400 block mb-1">Notes:</strong><p className="whitespace-pre-wrap">{feature.notes}</p></div>}
                         </div>
-                    </motion.div>
+                    </MotionDiv>
                 )}
             </AnimatePresence>
-        </motion.div>
+        </MotionDiv>
     );
 };
 
@@ -305,8 +306,8 @@ const FeaturesDictionary = () => {
     }, [features, searchTerm, activeFilters]);
 
     const renderForm = () => (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
+            <MotionDiv initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
                 <div className="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
                     <h3 className="font-semibold text-lg">{currentFeature?.id ? 'Edit Feature' : 'New Feature'}</h3>
                     <button onClick={() => setIsFormOpen(false)} className="p-1 rounded-full hover:bg-gray-700"><XIcon className="w-5 h-5" /></button>
@@ -332,8 +333,8 @@ const FeaturesDictionary = () => {
                     <button onClick={handleSaveFeature} className="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-500">Save Feature</button>
                     <button onClick={() => { console.log('User cancelled feature form.'); setIsFormOpen(false); }} className="px-4 py-2 bg-gray-600 text-white rounded-md text-sm hover:bg-gray-500">Cancel</button>
                 </div>
-            </motion.div>
-        </motion.div>
+            </MotionDiv>
+        </MotionDiv>
     );
 
     return (

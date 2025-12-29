@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -5,6 +6,8 @@ import { useConversation } from '@/components/providers/ConversationProvider';
 import CognitiveStatusBar from './chat/CognitiveStatusBar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CognitiveStatus } from '@/lib/types';
+
+const MotionDiv = motion.div as any;
 
 // This component is now a wrapper that decides which status to show.
 // For this request, we'll focus on the new CognitiveStatusBar.
@@ -26,7 +29,7 @@ const LoadingIndicator = () => {
     return (
         <AnimatePresence>
             {isCognitiveStatus(status.currentAction) && (
-                <motion.div
+                <MotionDiv
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
@@ -36,7 +39,7 @@ const LoadingIndicator = () => {
                         status={status.currentAction}
                         onInspect={handleInspect}
                     />
-                </motion.div>
+                </MotionDiv>
             )}
         </AnimatePresence>
     );

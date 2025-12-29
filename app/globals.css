@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -96,6 +97,23 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Mask for linear fade on scrollable horizontal lists */
+.mask-linear-fade {
+    mask-image: linear-gradient(to right, transparent, black 10px, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10px, black 90%, transparent);
+}
+
+/* iOS Safe Area Support */
+.safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+.safe-top {
+    padding-top: env(safe-area-inset-top, 20px);
+}
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 @media (max-width: 768px) {

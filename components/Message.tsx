@@ -10,6 +10,8 @@ import type { Message as MessageType, Conversation } from '@/lib/types';
 import MessageToolbar from './MessageToolbar';
 import MessageFooter from './MessageFooter';
 
+const MotionDiv = motion.div as any;
+
 interface MessageProps {
     message: MessageType;
     onSummarize: (content: string) => void;
@@ -47,7 +49,7 @@ const Message: React.FC<MessageProps> = (props) => {
     const hasHtml = message.content.includes('<html');
 
     return (
-        <motion.div
+        <MotionDiv
             layout
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -84,10 +86,10 @@ const Message: React.FC<MessageProps> = (props) => {
                     <div className={`rounded-xl p-4 md:p-6 ${isUser ? 'bg-gray-800/80' : 'bg-transparent border border-white/5'}`}>
                         <AnimatePresence initial={false}>
                         {isEditing ? (
-                            <motion.div key="editing" initial={{opacity:0}} animate={{opacity:1}}>
+                            <MotionDiv key="editing" initial={{opacity:0}} animate={{opacity:1}}>
                                 <textarea
                                     value={editedContent}
-                                    onChange={(e) => setEditedContent(e.target.value)}
+                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditedContent(e.target.value)}
                                     className="w-full bg-gray-900 p-3 rounded-md text-sm border border-indigo-500/50 focus:ring-1 focus:ring-indigo-500 outline-none"
                                     rows={Math.max(3, editedContent.split('\n').length)}
                                     autoFocus
@@ -96,15 +98,15 @@ const Message: React.FC<MessageProps> = (props) => {
                                     <button onClick={() => setIsEditing(false)} className="px-3 py-1 bg-gray-700 text-xs rounded-md hover:bg-gray-600">Cancel</button>
                                     <button onClick={handleSaveEdit} className="px-3 py-1 bg-green-600 text-xs rounded-md hover:bg-green-500 text-white">Save</button>
                                 </div>
-                            </motion.div>
+                            </MotionDiv>
                         ) : (
-                             <motion.div key="viewing" className="prose-custom max-w-none text-base">
+                             <MotionDiv key="viewing" className="prose-custom max-w-none text-base">
                                 {!isCollapsed ? (
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                                 ) : (
                                     <p className="italic text-gray-500 cursor-pointer" onClick={() => setIsCollapsed(false)}>Message content collapsed... (Click to expand)</p>
                                 )}
-                            </motion.div>
+                            </MotionDiv>
                         )}
                         </AnimatePresence>
                     </div>
@@ -116,7 +118,7 @@ const Message: React.FC<MessageProps> = (props) => {
                     findMessageById={props.findMessageById}
                 />
             </div>
-        </motion.div>
+        </MotionDiv>
     );
 };
 

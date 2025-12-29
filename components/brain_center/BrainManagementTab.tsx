@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -6,6 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PlusIcon, TrashIcon, EditIcon } from '@/components/Icons';
 import { useAppContext } from '@/lib/hooks/useAppContext';
 import { useLog } from '@/components/providers/LogProvider';
+
+const MotionDiv = motion.div as any;
 
 const BrainManagementTab = () => {
     const { setStatus, clearError } = useAppContext();
@@ -171,9 +174,9 @@ const BrainManagementTab = () => {
 
             <AnimatePresence>
                 {isFormOpen && (
-                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden flex-shrink-0">
+                     <MotionDiv initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden flex-shrink-0">
                         {renderForm()}
-                    </motion.div>
+                    </MotionDiv>
                 )}
             </AnimatePresence>
             

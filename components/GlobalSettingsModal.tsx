@@ -8,6 +8,8 @@ import { useSettings } from '@/components/providers/SettingsProvider';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import type { AppSettings } from '@/lib/types';
 
+const MotionDiv = motion.div as any;
+
 type Theme = 'theme-dark' | 'theme-light' | 'theme-solarized';
 type MessageFontSize = 'xs' | 'sm' | 'base' | 'lg';
 
@@ -201,15 +203,15 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
     };
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-            <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="glass-panel rounded-lg shadow-xl w-full max-w-2xl p-6">
+        <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+            <MotionDiv initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="glass-panel rounded-lg shadow-xl w-full max-w-2xl p-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold">Global Settings</h2>
                     <button onClick={() => setIsOpen(false)} className="p-1 rounded-full hover:bg-gray-700"><XIcon className="w-6 h-6" /></button>
                 </div>
                 {renderContent()}
-            </motion.div>
-        </motion.div>
+            </MotionDiv>
+        </MotionDiv>
     );
 };
 

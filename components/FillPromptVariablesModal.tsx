@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -6,6 +7,8 @@ import { motion } from 'framer-motion';
 import { XIcon } from '@/components/Icons';
 // FIX: Corrected import path for type.
 import type { Prompt } from '@/lib/types';
+
+const MotionDiv = motion.div as any;
 
 interface FillPromptVariablesModalProps {
     onClose: () => void;
@@ -39,20 +42,20 @@ const FillPromptVariablesModal = ({ onClose, prompt, variables, onSubmit }: Fill
     if (!prompt) return null;
 
     return (
-        <motion.div
+        <MotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
             onClick={onClose}
         >
-            <motion.div
+            <MotionDiv
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
                 transition={{ duration: 0.2 }}
                 className="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center">
                     <h2 className="text-xl font-bold">Fill in Prompt Variables</h2>
@@ -92,8 +95,8 @@ const FillPromptVariablesModal = ({ onClose, prompt, variables, onSubmit }: Fill
                         Use Prompt
                     </button>
                 </div>
-            </motion.div>
-        </motion.div>
+            </MotionDiv>
+        </MotionDiv>
     );
 };
 

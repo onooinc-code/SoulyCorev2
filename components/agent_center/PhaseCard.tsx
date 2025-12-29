@@ -1,3 +1,4 @@
+
 "use client";
 
 // components/agent_center/PhaseCard.tsx
@@ -5,6 +6,8 @@ import React from 'react';
 import type { AgentPlanPhase } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { CheckIcon, MinusIcon, SparklesIcon } from '../Icons';
+
+const MotionDiv = motion.div as any;
 
 interface PhaseCardProps {
     phase: Omit<AgentPlanPhase, 'id' | 'run_id' | 'steps' | 'result' | 'started_at' | 'completed_at'>;
@@ -22,7 +25,7 @@ const PhaseCard = ({ phase, isActive }: PhaseCardProps) => {
     const status = statusInfo[isActive ? 'running' : phase.status];
     
     return (
-        <motion.div
+        <MotionDiv
             layout
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -39,7 +42,7 @@ const PhaseCard = ({ phase, isActive }: PhaseCardProps) => {
                     <p className="text-sm text-gray-400">{phase.goal}</p>
                 </div>
             </div>
-        </motion.div>
+        </MotionDiv>
     );
 };
 

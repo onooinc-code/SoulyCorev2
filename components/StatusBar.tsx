@@ -8,6 +8,8 @@ import { CogIcon, ClockIcon, WrenchScrewdriverIcon, LogIcon, RocketLaunchIcon, B
 import type { CognitiveStatus, ExecutionStatus } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const MotionDiv = motion.div as any;
+
 interface StatusBarProps {
     onSettingsClick: () => void;
     onAgentConfigClick: () => void;
@@ -124,7 +126,7 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
                     
                     <AnimatePresence>
                         {showUsageLog && (
-                            <motion.div 
+                            <MotionDiv 
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: -5 }}
                                 exit={{ opacity: 0, y: 10 }}
@@ -139,7 +141,7 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
                                         </div>
                                     )) : <p className="text-[8px] text-gray-600 italic">No calls recorded.</p>}
                                 </div>
-                            </motion.div>
+                            </MotionDiv>
                         )}
                     </AnimatePresence>
                 </div>

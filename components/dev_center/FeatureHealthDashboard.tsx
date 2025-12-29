@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -10,6 +9,8 @@ import { useLog } from '@/components/providers/LogProvider';
 import { CheckIcon, XIcon, MinusIcon } from '@/components/Icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
+const MotionDiv = motion.div as any;
 
 type FeatureHealth = 'Healthy' | 'Failing' | 'Untested' | 'Partial';
 
@@ -64,8 +65,8 @@ const FeatureRow: React.FC<FeatureRowProps> = ({
     const healthInfo = healthStatusMap[health];
 
     return (
-        <motion.div layout className="bg-gray-800 rounded-lg overflow-hidden">
-            <motion.div layout className="flex items-center p-4 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+        <MotionDiv layout className="bg-gray-800 rounded-lg overflow-hidden">
+            <MotionDiv layout className="flex items-center p-4 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
                 <div className="flex items-center gap-3 w-1/4">
                     <span className={healthInfo.color}>{healthInfo.icon}</span>
                     <span className={`font-semibold ${healthInfo.color}`}>{healthInfo.label}</span>
@@ -76,10 +77,10 @@ const FeatureRow: React.FC<FeatureRowProps> = ({
                 <div className="w-1/4 text-right text-sm text-gray-400">
                     {tests.length} Test(s)
                 </div>
-            </motion.div>
+            </MotionDiv>
              <AnimatePresence>
                 {isExpanded && (
-                    <motion.div
+                    <MotionDiv
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -102,10 +103,10 @@ const FeatureRow: React.FC<FeatureRowProps> = ({
                                 <p className="text-xs text-gray-500 px-2">No test cases registered for this feature.</p>
                             )}
                         </div>
-                    </motion.div>
+                    </MotionDiv>
                 )}
             </AnimatePresence>
-        </motion.div>
+        </MotionDiv>
     );
 };
 
@@ -121,7 +122,7 @@ const TestCasePanel = ({ test, onUpdate, onClose }: { test: TestCase; onUpdate: 
     };
 
     return (
-        <motion.div
+        <MotionDiv
             initial={{ x: '100%' }}
             animate={{ x: '0%' }}
             exit={{ x: '100%' }}
@@ -163,7 +164,7 @@ const TestCasePanel = ({ test, onUpdate, onClose }: { test: TestCase; onUpdate: 
                     {isSaving ? "Saving..." : "Save Result"}
                 </button>
             </div>
-        </motion.div>
+        </MotionDiv>
     );
 }
 

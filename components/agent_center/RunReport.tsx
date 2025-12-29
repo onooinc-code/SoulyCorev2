@@ -7,6 +7,8 @@ import type { AgentRun, AgentRunStep, AgentPlanPhase } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckIcon, XIcon, SparklesIcon, RefreshIcon } from '../Icons';
 
+const MotionDiv = motion.div as any;
+
 // FIX: Extracted props to a dedicated interface to fix type error with `key` prop.
 interface StepDisplayProps {
     step: AgentRunStep;
@@ -14,7 +16,7 @@ interface StepDisplayProps {
 
 // FIX: Changed the StepDisplay component to be of type React.FC<StepDisplayProps> to correctly type it as a React functional component.
 const StepDisplay: React.FC<StepDisplayProps> = ({ step }) => (
-    <motion.div
+    <MotionDiv
         layout
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -23,7 +25,7 @@ const StepDisplay: React.FC<StepDisplayProps> = ({ step }) => (
         <p><strong className="text-purple-400">Thought:</strong> {step.thought}</p>
         <p className="mt-2"><strong className="text-cyan-400">Action:</strong> {step.action}({JSON.stringify(step.actionInput)})</p>
         <p className="mt-2"><strong className="text-green-400">Observation:</strong> {step.observation}</p>
-    </motion.div>
+    </MotionDiv>
 );
 
 // FIX: Extracted props to a dedicated interface to fix type error with `key` prop.

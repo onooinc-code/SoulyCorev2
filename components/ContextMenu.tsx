@@ -9,6 +9,8 @@ import {
 } from './Icons';
 import { useAppContext } from '@/lib/hooks/useAppContext';
 
+const MotionDiv = motion.div as any;
+
 export interface MenuItem {
     label?: string;
     icon?: React.FC<React.SVGProps<SVGSVGElement>>;
@@ -68,7 +70,7 @@ const ContextMenuItem: React.FC<ContextMenuItemProps> = ({ item, onClose }) => {
             {/* Recursive Submenu Rendering */}
             <AnimatePresence>
                 {item.children && isHovered && (
-                    <motion.div
+                    <MotionDiv
                         initial={{ opacity: 0, x: -5, scale: 0.95 }}
                         animate={{ opacity: 1, x: 0, scale: 1 }}
                         exit={{ opacity: 0, x: -5, scale: 0.95 }}
@@ -81,7 +83,7 @@ const ContextMenuItem: React.FC<ContextMenuItemProps> = ({ item, onClose }) => {
                             }
                             return <ContextMenuItem key={index} item={child} onClose={onClose} />;
                         })}
-                    </motion.div>
+                    </MotionDiv>
                 )}
             </AnimatePresence>
         </div>
@@ -160,7 +162,7 @@ const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
     const adjustedY = Math.min(position.y, (typeof window !== 'undefined' ? window.innerHeight : 800) - items.length * 40);
 
     return (
-        <motion.div
+        <MotionDiv
             ref={menuRef}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -168,7 +170,7 @@ const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
             transition={{ duration: 0.1 }}
             className="fixed w-64 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-1.5 z-[9999] flex flex-col gap-1 ring-1 ring-black/50"
             style={{ top: adjustedY, left: adjustedX }}
-            onContextMenu={(e) => e.preventDefault()}
+            onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
         >
             {/* Quick Actions Bar */}
             <div className="flex justify-between items-center gap-1 p-1 mb-1 border-b border-white/10 pb-2">
@@ -186,7 +188,7 @@ const ContextMenu = ({ position, items, onClose }: ContextMenuProps) => {
                 }
                 return <ContextMenuItem key={index} item={item} onClose={onClose} />;
             })}
-        </motion.div>
+        </MotionDiv>
     );
 };
 

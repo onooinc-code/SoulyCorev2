@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState } from 'react';
@@ -5,6 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { ApiEndpoint } from '@/lib/types';
 import StatusIndicator from './StatusIndicator';
 import { ServerIcon } from '@/components/Icons';
+
+const MotionSpan = motion.span as any;
+const MotionDiv = motion.div as any;
 
 interface EndpointNavigatorPanelProps {
     endpoints: ApiEndpoint[];
@@ -69,11 +73,11 @@ const EndpointNavigatorPanel = ({ endpoints, onSelectEndpoint, selectedEndpointI
                         <div key={groupName} className="py-1">
                             <button onClick={() => toggleGroup(groupName)} className="w-full flex items-center justify-between px-2 py-1 text-xs font-bold text-gray-400 uppercase tracking-wider hover:bg-gray-700/50 rounded">
                                 <span>{groupName}</span>
-                                <motion.span animate={{ rotate: expandedGroups[groupName] ? 90 : 0 }}>▶</motion.span>
+                                <MotionSpan animate={{ rotate: expandedGroups[groupName] ? 90 : 0 }}>▶</MotionSpan>
                             </button>
                             <AnimatePresence>
                                 {expandedGroups[groupName] && (
-                                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="pl-2 overflow-hidden">
+                                    <MotionDiv initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="pl-2 overflow-hidden">
                                         {groupEndpoints.map(endpoint => (
                                             <button
                                                 key={endpoint.id}
@@ -85,7 +89,7 @@ const EndpointNavigatorPanel = ({ endpoints, onSelectEndpoint, selectedEndpointI
                                                 <span className="truncate">{endpoint.path}</span>
                                             </button>
                                         ))}
-                                    </motion.div>
+                                    </MotionDiv>
                                 )}
                             </AnimatePresence>
                         </div>

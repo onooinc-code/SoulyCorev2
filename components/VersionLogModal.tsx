@@ -8,6 +8,8 @@ import type { VersionHistory } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+const MotionDiv = motion.div as any;
+
 interface VersionLogModalProps {
     onClose: () => void;
 }
@@ -43,7 +45,7 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
             {/* Backdrop */}
-            <motion.div
+            <MotionDiv
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -52,13 +54,13 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
             />
 
             {/* Modal Card */}
-            <motion.div
+            <MotionDiv
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 20 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className="relative w-full max-w-5xl h-[85vh] bg-gray-900 border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-[10000]"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
                 {/* Header */}
                 <div className="flex justify-between items-center p-6 border-b border-white/5 bg-gray-800/50 flex-shrink-0">
@@ -140,7 +142,7 @@ const VersionLogModal = ({ onClose }: VersionLogModalProps) => {
                         )}
                     </div>
                 </div>
-            </motion.div>
+            </MotionDiv>
         </div>
     );
 };

@@ -1,8 +1,11 @@
+
 "use client";
 
 import React from 'react';
 import { motion } from 'framer-motion';
 import { XIcon } from './Icons';
+
+const MotionDiv = motion.div as any;
 
 interface HtmlViewerModalProps {
     onClose: () => void;
@@ -11,20 +14,20 @@ interface HtmlViewerModalProps {
 
 const HtmlViewerModal = ({ onClose, htmlContent }: HtmlViewerModalProps) => {
     return (
-        <motion.div
+        <MotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100] p-4"
             onClick={onClose}
         >
-            <motion.div
+            <MotionDiv
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
                 transition={{ duration: 0.2 }}
                 className="bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl h-[80vh] flex flex-col"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
                     <h2 className="text-xl font-bold">HTML Preview</h2>
@@ -40,8 +43,8 @@ const HtmlViewerModal = ({ onClose, htmlContent }: HtmlViewerModalProps) => {
                         sandbox="allow-same-origin" // Restrictive sandbox for security
                     />
                 </div>
-            </motion.div>
-        </motion.div>
+            </MotionDiv>
+        </MotionDiv>
     );
 };
 

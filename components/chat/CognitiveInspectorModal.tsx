@@ -1,9 +1,12 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XIcon, BeakerIcon, CommandLineIcon, SparklesIcon, MagnifyingGlassIcon } from '@/components/Icons';
 import type { PipelineRun, PipelineRunStep } from '@/lib/types';
+
+const MotionDiv = motion.div as any;
 
 interface CognitiveInspectorModalProps {
     onClose: () => void;
@@ -82,11 +85,11 @@ const CognitiveInspectorModal = ({ onClose, messageId }: CognitiveInspectorModal
     const executionSteps = data?.pipelineSteps.filter(s => !retrievalSteps.includes(s) && !assemblySteps.includes(s)) || [];
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-end" onClick={onClose}>
-            <motion.div 
+        <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-end" onClick={onClose}>
+            <MotionDiv 
                 initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
                 className="bg-gray-950 w-full max-w-2xl h-full border-l border-white/10 flex flex-col shadow-2xl"
-                onClick={e => e.stopPropagation()}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
                 <header className="p-6 border-b border-white/5 flex justify-between items-center bg-gray-900/50">
                     <div className="flex items-center gap-3">
@@ -132,8 +135,8 @@ const CognitiveInspectorModal = ({ onClose, messageId }: CognitiveInspectorModal
                 <footer className="p-4 border-t border-white/5 bg-gray-900/30 text-center">
                     <p className="text-[10px] text-gray-600 italic">Total Process Latency: {data?.pipelineRun.durationMs || 0}ms</p>
                 </footer>
-            </motion.div>
-        </motion.div>
+            </MotionDiv>
+        </MotionDiv>
     );
 };
 

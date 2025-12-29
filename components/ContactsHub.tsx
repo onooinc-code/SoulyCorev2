@@ -7,6 +7,8 @@ import { motion } from 'framer-motion';
 import { PlusIcon, TrashIcon, EditIcon } from '@/components/Icons';
 import { useConversation } from '@/components/providers/ConversationProvider';
 
+const MotionTr = motion.tr as any;
+
 type SortKey = keyof Contact;
 
 const ContactsHub = () => {
@@ -181,7 +183,7 @@ const ContactsHub = () => {
                     </thead>
                     <tbody>
                         {sortedAndFilteredContacts.map(contact => (
-                            <motion.tr key={contact.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="border-b border-gray-700 hover:bg-gray-700/50">
+                            <MotionTr key={contact.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="border-b border-gray-700 hover:bg-gray-700/50">
                                 <td className="p-3 font-medium">{contact.name}</td>
                                 <td className="p-3">{contact.company}</td>
                                 <td className="p-3">{contact.email}</td>
@@ -200,7 +202,7 @@ const ContactsHub = () => {
                                         <button onClick={() => handleDeleteContact(contact.id)} title="Permanently delete this contact." className="p-2 rounded-lg text-gray-300 transition-colors hover:bg-white/10 hover:text-red-500"><TrashIcon className="w-5 h-5"/></button>
                                     </div>
                                 </td>
-                            </motion.tr>
+                            </MotionTr>
                         ))}
                     </tbody>
                 </table>

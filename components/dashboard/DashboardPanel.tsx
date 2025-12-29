@@ -6,6 +6,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MinusIcon, PlusIcon, FullscreenIcon, ExitFullscreenIcon } from '../Icons';
 
+const MotionDiv = motion.div as any;
+
 interface DashboardPanelProps {
     title: string;
     children?: React.ReactNode;
@@ -31,7 +33,7 @@ const DashboardPanel = ({ title, children }: DashboardPanelProps) => {
             </header>
             <AnimatePresence>
                 {!isCollapsed && (
-                    <motion.div
+                    <MotionDiv
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -39,7 +41,7 @@ const DashboardPanel = ({ title, children }: DashboardPanelProps) => {
                         className="flex-1 overflow-auto min-h-0" // Added min-h-0 for flexbox correctness
                     >
                         {children}
-                    </motion.div>
+                    </MotionDiv>
                 )}
             </AnimatePresence>
         </div>
@@ -47,12 +49,12 @@ const DashboardPanel = ({ title, children }: DashboardPanelProps) => {
 
     return (
         <>
-            <motion.div layout className={`h-full ${isFullscreen ? 'hidden' : 'block'}`}>
+            <MotionDiv layout className={`h-full ${isFullscreen ? 'hidden' : 'block'}`}>
                 {content}
-            </motion.div>
+            </MotionDiv>
             <AnimatePresence>
                 {isFullscreen && (
-                     <motion.div 
+                     <MotionDiv 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -61,7 +63,7 @@ const DashboardPanel = ({ title, children }: DashboardPanelProps) => {
                         <div className="w-full h-full">
                            {content}
                         </div>
-                    </motion.div>
+                    </MotionDiv>
                 )}
             </AnimatePresence>
         </>

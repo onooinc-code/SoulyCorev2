@@ -1,3 +1,4 @@
+
 // This file acts as a central barrel file for all icon components.
 export * from './icons/ArrowDownOnSquareIcon';
 export * from './icons/BeakerIcon';
@@ -78,3 +79,5 @@ export * from './icons/Bars3Icon';
 export * from './icons/Squares2X2Icon';
 export * from './icons/ViewColumnsIcon';
 export * from './icons/DocumentMagnifyingGlassIcon';
+export * from './icons/ChevronDownIcon';
+export * from './icons/ChevronUpIcon';

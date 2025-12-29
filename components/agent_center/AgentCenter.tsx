@@ -11,6 +11,8 @@ import PlanDisplay from './PlanDisplay';
 import EmptyState from '../ui/EmptyState';
 import { RocketLaunchIcon } from '../Icons';
 
+const MotionDiv = motion.div as any;
+
 type ViewState = 'idle' | 'planning' | 'review' | 'executing';
 
 const AgentCenter = () => {
@@ -178,7 +180,7 @@ const AgentCenter = () => {
         }
 
         return (
-            <motion.div 
+            <MotionDiv 
                 key={activeRunId || 'empty'}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -194,7 +196,7 @@ const AgentCenter = () => {
                         description="Select a past run from the history list, or define a new goal to begin an autonomous operation."
                     />
                 )}
-            </motion.div>
+            </MotionDiv>
         )
     }
 

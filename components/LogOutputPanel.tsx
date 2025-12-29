@@ -8,6 +8,8 @@ import { useAppContext } from '@/lib/hooks/useAppContext';
 import { InfoIcon, WarningIcon, ErrorIcon, SearchIcon, CopyIcon, CheckIcon, ChatBubbleLeftRightIcon, CommandLineIcon } from '@/components/Icons';
 import { LogEntry as LogEntryType } from './providers/LogProvider';
 
+const MotionDiv = motion.div as any;
+
 interface LogOutputPanelProps {}
 
 type LogLevel = 'info' | 'warn' | 'error';
@@ -147,7 +149,7 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
     );
 
     return (
-        <motion.div
+        <MotionDiv
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: '300px', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -197,7 +199,7 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
                     </div>
                 )}
             </div>
-        </motion.div>
+        </MotionDiv>
     );
 };
 

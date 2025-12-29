@@ -6,6 +6,8 @@ import type { Message, PipelineRun } from '@/lib/types';
 import { ClockIcon, CpuChipIcon, BookmarkIcon, ArrowsRightLeftIcon, BrainIcon } from './Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const MotionDiv = motion.div as any;
+
 interface MessageFooterProps {
     message: Message;
     isContextAssemblyRunning: boolean;
@@ -92,7 +94,7 @@ const MessageFooter = ({ message, isContextAssemblyRunning, isMemoryExtractionRu
             {/* Extraction Quick-View Panel */}
             <AnimatePresence>
                 {isExtractionVisible && (
-                    <motion.div 
+                    <MotionDiv 
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -128,7 +130,7 @@ const MessageFooter = ({ message, isContextAssemblyRunning, isMemoryExtractionRu
                         ) : (
                             <div className="text-[10px] text-gray-500 italic">Extraction data still processing or not found.</div>
                         )}
-                    </motion.div>
+                    </MotionDiv>
                 )}
             </AnimatePresence>
         </div>

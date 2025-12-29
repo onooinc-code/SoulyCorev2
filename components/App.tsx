@@ -23,6 +23,8 @@ import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';
 import EmptyState from './ui/EmptyState';
 import { ChatBubbleLeftRightIcon } from './Icons';
 
+const MotionDiv = motion.div as any;
+
 export const App = () => {
     const { 
         isConversationPanelOpen, 
@@ -86,7 +88,7 @@ export const App = () => {
                     {isConversationPanelOpen && (
                         <>
                             {isMobileView && (
-                                <motion.div 
+                                <MotionDiv 
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
@@ -94,7 +96,7 @@ export const App = () => {
                                     className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
                                 />
                             )}
-                            <motion.div
+                            <MotionDiv
                                 initial={isMobileView ? { x: '-100%' } : { width: 0, opacity: 0 }}
                                 animate={isMobileView ? { x: 0 } : { 
                                     width: isConversationPanelMinimized ? 80 : 300,
@@ -109,7 +111,7 @@ export const App = () => {
                                 }`}
                             >
                                 <Sidebar />
-                            </motion.div>
+                            </MotionDiv>
                         </>
                     )}
                 </AnimatePresence>

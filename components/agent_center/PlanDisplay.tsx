@@ -1,3 +1,4 @@
+
 "use client";
 
 // components/agent_center/PlanDisplay.tsx
@@ -5,6 +6,8 @@ import React from 'react';
 import { AgentPlanPhase } from '@/lib/types';
 import PhaseCard from './PhaseCard';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const MotionDiv = motion.div as any;
 
 type ViewState = 'idle' | 'planning' | 'review' | 'executing';
 
@@ -45,7 +48,7 @@ const PlanDisplay = ({ goal, plan, state, onApprove, onDiscard, onReplan }: Plan
     }
 
     return (
-        <motion.div
+        <MotionDiv
             key="plan-display"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -78,7 +81,7 @@ const PlanDisplay = ({ goal, plan, state, onApprove, onDiscard, onReplan }: Plan
                     ))}
                 </AnimatePresence>
             </div>
-        </motion.div>
+        </MotionDiv>
     );
 };
 
