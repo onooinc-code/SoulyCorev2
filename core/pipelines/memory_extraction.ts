@@ -121,15 +121,16 @@ export class MemoryExtractionPipeline {
             // 0. Auto-Title Logic
             // If the LLM suggested a title, check if we should update the conversation.
             if (data.title) {
-                // Update ONLY if the current title is one of the defaults.
-                // This prevents overwriting a title the user manually set.
+                // Update ONLY if the current title is one of the defaults (starts with 'New Chat' or 'محادثة جديدة').
+                // This matches "محادثة جديدة" and "محادثة جديدة - 10/20 5:00 PM"
                 const result = await sql`
                     UPDATE conversations 
                     SET title = ${data.title}, "lastUpdatedAt" = CURRENT_TIMESTAMP
                     WHERE id = ${conversationId} 
-                      AND (title = 'New Chat' OR title = 'محادثة جديدة' OR title IS NULL);
+                      AND (title LIKE 'New Chat%' OR title LIKE 'محادثة جديدة%' OR title IS NULL);
                 `;
-                if (result.rowCount > 0) {
+                // Use nullish coalescing to handle potential null rowCount
+                if ((result.rowCount ?? 0) > 0) {
                      await this.logEvent(`[Extraction] Auto-updated conversation title: ${data.title}`, logPayload());
                 }
             }

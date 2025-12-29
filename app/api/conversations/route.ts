@@ -51,7 +51,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json().catch(() => ({})); // Handle empty body safely
-        const title = body.title;
+        let title = body.title;
+        
+        if (!title) {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
+            const timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            title = `محادثة جديدة - ${dateStr} ${timeStr}`;
+        }
         
         // 1. Fetch Global Settings to get defaults
         const { rows: settingsRows } = await sql`
@@ -93,7 +100,7 @@ export async function POST(req: NextRequest) {
                 "useStructuredMemory",
                 "brainId"
             ) VALUES (
-                ${title || 'محادثة جديدة'},
+                ${title},
                 ${defaultAgentConfig.systemPrompt},
                 ${defaultModelConfig.model},
                 ${defaultModelConfig.temperature},
