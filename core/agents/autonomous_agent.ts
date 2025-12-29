@@ -1,3 +1,4 @@
+
 // core/agents/autonomous_agent.ts
 import { sql } from '@/lib/db';
 import { executeTool } from '../tools';
@@ -20,7 +21,11 @@ export class AutonomousAgent {
         this.plan = plan;
 
         // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
-        this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+        const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+             throw new Error("AutonomousAgent: API Key not found in environment variables.");
+        }
+        this.ai = new GoogleGenAI({ apiKey });
     }
 
     public async run() {

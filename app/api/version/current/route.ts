@@ -6,17 +6,16 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.5.5',
-    version: '0.5.5',
+    id: 'v-0.5.7',
+    version: '0.5.7',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🛠️ Build & Stability Fixes (v0.5.5)
+### 🛠️ Global Auth Consistency (v0.5.7)
 
-**Core Reliability:**
-- **Deployment Fix:** Removed database scripts from build process to prevent Vercel deployment failures.
-- **Monitor UI:** Fixed an issue where the "Live Tool Monitor" and "Memory Inspector" would hang indefinitely if the backend API failed.
-- **Error Handling:** Improved error messages for API Key configuration issues.
+**Configuration:**
+- **Standardized API Key Check:** Updated all backend services (Memory Extraction, Agents, Synthesis, and core LLM provider) to consistently check for both \`API_KEY\` and \`GEMINI_API_KEY\`. This resolves intermittent authentication failures where some features worked while others failed.
+- **Enhanced Debugging:** Added secure logging to the LLM provider to confirm which API key variable is being detected during initialization.
 `
 };
 

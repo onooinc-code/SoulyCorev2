@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import type { IStatus } from '@/lib/types';
-import { XIcon, WarningIcon, CodeIcon } from '@/components/Icons';
+import { XIcon, WarningIcon, CodeIcon, WrenchScrewdriverIcon } from '@/components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ErrorDisplayProps {
@@ -18,6 +18,7 @@ const ErrorDisplay = ({ status, isDbError, clearError }: ErrorDisplayProps) => {
     if (!status.error) return null;
 
     const isQuotaError = status.error.includes('429') || status.error.includes('quota') || status.error.includes('RESOURCE_EXHAUSTED');
+    const isAuthError = status.error.includes('Authentication Error') || status.error.includes('API Key');
     const isEngineError = status.error.includes('Cognitive Engine Failure');
     
     // Parse error details if available in the error string (sometimes passed as JSON string from API)
@@ -43,7 +44,7 @@ const ErrorDisplay = ({ status, isDbError, clearError }: ErrorDisplayProps) => {
                         <WarningIcon className="w-6 h-6 flex-shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-base">
-                                {isQuotaError ? 'AI Rate Limit Reached' : isEngineError ? 'System Error' : 'Error'}
+                                {isQuotaError ? 'AI Rate Limit Reached' : isAuthError ? 'Authentication Failed' : isEngineError ? 'System Error' : 'Error'}
                             </h4>
                             <p className="text-sm mt-1 opacity-90 break-words font-mono">
                                 {status.error}
@@ -52,6 +53,17 @@ const ErrorDisplay = ({ status, isDbError, clearError }: ErrorDisplayProps) => {
                                 <div className="mt-2 p-2 bg-black/30 rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
                                     <strong>Details:</strong> {details}
                                 </div>
+                            )}
+                            {isAuthError && (
+                                <a 
+                                    href="https://vercel.com/dashboard" 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="mt-3 inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-md text-xs font-bold transition-colors"
+                                >
+                                    <WrenchScrewdriverIcon className="w-3 h-3" />
+                                    Configure Vercel Environment
+                                </a>
                             )}
                             {isDbError && (
                                 <div className="mt-2 text-xs bg-black/20 p-2 rounded">

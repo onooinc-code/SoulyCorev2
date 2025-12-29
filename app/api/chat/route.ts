@@ -11,9 +11,11 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     try {
-        // Basic environment check
-        if (!process.env.API_KEY) {
-            console.error("CRITICAL: API_KEY is missing from environment variables.");
+        // Basic environment check - Look for either variable
+        const hasKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+        
+        if (!hasKey) {
+            console.error("CRITICAL: API_KEY/GEMINI_API_KEY is missing from environment variables.");
             return NextResponse.json({ error: 'System Configuration Error: Missing AI API Key' }, { status: 500 });
         }
 

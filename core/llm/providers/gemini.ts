@@ -22,12 +22,19 @@ export class GeminiProvider implements ILLMProvider {
      */
     private getClient(): GoogleGenAI {
         if (!this.ai) {
-            const apiKey = process.env.API_KEY;
+            // Check for API_KEY first, then GEMINI_API_KEY as a fallback
+            const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+            
             if (!apiKey) {
                 // Critical error logging
-                console.error("CRITICAL: API_KEY is missing from environment variables.");
-                throw new Error("Configuration Error: API_KEY is missing. Please add it to your Vercel project settings.");
+                console.error("CRITICAL: Both API_KEY and GEMINI_API_KEY are missing from environment variables.");
+                throw new Error("Configuration Error: API Key is missing. Please add API_KEY to your Vercel project settings.");
             }
+
+            const keySource = process.env.API_KEY ? 'API_KEY' : 'GEMINI_API_KEY';
+            const maskedKey = apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4);
+            console.log(`[GeminiProvider] Initializing client using ${keySource}. Key: ${maskedKey}`);
+
             // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
             this.ai = new GoogleGenAI({ apiKey });
         }
@@ -94,8 +101,8 @@ export class GeminiProvider implements ILLMProvider {
             console.error("GeminiProvider: Chat generation failed:", e);
             // Enhance error message for better debugging
             const errorMessage = (e as Error).message || "Unknown error";
-            if (errorMessage.includes("API key") || errorMessage.includes("Configuration Error")) {
-                throw new Error("Authentication Error: Invalid or missing API Key. Check Vercel Settings.");
+            if (errorMessage.includes("API Key") || errorMessage.includes("API_KEY")) {
+                throw new Error("Authentication Error: Invalid or missing API Key. Please check Vercel Environment Variables.");
             }
             throw new Error(`AI Provider Error (${model || 'default'}): ${errorMessage}`);
         }

@@ -4,6 +4,31 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
+        version: '0.5.7',
+        releaseDate: new Date().toISOString(),
+        changes: `
+### 🛠️ Global Auth Consistency (v0.5.7)
+
+**Configuration:**
+- **Standardized API Key Check:** Updated all backend services (Memory Extraction, Agents, Synthesis, and core LLM provider) to consistently check for both \`API_KEY\` and \`GEMINI_API_KEY\`. This resolves intermittent authentication failures.
+- **Enhanced Debugging:** Added secure logging to the LLM provider to confirm which API key variable is being detected during initialization.
+`
+    },
+    {
+        version: '0.5.6',
+        releaseDate: new Date().toISOString(),
+        changes: `
+### 🛠️ Auth Config Fixes (v0.5.6)
+
+**Configuration:**
+- **API Key Fallback:** Added support for both \`API_KEY\` and \`GEMINI_API_KEY\` environment variables to resolve authentication errors on Vercel.
+- **Improved Error UI:** Added a direct link to Vercel settings when authentication fails.
+
+**System Reliability:**
+- **Debug Logging:** Enhanced server-side logging to confirm API key presence during initialization.
+`
+    },
+    {
         version: '0.5.5',
         releaseDate: new Date().toISOString(),
         changes: `

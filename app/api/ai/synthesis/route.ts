@@ -9,8 +9,13 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     try {
+        const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return NextResponse.json({ error: 'API Key is missing from server configuration.' }, { status: 500 });
+        }
+
         // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+        const ai = new GoogleGenAI({ apiKey });
         
         // 1. Gather context from top memory tiers
         const [recentFacts, topEntities] = await Promise.all([

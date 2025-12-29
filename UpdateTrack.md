@@ -4,20 +4,21 @@
 
 ---
 
-### Update #37: Deployment & Critical Error Fixes (v0.5.5)
+### Update #39: Global Auth Standardization (v0.5.7)
 
 **Details:**
-Previous updates failed to deploy due to a database connection attempt during the build process (`postinstall` script). This update removes that script to ensure clean deployment. Additionally, hardened the UI against API failures to prevent the "Querying..." freeze and added specific checks for API Key presence.
+Completed the authentication fix by ensuring *every* file that instantiates the Google GenAI client checks for both `API_KEY` and `GEMINI_API_KEY`. This eliminates scattered failures where some features worked (like chat generation) but others failed (like memory extraction or agent planning) due to variable naming mismatches.
 
 **Changes Made:**
-- **Vercel Config:** Removed `postinstall` script from `package.json` to decouple DB operations from the build process.
-- **ConversationProvider:** Added `try/finally` logic to force monitor reset on API failure.
-- **GeminiProvider:** Added explicit check for `process.env.API_KEY` existence.
-- **Versioning:** Bumped version to `0.5.5`.
+- **Global:** Updated `lib/gemini-server.ts`, `core/pipelines/memory_extraction.ts`, `core/agents/autonomous_agent.ts`, and `app/api/ai/synthesis/route.ts` to include the API Key fallback logic.
+- **Logging:** Added secure, masked logging to the main provider to verify key detection in production logs.
+- **Versioning:** Bumped version to `0.5.7`.
 
 **Modified Files:**
-- `package.json`
-- `components/providers/ConversationProvider.tsx`
+- `lib/gemini-server.ts`
+- `core/pipelines/memory_extraction.ts`
+- `core/agents/autonomous_agent.ts`
+- `app/api/ai/synthesis/route.ts`
 - `core/llm/providers/gemini.ts`
 - `app/api/version/current/route.ts`
 - `scripts/seed-version-history.js`

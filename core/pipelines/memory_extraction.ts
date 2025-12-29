@@ -1,3 +1,4 @@
+
 // core/pipelines/memory_extraction.ts
 import { SemanticMemoryModule } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
@@ -35,11 +36,20 @@ export class MemoryExtractionPipeline {
         this.entityVectorMemory = new EntityVectorMemoryModule();
         
         // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
-        this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+        const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+             throw new Error("MemoryExtractionPipeline: API Key not found in environment variables.");
+        }
+        this.ai = new GoogleGenAI({ apiKey });
     }
 
     private async logEvent(message: string, payload?: any, level: 'info' | 'warn' | 'error' = 'info') {
-        await sql`INSERT INTO logs (message, payload, level) VALUES (${message}, ${JSON.stringify(payload)}, ${level})`;
+        if (!process.env.POSTGRES_URL) return;
+        try {
+            await sql`INSERT INTO logs (message, payload, level) VALUES (${message}, ${JSON.stringify(payload)}, ${level})`;
+        } catch (e) {
+            console.error("Failed to log event:", e);
+        }
     }
 
     async run(params: IMemoryExtractionParams) {
@@ -49,11 +59,16 @@ export class MemoryExtractionPipeline {
         await this.logEvent(`[Extraction] Starting pipeline for message ${messageId.slice(0,8)}`, { text });
 
         // Create a pipeline run record for the "Write Path"
-        const { rows: runRows } = await sql`
-            INSERT INTO pipeline_runs ("messageId", "pipelineType", status)
-            VALUES (${messageId}, 'MemoryExtraction', 'running') RETURNING id;
-        `;
-        const runId = runRows[0].id;
+        let runId: string | null = null;
+        try {
+            const { rows: runRows } = await sql`
+                INSERT INTO pipeline_runs ("messageId", "pipelineType", status)
+                VALUES (${messageId}, 'MemoryExtraction', 'running') RETURNING id;
+            `;
+            runId = runRows[0].id;
+        } catch (e) {
+            console.warn("Failed to create pipeline run record:", e);
+        }
 
         try {
             const prompt = `Analyze: "${text}"
@@ -114,13 +129,17 @@ export class MemoryExtractionPipeline {
             }
 
             const duration = Date.now() - startTime;
-            await sql`UPDATE pipeline_runs SET status = 'completed', "durationMs" = ${duration}, "finalOutput" = ${JSON.stringify(data)} WHERE id = ${runId}`;
+            if (runId) {
+                await sql`UPDATE pipeline_runs SET status = 'completed', "durationMs" = ${duration}, "finalOutput" = ${JSON.stringify(data)} WHERE id = ${runId}`;
+            }
             await this.logEvent(`[Extraction] Pipeline completed in ${duration}ms`);
 
         } catch (error) {
             const err = error as Error;
             await this.logEvent(`[Extraction] Pipeline failed`, { error: err.message }, 'error');
-            await sql`UPDATE pipeline_runs SET status = 'failed', "finalOutput" = ${err.message} WHERE id = ${runId}`;
+            if (runId) {
+                await sql`UPDATE pipeline_runs SET status = 'failed', "finalOutput" = ${err.message} WHERE id = ${runId}`;
+            }
         }
     }
 }
