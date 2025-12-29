@@ -6,20 +6,16 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.5.2',
-    version: '0.5.2',
+    id: 'v-0.5.3',
+    version: '0.5.3',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🛠️ UX Refinement & Agent Setup (v0.5.2)
-
-**Navigation Upgrade:**
-- **Agent Config Button:** Moved the Agent Setup button to the **Sidebar Toolbar** for permanent visibility. You no longer need to be in an active chat to find it.
-- **Global Context:** Agent configuration state is now global, allowing access from any view.
+### 🛡️ Resilience Update (v0.5.3)
 
 **System Stability:**
-- **Version Sync:** Fixed discrepancy between reported version and internal build number.
-- **Cleanup:** Refactored modal handling to reduce code duplication between Chat and Global scopes.
+- **Monitor Recovery:** Fixed an issue where the Cognitive Monitors would get stuck in a "Querying..." state if the API call failed.
+- **Error Handling:** Improved error reporting for API authentication failures.
 `
 };
 

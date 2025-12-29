@@ -4,21 +4,31 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.2',
+        version: '0.5.3',
         releaseDate: new Date().toISOString(),
+        changes: `
+### 🛡️ Resilience Update (v0.5.3)
+
+**System Stability:**
+- **Monitor Recovery:** Fixed an issue where the Cognitive Monitors (Memory/Tools) would get stuck in a "Querying..." state if the main AI request failed. They now correctly report errors.
+- **Error Handling:** Improved error reporting for API Key authentication failures.
+
+**Bug Fixes:**
+- **Version Sync:** Updated system version to reflect the latest hotfixes.
+`
+    },
+    {
+        version: '0.5.2',
+        releaseDate: '2025-12-24T10:00:00Z',
         changes: `
 ### 🛠️ UX Refinement & Agent Setup (v0.5.2)
 
 **Navigation Upgrade:**
-- **Agent Config Button:** Moved the Agent Setup button to the **Sidebar Toolbar** for permanent visibility. You no longer need to be in an active chat to find it.
-- **Global Context:** Agent configuration state is now global, allowing access from any view.
+- **Agent Config Button:** Moved the Agent Setup button to the **Sidebar Toolbar** for permanent visibility.
+- **Global Context:** Agent configuration state is now global.
 
 **System Stability:**
 - **Version Sync:** Fixed discrepancy between reported version and internal build number.
-- **Cleanup:** Refactored modal handling to reduce code duplication between Chat and Global scopes.
-
-**Features:**
-- **Sidebar Shortcuts:** Added quick access to Data Hub and Agent Setup directly from the sidebar footer.
 `
     },
     {
@@ -28,31 +38,9 @@ const versionData = [
 ### 🕵️ Memory Transparency & Deep Logging (v0.4.16)
 
 **New Cognitive Features:**
-- **Extracted Badge:** Every AI message now has a "Extracted" badge in the footer. Click it to see exactly what facts, entities, and preferences were harvested from that turn.
-- **Deep-Step Logging:** Added granular logging for every internal pipeline step. You can now see the detailed "Behind the Scenes" of memory extraction in the Debug Log panel.
-- **Unified Inspector:** The Cognitive Inspector now displays both "Context Retrieval" (What I read) and "Memory Extraction" (What I learned).
-
-**Bug Fixes:**
-- **Pipeline Visibility:** Fixed an issue where background extraction results were hidden from the user.
-`
-    },
-    {
-        version: '0.4.15',
-        releaseDate: '2025-12-22T14:00:00Z',
-        changes: `
-### 🧠 Cognitive Identity Sync (v0.4.15)
-- Automated background memory extraction for identity sync.
-- Enhanced Arabic support for extracting names, roles, and preferences.
-- Fixed duplicate messages bug in short-term memory assembly.
-`
-    },
-    {
-        version: '0.4.14',
-        releaseDate: '2025-12-21T12:00:00Z',
-        changes: `
-### 📏 Scrolling & UI Integrity (v0.4.14)
-- Fixed critical scrolling issue in the message list.
-- Improved scrollbar visibility and layout stability.
+- **Extracted Badge:** AI message footer now shows harvested facts.
+- **Deep-Step Logging:** Granular logging for internal pipeline steps.
+- **Unified Inspector:** Enhanced Cognitive Inspector.
 `
     }
 ];

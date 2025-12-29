@@ -157,36 +157,51 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         resetMonitors();
         const q = msgData.content;
         
+        // Initialize monitors to executing state
         setMemoryMonitorState('semantic', 'executing', null, undefined, q);
         setMemoryMonitorState('structured', 'executing', null, undefined, q);
         setMemoryMonitorState('graph', 'executing', null, undefined, q);
         setMemoryMonitorState('episodic', 'executing', null, undefined, q);
 
-        const result = await baseAddMessage(msgData, mentioned, history, parent, isAgentEnabled, isLinkPredictionEnabled);
-        
-        if (result.aiResponse && (result as any).monitorMetadata) {
-            const meta = (result as any).monitorMetadata;
+        try {
+            const result = await baseAddMessage(msgData, mentioned, history, parent, isAgentEnabled, isLinkPredictionEnabled);
             
-            // Record usage from retrieval calls
-            recordUsage({ origin: 'retrieval', model: 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
-            recordUsage({ origin: 'generation', model: currentConversation?.model || 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
+            if (result.aiResponse && (result as any).monitorMetadata) {
+                const meta = (result as any).monitorMetadata;
+                
+                // Record usage from retrieval calls
+                recordUsage({ origin: 'retrieval', model: 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
+                recordUsage({ origin: 'generation', model: currentConversation?.model || 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
 
-            if (isAgentEnabled) recordUsage({ origin: 'agent_thought', model: 'gemini-3-pro-preview', timestamp: new Date().toISOString() });
-            if (isLinkPredictionEnabled) recordUsage({ origin: 'link_prediction', model: 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
+                if (isAgentEnabled) recordUsage({ origin: 'agent_thought', model: 'gemini-3-pro-preview', timestamp: new Date().toISOString() });
+                if (isLinkPredictionEnabled) recordUsage({ origin: 'link_prediction', model: 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
 
-            const getStatus = (data: any): ExecutionStatus => {
-                if (!data) return 'null';
-                if (Array.isArray(data) && data.length === 0) return 'null';
-                return 'success';
-            };
+                const getStatus = (data: any): ExecutionStatus => {
+                    if (!data) return 'null';
+                    if (Array.isArray(data) && data.length === 0) return 'null';
+                    return 'success';
+                };
 
-            setMemoryMonitorState('semantic', getStatus(meta.semantic), meta.semantic, undefined, q);
-            setMemoryMonitorState('structured', getStatus(meta.structured), meta.structured, undefined, q);
-            setMemoryMonitorState('graph', getStatus(meta.graph), meta.graph, undefined, q);
-            setMemoryMonitorState('episodic', getStatus(meta.episodic), meta.episodic, undefined, q);
+                setMemoryMonitorState('semantic', getStatus(meta.semantic), meta.semantic, undefined, q);
+                setMemoryMonitorState('structured', getStatus(meta.structured), meta.structured, undefined, q);
+                setMemoryMonitorState('graph', getStatus(meta.graph), meta.graph, undefined, q);
+                setMemoryMonitorState('episodic', getStatus(meta.episodic), meta.episodic, undefined, q);
+            } else if (!result.aiResponse) {
+                // If no response (meaning failure in baseAddMessage caught internally), 
+                // we should check appStatus.error or infer failure.
+                // However, baseAddMessage throws on critical error, so we catch it below.
+            }
+            
+            return result;
+        } catch (error: any) {
+            // Critical: Update monitors to error state so they don't hang on "Querying..."
+            const errMsg = error.message || "Unknown error during execution";
+            setMemoryMonitorState('semantic', 'error', null, errMsg, q);
+            setMemoryMonitorState('structured', 'error', null, errMsg, q);
+            setMemoryMonitorState('graph', 'error', null, errMsg, q);
+            setMemoryMonitorState('episodic', 'error', null, errMsg, q);
+            throw error; // Re-throw to ensure UI displays the main error alert
         }
-        
-        return result;
     }, [baseAddMessage, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled]);
 
     const runCognitiveSynthesis = useCallback(async () => {
