@@ -4,16 +4,15 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.22',
+        version: '0.5.23',
         releaseDate: new Date().toISOString(),
-        changes: `
-### 🚀 Final Architecture Lock (v0.5.22)
+        changes: `### 📱 Mobile Experience Overhaul (v0.5.23)
 
-**Critical Fixes:**
-- **Atomic Database Seeding:** Rewrote the admin seed route to use a single transactional client, ensuring version updates are strictly persisted.
-- **Memory Tier Integration:** All memory modules (Postgres, Pinecone, KV) are now fully aligned with the v2.0 Architecture.
-- **Extraction Strategy:** Confirmed implementation of 'Single-Shot' vs 'Background' modes in the Core Engine.
-`
+**UI/UX Improvements:**
+- **Collapsible Toolbars:** Added a toggle to hide/show chat toolbars, maximizing screen real estate on small devices.
+- **Horizontal Scrolling:** Converted macro and formatting toolbars to swipeable lists to prevent button crowding.
+- **Touch Optimization:** Increased touch targets and adjusted spacing for better usability on touch screens.
+- **Visual Polish:** Improved backdrop blur and input container styling for a modern feel.`
     }
 ];
 
