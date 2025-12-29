@@ -30,6 +30,9 @@ const MemoryInspectorModal = ({ tier, onClose }: MemoryInspectorModalProps) => {
         error: { label: 'Retrieval Failed', icon: ErrorIcon, color: 'text-red-400' },
     }[tierState.status];
 
+    // Helper to check if data is "empty" even if successful (empty array)
+    const isEmpty = Array.isArray(tierState.data) && tierState.data.length === 0;
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -81,13 +84,13 @@ const MemoryInspectorModal = ({ tier, onClose }: MemoryInspectorModalProps) => {
 
                     <div className="space-y-2">
                         <h4 className="text-xs font-bold text-gray-400 uppercase">Retrieved Content / Metadata</h4>
-                        <div className="bg-black/40 rounded-xl p-4 font-mono text-xs text-gray-300 min-h-[200px] border border-white/5">
-                            {tierState.data ? (
+                        <div className="bg-black/40 rounded-xl p-4 font-mono text-xs text-gray-300 min-h-[200px] border border-white/5 overflow-auto max-h-[300px]">
+                            {tierState.data && !isEmpty ? (
                                 <pre className="whitespace-pre-wrap">{JSON.stringify(tierState.data, null, 2)}</pre>
                             ) : tierState.status === 'executing' ? (
                                 <span className="italic text-yellow-500/50 animate-pulse">Wait, retrieving from nexus...</span>
-                            ) : tierState.status === 'null' ? (
-                                <span className="italic text-amber-500/50">Query completed successfully but no relevant results were found for this input.</span>
+                            ) : tierState.status === 'null' || isEmpty ? (
+                                <span className="italic text-amber-500/50">Query completed successfully but no relevant results were found for this input (Empty Set).</span>
                             ) : (
                                 <span className="italic text-gray-600">No data retrieved in the last turn or tier was not queried.</span>
                             )}

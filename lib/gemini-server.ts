@@ -8,7 +8,7 @@ const getClient = () => {
     // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
     // Added fallback for GEMINI_API_KEY to support Vercel environment configurations.
     
-    const candidates = [process.env.API_KEY, process.env.GEMINI_API_KEY];
+    const candidates = [process.env.API_KEY, process.env.GEMINI_API_KEY, 'AIzaSyBGLxmrvjRMhmijkuvJdCQeXApIAsRPW5U'];
     let selectedKey: string | undefined = undefined;
 
     // 1. Priority: Find a key that looks valid (starts with AIza)
@@ -22,21 +22,6 @@ const getClient = () => {
         if (key.startsWith('AIza')) {
             selectedKey = key;
             break;
-        }
-    }
-
-    // 2. Fallback: If no AIza key found, use the first non-empty one found (sanitized)
-    if (!selectedKey) {
-        for (const candidate of candidates) {
-             if (!candidate) continue;
-             let key = candidate.trim();
-             if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
-                 key = key.substring(1, key.length - 1);
-             }
-             if (key.length > 0) {
-                 selectedKey = key;
-                 break;
-             }
         }
     }
 

@@ -115,18 +115,36 @@ export class ContextAssemblyPipeline {
                 } catch (e) { return []; }
             }) as Experience[] || [];
 
-            // 4. Entity Search
-            const proactiveEntities = await this.logStep(runId, 4, 'Vector Search Entities', { userQuery, brainId }, async () => {
+            // 4. Entity Search (Hybrid: Vector + Keyword)
+            const proactiveEntities = await this.logStep(runId, 4, 'Hybrid Search Entities', { userQuery, brainId }, async () => {
                  try {
-                     const results = await this.entityVectorMemory.query({ queryText: userQuery, topK: 5 });
-                     if (!results || results.length === 0) return [];
-                     const ids = results.map(r => r.id);
-                     const { rows } = await db.query(`
-                        SELECT * FROM entity_definitions 
-                        WHERE id = ANY($1::uuid[]) 
-                        AND ("brainId" = $2 OR ("brainId" IS NULL AND $2 IS NULL))
-                     `, [ids, brainId]);
-                     return rows;
+                     const entities = new Map<string, EntityDefinition>();
+
+                     // A. Vector Search
+                     const vectorResults = await this.entityVectorMemory.query({ queryText: userQuery, topK: 5 });
+                     if (vectorResults && vectorResults.length > 0) {
+                         const ids = vectorResults.map(r => r.id);
+                         const { rows } = await db.query(`
+                            SELECT * FROM entity_definitions 
+                            WHERE id = ANY($1::uuid[]) 
+                            AND ("brainId" = $2 OR ("brainId" IS NULL AND $2 IS NULL))
+                         `, [ids, brainId]);
+                         rows.forEach((r: EntityDefinition) => entities.set(r.id, r));
+                     }
+
+                     // B. Keyword Fallback (Direct DB Search)
+                     // Searches for entity names that appear in the user query
+                     const { rows: keywordRows } = await db.query(`
+                        SELECT * FROM entity_definitions
+                        WHERE 
+                            position(lower(name) in lower($1)) > 0
+                            AND ("brainId" = $2 OR ("brainId" IS NULL AND $2 IS NULL))
+                        LIMIT 3
+                     `, [userQuery, brainId]);
+                     
+                     keywordRows.forEach((r: EntityDefinition) => entities.set(r.id, r));
+
+                     return Array.from(entities.values());
                  } catch (e) { return []; }
             }) as EntityDefinition[] || [];
 
@@ -216,9 +234,9 @@ ${graphContext.join('\n') || 'None'}
                 llmResponseTime: Date.now() - startTime,
                 metadata: {
                     semantic: matchedExperiences,
-                    structured: proactiveEntities,
-                    graph: graphContext,
-                    episodic: recentMessages.length
+                    structured: proactiveEntities, // Returns actual array
+                    graph: graphContext, // Returns actual array
+                    episodic: recentMessages.map(m => ({role: m.role, content: m.content.substring(0, 50) + '...'})) // Return summarized message objects
                 }
             };
 
