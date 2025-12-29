@@ -4,6 +4,20 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
+        version: '0.5.8',
+        releaseDate: new Date().toISOString(),
+        changes: `
+### 🛠️ Key Sanitization & Diagnostics (v0.5.8)
+
+**Core Logic:**
+- **Key Trimming:** The Google GenAI client initialization now automatically trims whitespace from API keys (\`API_KEY\` or \`GEMINI_API_KEY\`) to prevent copy-paste errors from breaking authentication.
+
+**Dev Center:**
+- **AI Connectivity Check:** Added a live test in the Cognitive Diagnostics panel that pings Google's API. This definitively separates configuration errors from runtime issues.
+- **Source Visibility:** The diagnostics panel now indicates which environment variable is currently active (\`API_KEY\` vs \`GEMINI_API_KEY\`).
+`
+    },
+    {
         version: '0.5.7',
         releaseDate: new Date().toISOString(),
         changes: `

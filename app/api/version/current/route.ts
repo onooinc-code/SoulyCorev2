@@ -6,16 +6,19 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.5.7',
-    version: '0.5.7',
+    id: 'v-0.5.8',
+    version: '0.5.8',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🛠️ Global Auth Consistency (v0.5.7)
+### 🛠️ Key Sanitization & Diagnostics (v0.5.8)
 
-**Configuration:**
-- **Standardized API Key Check:** Updated all backend services (Memory Extraction, Agents, Synthesis, and core LLM provider) to consistently check for both \`API_KEY\` and \`GEMINI_API_KEY\`. This resolves intermittent authentication failures where some features worked while others failed.
-- **Enhanced Debugging:** Added secure logging to the LLM provider to confirm which API key variable is being detected during initialization.
+**Core Logic:**
+- **Key Trimming:** The Google GenAI client initialization now automatically trims whitespace from API keys (\`API_KEY\` or \`GEMINI_API_KEY\`) to prevent copy-paste errors from breaking authentication.
+
+**Dev Center:**
+- **AI Connectivity Check:** Added a live test in the Cognitive Diagnostics panel that pings Google's API. This definitively separates configuration errors from runtime issues.
+- **Source Visibility:** The diagnostics panel now indicates which environment variable is currently active (\`API_KEY\` vs \`GEMINI_API_KEY\`).
 `
 };
 

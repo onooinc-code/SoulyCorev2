@@ -15,25 +15,25 @@ export class GeminiProvider implements ILLMProvider {
 
     /**
      * Lazily initializes and returns the GoogleGenAI client instance.
-     * This prevents the API key check from running at module import time,
-     * which is crucial for compatibility with build environments like Vercel.
+     * This prevents the API key check from running at module import time.
      * @private
      * @returns {GoogleGenAI} The initialized GoogleGenAI client.
      */
     private getClient(): GoogleGenAI {
         if (!this.ai) {
-            // Check for API_KEY first, then GEMINI_API_KEY as a fallback
-            const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+            // Check for API_KEY first, then GEMINI_API_KEY as a fallback.
+            // TRIM whitespace to prevent copy-paste errors.
+            const rawApiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+            const apiKey = rawApiKey ? rawApiKey.trim() : undefined;
             
             if (!apiKey) {
-                // Critical error logging
                 console.error("CRITICAL: Both API_KEY and GEMINI_API_KEY are missing from environment variables.");
                 throw new Error("Configuration Error: API Key is missing. Please add API_KEY to your Vercel project settings.");
             }
 
             const keySource = process.env.API_KEY ? 'API_KEY' : 'GEMINI_API_KEY';
             const maskedKey = apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4);
-            console.log(`[GeminiProvider] Initializing client using ${keySource}. Key: ${maskedKey}`);
+            console.log(`[GeminiProvider] Initializing client using ${keySource}. Key: ${maskedKey} (Length: ${apiKey.length})`);
 
             // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
             this.ai = new GoogleGenAI({ apiKey });
@@ -101,8 +101,8 @@ export class GeminiProvider implements ILLMProvider {
             console.error("GeminiProvider: Chat generation failed:", e);
             // Enhance error message for better debugging
             const errorMessage = (e as Error).message || "Unknown error";
-            if (errorMessage.includes("API Key") || errorMessage.includes("API_KEY")) {
-                throw new Error("Authentication Error: Invalid or missing API Key. Please check Vercel Environment Variables.");
+            if (errorMessage.includes("API Key") || errorMessage.includes("API_KEY") || errorMessage.includes("403")) {
+                throw new Error(`Authentication Error: Google rejected the API Key. (${errorMessage})`);
             }
             throw new Error(`AI Provider Error (${model || 'default'}): ${errorMessage}`);
         }

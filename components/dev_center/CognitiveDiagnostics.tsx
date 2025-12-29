@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckIcon, XIcon, RefreshIcon, BeakerIcon, CommandLineIcon, CircleStackIcon } from '../Icons';
+import { CheckIcon, XIcon, RefreshIcon, BeakerIcon, CommandLineIcon, CircleStackIcon, SparklesIcon } from '../Icons';
 
 const CognitiveDiagnostics = () => {
     const [health, setHealth] = useState<any>(null);
@@ -33,17 +33,21 @@ const CognitiveDiagnostics = () => {
         finally { setIsRunningSandbox(false); }
     };
 
-    const StatusCard = ({ name, data }: { name: string, data: any }) => {
+    const StatusCard = ({ name, data, icon }: { name: string, data: any, icon?: React.ReactNode }) => {
         const isHealthy = data?.status === 'healthy';
+        const Icon = icon || <CircleStackIcon className="w-5 h-5" />;
         return (
             <div className="bg-gray-900 border border-white/5 p-4 rounded-xl flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${isHealthy ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                        <CircleStackIcon className="w-5 h-5" />
+                        {Icon}
                     </div>
                     <div>
                         <h4 className="font-bold text-sm uppercase tracking-tighter">{name}</h4>
-                        <p className="text-[10px] text-gray-500">{data?.latency ? `${data.latency}ms latency` : data?.status || 'Unknown'}</p>
+                        <p className="text-[10px] text-gray-500">
+                            {data?.latency ? `${data.latency}ms latency` : data?.status || 'Unknown'}
+                            {data?.source ? ` (${data.source})` : ''}
+                        </p>
                     </div>
                 </div>
                 {isHealthy ? <CheckIcon className="w-5 h-5 text-green-500" /> : <XIcon className="w-5 h-5 text-red-500" />}
@@ -63,7 +67,8 @@ const CognitiveDiagnostics = () => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
+                <StatusCard name="AI Connection" data={health?.ai_connectivity} icon={<SparklesIcon className="w-5 h-5" />} />
                 <StatusCard name="Postgres (Core)" data={health?.postgres} />
                 <StatusCard name="EdgeDB (Graph)" data={health?.edgedb} />
                 <StatusCard name="MongoDB (Logs)" data={health?.mongodb} />
@@ -112,6 +117,13 @@ const CognitiveDiagnostics = () => {
                         <h4 className="font-bold">Deep Trace (Mongo Logs)</h4>
                     </div>
                     <div className="flex-1 overflow-y-auto space-y-2">
+                         {health?.ai_connectivity?.status === 'error' && (
+                             <div className="p-3 bg-red-900/20 border border-red-500/50 rounded-lg">
+                                 <p className="text-[10px] text-red-300 font-bold mb-1">AI CONNECTION FAILED</p>
+                                 <p className="text-xs text-red-200">{health.ai_connectivity.message}</p>
+                                 <p className="text-[10px] text-red-400 mt-2">Check Vercel Environment Variables. Ensure API_KEY or GEMINI_API_KEY is valid.</p>
+                             </div>
+                         )}
                          {health?.mongodb?.status === 'healthy' ? (
                              <p className="text-xs text-gray-500 italic">MongoDB is live. Logs are being archived successfully.</p>
                          ) : (

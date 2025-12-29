@@ -5,6 +5,7 @@ import { getEdgeDBClient } from '@/lib/graphdb';
 import clientPromise from '@/lib/mongodb';
 import { getKnowledgeBaseIndex } from '@/lib/pinecone';
 import { Index } from "@upstash/vector";
+import { GoogleGenAI } from "@google/genai";
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,8 @@ export async function GET() {
         pinecone: { status: 'testing' },
         mongodb: { status: 'testing' },
         edgedb: { status: 'testing' },
-        upstash: { status: 'testing' }
+        upstash: { status: 'testing' },
+        ai_connectivity: { status: 'testing' }
     };
 
     // 1. Postgres Check
@@ -59,6 +61,37 @@ export async function GET() {
             results.upstash = { status: 'healthy', latency: Date.now() - upStart, vectors: stats.vectorCount };
         } else { results.upstash = { status: 'not_configured' }; }
     } catch (e) { results.upstash = { status: 'error', message: (e as Error).message }; }
+
+    // 6. AI Connectivity Check (Gemini)
+    try {
+        const aiStart = Date.now();
+        const rawApiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+        const keySource = process.env.API_KEY ? 'API_KEY' : 'GEMINI_API_KEY';
+        
+        if (!rawApiKey) {
+             results.ai_connectivity = { status: 'error', message: 'No API Key found in environment.' };
+        } else {
+            const ai = new GoogleGenAI({ apiKey: rawApiKey.trim() });
+            // Simple generation to test auth and quota
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: [{ role: 'user', parts: [{ text: 'ping' }] }]
+            });
+            
+            if (response && response.text) {
+                results.ai_connectivity = { 
+                    status: 'healthy', 
+                    latency: Date.now() - aiStart, 
+                    source: keySource,
+                    model: 'gemini-2.5-flash'
+                };
+            } else {
+                 results.ai_connectivity = { status: 'error', message: 'No text returned from Gemini.' };
+            }
+        }
+    } catch (e) {
+        results.ai_connectivity = { status: 'error', message: (e as Error).message };
+    }
 
     return NextResponse.json(results);
 }
