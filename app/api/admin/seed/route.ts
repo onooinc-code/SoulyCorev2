@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { db, sql } from '@/lib/db';
+import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,57 +28,76 @@ const schemaStatements = [
     "releaseDate" TIMESTAMPTZ NOT NULL,
     "changes" TEXT NOT NULL,
     "createdAt" TIMESTAMPTZ DEFAULT now()
+  );`,
+
+   `CREATE TABLE IF NOT EXISTS "features" (
+    "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "name" VARCHAR(255) UNIQUE NOT NULL,
+    "overview" TEXT,
+    "status" VARCHAR(50) NOT NULL,
+    "category" VARCHAR(255),
+    "uiUxBreakdownJson" JSONB,
+    "logicFlow" TEXT,
+    "keyFilesJson" JSONB,
+    "notes" TEXT,
+    "createdAt" TIMESTAMPTZ DEFAULT now(),
+    "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`
 ];
 
 export async function GET() {
+    // We use a single client instance for the entire operation to ensure Transaction Atomicity.
     const client = await db.connect();
     
     try {
-        console.log("Starting Full Database Self-Repair...");
+        console.log("Starting Full Database Self-Repair (v0.5.22)...");
 
-        // 1. Initialize Schema
+        // 1. Start Transaction
         await client.query('BEGIN');
+
+        // 2. Ensure Schema Exists
         for (const statement of schemaStatements) {
             await client.query(statement);
         }
         
-        // --- CRITICAL FIX: Clean version history to fix display ordering issues ---
-        // This ensures the latest seeded version is the undeniable truth.
-        await client.query('TRUNCATE TABLE "version_history";');
+        // 3. NUCLEAR OPTION: Clean version history table completely using the SAME client
+        // This removes any possibility of race conditions or stale data.
+        await client.query('DELETE FROM "version_history"');
         
-        await client.query('COMMIT');
-        console.log("Schema initialization & cleaning complete.");
-
-        // 2. Seed Version History (v0.5.21) - Now inserted into a clean table
-        await sql`
+        // 4. Insert the NEW Version (v0.5.22) using the SAME client
+        // Note: We use parameterized queries ($1, $2...) for safety.
+        const versionSql = `
             INSERT INTO "version_history" ("version", "releaseDate", "changes")
-            VALUES ('0.5.21', NOW(), '### 🧠 Advanced Memory Control (v0.5.21)\n\n**New Features:**\n- **Extraction Strategy Selector:** Users can now choose between "Single-Shot" (Fast/Efficient) and "Background" (High Accuracy) memory extraction modes.\n- **Configurable Models:** The model used for background extraction can be customized (e.g., use Pro for complex analysis, Flash for speed).\n- **Granular Control:** Settings can be defined globally and overridden per conversation in the Agent Setup menu.')
-            ON CONFLICT ("version") DO UPDATE SET
-                "releaseDate" = EXCLUDED."releaseDate",
-                "changes" = EXCLUDED."changes";
+            VALUES ($1, NOW(), $2)
         `;
+        const changesText = `### 🚀 Final Architecture Lock (v0.5.22)
 
-        // 3. Seed Basic Features
-        const features = [
-            { name: "Core: Context Assembly", status: "✅ Completed", category: "Core Engine" },
-            { name: "Core: Memory Extraction", status: "✅ Completed", category: "Core Engine" },
-            { name: "UI: Chat Interface", status: "✅ Completed", category: "Chat" },
-            { name: "Core: Autonomous Agent Engine", status: "✅ Completed", category: "Agent System" }
-        ];
+**Critical Fixes:**
+- **Atomic Database Seeding:** Rewrote the admin seed route to use a single transactional client, ensuring version updates are strictly persisted.
+- **Memory Tier Integration:** All memory modules (Postgres, Pinecone, KV) are now fully aligned with the v2.0 Architecture.
+- **Extraction Strategy:** Confirmed implementation of 'Single-Shot' vs 'Background' modes in the Core Engine.`;
 
-        for (const f of features) {
-            await sql`
-                INSERT INTO features (name, status, category, "lastUpdatedAt")
-                VALUES (${f.name}, ${f.status}, ${f.category}, NOW())
-                ON CONFLICT (name) DO UPDATE SET status = EXCLUDED.status;
-            `;
-        }
+        await client.query(versionSql, ['0.5.22', changesText]);
+
+        // 5. Seed Features (Optional but good for health check)
+        const featuresSql = `
+            INSERT INTO features (name, status, category, "lastUpdatedAt")
+            VALUES ($1, $2, $3, NOW())
+            ON CONFLICT (name) DO UPDATE SET status = EXCLUDED.status;
+        `;
+        await client.query(featuresSql, ["Core: Context Assembly", "✅ Completed", "Core Engine"]);
+        await client.query(featuresSql, ["Core: Memory Extraction", "✅ Completed", "Core Engine"]);
+        await client.query(featuresSql, ["UI: Chat Interface", "✅ Completed", "Chat"]);
+
+        // 6. Commit Transaction
+        await client.query('COMMIT');
+        
+        console.log("Database repaired and updated to v0.5.22 successfully.");
         
         return NextResponse.json({ 
             success: true, 
-            message: "Database schema repaired, version history cleaned, and updated to v0.5.21.",
-            action: "Page will reload automatically."
+            message: "System successfully repaired and updated to v0.5.22.",
+            action: "Reloading..."
         });
 
     } catch (error) {
@@ -86,6 +105,7 @@ export async function GET() {
         console.error("Admin Seed Failed:", error);
         return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     } finally {
+        // Always release the client back to the pool
         client.release();
     }
 }
