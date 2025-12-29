@@ -151,9 +151,6 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Determine current conversation object
     const currentConversation = useMemo(() => conversations.find(c => c.id === currentConversationId) || null, [conversations, currentConversationId]);
 
-    // Force update useMessageManager's conversation reference implicitly by logic flow, 
-    // but the `addMessage` wrapper below uses `currentConversation` directly.
-
     useEffect(() => {
         if (!currentConversationId) {
             setMessages([]);
@@ -176,16 +173,6 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setMemoryMonitorState('episodic', 'executing', null, undefined, q);
 
         try {
-            // Need to pass the current conversation explicitly to the base manager logic via the hook wrapper above, 
-            // but since useMessageManager is initialized once, we need to ensure it sees the current conversation.
-            // *Correction*: useMessageManager depends on the props passed to it. In the `const { ... } = useMessageManager(...)` above, 
-            // we passed `currentConversation: null` initially. This is a potential bug in the original code structure if not re-rendered.
-            // However, React functional component re-renders will recreate the hook with new props if `currentConversation` changes.
-            // Let's assume the hook behaves correctly on re-render.
-            
-            // Note: We need to pass the *current* conversation ID to fetch/save if the hook doesn't have it closure-bound correctly.
-            // The `baseAddMessage` in `useMessageManager` uses `currentConversation.id`.
-            
             const result = await baseAddMessage(msgData, mentioned, history, parent, isAgentEnabled, isLinkPredictionEnabled);
             
             if (result.aiResponse && (result as any).monitorMetadata) {
@@ -216,14 +203,8 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 setMemoryMonitorState('episodic', 'error', null, err, q);
             }
 
-            // --- AUTO-TITLE GENERATION ---
-            // If the conversation still has the default title and we got a response, generate a title.
-            // We do this fire-and-forget.
-            if (result.aiResponse && (currentConversation.title === 'محادثة جديدة' || currentConversation.title === 'New Chat')) {
-                // Ensure we have at least 2 messages (User + AI) before generating
-                // The `messages` state might update asynchronously, but `baseAddMessage` confirms success.
-                generateConversationTitle(currentConversation.id);
-            }
+            // Note: Auto-title generation is now handled within the background MemoryExtraction pipeline
+            // to save tokens and reduce request overhead.
             
             return result;
         } catch (error: any) {
@@ -234,7 +215,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             setMemoryMonitorState('episodic', 'error', null, errMsg, q);
             throw error;
         }
-    }, [baseAddMessage, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled, appStatus.error, generateConversationTitle]);
+    }, [baseAddMessage, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled, appStatus.error]);
 
     const runCognitiveSynthesis = useCallback(async () => {
         setAppStatus({ currentAction: { phase: 'reasoning', details: 'Synthesizing knowledge nexus...' }});

@@ -75,8 +75,9 @@ export class MemoryExtractionPipeline {
 
         try {
             const prompt = `Analyze: "${text}"
-            Extract structured knowledge. Text is likely in Arabic. 
-            Categories: aiIdentity (name), userProfile (name, role, preferences), entities (name, type, desc), relationships (source, predicate, target), facts (statements).
+            1. Extract structured knowledge (entities, facts, relationships).
+            2. Suggest a concise 'title' (max 5 words) summarizing this interaction.
+            Text is likely in Arabic. 
             Return ONLY JSON.`;
 
             await this.logEvent(`[Extraction] Calling LLM for analysis...`, logPayload());
@@ -89,6 +90,7 @@ export class MemoryExtractionPipeline {
                     responseSchema: {
                         type: Type.OBJECT,
                         properties: {
+                            title: { type: Type.STRING, description: "A concise title (3-5 words) for this conversation context." },
                             aiIdentity: { type: Type.OBJECT, properties: { name: { type: Type.STRING } } },
                             userProfile: { 
                                 type: Type.OBJECT, 
@@ -108,6 +110,19 @@ export class MemoryExtractionPipeline {
 
             const data = JSON.parse(response.text?.trim() || '{}');
             await this.logEvent(`[Extraction] LLM returned data`, logPayload(data));
+
+            // 0. Auto-Title (Optimization: Only if title is default)
+            if (data.title) {
+                // We only update if the title is generic "محادثة جديدة" or "New Chat"
+                // This prevents overwriting manual renames.
+                await sql`
+                    UPDATE conversations 
+                    SET title = ${data.title}, "lastUpdatedAt" = CURRENT_TIMESTAMP
+                    WHERE id = ${conversationId} AND (title = 'محادثة جديدة' OR title = 'New Chat');
+                `;
+                // Log this specific action as it's visible to user
+                await this.logEvent(`[Extraction] Auto-titled conversation: ${data.title}`, logPayload());
+            }
 
             // Syncing steps with individual logs
             if (data.aiIdentity?.name) {
