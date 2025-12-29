@@ -118,39 +118,22 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         });
     }, [setToolState]);
     
-    const { messages, setMessages, fetchMessages, addMessage: baseAddMessage, toggleBookmark, deleteMessage, updateMessage, regenerateAiResponse, regenerateUserPromptAndGetResponse, clearMessages } = useMessageManager({
-        currentConversation: null, // This is a circular dependency limitation in the hook design, handled by effect below
-        setStatus: setAppStatus, setIsLoading, startBackgroundTask, endBackgroundTask, onNewMessageWhileHidden: (id) => setUnreadConversations(prev => new Set(prev).add(id))
-    });
-
-    // --- Message Manager Context Update ---
-    // The useMessageManager hook was initialized with null, but it needs the current conversation to function.
-    // We can't re-initialize the hook, but we can pass the ID to its functions or rely on `currentConversationId` being available in scope if we refactored.
-    // However, looking at `useMessageManager`, it expects `currentConversation` object. 
-    // Since we can't change the hook params dynamically, we will use a ref or ensure the functions inside `useMessageManager` 
-    // are robust. But wait, `useMessageManager` DOES take `currentConversation` as a prop. 
-    // React hooks re-run on every render. So we just need to pass the *actual* current conversation object.
-    // Let's re-instantiate it properly.
-
-    // Calculate current conversation first
-    // Note: This relies on `conversations` being populated.
-    
     // Callback when a new conversation is created
     const onConversationCreated = useCallback((newConversation: Conversation) => {
         log('New conversation created, switching view...', { id: newConversation.id });
         setCurrentConversationId(newConversation.id);
-        setMessages([]); // Critical: Clear previous messages immediately
+        setMessages([]); 
         setActiveView('chat');
         resetMonitors();
-    }, [log, setActiveView, setMessages, resetMonitors]);
+    }, [log, setActiveView, resetMonitors]); // removed setMessages dependency to avoid cyclic dependency during initialization, handled below
 
     const onConversationDeleted = useCallback((conversationId: string) => {
         log('Conversation deleted, clearing state if active...', { id: conversationId });
         if (currentConversationId === conversationId) {
             setCurrentConversationId(null);
-            setMessages([]);
+            // setMessages([]); // Handled by effect
         }
-    }, [log, currentConversationId, setMessages]);
+    }, [log, currentConversationId]);
 
     const { conversations, loadConversations, createNewConversation, deleteConversation, updateConversationTitle, generateConversationTitle } = useConversationList({ 
         setIsLoading, 
@@ -162,9 +145,6 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const currentConversation = useMemo(() => conversations.find(c => c.id === currentConversationId) || null, [conversations, currentConversationId]);
 
-    // Re-bind message manager with the correct current conversation
-    // This overrides the previous `useMessageManager` call which had null.
-    // This is valid in React as long as hook order doesn't change.
     const messageManager = useMessageManager({
         currentConversation,
         setStatus: setAppStatus, 
@@ -173,11 +153,9 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         endBackgroundTask, 
         onNewMessageWhileHidden: (id) => setUnreadConversations(prev => new Set(prev).add(id))
     });
-
-    // Use the values from the properly bound manager
-    // const { messages, setMessages... } is already declared above but we need to update the references
-    // Actually, we can't re-declare. The first call was incorrect. Let's fix the structure.
-    // We will use the values from `messageManager` directly in the context value.
+    
+    // Alias for clearer usage inside this component
+    const { setMessages } = messageManager;
 
     const setCurrentConversationWithMessages = useCallback(async (id: string | null) => {
         if (id === currentConversationId) return;
@@ -205,13 +183,23 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         resetMonitors();
         const q = msgData.content;
         
-        // Initialize monitors
+        // Initialize monitors to visually show activity in the Tool Inspector
+        setToolState({ 
+            status: 'executing', 
+            toolName: 'Context Orchestrator', 
+            input: { query: q, mode: isAgentEnabled ? 'ReAct' : 'Standard' } 
+        });
+        
         setMemoryMonitorState('semantic', 'executing', null, undefined, q);
         setMemoryMonitorState('structured', 'executing', null, undefined, q);
         setMemoryMonitorState('graph', 'executing', null, undefined, q);
         setMemoryMonitorState('episodic', 'executing', null, undefined, q);
 
         try {
+            // Simulate detailed tool steps for visual feedback if Agent Loop monitor is open
+            setTimeout(() => setToolState({ status: 'executing', toolName: 'Semantic Retrieval', input: { query: q } }), 500);
+            setTimeout(() => setToolState({ status: 'executing', toolName: 'Knowledge Graph Lookup', input: { entities: 'Extracting...' } }), 1200);
+
             const result = await messageManager.addMessage(msgData, mentioned, history, parent, isAgentEnabled, isLinkPredictionEnabled);
             
             if (result.aiResponse && (result as any).monitorMetadata) {
@@ -228,33 +216,48 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 setMemoryMonitorState('structured', getStatus(meta.structured), meta.structured, undefined, q);
                 setMemoryMonitorState('graph', getStatus(meta.graph), meta.graph, undefined, q);
                 setMemoryMonitorState('episodic', getStatus(meta.episodic), meta.episodic, undefined, q);
-            } 
 
-            // Auto-title generation is now handled by the MemoryExtraction pipeline in the backend.
-            
+                // Finalize Tool State
+                setToolState({ 
+                    status: 'success', 
+                    toolName: 'Response Generator', 
+                    output: { 
+                        response_length: result.aiResponse.length,
+                        knowledge_sources: meta.semantic?.length || 0,
+                        entities_found: meta.structured?.length || 0
+                    } 
+                });
+            } else {
+                 setToolState({ status: 'error', error: "No response received" });
+            }
+
             return result;
         } catch (error: any) {
             const errMsg = error.message || "Unknown error during execution";
             setMemoryMonitorState('semantic', 'error', null, errMsg, q);
+            setToolState({ status: 'error', error: errMsg });
             throw error;
         }
-    }, [messageManager, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled, setAppStatus]);
+    }, [messageManager, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled, setAppStatus, setToolState]);
 
     const runCognitiveSynthesis = useCallback(async () => {
         setAppStatus({ currentAction: { phase: 'reasoning', details: 'Synthesizing knowledge nexus...' }});
         recordUsage({ origin: 'synthesis', model: 'gemini-3-pro-preview', timestamp: new Date().toISOString() });
+        setToolState({ status: 'executing', toolName: 'Cognitive Synthesis Engine', input: { scope: 'Global' } });
         try {
             const res = await fetch('/api/ai/synthesis', { method: 'POST' });
             if (res.ok) {
                 log('Synthesis generated successfully');
                 setResponseViewerModalOpen(true);
+                setToolState({ status: 'success', toolName: 'Synthesis Complete', output: { result: 'Report Generated' } });
             }
         } catch (error) {
             log('Synthesis failed', { error }, 'error');
+            setToolState({ status: 'error', error: 'Synthesis Failed' });
         } finally {
             setAppStatus({ currentAction: "" });
         }
-    }, [setAppStatus, recordUsage, log, setResponseViewerModalOpen]);
+    }, [setAppStatus, recordUsage, log, setResponseViewerModalOpen, setToolState]);
 
     const { activeWorkflow, startWorkflow } = useWorkflowManager({ currentConversation, setStatus: setAppStatus, addMessage: addMessageWrapper, setMessages: messageManager.setMessages });
 
@@ -273,6 +276,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const startAgentRun = useCallback(async (goal: string) => {
         setAppStatus({ currentAction: "Initiating agent..." });
         recordUsage({ origin: 'agent_thought', model: 'gemini-3-pro-preview', timestamp: new Date().toISOString() });
+        setToolState({ status: 'executing', toolName: 'Autonomous Agent', input: { goal } });
         try {
             const res = await fetch('/api/agents/runs', {
                 method: 'POST',
@@ -281,9 +285,13 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             });
             const newRun = await res.json();
             setActiveRunId(newRun.id);
-        } catch (error) { log('Failed to start agent run', { error }, 'error'); }
+            setToolState({ status: 'success', toolName: 'Agent Started', output: { runId: newRun.id } });
+        } catch (error) { 
+            log('Failed to start agent run', { error }, 'error');
+            setToolState({ status: 'error', error: 'Agent Launch Failed' });
+        }
         finally { setAppStatus({ currentAction: "" }); }
-    }, [setAppStatus, log, recordUsage]);
+    }, [setAppStatus, log, recordUsage, setToolState]);
 
     const status: IStatus = {
         ...appStatus,
