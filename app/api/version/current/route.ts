@@ -6,16 +6,17 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.5.4',
-    version: '0.5.4',
+    id: 'v-0.5.5',
+    version: '0.5.5',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🛠️ Build & Stability Fixes (v0.5.4)
+### 🛠️ Build & Stability Fixes (v0.5.5)
 
 **Core Reliability:**
-- **Deployment Fix:** Resolved a Vercel build failure caused by database connection timeouts during the install phase.
+- **Deployment Fix:** Removed database scripts from build process to prevent Vercel deployment failures.
 - **Monitor UI:** Fixed an issue where the "Live Tool Monitor" and "Memory Inspector" would hang indefinitely if the backend API failed.
+- **Error Handling:** Improved error messages for API Key configuration issues.
 `
 };
 

@@ -187,13 +187,12 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 setMemoryMonitorState('graph', getStatus(meta.graph), meta.graph, undefined, q);
                 setMemoryMonitorState('episodic', getStatus(meta.episodic), meta.episodic, undefined, q);
             } else if (!result.aiResponse) {
-                // FAIL SAFE: If no response and no error thrown, assume error to stop monitors hanging
-                // This typically happens if baseAddMessage catches an error and returns { aiResponse: null }
-                const fallbackError = appStatus.error || "Generation failed";
-                setMemoryMonitorState('semantic', 'error', null, fallbackError, q);
-                setMemoryMonitorState('structured', 'error', null, fallbackError, q);
-                setMemoryMonitorState('graph', 'error', null, fallbackError, q);
-                setMemoryMonitorState('episodic', 'error', null, fallbackError, q);
+                // If API failed gracefully (returned null but no throw), manually error monitors
+                const err = appStatus.error || "Generation Failed (No Response)";
+                setMemoryMonitorState('semantic', 'error', null, err, q);
+                setMemoryMonitorState('structured', 'error', null, err, q);
+                setMemoryMonitorState('graph', 'error', null, err, q);
+                setMemoryMonitorState('episodic', 'error', null, err, q);
             }
             
             return result;

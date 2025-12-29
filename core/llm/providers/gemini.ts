@@ -24,7 +24,9 @@ export class GeminiProvider implements ILLMProvider {
         if (!this.ai) {
             const apiKey = process.env.API_KEY;
             if (!apiKey) {
-                throw new Error("API_KEY environment variable is missing. Please configure your AI API key.");
+                // Critical error logging
+                console.error("CRITICAL: API_KEY is missing from environment variables.");
+                throw new Error("Configuration Error: API_KEY is missing. Please add it to your Vercel project settings.");
             }
             // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
             this.ai = new GoogleGenAI({ apiKey });
@@ -92,8 +94,8 @@ export class GeminiProvider implements ILLMProvider {
             console.error("GeminiProvider: Chat generation failed:", e);
             // Enhance error message for better debugging
             const errorMessage = (e as Error).message || "Unknown error";
-            if (errorMessage.includes("API key")) {
-                throw new Error("Authentication Error: Invalid or missing API Key.");
+            if (errorMessage.includes("API key") || errorMessage.includes("Configuration Error")) {
+                throw new Error("Authentication Error: Invalid or missing API Key. Check Vercel Settings.");
             }
             throw new Error(`AI Provider Error (${model || 'default'}): ${errorMessage}`);
         }

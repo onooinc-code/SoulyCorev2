@@ -4,6 +4,18 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
+        version: '0.5.5',
+        releaseDate: new Date().toISOString(),
+        changes: `
+### 🛠️ Build & Stability Fixes (v0.5.5)
+
+**Core Reliability:**
+- **Deployment Fix:** Removed database scripts from build process to prevent Vercel deployment failures.
+- **Monitor UI:** Fixed an issue where the "Live Tool Monitor" and "Memory Inspector" would hang indefinitely if the backend API failed.
+- **Error Handling:** Improved error messages for API Key configuration issues.
+`
+    },
+    {
         version: '0.5.4',
         releaseDate: new Date().toISOString(),
         changes: `
