@@ -19,7 +19,7 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
 
     useEffect(() => {
         if (settings) {
-            // Ensure memoryConfig exists
+            // Ensure memoryConfig exists with defaults
             const safeSettings = JSON.parse(JSON.stringify(settings));
             if (!safeSettings.memoryConfig) {
                 safeSettings.memoryConfig = { extractionStrategy: 'single-shot', extractionModel: 'gemini-2.5-flash' };

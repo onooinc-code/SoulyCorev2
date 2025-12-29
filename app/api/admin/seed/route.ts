@@ -22,8 +22,6 @@ const schemaStatements = [
     "lastUpdatedAt" TIMESTAMPTZ DEFAULT now()
   );`,
   
-  // ... (Other tables remain implicit in the execution, forcing a recreation of version history below)
-
   `CREATE TABLE IF NOT EXISTS "version_history" (
     "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "version" VARCHAR(50) UNIQUE NOT NULL,
@@ -39,7 +37,7 @@ export async function GET() {
     try {
         console.log("Starting Full Database Self-Repair...");
 
-        // 1. Initialize Schema (Create tables if missing)
+        // 1. Initialize Schema
         await client.query('BEGIN');
         for (const statement of schemaStatements) {
             await client.query(statement);
@@ -47,10 +45,10 @@ export async function GET() {
         await client.query('COMMIT');
         console.log("Schema initialization complete.");
 
-        // 2. Seed Version History (v0.5.19)
+        // 2. Seed Version History (v0.5.21)
         await sql`
             INSERT INTO "version_history" ("version", "releaseDate", "changes")
-            VALUES ('0.5.19', NOW(), '### ⚡ Performance & Quota Optimization (v0.5.19)\n\n**Core Engine:**\n- **Smart Extraction:** Memory extraction now skips short messages (<20 chars) to save AI quota.\n- **Model Switching:** Background tasks now use \`gemini-2.5-flash\`.\n- **Error Handling:** Graceful handling of 429 Rate Limit errors.')
+            VALUES ('0.5.21', NOW(), '### 🧠 Advanced Memory Control (v0.5.21)\n\n**New Features:**\n- **Extraction Strategy Selector:** Users can now choose between "Single-Shot" (Fast/Efficient) and "Background" (High Accuracy) memory extraction modes.\n- **Configurable Models:** The model used for background extraction can be customized (e.g., use Pro for complex analysis, Flash for speed).\n- **Granular Control:** Settings can be defined globally and overridden per conversation in the Agent Setup menu.')
             ON CONFLICT ("version") DO UPDATE SET
                 "releaseDate" = EXCLUDED."releaseDate",
                 "changes" = EXCLUDED."changes";
@@ -74,7 +72,7 @@ export async function GET() {
         
         return NextResponse.json({ 
             success: true, 
-            message: "Database schema repaired, tables checked, and version updated to v0.5.19.",
+            message: "Database schema repaired, tables checked, and version updated to v0.5.21.",
             action: "Page will reload automatically."
         });
 
