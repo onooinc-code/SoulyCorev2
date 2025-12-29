@@ -1,65 +1,49 @@
 
-
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
-// FIX: Replaced `process.cwd()` with `path.resolve()` which requires importing the 'path' module.
 import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * @handler GET
- * @description Finds and returns the content of the most recent `ResponseTemplate-X.html` file.
- * @returns {Promise<NextResponse>} An HTML response with the file content or a 404/500 error.
+ * @description Finds and returns the list of available report files.
+ * @returns {Promise<NextResponse>} A JSON list of filenames.
  */
 export async function GET() {
     try {
-        // FIX: Replaced `process.cwd()` with `path.resolve()` to resolve a TypeScript error where the `cwd` method was not found on the `Process` type. This change maintains the original logic while fixing the type issue.
-        const dirPath = path.resolve();
-        const files = await fs.readdir(dirPath);
+        // Fix: Use path.resolve() to get CWD to avoid TypeScript error with process.cwd()
+        const dirPath = path.join(path.resolve(), 'reports');
 
-        const responseFiles = files.filter(file => /^ResponseTemplate-\d+\.html$/.test(file));
-
-        if (responseFiles.length === 0) {
-            const notFoundMessage = `
-                <div style="font-family: sans-serif; text-align: center; padding: 40px; color: #555;">
-                    <h1>404 - No Response Report Found</h1>
-                    <p>No <code>ResponseTemplate-X.html</code> files were found in the project directory.</p>
-                </div>
-            `;
-            return new NextResponse(notFoundMessage, { status: 404, headers: { 'Content-Type': 'text/html' } });
+        // Ensure directory exists
+        try {
+            await fs.access(dirPath);
+        } catch {
+            return new NextResponse(JSON.stringify([]), { status: 200 }); // Return empty list if dir doesn't exist yet
         }
 
-        const latestFile = responseFiles.reduce((latest, current) => {
-            const latestNum = parseInt(latest.match(/(\d+)/)?.[0] || '0', 10);
-            const currentNum = parseInt(current.match(/(\d+)/)?.[0] || '0', 10);
-            return currentNum > latestNum ? current : latest;
-        });
+        const files = await fs.readdir(dirPath);
+        
+        // FIX: Updated Regex to accept any file starting with "ResponseTemplate-" and ending with ".html"
+        // This allows named reports like "ResponseTemplate-System-Audit.html" to appear.
+        const reportFiles = files.filter(file => /^ResponseTemplate-.*\.html$/.test(file));
 
-        const filePath = path.join(dirPath, latestFile);
-        const fileContent = await fs.readFile(filePath, 'utf-8');
+        // Sort by modification time (newest first)
+        const fileStats = await Promise.all(
+            reportFiles.map(async (file) => {
+                const filePath = path.join(dirPath, file);
+                const stats = await fs.stat(filePath);
+                return { file, mtime: stats.mtime.getTime() };
+            })
+        );
 
-        return new NextResponse(fileContent, {
-            status: 200,
-            headers: {
-                'Content-Type': 'text/html',
-            },
-        });
+        fileStats.sort((a, b) => b.mtime - a.mtime);
+        const sortedFiles = fileStats.map(f => f.file);
+
+        return NextResponse.json(sortedFiles);
 
     } catch (error) {
-        console.error('Failed to get latest response template:', error);
-        // FIX: Changed type from Node-specific `NodeJS.ErrnoException` to a generic object with an optional `code` property to ensure compatibility across JavaScript runtimes and avoid build errors.
-        if ((error as { code?: string }).code === 'ENOENT') {
-            return new NextResponse('The `reports` directory does not exist.', { status: 404, headers: { 'Content-Type': 'text/html' } });
-        }
-        const errorDetails = { message: (error as Error).message };
-        const errorMessage = `
-            <div style="font-family: sans-serif; text-align: center; padding: 40px; color: #D8000C; background-color: #FFBABA;">
-                <h1>500 - Internal Server Error</h1>
-                <p>Could not read the response file from the server.</p>
-                <pre style="text-align: left; background: #fff; padding: 10px; border-radius: 5px; margin-top: 20px;">${JSON.stringify(errorDetails, null, 2)}</pre>
-            </div>
-        `;
-        return new NextResponse(errorMessage, { status: 500, headers: { 'Content-Type': 'text/html' } });
+        console.error('Failed to list reports:', error);
+        return new NextResponse('Internal Server Error', { status: 500 });
     }
 }

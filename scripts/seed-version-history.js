@@ -4,41 +4,38 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
+        version: '0.5.15',
+        releaseDate: new Date().toISOString(), // NOW
+        changes: `
+### 🔧 Critical Fixes & Sync (v0.5.15)
+
+**System Repairs:**
+- **Report Visibility:** Fixed a bug where named reports (like the System Audit) were hidden from the Reports Hub.
+- **Version Sync:** Forced synchronization of version history across the Header and Change Log modal.
+
+**Documentation:**
+- **Codebase Explained:** Added comprehensive technical documentation covering the entire system architecture.
+`
+    },
+    {
         version: '0.5.14',
-        releaseDate: new Date().toISOString(), // Today
+        releaseDate: new Date(Date.now() - 3600000).toISOString(),
         changes: `
 ### 📚 Documentation & Reference (v0.5.14)
 
 **New Resources:**
 - **Codebase Encyclopedia:** Added \`CODE_EXPLAINED.md\`, a complete technical reference manual explaining every directory, core module, and data flow in the system.
-
-**System Updates:**
-- **Documentation Sync:** Updated internal references to ensure the AI assistant is aware of the new documentation structure.
 `
     },
     {
         version: '0.5.13',
-        releaseDate: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+        releaseDate: new Date(Date.now() - 7200000).toISOString(),
         changes: `
 ### 🔍 System Audit & Versioning Fix (v0.5.13)
 
 **Critical Repairs:**
 - **Report Viewer:** Fixed a logic error where named reports (e.g., System Audit) were ignored by the viewer. Now sorts by file date.
-- **Versioning Sync:** Resolved data discrepancy. The system now enforces strict date-based sorting to fetch the true latest version from the database.
-
-**Reports:**
-- **System Audit:** Generated a comprehensive audit report covering active features, bugs, and mobile UX analysis.
-`
-    },
-    {
-        version: '0.5.12',
-        releaseDate: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
-        changes: `
-### 🛠️ Stability & Live Sync Patch (v0.5.12)
-
-**Critical Bug Fixes:**
-- **Extraction Pipeline Auth:** Fixed a critical 'API_KEY_INVALID' error in the background memory extraction process.
-- **Chat UI Sync:** Fixed an issue where new messages and AI responses wouldn't appear immediately.
+- **Versioning Sync:** Resolved data discrepancy.
 `
     }
 ];
