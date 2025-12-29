@@ -41,36 +41,26 @@ export class ContextAssemblyPipeline {
         try {
             const output = await execution();
             const duration = Date.now() - startTime;
-            if (runId) {
-                try {
-                    // Use a fire-and-forget approach for logging to avoid blocking the critical path
-                    // providing connection is available
-                    if (process.env.POSTGRES_URL) {
-                        sql`
-                            INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status)
-                            VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
-                        `.catch(e => console.warn(`DB Log Step ${name} failed silently:`, e));
-                    }
-                } catch (logErr) {
-                    console.warn(`Failed to log successful pipeline step [${name}] to DB:`, logErr);
-                }
+            if (runId && process.env.POSTGRES_URL) {
+                sql`
+                    INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status)
+                    VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
+                `.catch(e => console.warn(`DB Log Step ${name} failed:`, e.message));
             }
             return output;
-        } catch (error) {
+        } catch (error: any) {
             const duration = Date.now() - startTime;
-            const errorMessage = (error as Error).message;
+            const errorMessage = error.message;
             console.error(`Pipeline step [${name}] failed:`, errorMessage);
+            
             if (runId && process.env.POSTGRES_URL) {
-                try {
-                    sql`
-                        INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "durationMs", status, "errorMessage")
-                        VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${duration}, 'failed', ${errorMessage});
-                    `.catch(e => console.warn(`DB Log Error Step ${name} failed silently:`, e));
-                } catch (innerError) {
-                    console.error("Failed to log step failure to DB:", innerError);
-                }
+                sql`
+                    INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "durationMs", status, "errorMessage")
+                    VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${duration}, 'failed', ${errorMessage});
+                `.catch(e => console.warn(`DB Log Error Step ${name} failed:`, e.message));
             }
-            // Fail-safe returns for retrieval steps
+
+            // Fail-safe returns for non-critical retrieval steps
             if (name.includes('Retrieve') || name.includes('Search') || name.includes('Lookup')) {
                 if (name.includes('Episodic')) return [];
                 if (name.includes('Profile')) return { name: 'User', aiName: 'SoulyCore' };
@@ -86,8 +76,6 @@ export class ContextAssemblyPipeline {
 
         let runId: string | null = null;
         const startTime = Date.now();
-
-        // Check if database is even connected
         const hasDb = !!process.env.POSTGRES_URL;
 
         if (hasDb) {
@@ -98,28 +86,23 @@ export class ContextAssemblyPipeline {
                 `;
                 runId = runRows[0].id;
             } catch (e) {
-                console.warn("Failed to create pipeline run record in DB (table might be missing):", e);
+                console.warn("Pipeline Run creation failed:", (e as Error).message);
             }
         }
 
         try {
-            // 1. Episodic Retrieval (History)
+            // 1. Episodic Retrieval
             const recentMessages = await this.logStep(runId, 1, 'Retrieve Episodic Memory', { conversationId: conversation.id }, async () => {
-                if (!hasDb) return [];
-                // Only fetch recent messages, excluding the current user message which is passed in params
-                // But we need context, so fetching last N messages is correct.
                 return this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth });
             }) as Message[] || [];
             
-            // 2. Profile Retrieval (Preferences)
+            // 2. Profile Retrieval
             const userProfile = await this.logStep(runId, 2, 'Retrieve User Profile', {}, async () => {
-                if (!hasDb) return { name: 'User', aiName: 'SoulyCore' };
                 return this.profileMemory.query({});
             }) || { name: 'User', aiName: 'SoulyCore' };
 
-            // 3. Experience Retrieval (Learned Patterns)
+            // 3. Experience Retrieval
             const matchedExperiences = await this.logStep(runId, 3, 'Retrieve Learned Experiences', { userQuery, brainId }, async () => {
-                if (!hasDb) return [];
                 const queryWords = userQuery.toLowerCase().split(/\s+/).filter(w => w.length > 3);
                 if (queryWords.length === 0) return [];
                 try {
@@ -129,16 +112,14 @@ export class ContextAssemblyPipeline {
                         LIMIT 3
                     `, [queryWords]);
                     return rows as Experience[];
-                } catch (e) {
-                    return [];
-                }
+                } catch (e) { return []; }
             }) as Experience[] || [];
 
             // 4. Entity Search
             const proactiveEntities = await this.logStep(runId, 4, 'Vector Search Entities', { userQuery, brainId }, async () => {
                  try {
                      const results = await this.entityVectorMemory.query({ queryText: userQuery, topK: 5 });
-                     if (!results || results.length === 0 || !hasDb) return [];
+                     if (!results || results.length === 0) return [];
                      const ids = results.map(r => r.id);
                      const { rows } = await db.query(`
                         SELECT * FROM entity_definitions 
@@ -146,9 +127,7 @@ export class ContextAssemblyPipeline {
                         AND ("brainId" = $2 OR ("brainId" IS NULL AND $2 IS NULL))
                      `, [ids, brainId]);
                      return rows;
-                 } catch (e) {
-                     return [];
-                 }
+                 } catch (e) { return []; }
             }) as EntityDefinition[] || [];
 
             // 5. Graph Lookup
@@ -158,14 +137,13 @@ export class ContextAssemblyPipeline {
                     try {
                         const rels = await this.graphMemory.query({ entityName: entity.name, brainId });
                         if (rels) relationships.push(...rels);
-                    } catch (e) { console.warn('Graph Query failed', e); }
+                    } catch (e) { }
                 }
                 return relationships;
             }) || [];
 
             // 6. Tool Discovery
             const discoveredTools = await this.logStep(runId, 6, 'Semantic Tool Selection', { userQuery }, async () => {
-                if (!hasDb) return [];
                 try {
                     const { rows: allTools } = await db.query('SELECT name, description FROM tools');
                     return allTools.filter((t: Tool) => 
@@ -198,18 +176,14 @@ ${graphContext.join('\n') || 'None'}
                 const existingIds = new Set(recentMessages.map(m => m.id));
                 const formattedHistory = recentMessages.map(m => ({
                     role: m.role as 'user' | 'model',
-                    parts: [{ text: m.content || "" }] // Ensure text is never undefined/null
+                    parts: [{ text: m.content || "" }]
                 }));
                 
-                // Add the current user query if it's not already in the history (it usually isn't in episodic memory yet)
                 if (!existingIds.has(userMessageId)) {
                     formattedHistory.push({ role: 'user', parts: [{ text: userQuery }] });
                 }
                 
-                // Truncate instruction if extremely long to avoid context window issues
-                const safeInstruction = finalInstruction.substring(0, 30000);
-                
-                return Promise.resolve({ systemInstruction: safeInstruction, history: formattedHistory });
+                return Promise.resolve({ systemInstruction: finalInstruction, history: formattedHistory });
             });
 
             const { systemInstruction, history } = assembledData;
@@ -223,23 +197,18 @@ ${graphContext.join('\n') || 'None'}
                     { temperature: conversation.temperature }, 
                     conversation.model || undefined
                 );
-            } catch (llmError) {
-                console.error("LLM Execution Failed:", llmError);
-                throw new Error(`LLM Generation Failed: ${(llmError as Error).message}`);
+            } catch (llmError: any) {
+                console.error("LLM Execution Failed:", llmError.message);
+                throw new Error(`LLM Generation Failed: ${llmError.message}`);
             }
             
             if (runId && hasDb) {
                 const totalDuration = Date.now() - startTime;
-                try {
-                    // Update async
-                    sql`
-                        UPDATE pipeline_runs 
-                        SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${llmResponse}
-                        WHERE id = ${runId};
-                    `.catch(e => console.warn("Failed to update pipeline run status (async):", e));
-                } catch (updateErr) {
-                    console.warn("Failed to update final pipeline run status in DB:", updateErr);
-                }
+                sql`
+                    UPDATE pipeline_runs 
+                    SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${llmResponse}
+                    WHERE id = ${runId};
+                `.catch(e => console.warn("Failed to update pipeline run status:", e.message));
             }
             
             return { 
@@ -253,16 +222,12 @@ ${graphContext.join('\n') || 'None'}
                 }
             };
 
-        } catch (error) {
-             const finalErrorMessage = (error as Error).message;
+        } catch (error: any) {
+             const finalErrorMessage = error.message;
              console.error("Critical ContextAssembly failure:", finalErrorMessage);
              if (runId && hasDb) {
                  const totalDuration = Date.now() - startTime;
-                 try {
-                     await sql`UPDATE pipeline_runs SET status = 'failed', "durationMs" = ${totalDuration}, "finalOutput" = ${finalErrorMessage} WHERE id = ${runId};`;
-                 } catch (innerUpdateErr) {
-                     console.error("Failed to log critical pipeline failure to DB:", innerUpdateErr);
-                 }
+                 sql`UPDATE pipeline_runs SET status = 'failed', "durationMs" = ${totalDuration}, "finalOutput" = ${finalErrorMessage} WHERE id = ${runId};`.catch(() => {});
              }
              throw error;
         }

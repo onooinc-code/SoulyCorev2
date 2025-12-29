@@ -15,10 +15,6 @@ export class GeminiProvider implements ILLMProvider {
 
     /**
      * Lazily initializes and returns the GoogleGenAI client instance.
-     * This prevents the API key check from running at module import time,
-     * which is crucial for compatibility with build environments like Vercel.
-     * @private
-     * @returns {GoogleGenAI} The initialized GoogleGenAI client.
      */
     private getClient(): GoogleGenAI {
         if (!this.ai) {
@@ -26,10 +22,52 @@ export class GeminiProvider implements ILLMProvider {
             if (!apiKey) {
                 throw new Error("API_KEY environment variable is missing. Please configure your AI API key.");
             }
-            // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
             this.ai = new GoogleGenAI({ apiKey });
         }
         return this.ai;
+    }
+
+    /**
+     * Sanitizes conversation history to meet strict Gemini API requirements:
+     * 1. Roles must be only 'user' or 'model'.
+     * 2. Roles must strictly alternate.
+     * 3. Sequence must start and end with 'user' for generateContent.
+     * @private
+     */
+    private sanitizeHistory(history: HistoryContent[]): HistoryContent[] {
+        if (!history || history.length === 0) return [];
+
+        // 1. Normalize roles and filter empty parts
+        const normalized = history.map(h => ({
+            role: h.role === 'model' || h.role === 'assistant' ? 'model' : 'user',
+            parts: (h.parts || []).filter(p => p.text && p.text.trim().length > 0)
+        })).filter(h => h.parts.length > 0);
+
+        // 2. Merge consecutive messages with the same role to ensure alternation
+        const alternated: HistoryContent[] = [];
+        for (const msg of normalized) {
+            if (alternated.length > 0 && alternated[alternated.length - 1].role === msg.role) {
+                alternated[alternated.length - 1].parts.push(...msg.parts);
+            } else {
+                alternated.push(msg);
+            }
+        }
+
+        // 3. Trim non-user messages from start and end (API requirement for generation)
+        let final = [...alternated];
+        while (final.length > 0 && final[0].role !== 'user') {
+            final.shift();
+        }
+        while (final.length > 0 && final[final.length - 1].role !== 'user') {
+            final.pop();
+        }
+
+        // 4. Emergency fallback if trimming resulted in empty history
+        if (final.length === 0 && alternated.length > 0) {
+            return [alternated[alternated.length - 1]];
+        }
+
+        return final;
     }
 
     private async executeWithRetry<T>(operation: () => Promise<T>, retries = 2, initialDelay = 1000): Promise<T> {
@@ -37,7 +75,9 @@ export class GeminiProvider implements ILLMProvider {
             return await operation();
         } catch (error: any) {
             const msg = error?.message || '';
-            const isRetryable = error.status === 429 || msg.includes('429') || msg.includes('Quota') || msg.includes('overloaded') || error.status >= 500;
+            const status = error?.status;
+            // Retry on rate limits (429) or server errors (5xx)
+            const isRetryable = status === 429 || msg.includes('429') || msg.includes('Quota') || msg.includes('overloaded') || (status >= 500);
             
             if (retries > 0 && isRetryable) {
                 console.warn(`GeminiProvider: Retryable error (${msg}). Retrying in ${initialDelay}ms...`);
@@ -48,7 +88,6 @@ export class GeminiProvider implements ILLMProvider {
         }
     }
 
-
     /**
      * @inheritdoc
      */
@@ -57,46 +96,48 @@ export class GeminiProvider implements ILLMProvider {
             const client = this.getClient();
             const targetModel = model || defaultModelName;
 
-            // Validate history to ensure no empty parts which can crash the API
-            const validHistory = history.map(h => ({
-                role: h.role,
-                parts: (h.parts || []).filter(p => p.text && p.text.trim().length > 0)
-            })).filter(h => h.parts.length > 0);
+            const sanitizedHistory = this.sanitizeHistory(history);
 
-            // If history becomes empty after validation (e.g. only had empty messages), preserve at least the last user message if possible or throw
-            if (validHistory.length === 0 && history.length > 0) {
-                 // Fallback: try to recover the last user message even if empty-ish, or just use a placeholder
-                 console.warn("GeminiProvider: History validation resulted in empty history. Using placeholder.");
-                 validHistory.push({ role: 'user', parts: [{ text: "..." }] });
+            // If history is empty after sanitization, we can't proceed with generateContent
+            if (sanitizedHistory.length === 0) {
+                console.warn("GeminiProvider: History is empty after sanitization. Using system instruction only.");
+                // We add a dummy user message to satisfy the API if needed, 
+                // but usually this indicates a logic error upstream.
+                sanitizedHistory.push({ role: 'user', parts: [{ text: "..." }] });
             }
 
             const result = await this.executeWithRetry(async () => {
                 return await client.models.generateContent({
                     model: targetModel,
-                    contents: validHistory,
+                    contents: sanitizedHistory,
                     config: {
                         systemInstruction: systemInstruction || "You are a helpful AI assistant.",
-                        temperature: config?.temperature ?? 0.7,
-                        topP: config?.topP ?? 0.95,
+                        // Ensure temperature and topP are numbers and not null/undefined
+                        temperature: (config?.temperature != null) ? Number(config.temperature) : 0.7,
+                        topP: (config?.topP != null) ? Number(config.topP) : 0.95,
                     }
                 });
             });
 
-            // @google/genai-api-guideline-fix: Per @google/genai guidelines, access the text property directly from the response object.
             if (!result || !result.text) {
                 console.error("GeminiProvider: Content generation returned no text.", { result });
-                throw new Error("Content generation failed: The model returned an empty response.");
+                throw new Error("The model returned an empty response.");
             }
 
             return result.text.trim();
-        } catch (e) {
+        } catch (e: any) {
             console.error("GeminiProvider: Chat generation failed:", e);
-            // Enhance error message for better debugging
-            const errorMessage = (e as Error).message || "Unknown error";
-            if (errorMessage.includes("API key")) {
-                throw new Error("Authentication Error: Invalid or missing API Key.");
+            const errorMessage = e?.message || "Unknown provider error";
+            
+            // Provide more actionable details for common errors
+            if (errorMessage.includes("400") || errorMessage.includes("invalid")) {
+                throw new Error(`Invalid Request: The AI engine rejected the conversation structure. (Details: ${errorMessage})`);
             }
-            throw new Error(`AI Provider Error (${model}): ${errorMessage}`);
+            if (errorMessage.includes("404") || errorMessage.includes("not found")) {
+                throw new Error(`Model Error: The selected AI model '${model || defaultModelName}' was not found.`);
+            }
+
+            throw new Error(`AI Provider Error: ${errorMessage}`);
         }
     }
 
@@ -104,22 +145,13 @@ export class GeminiProvider implements ILLMProvider {
      * @inheritdoc
      */
     async generateEmbedding(text: string): Promise<number[]> {
-        // NOTE: This remains a placeholder as the GenAI SDK does not have a dedicated embedding endpoint 
-        // that matches the current interface directly without model specification.
-        // In a production scenario, this would be replaced with a direct API call to an embedding model like 'text-embedding-004'.
-        
-        // Simulating embedding generation for now to unblock vector logic
+        // Simple hash-based simulation for now
         let hash = 0;
         for (let i = 0; i < text.length; i++) {
             const char = text.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
-            hash |= 0; // Convert to 32bit integer
+            hash |= 0;
         }
-
-        const embedding = Array(768).fill(0).map((_, i) => {
-            return Math.sin(hash + i * 0.1);
-        });
-
-        return embedding;
+        return Array(768).fill(0).map((_, i) => Math.sin(hash + i * 0.1));
     }
 }
