@@ -4,28 +4,26 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.20',
+        version: '0.5.21',
         releaseDate: new Date().toISOString(),
+        changes: `
+### 🧠 Advanced Memory Control (v0.5.21)
+
+**New Features:**
+- **Extraction Strategy Selector:** Users can now choose between "Single-Shot" (Fast/Efficient) and "Background" (High Accuracy) memory extraction modes.
+- **Configurable Models:** The model used for background extraction can be customized (e.g., use Pro for complex analysis, Flash for speed).
+- **Granular Control:** Settings can be defined globally and overridden per conversation in the Agent Setup menu.
+`
+    },
+    {
+        version: '0.5.20',
+        releaseDate: new Date(Date.now() - 3600000).toISOString(),
         changes: `
 ### ⚡ Major Optimization: Single-Shot Architecture (v0.5.20)
 
 **Core Engine:**
 - **Dual-Output Logic:** The AI now generates the chat response AND extracts memory in a single API call.
 - **Quota Saver:** Reduced API usage by 50%, virtually eliminating "429 Rate Limit" errors.
-- **Zero Latency Learning:** Memory is extracted and saved instantly, without waiting for a background job.
-- **JSON Enforcement:** The pipeline now strictly enforces structured output for machine-readable reliability.
-`
-    },
-    {
-        version: '0.5.19',
-        releaseDate: new Date(Date.now() - 3600000).toISOString(),
-        changes: `
-### ⚡ Performance & Quota Optimization (v0.5.19)
-
-**Core Engine:**
-- **Smart Extraction:** Memory extraction now skips short messages (<20 chars) to save AI quota.
-- **Model Switching:** Background tasks now use \`gemini-2.5-flash\`.
-- **Error Handling:** Graceful handling of 429 Rate Limit errors.
 `
     }
 ];

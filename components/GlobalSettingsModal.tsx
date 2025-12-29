@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { XIcon } from '@/components/Icons';
+import { XIcon, BrainIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { useConversation } from '@/components/providers/ConversationProvider';
@@ -18,7 +19,12 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
 
     useEffect(() => {
         if (settings) {
-            setLocalSettings(JSON.parse(JSON.stringify(settings)));
+            // Ensure memoryConfig exists
+            const safeSettings = JSON.parse(JSON.stringify(settings));
+            if (!safeSettings.memoryConfig) {
+                safeSettings.memoryConfig = { extractionStrategy: 'single-shot', extractionModel: 'gemini-2.5-flash' };
+            }
+            setLocalSettings(safeSettings);
         }
     }, [settings]);
     
@@ -62,6 +68,8 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
             const newSettings = JSON.parse(JSON.stringify(prev)); // Deep copy
             let current: any = newSettings;
             for (let i = 0; i < keys.length - 1; i++) {
+                // Create object if it doesn't exist (e.g. memoryConfig)
+                if (!current[keys[i]]) current[keys[i]] = {};
                 current = current[keys[i]];
             }
             current[keys[keys.length - 1]] = value;
@@ -87,7 +95,7 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
 
         return (
             <>
-                <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+                <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
                     {/* Theming */}
                     <div className="p-4 bg-gray-900/50 rounded-lg">
                         <h3 className="font-semibold text-lg mb-2">Appearance</h3>
@@ -106,11 +114,50 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
                             </button>
                          </div>
                     </div>
+                    
+                    {/* Memory Architecture */}
+                    <div className="p-4 bg-indigo-900/20 border border-indigo-500/20 rounded-lg">
+                        <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                            <BrainIcon className="w-5 h-5 text-indigo-400"/> Memory Architecture
+                        </h3>
+                        <p className="text-sm text-gray-400 mb-4">Configure how the AI learns and persists information.</p>
+                        
+                        <div className="space-y-4">
+                             <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Extraction Strategy</label>
+                                <select 
+                                    value={localSettings.memoryConfig?.extractionStrategy || 'single-shot'}
+                                    onChange={e => handleSettingChange('memoryConfig.extractionStrategy', e.target.value)}
+                                    className="w-full p-2 bg-gray-800 rounded-lg text-sm border border-gray-700 focus:border-indigo-500 outline-none"
+                                >
+                                    <option value="single-shot">Single-Shot (Fast & Efficient)</option>
+                                    <option value="background">Background Task (High Accuracy)</option>
+                                </select>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    <strong>Single-Shot:</strong> Replies and learns in one request (Save 50% API calls).<br/>
+                                    <strong>Background:</strong> Replies fast, then runs a separate, more detailed model to learn.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Extraction Model (Background Only)</label>
+                                <select 
+                                    value={localSettings.memoryConfig?.extractionModel || 'gemini-2.5-flash'}
+                                    onChange={e => handleSettingChange('memoryConfig.extractionModel', e.target.value)}
+                                    className="w-full p-2 bg-gray-800 rounded-lg text-sm border border-gray-700 focus:border-indigo-500 outline-none"
+                                    disabled={localSettings.memoryConfig?.extractionStrategy === 'single-shot'}
+                                >
+                                     {availableModels.length > 0 ? availableModels.map(m => (
+                                        <option key={m} value={m}>{m}</option>
+                                    )) : <option value="gemini-2.5-flash">gemini-2.5-flash</option>}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Default Model Config */}
                     <div className="p-4 bg-gray-900/50 rounded-lg">
-                        <h3 className="font-semibold text-lg mb-2">Default Model Config</h3>
-                        <p className="text-sm text-gray-400 mb-4">Settings applied to all new conversations.</p>
+                        <h3 className="font-semibold text-lg mb-2">Default Chat Model</h3>
                         <div className="space-y-4">
                            <div>
                                 <label htmlFor="defaultModel" className="block text-sm text-gray-400 mb-1">Model Name</label>
@@ -125,57 +172,23 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
                                     )) : <option value={localSettings.defaultModelConfig.model}>{localSettings.defaultModelConfig.model}</option>}
                                 </select>
                            </div>
-                            <div>
-                                <label htmlFor="defaultTemperature" className="block text-sm text-gray-400">Temperature: {localSettings.defaultModelConfig.temperature.toFixed(2)}</label>
-                                <input id="defaultTemperature" type="range" min="0" max="1" step="0.01" value={localSettings.defaultModelConfig.temperature} onChange={e => handleSettingChange('defaultModelConfig.temperature', parseFloat(e.target.value))} className="w-full" />
-                            </div>
-                             <div>
-                                <label htmlFor="defaultTopP" className="block text-sm text-gray-400">Top P: {localSettings.defaultModelConfig.topP.toFixed(2)}</label>
-                                <input id="defaultTopP" type="range" min="0" max="1" step="0.01" value={localSettings.defaultModelConfig.topP} onChange={e => handleSettingChange('defaultModelConfig.topP', parseFloat(e.target.value))} className="w-full" />
-                            </div>
                         </div>
                     </div>
 
                     {/* Default Agent Config */}
                     <div className="p-4 bg-gray-900/50 rounded-lg">
-                         <h3 className="font-semibold text-lg mb-2">Default Agent Config</h3>
+                         <h3 className="font-semibold text-lg mb-2">Default System Persona</h3>
                         <label htmlFor="defaultSystemPrompt" className="sr-only">System Prompt</label>
                         <textarea id="defaultSystemPrompt" value={localSettings.defaultAgentConfig.systemPrompt} onChange={e => handleSettingChange('defaultAgentConfig.systemPrompt', e.target.value)} placeholder="System Prompt" className="w-full p-2 bg-gray-700 rounded-lg text-sm" rows={3}></textarea>
                     </div>
-
-                    {/* Feature Flags */}
-                    {localSettings.featureFlags && (
-                        <div className="p-4 bg-gray-900/50 rounded-lg">
-                            <h3 className="font-semibold text-lg mb-2">Feature Flags</h3>
-                             <p className="text-sm text-gray-400 mb-4">Default settings for resource-intensive features in new conversations.</p>
-                             <div className="space-y-3">
-                                <label className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
-                                    <input type="checkbox" checked={localSettings.featureFlags.enableMemoryExtraction} onChange={e => handleSettingChange('featureFlags.enableMemoryExtraction', e.target.checked)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
-                                    <span>Enable Memory Extraction</span>
-                                </label>
-                                 <label className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
-                                    <input type="checkbox" checked={localSettings.featureFlags.enableProactiveSuggestions} onChange={e => handleSettingChange('featureFlags.enableProactiveSuggestions', e.target.checked)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
-                                    <span>Enable Proactive Suggestions</span>
-                                </label>
-                                 <label className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
-                                    <input type="checkbox" checked={localSettings.featureFlags.enableAutoSummarization} onChange={e => handleSettingChange('featureFlags.enableAutoSummarization', e.target.checked)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
-                                    <span>Enable Auto-Collapse Summaries</span>
-                                </label>
-                            </div>
-                        </div>
-                    )}
-
 
                      {/* Developer Settings */}
                     <div className="p-4 bg-gray-900/50 rounded-lg">
                         <h3 className="font-semibold text-lg mb-2">Developer Settings</h3>
                         <label className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
-                            <input type="checkbox" checked={localSettings.enableDebugLog.enabled} onChange={e => handleSettingChange('enableDebugLog.enabled', e.target.checked)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                            <input type="checkbox" checked={localSettings.enableDebugLog.enabled} onChange={e => handleSettingChange('enableDebugLog.enabled', e.target.value)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
                             <span>Enable Developer Logging</span>
                         </label>
-                        <p className="text-xs text-gray-400 mt-2 pl-8">
-                            When enabled, detailed logs for API calls and state changes will be saved. This may impact performance.
-                        </p>
                     </div>
                 </div>
 

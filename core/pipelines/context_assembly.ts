@@ -18,6 +18,8 @@ interface IContextAssemblyParams {
     mentionedContacts: Contact[];
     userMessageId: string;
     config: IContextAssemblyConfig;
+    // New param to control output mode
+    executionMode?: 'dual_output' | 'response_only';
 }
 
 export class ContextAssemblyPipeline {
@@ -47,41 +49,13 @@ export class ContextAssemblyPipeline {
         } catch (e) { console.warn("Failed to write to system log:", e); }
     }
 
-    private async logStep(runId: string | null, order: number, name: string, input: any, execution: () => Promise<any>) {
-        const startTime = Date.now();
-        await this.logToSystem(`[Pipeline] Step: ${name}`, { runId });
-
-        try {
-            const output = await execution();
-            const duration = Date.now() - startTime;
-            
-            if (runId && process.env.POSTGRES_URL) {
-                sql`
-                    INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status)
-                    VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
-                `.catch(() => {});
-            }
-            return output;
-        } catch (error: any) {
-            const duration = Date.now() - startTime;
-            if (runId && process.env.POSTGRES_URL) {
-                sql`
-                    INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "durationMs", status, "errorMessage")
-                    VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${duration}, 'failed', ${error.message});
-                `.catch(() => {});
-            }
-            if (name.includes('Retrieve') || name.includes('Search')) return [];
-            throw error;
-        }
-    }
-
     async run(params: IContextAssemblyParams) {
-        const { conversation, userQuery, mentionedContacts, userMessageId, config } = params;
+        const { conversation, userQuery, mentionedContacts, userMessageId, config, executionMode = 'dual_output' } = params;
         const brainId = conversation.brainId || null;
         let runId: string | null = null;
         const startTime = Date.now();
 
-        await this.logToSystem(`[Pipeline] Context Assembly Initiated`, { userQuery });
+        await this.logToSystem(`[Pipeline] Context Assembly Initiated`, { userQuery, executionMode });
 
         if (process.env.POSTGRES_URL) {
             try {
@@ -117,29 +91,45 @@ Role: ${userProfile.role || 'Assistant'}
 ${proactiveEntities.map((e: any) => `- ${e.name} (${e.type}): ${e.description}`).join('\n') || 'None'}
 `;
 
-            const finalInstruction = `
-            ${conversation.systemPrompt || "You are a helpful AI assistant."}
-            
-            ${context}
+            let finalInstruction = '';
 
-            IMPORTANT INSTRUCTION:
-            You must respond in a specific JSON format. Do not output plain text.
-            
-            JSON Structure:
-            {
-                "reply": "Your natural language response to the user here (use Markdown if needed)",
-                "memory": {
-                    "entities": [ { "name": "Name", "type": "Type", "description": "Description" } ],
-                    "facts": [ "Fact 1", "Fact 2" ],
-                    "userProfileUpdates": { "name": "...", "preference": "..." }
+            if (executionMode === 'dual_output') {
+                 // --- SINGLE-SHOT MODE (ORIGINAL) ---
+                 finalInstruction = `
+                ${conversation.systemPrompt || "You are a helpful AI assistant."}
+                
+                ${context}
+
+                IMPORTANT INSTRUCTION:
+                You must respond in a specific JSON format. Do not output plain text.
+                
+                JSON Structure:
+                {
+                    "reply": "Your natural language response to the user here (use Markdown if needed)",
+                    "memory": {
+                        "entities": [ { "name": "Name", "type": "Type", "description": "Description" } ],
+                        "facts": [ "Fact 1", "Fact 2" ],
+                        "userProfileUpdates": { "name": "...", "preference": "..." }
+                    }
                 }
-            }
 
-            Tasks:
-            1. Answer the user's request in the "reply" field.
-            2. Simultaneously, extract any NEW entities, facts, or user preferences found in this turn into the "memory" field.
-            3. If nothing new to memorize, "memory" arrays should be empty.
-            `;
+                Tasks:
+                1. Answer the user's request in the "reply" field.
+                2. Simultaneously, extract any NEW entities, facts, or user preferences found in this turn into the "memory" field.
+                3. If nothing new to memorize, "memory" arrays should be empty.
+                `;
+            } else {
+                 // --- RESPONSE ONLY MODE (BACKGROUND EXTRACTION) ---
+                 finalInstruction = `
+                 ${conversation.systemPrompt || "You are a helpful AI assistant."}
+                 
+                 ${context}
+                 
+                 Instructions:
+                 1. Answer the user's request naturally and helpfully.
+                 2. Do NOT output JSON. Just output the text response.
+                 `;
+            }
             
             const history = recentMessages.map(m => ({
                 role: m.role as 'user' | 'model',
@@ -149,11 +139,10 @@ ${proactiveEntities.map((e: any) => `- ${e.name} (${e.type}): ${e.description}`)
             // Add current message
             history.push({ role: 'user', parts: [{ text: userQuery }] });
 
-            // 3. One-Shot Generation
-            await this.logToSystem(`[Pipeline] Calling LLM (Single-Shot Mode)`);
+            // 3. Call LLM
+            await this.logToSystem(`[Pipeline] Calling LLM (${executionMode})`);
             
-            // We use the raw client here to access the JSON mode configuration
-            // forcing the LLM to adhere to the schema in one go.
+            // Note: If dual_output, we ideally want to enforce JSON mode via config, but doing it via prompt is often enough for Gemini 1.5/2.0
             const responseText = await llmProvider.generateContent(
                 history, 
                 finalInstruction, 
@@ -161,30 +150,40 @@ ${proactiveEntities.map((e: any) => `- ${e.name} (${e.type}): ${e.description}`)
                 conversation.model || undefined
             );
 
-            // 4. Parse the Dual Output
-            let parsedOutput;
-            try {
-                // Remove markdown code blocks if present
-                const cleanText = responseText.replace(/```json\n?|```/g, '').trim();
-                parsedOutput = JSON.parse(cleanText);
-            } catch (e) {
-                console.error("JSON Parse Error:", responseText);
-                // Fallback if model fails to output JSON (rare with this prompt)
-                parsedOutput = { reply: responseText, memory: {} };
+            // 4. Output Processing
+            let resultData: { reply: string, memory: any } = { reply: '', memory: null };
+
+            if (executionMode === 'dual_output') {
+                try {
+                    const cleanText = responseText.replace(/```json\n?|```/g, '').trim();
+                    const parsed = JSON.parse(cleanText);
+                    resultData.reply = parsed.reply;
+                    resultData.memory = parsed.memory;
+                } catch (e) {
+                    console.error("JSON Parse Error in Dual Output:", responseText);
+                    // Fallback
+                    resultData.reply = responseText;
+                    resultData.memory = {};
+                }
+            } else {
+                resultData.reply = responseText;
+                resultData.memory = null; // Memory extraction will happen in background
             }
 
             if (runId) {
                 const totalDuration = Date.now() - startTime;
+                // For logging, we save what we got
+                const outputLog = executionMode === 'dual_output' ? JSON.stringify(resultData) : JSON.stringify({ reply: "Text Response Generated (See Message)"});
                 sql`
                     UPDATE pipeline_runs 
-                    SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${JSON.stringify(parsedOutput)}
+                    SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${outputLog}
                     WHERE id = ${runId};
                 `.catch(() => {});
             }
 
             return { 
-                llmResponse: parsedOutput.reply || "Error: No reply generated.", 
-                extractedMemory: parsedOutput.memory || {},
+                llmResponse: resultData.reply, 
+                extractedMemory: resultData.memory,
                 llmResponseTime: Date.now() - startTime,
                 metadata: { structured: proactiveEntities }
             };

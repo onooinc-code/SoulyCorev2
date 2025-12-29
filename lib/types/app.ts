@@ -16,7 +16,7 @@ export type CognitiveTask = 'main_response' | 'memory_extraction' | 'context_ass
 export type AiProvider = 'gemini-3-flash-preview' | 'gemini-3-pro-preview' | 'external';
 
 export interface UsageMetric {
-    origin: 'retrieval' | 'generation' | 'agent_thought' | 'link_prediction' | 'synthesis';
+    origin: 'retrieval' | 'generation' | 'agent_thought' | 'link_prediction' | 'synthesis' | 'extraction';
     model: string;
     timestamp: string;
 }
@@ -62,6 +62,8 @@ export interface SavedFilterSet {
     filters: any; 
 }
 
+export type ExtractionStrategy = 'single-shot' | 'background';
+
 export interface AppSettings {
     defaultModelConfig: {
         model: string;
@@ -72,6 +74,11 @@ export interface AppSettings {
         systemPrompt: string;
         useSemanticMemory: boolean;
         useStructuredMemory: boolean;
+    };
+    // New Configuration Section
+    memoryConfig?: {
+        extractionStrategy: ExtractionStrategy;
+        extractionModel: string;
     };
     enableDebugLog: { enabled: boolean };
     featureFlags: {

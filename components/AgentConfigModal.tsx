@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { XIcon, UserCircleIcon } from '@/components/Icons';
+import { XIcon, UserCircleIcon, BrainIcon } from '@/components/Icons';
 import { motion } from 'framer-motion';
 import { useAppContext } from '@/lib/hooks/useAppContext';
 import { Conversation, Brain } from '@/lib/types';
@@ -24,46 +24,65 @@ const AgentConfigModal = ({ onClose, conversation }: AgentConfigModalProps) => {
     const [systemPrompt, setSystemPrompt] = useState('');
     const [brainId, setBrainId] = useState<string | null>(null);
     const [brains, setBrains] = useState<Brain[]>([]);
+    
+    // New Settings
+    const [extractionStrategy, setExtractionStrategy] = useState<'default' | 'single-shot' | 'background'>('default');
+    const [extractionModel, setExtractionModel] = useState<string>('default');
+    const [availableModels, setAvailableModels] = useState<string[]>([]);
 
     useEffect(() => {
-        const fetchBrains = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch('/api/brains');
-                if(res.ok) {
-                    const data = await res.json();
-                    setBrains(data);
-                }
+                const [brainsRes, modelsRes] = await Promise.all([
+                    fetch('/api/brains'),
+                    fetch('/api/models')
+                ]);
+                if(brainsRes.ok) setBrains(await brainsRes.json());
+                if(modelsRes.ok) setAvailableModels(await modelsRes.json());
             } catch (error) { console.error(error); }
         };
-        fetchBrains();
+        fetchData();
     }, []);
 
     useEffect(() => {
         if (conversation) {
             setSystemPrompt(conversation.systemPrompt || '');
             setBrainId(conversation.brainId || null);
+            
+            // Load overrides from uiSettings
+            const uiSettings = conversation.uiSettings || {};
+            setExtractionStrategy(uiSettings.extractionStrategy || 'default');
+            setExtractionModel(uiSettings.extractionModel || 'default');
         }
     }, [conversation]);
 
     const handleSave = () => {
         if (!conversation) return;
+        
+        const newUiSettings = {
+            ...(conversation.uiSettings || {}),
+            extractionStrategy: extractionStrategy === 'default' ? undefined : extractionStrategy,
+            extractionModel: extractionModel === 'default' ? undefined : extractionModel,
+        };
+
         updateCurrentConversation({
             systemPrompt,
             brainId: brainId === 'none' ? null : brainId,
+            uiSettings: newUiSettings
         });
-        addNotification({ type: 'success', title: 'Agent Updated', message: 'System instructions saved.' });
+        addNotification({ type: 'success', title: 'Agent Updated', message: 'System instructions and memory config saved.' });
         onClose();
     };
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-gray-800 w-full max-w-lg rounded-xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-gray-800 w-full max-w-lg rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
                 <div className="p-4 border-b border-gray-700 flex justify-between items-center">
                     <h3 className="font-bold text-lg flex items-center gap-2"><UserCircleIcon className="w-5 h-5 text-indigo-400"/> Agent Configuration</h3>
                     <button onClick={onClose}><XIcon className="w-5 h-5 text-gray-400 hover:text-white"/></button>
                 </div>
                 
-                <div className="p-6 space-y-6">
+                <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
                     <div>
                          <label className="text-sm font-medium text-gray-300 mb-2 block">Load Persona</label>
                          <div className="flex flex-wrap gap-2">
@@ -92,9 +111,32 @@ const AgentConfigModal = ({ onClose, conversation }: AgentConfigModalProps) => {
                             {brains.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                          </select>
                     </div>
+
+                    <div className="p-4 bg-indigo-900/10 border border-indigo-500/20 rounded-lg space-y-4">
+                        <h4 className="text-xs font-bold uppercase text-indigo-400 flex items-center gap-2"><BrainIcon className="w-4 h-4"/> Memory Strategy Overrides</h4>
+                        
+                        <div>
+                            <label className="text-xs text-gray-400 block mb-1">Extraction Strategy</label>
+                            <select value={extractionStrategy} onChange={e => setExtractionStrategy(e.target.value as any)} className="w-full p-2 bg-gray-900 rounded text-sm border border-gray-700">
+                                <option value="default">Use Global Default</option>
+                                <option value="single-shot">Single-Shot (Integrated)</option>
+                                <option value="background">Background Task</option>
+                            </select>
+                        </div>
+                        
+                         {extractionStrategy === 'background' && (
+                             <div>
+                                <label className="text-xs text-gray-400 block mb-1">Extraction Model</label>
+                                <select value={extractionModel} onChange={e => setExtractionModel(e.target.value)} className="w-full p-2 bg-gray-900 rounded text-sm border border-gray-700">
+                                    <option value="default">Use Global Default</option>
+                                    {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
+                                </select>
+                            </div>
+                         )}
+                    </div>
                 </div>
 
-                <div className="p-4 border-t border-gray-700 flex justify-end gap-2">
+                <div className="p-4 border-t border-gray-700 flex justify-end gap-2 flex-shrink-0">
                     <button onClick={onClose} className="px-4 py-2 bg-gray-700 rounded-lg text-sm">Cancel</button>
                     <button onClick={handleSave} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm">Save Configuration</button>
                 </div>
