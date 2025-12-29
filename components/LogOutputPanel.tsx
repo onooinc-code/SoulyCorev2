@@ -57,20 +57,20 @@ const LogEntry: React.FC<LogEntryProps> = ({ log, onJumpToChat }) => {
                 </button>
             </div>
             <span className="mt-0.5">{levelIcon[log.level as LogLevel]}</span>
-            <span className="text-gray-500 flex-shrink-0">{new Date(log.timestamp).toISOString().slice(11, 23)}</span>
+            <span className="text-gray-500 flex-shrink-0 font-mono text-[10px]">{new Date(log.timestamp).toLocaleTimeString()}</span>
             <div className="flex-1 whitespace-pre-wrap break-words min-w-0">
                 <p>
                     {log.message}
                     {conversationId && (
-                         <span className="ml-2 text-[10px] text-gray-600 font-mono bg-black/30 px-1.5 py-0.5 rounded border border-white/5">
-                            CTX: {conversationId.substring(0, 6)}...
+                         <span className="ml-2 text-[9px] text-indigo-400/70 font-mono border border-indigo-500/20 px-1 rounded">
+                            CTX: {conversationId.substring(0, 5)}...
                          </span>
                     )}
                 </p>
                 {log.payload && (
                     <details className="mt-1 text-gray-500">
-                        <summary className="cursor-pointer text-xs outline-none focus:underline">Payload</summary>
-                        <pre className="text-xs bg-gray-800 p-2 rounded-md mt-1 overflow-auto max-h-60">
+                        <summary className="cursor-pointer text-[10px] outline-none focus:underline hover:text-indigo-300">Payload</summary>
+                        <pre className="text-[10px] bg-gray-900/50 p-2 rounded-md mt-1 overflow-auto max-h-40 border border-white/5">
                             <code>{JSON.stringify(log.payload, null, 2)}</code>
                         </pre>
                     </details>
@@ -92,7 +92,7 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
 
     useEffect(() => {
         if (isAutoScrollEnabled && logContainerRef.current) {
-            logContainerRef.current.scrollTop = 0;
+            logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
         }
     }, [logs, isAutoScrollEnabled]);
 
@@ -106,9 +106,13 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
     }, [logs]);
 
     const filteredLogs = useMemo(() => {
+        // Reverse logs for display (newest at bottom is standard for terminals, but here we render top-down list usually. 
+        // Let's keep array order (newest first in state usually, so reverse to show history flow top-down)
+        const sortedLogs = [...logs].reverse();
+
         const levelFiltered = filter === 'all'
-            ? logs
-            : logs.filter(log => log.level === filter);
+            ? sortedLogs
+            : sortedLogs.filter(log => log.level === filter);
 
         if (!searchTerm.trim()) {
             return levelFiltered;
@@ -127,7 +131,6 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
     const handleJumpToChat = (id: string) => {
         setCurrentConversation(id);
         setActiveView('chat');
-        // Optionally close the panel if on mobile, or keep open if debugging
         if (window.innerWidth < 1024) {
             setLogPanelOpen(false);
         }
@@ -136,60 +139,61 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
     const FilterButton = ({ level, label, count }: { level: FilterLevel, label: string, count: number }) => (
         <button
             onClick={() => setFilter(level)}
-            className={`flex items-center gap-1.5 px-2 py-0.5 text-xs rounded transition-colors ${filter === level ? 'bg-indigo-600 text-white' : 'bg-gray-600 hover:bg-gray-500'}`}
+            className={`flex items-center gap-1.5 px-2 py-0.5 text-xs rounded transition-colors ${filter === level ? 'bg-indigo-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
         >
             <span>{label}</span>
-            <span className={`text-xs ${filter === level ? 'text-indigo-200' : 'text-gray-400'}`}>{count}</span>
+            <span className={`text-[10px] ${filter === level ? 'text-indigo-200' : 'text-gray-400'}`}>{count}</span>
         </button>
     );
 
     return (
         <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: '350px', opacity: 1 }}
+            animate={{ height: '300px', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="bg-gray-900 border-t border-gray-700 overflow-hidden flex flex-col shadow-[0_-5px_20px_rgba(0,0,0,0.5)] z-50 relative"
+            className="bg-gray-950 border-t border-gray-700 flex flex-col shadow-inner z-50 relative font-mono"
         >
-            <div className="flex justify-between items-center p-2 bg-gray-800 text-xs font-bold text-gray-300 gap-4">
+            <div className="flex justify-between items-center p-2 bg-gray-900 text-xs text-gray-300 gap-4 border-b border-gray-800">
                 <div className="flex items-center gap-4 flex-grow">
-                    <span className="flex-shrink-0 flex items-center gap-2">
-                        <CommandLineIcon className="w-4 h-4 text-indigo-400"/> System Output
+                    <span className="flex-shrink-0 flex items-center gap-2 font-bold text-indigo-400">
+                        <CommandLineIcon className="w-4 h-4"/> System Output
                     </span>
                      <div className="relative flex-grow max-w-xs">
-                        <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
                         <input
                             type="text"
-                            placeholder="Filter logs..."
+                            placeholder="Filter output..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full bg-gray-700 rounded-md pl-8 pr-2 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="w-full bg-black/50 border border-white/10 rounded-md pl-7 pr-2 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-300"
                         />
                     </div>
                 </div>
-                 <div className="flex items-center gap-1.5 flex-shrink-0">
+                 <div className="flex items-center gap-2 flex-shrink-0">
                     <FilterButton level="all" label="All" count={logCounts.all} />
                     <FilterButton level="info" label="Info" count={logCounts.info} />
                     <FilterButton level="warn" label="Warn" count={logCounts.warn} />
                     <FilterButton level="error" label="Error" count={logCounts.error} />
+                     <div className="w-px h-4 bg-gray-700 mx-1"></div>
                      <button
                         onClick={() => setIsAutoScrollEnabled(prev => !prev)}
-                        className={`ml-2 px-2 py-0.5 text-xs rounded transition-colors ${isAutoScrollEnabled ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-500'}`}
-                        title="Toggle auto-scrolling to the latest log"
+                        className={`px-2 py-0.5 text-[10px] rounded transition-colors ${isAutoScrollEnabled ? 'bg-indigo-900/50 text-indigo-300 border border-indigo-500/30' : 'bg-gray-800 text-gray-500 border border-transparent'}`}
                     >
-                        {isAutoScrollEnabled ? 'Auto-Scroll: ON' : 'Scroll: OFF'}
+                        {isAutoScrollEnabled ? 'Auto-Scroll' : 'Manual'}
                     </button>
-                    <button onClick={clearLogs} className="px-2 py-0.5 text-xs bg-red-800 text-white rounded hover:bg-red-700">Clear</button>
+                    <button onClick={clearLogs} className="px-2 py-0.5 text-[10px] bg-gray-800 hover:bg-red-900/50 hover:text-red-300 text-gray-400 rounded transition-colors">Clear</button>
                 </div>
             </div>
-            <div ref={logContainerRef} className="flex-1 p-2 overflow-y-auto text-xs font-mono bg-gray-950">
+            <div ref={logContainerRef} className="flex-1 p-2 overflow-y-auto text-xs bg-black/40">
                 {filteredLogs.length > 0 ? (
                      filteredLogs.map((log, index) => (
                         <LogEntry key={`${log.id}-${index}`} log={log} onJumpToChat={handleJumpToChat} />
                     ))
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                        <p>No logs match the current filter.</p>
+                    <div className="flex flex-col items-center justify-center h-full text-gray-600 gap-2">
+                         <CommandLineIcon className="w-8 h-8 opacity-20"/>
+                        <p>System output is quiet.</p>
                     </div>
                 )}
             </div>

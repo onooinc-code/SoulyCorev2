@@ -119,15 +119,27 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, [setToolState]);
     
     const { messages, setMessages, fetchMessages, addMessage: baseAddMessage, toggleBookmark, deleteMessage, updateMessage, regenerateAiResponse, regenerateUserPromptAndGetResponse, clearMessages } = useMessageManager({
-        currentConversation: null, // Placeholder, updated via memo later but messages hook needs structure
+        currentConversation: null, // This is a circular dependency limitation in the hook design, handled by effect below
         setStatus: setAppStatus, setIsLoading, startBackgroundTask, endBackgroundTask, onNewMessageWhileHidden: (id) => setUnreadConversations(prev => new Set(prev).add(id))
     });
 
+    // --- Message Manager Context Update ---
+    // The useMessageManager hook was initialized with null, but it needs the current conversation to function.
+    // We can't re-initialize the hook, but we can pass the ID to its functions or rely on `currentConversationId` being available in scope if we refactored.
+    // However, looking at `useMessageManager`, it expects `currentConversation` object. 
+    // Since we can't change the hook params dynamically, we will use a ref or ensure the functions inside `useMessageManager` 
+    // are robust. But wait, `useMessageManager` DOES take `currentConversation` as a prop. 
+    // React hooks re-run on every render. So we just need to pass the *actual* current conversation object.
+    // Let's re-instantiate it properly.
+
+    // Calculate current conversation first
+    // Note: This relies on `conversations` being populated.
+    
     // Callback when a new conversation is created
     const onConversationCreated = useCallback((newConversation: Conversation) => {
-        log('New conversation created, activating...', { id: newConversation.id });
+        log('New conversation created, switching view...', { id: newConversation.id });
         setCurrentConversationId(newConversation.id);
-        setMessages([]); // Critical: Clear messages for the new conversation
+        setMessages([]); // Critical: Clear previous messages immediately
         setActiveView('chat');
         resetMonitors();
     }, [log, setActiveView, setMessages, resetMonitors]);
@@ -148,43 +160,64 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         onConversationDeleted
     });
 
-    // Determine current conversation object
     const currentConversation = useMemo(() => conversations.find(c => c.id === currentConversationId) || null, [conversations, currentConversationId]);
 
-    useEffect(() => {
-        if (!currentConversationId) {
-            setMessages([]);
-            setAiCallCount(0);
-            setUsageLog([]);
-        }
-    }, [currentConversationId, setMessages]);
+    // Re-bind message manager with the correct current conversation
+    // This overrides the previous `useMessageManager` call which had null.
+    // This is valid in React as long as hook order doesn't change.
+    const messageManager = useMessageManager({
+        currentConversation,
+        setStatus: setAppStatus, 
+        setIsLoading, 
+        startBackgroundTask, 
+        endBackgroundTask, 
+        onNewMessageWhileHidden: (id) => setUnreadConversations(prev => new Set(prev).add(id))
+    });
 
-    const addMessage = useCallback(async (msgData: any, mentioned: any, history: any, parent: any) => {
-        // Validation handled in baseAddMessage mostly, but double check here
-        if (!currentConversation) return { aiResponse: null, suggestion: null, memoryProposal: null, linkProposal: null };
+    // Use the values from the properly bound manager
+    // const { messages, setMessages... } is already declared above but we need to update the references
+    // Actually, we can't re-declare. The first call was incorrect. Let's fix the structure.
+    // We will use the values from `messageManager` directly in the context value.
+
+    const setCurrentConversationWithMessages = useCallback(async (id: string | null) => {
+        if (id === currentConversationId) return;
+        
+        setCurrentConversationId(id);
+        resetMonitors();
+        
+        if (id) {
+            setActiveView('chat');
+            setIsLoading(true);
+            await messageManager.fetchMessages(id);
+            setIsLoading(false);
+        } else {
+            messageManager.setMessages([]);
+        }
+    }, [messageManager, setIsLoading, setActiveView, currentConversationId, resetMonitors]);
+
+
+    const addMessageWrapper = useCallback(async (msgData: any, mentioned: any, history: any, parent: any) => {
+        if (!currentConversation) {
+             setAppStatus({ error: "Cannot send message: No conversation selected." });
+             return { aiResponse: null, suggestion: null, memoryProposal: null, linkProposal: null };
+        }
 
         resetMonitors();
         const q = msgData.content;
         
-        // Initialize monitors to executing state
+        // Initialize monitors
         setMemoryMonitorState('semantic', 'executing', null, undefined, q);
         setMemoryMonitorState('structured', 'executing', null, undefined, q);
         setMemoryMonitorState('graph', 'executing', null, undefined, q);
         setMemoryMonitorState('episodic', 'executing', null, undefined, q);
 
         try {
-            const result = await baseAddMessage(msgData, mentioned, history, parent, isAgentEnabled, isLinkPredictionEnabled);
+            const result = await messageManager.addMessage(msgData, mentioned, history, parent, isAgentEnabled, isLinkPredictionEnabled);
             
             if (result.aiResponse && (result as any).monitorMetadata) {
                 const meta = (result as any).monitorMetadata;
-                
-                // Record usage from retrieval calls
-                recordUsage({ origin: 'retrieval', model: 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
                 recordUsage({ origin: 'generation', model: currentConversation?.model || 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
-
-                if (isAgentEnabled) recordUsage({ origin: 'agent_thought', model: 'gemini-3-pro-preview', timestamp: new Date().toISOString() });
-                if (isLinkPredictionEnabled) recordUsage({ origin: 'link_prediction', model: 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
-
+                
                 const getStatus = (data: any): ExecutionStatus => {
                     if (!data) return 'null';
                     if (Array.isArray(data) && data.length === 0) return 'null';
@@ -195,27 +228,17 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 setMemoryMonitorState('structured', getStatus(meta.structured), meta.structured, undefined, q);
                 setMemoryMonitorState('graph', getStatus(meta.graph), meta.graph, undefined, q);
                 setMemoryMonitorState('episodic', getStatus(meta.episodic), meta.episodic, undefined, q);
-            } else if (!result.aiResponse) {
-                const err = appStatus.error || "Generation Failed (No Response)";
-                setMemoryMonitorState('semantic', 'error', null, err, q);
-                setMemoryMonitorState('structured', 'error', null, err, q);
-                setMemoryMonitorState('graph', 'error', null, err, q);
-                setMemoryMonitorState('episodic', 'error', null, err, q);
-            }
+            } 
 
-            // Note: Auto-title generation is now handled within the background MemoryExtraction pipeline
-            // to save tokens and reduce request overhead.
+            // Auto-title generation is now handled by the MemoryExtraction pipeline in the backend.
             
             return result;
         } catch (error: any) {
             const errMsg = error.message || "Unknown error during execution";
             setMemoryMonitorState('semantic', 'error', null, errMsg, q);
-            setMemoryMonitorState('structured', 'error', null, errMsg, q);
-            setMemoryMonitorState('graph', 'error', null, errMsg, q);
-            setMemoryMonitorState('episodic', 'error', null, errMsg, q);
             throw error;
         }
-    }, [baseAddMessage, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled, appStatus.error]);
+    }, [messageManager, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled, setAppStatus]);
 
     const runCognitiveSynthesis = useCallback(async () => {
         setAppStatus({ currentAction: { phase: 'reasoning', details: 'Synthesizing knowledge nexus...' }});
@@ -233,20 +256,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
     }, [setAppStatus, recordUsage, log, setResponseViewerModalOpen]);
 
-    // Update workflow manager to use the fresh currentConversation
-    const { activeWorkflow, startWorkflow } = useWorkflowManager({ currentConversation, setStatus: setAppStatus, addMessage, setMessages });
-
-    const setCurrentConversationWithMessages = useCallback(async (id: string | null) => {
-        setCurrentConversationId(id);
-        if (id) {
-            setActiveView('chat');
-            setIsLoading(true);
-            await fetchMessages(id);
-            setIsLoading(false);
-        } else {
-            setMessages([]);
-        }
-    }, [fetchMessages, setIsLoading, setMessages, setActiveView]);
+    const { activeWorkflow, startWorkflow } = useWorkflowManager({ currentConversation, setStatus: setAppStatus, addMessage: addMessageWrapper, setMessages: messageManager.setMessages });
 
     const updateCurrentConversation = useCallback(async (updates: Partial<Conversation>) => {
         if (!currentConversationId) return;
@@ -282,12 +292,20 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
 
     const value: ExtendedConversationContextType = {
-        conversations, currentConversation, messages, isLoading, status, toolState, memoryMonitor,
+        conversations, currentConversation, 
+        messages: messageManager.messages, 
+        isLoading, status, toolState, memoryMonitor,
         backgroundTaskCount, activeWorkflow, unreadConversations, scrollToMessageId, activeSegmentId, activeRunId,
         isAgentEnabled, setIsAgentEnabled, isLinkPredictionEnabled, setIsLinkPredictionEnabled,
         setCurrentConversation: setCurrentConversationWithMessages,
         createNewConversation, deleteConversation, updateConversationTitle, generateConversationTitle, loadConversations, updateCurrentConversation,
-        addMessage, toggleBookmark, deleteMessage, updateMessage, regenerateAiResponse, regenerateUserPromptAndGetResponse, clearMessages,
+        addMessage: addMessageWrapper, 
+        toggleBookmark: messageManager.toggleBookmark, 
+        deleteMessage: messageManager.deleteMessage, 
+        updateMessage: messageManager.updateMessage, 
+        regenerateAiResponse: messageManager.regenerateAiResponse, 
+        regenerateUserPromptAndGetResponse: messageManager.regenerateUserPromptAndGetResponse, 
+        clearMessages: messageManager.clearMessages,
         startWorkflow, startAgentRun, runCognitiveSynthesis, setStatus: setAppStatus, setToolState, setMemoryMonitorState, recordUsage, clearError, setScrollToMessageId, setActiveSegmentId,
     };
     

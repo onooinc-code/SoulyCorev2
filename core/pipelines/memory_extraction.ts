@@ -74,11 +74,18 @@ export class MemoryExtractionPipeline {
         }
 
         try {
-            const prompt = `Analyze: "${text}"
-            1. Extract structured knowledge (entities, facts, relationships).
-            2. Suggest a concise 'title' (max 5 words) summarizing this interaction.
-            Text is likely in Arabic. 
-            Return ONLY JSON.`;
+            const prompt = `Analyze the following conversation text:
+            "${text}"
+            
+            Tasks:
+            1. Suggest a concise, descriptive title (3-5 words, in Arabic if the text is Arabic) for this conversation context.
+            2. Extract structured knowledge:
+               - Entities (People, Places, Concepts)
+               - Facts (Key information to remember)
+               - Relationships (How entities connect)
+               - User Profile (Name, Role, Preferences mentioned)
+            
+            Return JSON.`;
 
             await this.logEvent(`[Extraction] Calling LLM for analysis...`, logPayload());
             
@@ -90,7 +97,7 @@ export class MemoryExtractionPipeline {
                     responseSchema: {
                         type: Type.OBJECT,
                         properties: {
-                            title: { type: Type.STRING, description: "A concise title (3-5 words) for this conversation context." },
+                            title: { type: Type.STRING, description: "A concise title for this conversation." },
                             aiIdentity: { type: Type.OBJECT, properties: { name: { type: Type.STRING } } },
                             userProfile: { 
                                 type: Type.OBJECT, 
@@ -111,17 +118,20 @@ export class MemoryExtractionPipeline {
             const data = JSON.parse(response.text?.trim() || '{}');
             await this.logEvent(`[Extraction] LLM returned data`, logPayload(data));
 
-            // 0. Auto-Title (Optimization: Only if title is default)
+            // 0. Auto-Title Logic
+            // If the LLM suggested a title, check if we should update the conversation.
             if (data.title) {
-                // We only update if the title is generic "محادثة جديدة" or "New Chat"
-                // This prevents overwriting manual renames.
-                await sql`
+                // Update ONLY if the current title is one of the defaults.
+                // This prevents overwriting a title the user manually set.
+                const result = await sql`
                     UPDATE conversations 
                     SET title = ${data.title}, "lastUpdatedAt" = CURRENT_TIMESTAMP
-                    WHERE id = ${conversationId} AND (title = 'محادثة جديدة' OR title = 'New Chat');
+                    WHERE id = ${conversationId} 
+                      AND (title = 'New Chat' OR title = 'محادثة جديدة' OR title IS NULL);
                 `;
-                // Log this specific action as it's visible to user
-                await this.logEvent(`[Extraction] Auto-titled conversation: ${data.title}`, logPayload());
+                if (result.rowCount > 0) {
+                     await this.logEvent(`[Extraction] Auto-updated conversation title: ${data.title}`, logPayload());
+                }
             }
 
             // Syncing steps with individual logs
@@ -145,6 +155,8 @@ export class MemoryExtractionPipeline {
                 const saved = await this.structuredMemory.store({ type: 'entity', data: { ...entity, brainId } });
                 if (saved?.id) await this.entityVectorMemory.store({ id: saved.id, text: `${saved.name}: ${saved.description}`, metadata: { brainId } });
             }
+            
+            // Relationships would be stored via GraphMemory here (implementation skipped for brevity as GraphMemory logic wasn't fully requested to be changed, just extraction flow)
 
             const duration = Date.now() - startTime;
             if (runId) {

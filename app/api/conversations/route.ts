@@ -50,7 +50,8 @@ export async function GET(req: NextRequest) {
 // POST a new conversation
 export async function POST(req: NextRequest) {
     try {
-        const { title } = await req.json();
+        const body = await req.json().catch(() => ({})); // Handle empty body safely
+        const title = body.title;
         
         // 1. Fetch Global Settings to get defaults
         const { rows: settingsRows } = await sql`
