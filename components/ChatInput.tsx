@@ -79,7 +79,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     const [newButtonLabel, setNewButtonLabel] = useState('');
     const [newButtonPrompt, setNewButtonPrompt] = useState('');
 
-    // UI State for Mobile
+    // UI State for Mobile - Default to true but user can toggle
     const [showToolbars, setShowToolbars] = useState(true);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -92,7 +92,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
             // Increase max height to accommodate larger default size
-            textareaRef.current.style.height = `${Math.min(Math.max(textareaRef.current.scrollHeight, 60), 200)}px`;
+            textareaRef.current.style.height = `${Math.min(Math.max(textareaRef.current.scrollHeight, 50), 150)}px`;
         }
     }, [content]);
     

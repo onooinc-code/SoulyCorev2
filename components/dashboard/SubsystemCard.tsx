@@ -26,7 +26,6 @@ const healthColorMap: Record<string, { bg: string; text: string; }> = {
 const SubsystemCard = ({ subsystem, onOpenDetails, onAiAction }: SubsystemCardProps) => {
     const healthStyle = healthColorMap[subsystem.healthScore];
     return (
-        // FIX: Replaced `Reorder.Item` with `motion.div` to fix an incorrect usage pattern. The parent component (`HedraGoalsPanel`) is now responsible for wrapping this component in `Reorder.Item` for drag-and-drop functionality.
         <MotionDiv
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -49,3 +48,48 @@ const SubsystemCard = ({ subsystem, onOpenDetails, onAiAction }: SubsystemCardPr
                 <div className="flex justify-between text-xs mb-1">
                     <span className="font-semibold text-gray-300">Progress</span>
                     <span className="text-indigo-300">{subsystem.progress}%</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div 
+                        className="bg-indigo-500 h-2 rounded-full transition-all duration-500" 
+                        style={{ width: `${subsystem.progress}%` }}
+                    ></div>
+                </div>
+            </div>
+
+            {/* Stats Row */}
+            <div className="flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-gray-700/50">
+                <div className="flex gap-3">
+                    <span className="flex items-center gap-1"><GitCommitIcon className="w-3 h-3"/> {subsystem.githubStats.commits}</span>
+                    <span className="flex items-center gap-1"><GitPullRequestIcon className="w-3 h-3"/> {subsystem.githubStats.pullRequests}</span>
+                    <span className="flex items-center gap-1"><IssueOpenedIcon className="w-3 h-3"/> {subsystem.githubStats.issues}</span>
+                </div>
+                <div className="flex gap-2">
+                     <button 
+                        onClick={(e) => { e.stopPropagation(); onAiAction(subsystem, 'risk'); }}
+                        className="p-1 hover:bg-red-500/20 text-red-400 rounded transition-colors" 
+                        title="AI Risk Assessment"
+                    >
+                        <WarningIcon className="w-4 h-4" />
+                    </button>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); onAiAction(subsystem, 'summary'); }}
+                        className="p-1 hover:bg-indigo-500/20 text-indigo-400 rounded transition-colors" 
+                        title="AI Summary"
+                    >
+                        <SparklesIcon className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+            
+            <button 
+                onClick={(e) => { e.stopPropagation(); onOpenDetails(); }}
+                className="w-full mt-2 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 rounded text-gray-300 transition-colors"
+            >
+                View Details
+            </button>
+        </MotionDiv>
+    );
+};
+
+export default SubsystemCard;
