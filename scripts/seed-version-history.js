@@ -4,8 +4,21 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
+        version: '0.5.14',
+        releaseDate: new Date().toISOString(), // Today
+        changes: `
+### 📚 Documentation & Reference (v0.5.14)
+
+**New Resources:**
+- **Codebase Encyclopedia:** Added \`CODE_EXPLAINED.md\`, a complete technical reference manual explaining every directory, core module, and data flow in the system.
+
+**System Updates:**
+- **Documentation Sync:** Updated internal references to ensure the AI assistant is aware of the new documentation structure.
+`
+    },
+    {
         version: '0.5.13',
-        releaseDate: new Date().toISOString(), // NOW
+        releaseDate: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
         changes: `
 ### 🔍 System Audit & Versioning Fix (v0.5.13)
 
@@ -19,7 +32,7 @@ const versionData = [
     },
     {
         version: '0.5.12',
-        releaseDate: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+        releaseDate: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
         changes: `
 ### 🛠️ Stability & Live Sync Patch (v0.5.12)
 
@@ -33,7 +46,6 @@ const versionData = [
 async function seedVersionHistory() {
     console.log("Seeding version history...");
     try {
-        // We do NOT truncate here to preserve history, but we upsert the new ones.
         for (const version of versionData) {
             await sql`
                 INSERT INTO "version_history" ("version", "releaseDate", "changes")
