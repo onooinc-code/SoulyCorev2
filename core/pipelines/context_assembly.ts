@@ -140,10 +140,17 @@ export class ContextAssemblyPipeline {
             // 4. Entity Search (Hybrid: Vector + Keyword)
             const proactiveEntities = await this.logStep(runId, 4, 'Hybrid Search Entities', { userQuery, brainId }, async () => {
                  try {
+                     // FIX: Construct a richer search query including the last message to resolve pronouns (e.g. "Where does HE work?").
+                     let expandedQuery = userQuery;
+                     if (recentMessages.length > 0) {
+                         const lastMsg = recentMessages[0]; // Assuming index 0 is most recent from query above
+                         expandedQuery = `${lastMsg.content} ${userQuery}`;
+                     }
+                     
                      const entities = new Map<string, EntityDefinition>();
 
-                     // A. Vector Search
-                     const vectorResults = await this.entityVectorMemory.query({ queryText: userQuery, topK: 5 });
+                     // A. Vector Search with Expanded Query
+                     const vectorResults = await this.entityVectorMemory.query({ queryText: expandedQuery, topK: 5 });
                      if (vectorResults && vectorResults.length > 0) {
                          const ids = vectorResults.map(r => r.id);
                          const { rows } = await db.query(`
@@ -155,14 +162,14 @@ export class ContextAssemblyPipeline {
                      }
 
                      // B. Keyword Fallback (Direct DB Search)
-                     // Searches for entity names that appear in the user query
+                     // Searches for entity names that appear in the user query OR the expanded query
                      const { rows: keywordRows } = await db.query(`
                         SELECT * FROM entity_definitions
                         WHERE 
                             position(lower(name) in lower($1)) > 0
                             AND ("brainId" = $2 OR ("brainId" IS NULL AND $2 IS NULL))
                         LIMIT 3
-                     `, [userQuery, brainId]);
+                     `, [expandedQuery, brainId]);
                      
                      keywordRows.forEach((r: EntityDefinition) => entities.set(r.id, r));
 

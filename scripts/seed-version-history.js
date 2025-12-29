@@ -4,8 +4,20 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
+        version: '0.5.16',
+        releaseDate: new Date().toISOString(),
+        changes: `
+### 🚀 Vercel & Memory Core Fix (v0.5.16)
+
+**System Updates:**
+- **Admin Seeder:** Added web-based seeding tool at \`/api/admin/seed\` to fix database updates on Vercel.
+- **UI Sync:** Fixed chat response lag by removing reliance on immediate read-after-write fetches.
+- **Deep Context:** Enhanced entity lookup to use conversation history, fixing pronoun resolution ("Where does *he* work?").
+`
+    },
+    {
         version: '0.5.15',
-        releaseDate: new Date().toISOString(), // NOW
+        releaseDate: new Date(Date.now() - 3600000).toISOString(), 
         changes: `
 ### 🔧 Critical Fixes & Sync (v0.5.15)
 
@@ -15,27 +27,6 @@ const versionData = [
 
 **Documentation:**
 - **Codebase Explained:** Added comprehensive technical documentation covering the entire system architecture.
-`
-    },
-    {
-        version: '0.5.14',
-        releaseDate: new Date(Date.now() - 3600000).toISOString(),
-        changes: `
-### 📚 Documentation & Reference (v0.5.14)
-
-**New Resources:**
-- **Codebase Encyclopedia:** Added \`CODE_EXPLAINED.md\`, a complete technical reference manual explaining every directory, core module, and data flow in the system.
-`
-    },
-    {
-        version: '0.5.13',
-        releaseDate: new Date(Date.now() - 7200000).toISOString(),
-        changes: `
-### 🔍 System Audit & Versioning Fix (v0.5.13)
-
-**Critical Repairs:**
-- **Report Viewer:** Fixed a logic error where named reports (e.g., System Audit) were ignored by the viewer. Now sorts by file date.
-- **Versioning Sync:** Resolved data discrepancy.
 `
     }
 ];

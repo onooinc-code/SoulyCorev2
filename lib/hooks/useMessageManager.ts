@@ -117,7 +117,7 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
             // This ensures the UI updates even if the subsequent fetchMessages call is delayed or hits a race condition.
             if (aiResponse) {
                 const aiMessage: Message = {
-                    id: crypto.randomUUID(), // Temporary ID until refresh
+                    id: crypto.randomUUID(), // Temporary ID
                     role: 'model',
                     content: aiResponse,
                     conversationId: currentConversation.id,
@@ -127,11 +127,9 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
                 setMessages(prev => [...prev, aiMessage]);
             }
             
-            // Background fetch to sync proper IDs and any side effects
-            // We delay this slightly to let the database settle
-            setTimeout(() => {
-                fetchMessages(currentConversation.id);
-            }, 500);
+            // Do NOT re-fetch immediately to avoid race conditions with read-replicas.
+            // The local state update above is sufficient for the UI.
+            // We can silently re-sync later if needed, but not critical for immediate feedback.
 
             if (!isVisibleRef.current) {
                 onNewMessageWhileHidden(currentConversation.id);
@@ -150,7 +148,7 @@ export const useMessageManager = ({ currentConversation, setStatus, setIsLoading
             phaseTimers.current.forEach(clearTimeout);
             phaseTimers.current = [];
         }
-    }, [currentConversation, messages, setStatus, setIsLoading, startBackgroundTask, endBackgroundTask, fetchMessages, onNewMessageWhileHidden, log]);
+    }, [currentConversation, messages, setStatus, setIsLoading, startBackgroundTask, endBackgroundTask, onNewMessageWhileHidden, log]);
     
     const toggleBookmark = useCallback(async (messageId: string) => {
         try {
