@@ -36,11 +36,28 @@ export class ContextAssemblyPipeline {
         this.profileMemory = new ProfileMemoryModule();
     }
 
+    // Helper to write to the main system log table (visible in UI)
+    private async logToSystem(message: string, payload?: any, level: 'info' | 'warn' | 'error' = 'info') {
+        if (!process.env.POSTGRES_URL) return;
+        try {
+            await sql`
+                INSERT INTO logs (message, payload, level, timestamp) 
+                VALUES (${message}, ${payload ? JSON.stringify(payload) : null}, ${level}, NOW());
+            `;
+        } catch (e) {
+            console.warn("Failed to write to system log:", e);
+        }
+    }
+
     private async logStep(runId: string | null, order: number, name: string, input: any, execution: () => Promise<any>) {
         const startTime = Date.now();
+        // Log start of step to system logs for real-time feedback
+        await this.logToSystem(`[Pipeline] Starting step: ${name}`, { runId, input });
+
         try {
             const output = await execution();
             const duration = Date.now() - startTime;
+            
             if (runId && process.env.POSTGRES_URL) {
                 sql`
                     INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status)
@@ -53,6 +70,9 @@ export class ContextAssemblyPipeline {
             const errorMessage = error.message;
             console.error(`Pipeline step [${name}] failed:`, errorMessage);
             
+            // Log error to system logs
+            await this.logToSystem(`[Pipeline] Step failed: ${name}`, { error: errorMessage }, 'error');
+
             if (runId && process.env.POSTGRES_URL) {
                 sql`
                     INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "durationMs", status, "errorMessage")
@@ -77,6 +97,8 @@ export class ContextAssemblyPipeline {
         let runId: string | null = null;
         const startTime = Date.now();
         const hasDb = !!process.env.POSTGRES_URL;
+
+        await this.logToSystem(`[Pipeline] Context Assembly Initiated`, { userQuery, conversationId: conversation.id });
 
         if (hasDb) {
             try {
@@ -206,6 +228,8 @@ ${graphContext.join('\n') || 'None'}
 
             const { systemInstruction, history } = assembledData;
 
+            await this.logToSystem(`[Pipeline] Calling LLM`, { model: conversation.model });
+
             // 8. LLM Execution
             let llmResponse = "";
             try {
@@ -229,20 +253,24 @@ ${graphContext.join('\n') || 'None'}
                 `.catch(e => console.warn("Failed to update pipeline run status:", e.message));
             }
             
+            await this.logToSystem(`[Pipeline] Completed successfully`, { durationMs: Date.now() - startTime });
+
             return { 
                 llmResponse, 
                 llmResponseTime: Date.now() - startTime,
                 metadata: {
                     semantic: matchedExperiences,
-                    structured: proactiveEntities, // Returns actual array
-                    graph: graphContext, // Returns actual array
-                    episodic: recentMessages.map(m => ({role: m.role, content: m.content.substring(0, 50) + '...'})) // Return summarized message objects
+                    structured: proactiveEntities,
+                    graph: graphContext, 
+                    episodic: recentMessages.map(m => ({role: m.role, content: m.content.substring(0, 50) + '...'}))
                 }
             };
 
         } catch (error: any) {
              const finalErrorMessage = error.message;
              console.error("Critical ContextAssembly failure:", finalErrorMessage);
+             await this.logToSystem(`[Pipeline] Critical Failure`, { error: finalErrorMessage }, 'error');
+             
              if (runId && hasDb) {
                  const totalDuration = Date.now() - startTime;
                  sql`UPDATE pipeline_runs SET status = 'failed', "durationMs" = ${totalDuration}, "finalOutput" = ${finalErrorMessage} WHERE id = ${runId};`.catch(() => {});

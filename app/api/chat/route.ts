@@ -6,16 +6,22 @@ import { generateProactiveSuggestion } from '@/lib/gemini-server';
 import { EpisodicMemoryModule } from '@/core/memory/modules/episodic';
 import { MemoryExtractionPipeline } from '@/core/pipelines/memory_extraction';
 import { LinkPredictionPipeline } from '@/core/pipelines/link_prediction';
+import { sql } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
+async function logSystem(message: string, payload?: any, level: 'info'|'warn'|'error' = 'info') {
+    try {
+        await sql`INSERT INTO logs (message, payload, level, timestamp) VALUES (${message}, ${JSON.stringify(payload)}, ${level}, NOW())`;
+    } catch(e) { console.error("SysLog failed:", e); }
+}
+
 export async function POST(req: NextRequest) {
     try {
-        // Basic environment check - Look for either variable
+        // Basic environment check
         const hasKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-        
         if (!hasKey) {
-            console.error("CRITICAL: API_KEY/GEMINI_API_KEY is missing from environment variables.");
+            console.error("CRITICAL: API_KEY/GEMINI_API_KEY is missing.");
             return NextResponse.json({ error: 'System Configuration Error: Missing AI API Key' }, { status: 500 });
         }
 
@@ -27,6 +33,7 @@ export async function POST(req: NextRequest) {
         }
 
         const userQuery = messages[messages.length - 1].content;
+        await logSystem(`[Chat API] Received request`, { conversationId: conversation.id, userQueryLength: userQuery.length });
 
         // 1. READ PATH: Context Assembly
         let assemblyResult;
@@ -46,13 +53,12 @@ export async function POST(req: NextRequest) {
         } catch (assemblyError) {
             console.error("Context Assembly Pipeline failed:", assemblyError);
             const msg = (assemblyError as Error).message || "Unknown Pipeline Error";
-            const stack = (assemblyError as Error).stack;
+            await logSystem(`[Chat API] Context Assembly Failed`, { error: msg }, 'error');
             
-            // FIX: Return 'details' as an object with a 'message' property to match client expectation.
             return NextResponse.json({ 
                 error: `Cognitive Engine Failure: ${msg}`,
                 details: { message: msg },
-                stack: process.env.NODE_ENV === 'development' ? stack : undefined
+                stack: process.env.NODE_ENV === 'development' ? (assemblyError as Error).stack : undefined
             }, { status: 500 });
         }
 
@@ -113,6 +119,8 @@ export async function POST(req: NextRequest) {
             console.warn("Suggestion generation failed:", suggestionError);
         }
         
+        await logSystem(`[Chat API] Response sent successfully`, { responseTime: llmResponseTime });
+
         return NextResponse.json({ 
             response: llmResponse, 
             suggestion,
@@ -122,6 +130,7 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error('UNHANDLED CRITICAL ERROR in chat API route:', error);
+        await logSystem(`[Chat API] Critical Error`, { error: (error as Error).message }, 'error');
         return NextResponse.json({ 
             error: 'Internal Server Error',
             details: { message: (error as Error).message },

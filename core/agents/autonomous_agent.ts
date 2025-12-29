@@ -28,8 +28,17 @@ export class AutonomousAgent {
         this.ai = new GoogleGenAI({ apiKey });
     }
 
+    private async logSystem(message: string, payload?: any, level: 'info' | 'warn' | 'error' = 'info') {
+        if (!process.env.POSTGRES_URL) return;
+        try {
+            await sql`INSERT INTO logs (message, payload, level, timestamp) VALUES (${message}, ${payload ? JSON.stringify(payload) : null}, ${level}, NOW())`;
+        } catch (e) { console.error("AgentSysLog failed:", e); }
+    }
+
     public async run() {
         console.log(`[AgentRun ${this.runId}] Starting run with goal: ${this.mainGoal}`);
+        await this.logSystem(`[Agent] Starting run: ${this.mainGoal}`, { runId: this.runId });
+        
         try {
             for (const phaseDef of this.plan) {
                 await this.executePhase(phaseDef);
@@ -43,6 +52,7 @@ export class AutonomousAgent {
         } catch (error) {
             const errorMessage = `[AgentRun ${this.runId}] Run failed: ${(error as Error).message}`;
             console.error(errorMessage, (error as Error).stack);
+            await this.logSystem(`[Agent] Run failed`, { error: errorMessage }, 'error');
             await this.finalizeRun('failed', errorMessage);
         }
     }
@@ -55,7 +65,8 @@ export class AutonomousAgent {
             RETURNING id;
         `;
         const phaseId = phaseRows[0].id;
-        console.log(`[AgentRun ${this.runId}] Starting Phase ${phaseDef.phaseOrder}: ${phaseDef.goal}`);
+        
+        await this.logSystem(`[Agent] Starting Phase ${phaseDef.phaseOrder}`, { goal: phaseDef.goal });
 
         let stepCount = 0;
         let lastObservation = "No observation yet. Begin by thinking about the first step to achieve your goal.";
@@ -65,6 +76,8 @@ export class AutonomousAgent {
             
             // 2. Generate thought and action
             const { thought, action, action_input, is_final_answer } = await this.generateNextStep(phaseId, phaseDef.goal, lastObservation);
+
+            await this.logSystem(`[Agent] Thought`, { thought, action });
 
             // 3. Log the step (thought process)
             const { rows: stepRows } = await sql`
@@ -80,6 +93,7 @@ export class AutonomousAgent {
             }
 
             // 4. Execute the tool/action
+            await this.logSystem(`[Agent] Executing Tool: ${action}`, action_input);
             const observation = await executeTool(action, action_input);
             lastObservation = observation;
 
@@ -154,6 +168,7 @@ export class AutonomousAgent {
         if (status === 'completed') {
             this.memory.push(result);
         }
+        await this.logSystem(`[Agent] Phase Finalized: ${status}`, { result });
         console.log(`[AgentRun ${this.runId}] Finalized Phase. Status: ${status}. Result: ${result}`);
     }
 
@@ -163,6 +178,7 @@ export class AutonomousAgent {
             SET status = ${status}, result_summary = ${resultSummary}, "completedAt" = NOW()
             WHERE id = ${this.runId};
         `;
+        await this.logSystem(`[Agent] Run Finalized: ${status}`);
         console.log(`[AgentRun ${this.runId}] Finalized Run. Status: ${status}`);
     }
 }
