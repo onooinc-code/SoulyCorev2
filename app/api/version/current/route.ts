@@ -6,19 +6,20 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.5.10',
-    version: '0.5.10',
+    id: 'v-0.5.11',
+    version: '0.5.11',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🛠️ Robust Auth Strategy (v0.5.10)
+### 🚀 UX & Traceability Upgrade (v0.5.11)
 
-**Critical Fixes:**
-- **Smart Key Selection:** The system now intelligently iterates through all available environment variables (\`API_KEY\`, \`GEMINI_API_KEY\`) and prioritizes the one that matches the Google API Key format (starts with \`AIza\`). This resolves issues where an empty or invalid primary key would block the valid backup key.
-- **Enhanced Sanitization:** Hardened logic to strip surrounding quotes and trim whitespace across all authentication entry points.
+**Core Experience:**
+- **Auto-Navigation:** Creating a new chat now automatically switches focus to it, clearing the previous view immediately.
+- **Smart Auto-Titling:** New conversations start as "محادثة جديدة" and automatically generate a descriptive title after the first AI response.
 
-**Diagnostics:**
-- **Key Source Visibility:** The diagnostics panel now correctly reports which specific environment variable (and its validity status) is currently active.
+**System Observability:**
+- **Deep Trace Links:** System logs in the Dashboard and Log Panel are now clickable, jumping directly to the specific conversation context where the event occurred.
+- **Granular Pipeline Logging:** Added specific \`conversationId\` tracking to all memory extraction and context assembly steps.
 `
 };
 
@@ -40,6 +41,7 @@ export async function GET() {
         const { rows } = await sql<VersionHistory>`SELECT * FROM version_history ORDER BY "releaseDate" DESC LIMIT 1;`;
         if (rows.length === 0) return NextResponse.json(staticCurrentVersion);
         const dbVersion = rows[0];
+        // If DB version is older than static (e.g. fresh deploy before seed), use static
         if (compareVersions(dbVersion.version, staticCurrentVersion.version) < 0) return NextResponse.json(staticCurrentVersion);
         return NextResponse.json(dbVersion);
     } catch (error) { return NextResponse.json(staticCurrentVersion); }

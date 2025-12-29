@@ -4,8 +4,23 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.10',
+        version: '0.5.11',
         releaseDate: new Date().toISOString(),
+        changes: `
+### 🚀 UX & Traceability Upgrade (v0.5.11)
+
+**Core Experience:**
+- **Auto-Navigation:** Creating a new chat now automatically switches focus to it, clearing the previous view immediately.
+- **Smart Auto-Titling:** New conversations start as "محادثة جديدة" and automatically generate a descriptive title after the first AI response.
+
+**System Observability:**
+- **Deep Trace Links:** System logs in the Dashboard and Log Panel are now clickable, jumping directly to the specific conversation context where the event occurred.
+- **Granular Pipeline Logging:** Added specific \`conversationId\` tracking to all memory extraction and context assembly steps.
+`
+    },
+    {
+        version: '0.5.10',
+        releaseDate: new Date('2025-12-28T10:00:00Z').toISOString(),
         changes: `
 ### 🛠️ Robust Auth Strategy (v0.5.10)
 
@@ -19,7 +34,7 @@ const versionData = [
     },
     {
         version: '0.5.9',
-        releaseDate: new Date().toISOString(),
+        releaseDate: new Date('2025-12-27T10:00:00Z').toISOString(),
         changes: `
 ### 🛠️ Strict Auth Sanitization (v0.5.9)
 
@@ -34,7 +49,7 @@ const versionData = [
     },
     {
         version: '0.5.8',
-        releaseDate: new Date().toISOString(),
+        releaseDate: new Date('2025-12-26T10:00:00Z').toISOString(),
         changes: `
 ### 🛠️ Key Sanitization & Diagnostics (v0.5.8)
 
@@ -48,7 +63,7 @@ const versionData = [
     },
     {
         version: '0.5.7',
-        releaseDate: new Date().toISOString(),
+        releaseDate: new Date('2025-12-26T08:00:00Z').toISOString(),
         changes: `
 ### 🛠️ Global Auth Consistency (v0.5.7)
 
@@ -59,7 +74,7 @@ const versionData = [
     },
     {
         version: '0.5.6',
-        releaseDate: new Date().toISOString(),
+        releaseDate: new Date('2025-12-25T14:00:00Z').toISOString(),
         changes: `
 ### 🛠️ Auth Config Fixes (v0.5.6)
 
@@ -73,7 +88,7 @@ const versionData = [
     },
     {
         version: '0.5.5',
-        releaseDate: new Date().toISOString(),
+        releaseDate: new Date('2025-12-25T12:00:00Z').toISOString(),
         changes: `
 ### 🛠️ Build & Stability Fixes (v0.5.5)
 
@@ -85,7 +100,7 @@ const versionData = [
     },
     {
         version: '0.5.4',
-        releaseDate: new Date().toISOString(),
+        releaseDate: new Date('2025-12-25T11:00:00Z').toISOString(),
         changes: `
 ### 🛠️ Build & Stability Fixes (v0.5.4)
 
