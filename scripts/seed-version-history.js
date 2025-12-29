@@ -4,8 +4,29 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.16',
+        version: '0.5.18',
         releaseDate: new Date().toISOString(),
+        changes: `
+### 🚨 Auto-Repair (v0.5.18)
+
+**System Recovery:**
+- **Full DB Re-Init:** The Force Update button now rebuilds the entire database schema to fix missing tables (Agent Runs, Logs, etc.) on Vercel.
+- **Self-Healing:** Automatically applied schema fixes.
+`
+    },
+    {
+        version: '0.5.17',
+        releaseDate: new Date(Date.now() - 1000000).toISOString(),
+        changes: `
+### 🛠️ UI Utilities (v0.5.17)
+
+**New Features:**
+- **Force Update Button:** Added a manual trigger in the Header to re-seed the database and sync versions on Vercel without CLI access.
+`
+    },
+    {
+        version: '0.5.16',
+        releaseDate: new Date(Date.now() - 2000000).toISOString(),
         changes: `
 ### 🚀 Vercel & Memory Core Fix (v0.5.16)
 
@@ -13,20 +34,6 @@ const versionData = [
 - **Admin Seeder:** Added web-based seeding tool at \`/api/admin/seed\` to fix database updates on Vercel.
 - **UI Sync:** Fixed chat response lag by removing reliance on immediate read-after-write fetches.
 - **Deep Context:** Enhanced entity lookup to use conversation history, fixing pronoun resolution ("Where does *he* work?").
-`
-    },
-    {
-        version: '0.5.15',
-        releaseDate: new Date(Date.now() - 3600000).toISOString(), 
-        changes: `
-### 🔧 Critical Fixes & Sync (v0.5.15)
-
-**System Repairs:**
-- **Report Visibility:** Fixed a bug where named reports (like the System Audit) were hidden from the Reports Hub.
-- **Version Sync:** Forced synchronization of version history across the Header and Change Log modal.
-
-**Documentation:**
-- **Codebase Explained:** Added comprehensive technical documentation covering the entire system architecture.
 `
     }
 ];
