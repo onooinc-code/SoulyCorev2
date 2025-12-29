@@ -45,9 +45,11 @@ export async function POST(req: NextRequest) {
             console.error("Context Assembly Pipeline failed:", assemblyError);
             const msg = (assemblyError as Error).message || "Unknown Pipeline Error";
             const stack = (assemblyError as Error).stack;
+            
+            // FIX: Return 'details' as an object with a 'message' property to match client expectation.
             return NextResponse.json({ 
-                error: 'Cognitive Engine Failure', 
-                details: msg,
+                error: `Cognitive Engine Failure: ${msg}`,
+                details: { message: msg },
                 stack: process.env.NODE_ENV === 'development' ? stack : undefined
             }, { status: 500 });
         }
@@ -120,7 +122,7 @@ export async function POST(req: NextRequest) {
         console.error('UNHANDLED CRITICAL ERROR in chat API route:', error);
         return NextResponse.json({ 
             error: 'Internal Server Error',
-            details: (error as Error).message,
+            details: { message: (error as Error).message },
             stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
         }, { status: 500 });
     }

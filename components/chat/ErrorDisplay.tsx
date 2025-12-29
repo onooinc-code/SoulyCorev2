@@ -22,16 +22,12 @@ const ErrorDisplay = ({ status, isDbError, clearError }: ErrorDisplayProps) => {
     
     // Parse error details if available in the error string (sometimes passed as JSON string from API)
     let details = "";
-    let stackTrace = "";
     
     try {
-        // Sometimes the error object from the API is spread into the error message by the hook
         if (typeof status.error === 'string' && status.error.startsWith('{')) {
             const parsed = JSON.parse(status.error);
-            if (parsed.details) details = parsed.details;
+            if (parsed.details) details = typeof parsed.details === 'string' ? parsed.details : parsed.details.message;
         } 
-        // Or if the status itself has extra properties (though IStatus only has 'error' string currently)
-        // We rely on the hook passing detailed strings.
     } catch (e) {}
 
     return (
@@ -47,7 +43,7 @@ const ErrorDisplay = ({ status, isDbError, clearError }: ErrorDisplayProps) => {
                         <WarningIcon className="w-6 h-6 flex-shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-base">
-                                {isQuotaError ? 'AI Rate Limit Reached' : isEngineError ? 'Cognitive Engine Failure' : 'System Error'}
+                                {isQuotaError ? 'AI Rate Limit Reached' : isEngineError ? 'System Error' : 'Error'}
                             </h4>
                             <p className="text-sm mt-1 opacity-90 break-words font-mono">
                                 {status.error}
@@ -68,7 +64,7 @@ const ErrorDisplay = ({ status, isDbError, clearError }: ErrorDisplayProps) => {
                                     className="mt-2 text-xs underline flex items-center gap-1 hover:text-white"
                                 >
                                     <CodeIcon className="w-3 h-3" />
-                                    {showStack ? "Hide Stack Trace" : "Show Stack Trace"}
+                                    {showStack ? "Hide Trace" : "Show Trace"}
                                 </button>
                             )}
                         </div>
@@ -85,8 +81,7 @@ const ErrorDisplay = ({ status, isDbError, clearError }: ErrorDisplayProps) => {
                                 className="overflow-hidden"
                             >
                                 <div className="bg-black/50 p-2 rounded text-[10px] font-mono whitespace-pre-wrap overflow-x-auto text-red-200 mt-2 border border-red-500/30">
-                                    {/* In a real app, pass stack via a separate prop, here we simulate or check if it's appended */}
-                                    Stack trace info would appear here if available in development mode. Check console.
+                                    Check the console for the full stack trace.
                                 </div>
                             </motion.div>
                         )}
