@@ -1,0 +1,262 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulyCore | تقرير التدقيق الشامل (v0.5.12)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #6366f1;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #f1f5f9;
+            --text-sub: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 40px;
+            background: radial-gradient(circle at center, #1e1b4b 0%, transparent 70%);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .badge {
+            background: var(--primary);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .section {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .item {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 8px;
+            border-right: 3px solid var(--border);
+        }
+        
+        .item.success { border-color: var(--success); }
+        .item.warning { border-color: var(--accent); }
+        .item.danger { border-color: var(--danger); }
+
+        .item h3 { margin: 0 0 10px 0; font-size: 1.1rem; }
+        
+        .mobile-mockup {
+            border: 4px solid #333;
+            border-radius: 20px;
+            padding: 10px;
+            background: #000;
+            max-width: 300px;
+            margin: 20px auto;
+            position: relative;
+        }
+        
+        .screen {
+            background: #111827;
+            height: 500px;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-ui-mock .header { height: 50px; background: #1f2937; border-bottom: 1px solid #374151; }
+        .chat-ui-mock .body { flex: 1; padding: 10px; }
+        .chat-ui-mock .msg { background: #374151; padding: 8px; border-radius: 8px; margin-bottom: 8px; width: 80%; }
+        .chat-ui-mock .footer { padding: 10px; background: #1f2937; border-top: 1px solid #374151; }
+        
+        /* Highlight areas */
+        .problem-area {
+            border: 2px dashed var(--danger);
+            position: relative;
+        }
+        .problem-area::after {
+            content: "مساحة ضائعة";
+            position: absolute;
+            top: -20px;
+            right: 0;
+            background: var(--danger);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>تقرير فحص النظام الشامل <span class="badge">v0.5.12</span></h1>
+        <p>مراجعة الكود، المميزات، الفجوات، وتحليل تجربة الهاتف</p>
+    </header>
+
+    <!-- 1. Active Features -->
+    <div class="section">
+        <h2>✅ 1. المميزات المفعلة والنشطة</h2>
+        <div class="grid">
+            <div class="item success">
+                <h3>Pipeline الذاكرة (RAG)</h3>
+                <p>تعمل بكفاءة. يتم تجميع السياق من الرسائل السابقة، والبحث الدلالي (Pinecone)، واسترجاع الملف الشخصي (Postgres) قبل كل رد.</p>
+            </div>
+            <div class="item success">
+                <h3>الاستخراج الخلفي (Extraction)</h3>
+                <p>تعمل في الخلفية. يتم تحليل المحادثات واستخراج الكيانات والحقائق وتخزينها دون تعطيل واجهة المستخدم.</p>
+            </div>
+            <div class="item success">
+                <h3>إدارة المحادثات</h3>
+                <p>إنشاء، حذف، إعادة تسمية تلقائية، والبحث داخل الرسائل، كلها تعمل بشكل ممتاز.</p>
+            </div>
+            <div class="item success">
+                <h3>واجهة المطورين (Dev Center)</h3>
+                <p>لوحة التحكم، سجلات النظام الحية، واختبار الـ API كلها نشطة وتساعد في التشخيص.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Errors & Bugs -->
+    <div class="section">
+        <h2>⚠️ 2. الأخطاء والفجوات التقنية (Bugs & Gaps)</h2>
+        <div class="grid">
+            <div class="item danger">
+                <h3>مهلة الوكيل (Agent Timeout)</h3>
+                <p><strong>الوصف:</strong> الوكيل المستقل (Autonomous Agent) يعمل داخل دالة API عادية. منصة Vercel تقتل أي دالة تستغرق أكثر من 10-60 ثانية (حسب الخطة).<br><strong>الأثر:</strong> الوكلاء الذين لديهم خطط طويلة سيفشلون في المنتصف بصمت.<br><strong>الحل:</strong> نحتاج لفصل التنفيذ عن الـ API باستخدام Cron Jobs أو Queue خارجي (مثل Upstash QStash).</p>
+            </div>
+            <div class="item warning">
+                <h3>أدوات وهمية (Mocked Tools)</h3>
+                <p><strong>الوصف:</strong> أدوات <code>web_search</code> و <code>calculator</code> هي مجرد دوال وهمية تعيد نصوصاً ثابتة.<br><strong>الحل:</strong> يجب ربطها بـ Google Search API (أو SerpApi) ومحرك آلة حاسبة حقيقي.</p>
+            </div>
+            <div class="item warning">
+                <h3>ازدواجية متجهات الكيانات</h3>
+                <p><strong>الوصف:</strong> لدينا <code>SemanticMemory</code> (Pinecone) و <code>EntityVectorMemory</code> (Upstash). وجود قاعدتي بيانات للمتجهات يزيد التعقيد والتكلفة.<br><strong>الحل:</strong> توحيد التخزين المتجهي في Pinecone فقط لتبسيط البنية.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Mobile UX Analysis -->
+    <div class="section">
+        <h2>📱 3. تحليل تجربة الهاتف (Mobile UX)</h2>
+        <p>الوضع الحالي: النظام "يعمل" على الموبايل، لكنه ليس مريحاً.</p>
+        
+        <div style="display:flex; justify-content: center; gap: 40px; flex-wrap: wrap;">
+            
+            <!-- Current Situation -->
+            <div style="text-align: center;">
+                <h4>الوضع الحالي (The Problem)</h4>
+                <div class="mobile-mockup">
+                    <div class="screen chat-ui-mock">
+                        <div class="header"></div>
+                        <div class="body">
+                            <div class="msg">رسالة مستخدم...</div>
+                            <div class="msg" style="align-self: flex-end; background: #4f46e5;">رد الذكاء الاصطناعي...</div>
+                        </div>
+                        <div class="footer problem-area">
+                            <div style="height: 30px; background: #333; margin-bottom: 5px;">أزرار الماكرو</div>
+                            <div style="height: 40px; background: #000; border: 1px solid #444; border-radius: 20px;">Input Field</div>
+                            <div style="height: 30px; background: #333; margin-top: 5px;">أزرار التنسيق</div>
+                        </div>
+                    </div>
+                </div>
+                <p style="max-width: 300px; font-size: 0.9rem; color: #f87171;">
+                    المشكلة: عند فتح الكيبورد، أشرطة الأدوات العلوية والسفلية تلتهم 50% من الشاشة، مما يترك مساحة ضئيلة جداً لرؤية الرسائل.
+                </p>
+            </div>
+
+            <!-- Proposed Solution -->
+            <div style="text-align: center;">
+                <h4>المقترح (The Solution)</h4>
+                <div class="mobile-mockup">
+                    <div class="screen chat-ui-mock">
+                        <div class="header"></div>
+                        <div class="body">
+                            <div class="msg">رسالة مستخدم...</div>
+                            <div class="msg" style="align-self: flex-end; background: #4f46e5;">رد الذكاء الاصطناعي...</div>
+                        </div>
+                        <div class="footer" style="border-color: #10b981;">
+                            <div style="display: flex; gap: 5px;">
+                                <div style="width: 30px; height: 30px; background: #333; border-radius: 50%;">+</div>
+                                <div style="flex: 1; height: 30px; background: #000; border: 1px solid #444; border-radius: 20px;">Input</div>
+                                <div style="width: 30px; height: 30px; background: #4f46e5; border-radius: 50%;">Send</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p style="max-width: 300px; font-size: 0.9rem; color: #34d399;">
+                    الحل: وضع "Compact Mode" للموبايل. إخفاء جميع الأشرطة خلف زر (+) أو قائمة منبثقة (Bottom Sheet) تظهر فقط عند الطلب.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 4. Recommendations -->
+    <div class="section">
+        <h2>🚀 4. التوصيات والمميزات المقترحة</h2>
+        <ul>
+            <li><strong>تفعيل Web Search الحقيقي:</strong> لجعل الوكيل قادراً على جلب معلومات حية (طقس، أخبار، أسعار).</li>
+            <li><strong>تحسين الـ Mobile Layout:</strong> تنفيذ وضع "التركيز" (Focus Mode) في الموبايل الذي يخفي كل شيء ما عدا الشات عند الكتابة.</li>
+            <li><strong>دعم الصوت (Voice Input/Output):</strong> إضافة زر ميكروفون لاستخدام Gemini Audio capabilities للتحدث مع النظام بدلاً من الكتابة فقط (مفيد جداً للموبايل).</li>
+            <li><strong>نظام تنبيهات (Push Notifications):</strong> إذا انتهى الوكيل من مهمة طويلة في الخلفية، يرسل إشعاراً للمستخدم.</li>
+        </ul>
+    </div>
+
+</div>
+
+</body>
+</html>
