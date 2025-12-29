@@ -23,6 +23,7 @@ const VersionSystem = () => {
     const [currentVersion, setCurrentVersion] = useState<VersionHistory | null>(null);
     const [isLogOpen, setIsLogOpen] = useState(false);
     const [hasUnreadUpdate, setHasUnreadUpdate] = useState(false);
+    const [isSeeding, setIsSeeding] = useState(false);
 
     useEffect(() => {
         const checkVersion = async () => {
@@ -52,10 +53,30 @@ const VersionSystem = () => {
         }
     };
 
+    const handleForceUpdate = async () => {
+        if (isSeeding) return;
+        if (!confirm("تحديث قاعدة البيانات والإصدار الآن؟ (سيتم إعادة تحميل الصفحة)")) return;
+        
+        setIsSeeding(true);
+        try {
+            const res = await fetch('/api/admin/seed');
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert("فشل التحديث. تحقق من السجلات.");
+            }
+        } catch (e) {
+            console.error("Update failed", e);
+            alert("حدث خطأ أثناء التحديث.");
+        } finally {
+            setIsSeeding(false);
+        }
+    };
+
     if (!currentVersion) return null;
 
     return (
-        <>
+        <div className="flex items-center gap-2">
             <button 
                 onClick={handleClick}
                 className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all duration-300"
@@ -66,10 +87,20 @@ const VersionSystem = () => {
                 </div>
                 <span className="text-[10px] font-mono font-medium text-gray-400 group-hover:text-gray-200 transition-colors tracking-wider">v{currentVersion.version}</span>
             </button>
+
+            <button
+                onClick={handleForceUpdate}
+                disabled={isSeeding}
+                className="p-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 transition-all"
+                title="تحديث النظام (Seed Database)"
+            >
+                <RefreshIcon className={`w-3 h-3 ${isSeeding ? 'animate-spin' : ''}`} />
+            </button>
+
             <AnimatePresence>
                 {isLogOpen && <VersionLogModal onClose={() => setIsLogOpen(false)} />}
             </AnimatePresence>
-        </>
+        </div>
     );
 };
 
