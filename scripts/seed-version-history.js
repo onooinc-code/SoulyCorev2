@@ -4,6 +4,20 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
+        version: '0.5.10',
+        releaseDate: new Date().toISOString(),
+        changes: `
+### 🛠️ Robust Auth Strategy (v0.5.10)
+
+**Critical Fixes:**
+- **Smart Key Selection:** The system now intelligently iterates through all available environment variables (\`API_KEY\`, \`GEMINI_API_KEY\`) and prioritizes the one that matches the Google API Key format (starts with \`AIza\`). This resolves issues where an empty or invalid primary key would block the valid backup key.
+- **Enhanced Sanitization:** Hardened logic to strip surrounding quotes and trim whitespace across all authentication entry points.
+
+**Diagnostics:**
+- **Key Source Visibility:** The diagnostics panel now correctly reports which specific environment variable (and its validity status) is currently active.
+`
+    },
+    {
         version: '0.5.9',
         releaseDate: new Date().toISOString(),
         changes: `

@@ -6,20 +6,19 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.5.9',
-    version: '0.5.9',
+    id: 'v-0.5.10',
+    version: '0.5.10',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🛠️ Strict Auth Sanitization (v0.5.9)
+### 🛠️ Robust Auth Strategy (v0.5.10)
 
-**Security & Reliability:**
-- **Aggressive Key Cleaning:** Implemented logic to strip surrounding quotes (\`"\` or \`'\`) from API keys retrieved from environment variables. This handles common configuration errors in Vercel.
-- **Prefix Validation:** The system now warns in the server logs if an API Key does not start with \`AIza\`.
-- **Diagnostic Transparency:** The Cognitive Diagnostics panel now reports the key prefix (safe subset) to help verify if the key is loaded correctly or corrupted by formatting.
+**Critical Fixes:**
+- **Smart Key Selection:** The system now intelligently iterates through all available environment variables (\`API_KEY\`, \`GEMINI_API_KEY\`) and prioritizes the one that matches the Google API Key format (starts with \`AIza\`). This resolves issues where an empty or invalid primary key would block the valid backup key.
+- **Enhanced Sanitization:** Hardened logic to strip surrounding quotes and trim whitespace across all authentication entry points.
 
-**System Consistency:**
-- Applied the new sanitization logic across all entry points: Core Provider, Shared Library, and Model Discovery route.
+**Diagnostics:**
+- **Key Source Visibility:** The diagnostics panel now correctly reports which specific environment variable (and its validity status) is currently active.
 `
 };
 

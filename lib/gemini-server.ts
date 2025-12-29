@@ -3,24 +3,48 @@ import { GoogleGenAI, Content, Tool, GenerateContentResponse } from "@google/gen
 import { sql } from '@/lib/db';
 import { AppSettings, CognitiveTask } from '@/lib/types';
 
-// Helper to get client
+// Helper to get client with robust key selection
 const getClient = () => {
     // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
     // Added fallback for GEMINI_API_KEY to support Vercel environment configurations.
-    let apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
     
-    // SANITIZATION: Trim whitespace and surrounding quotes
-    if (apiKey) {
-        apiKey = apiKey.trim();
-        if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
-            apiKey = apiKey.substring(1, apiKey.length - 1);
+    const candidates = [process.env.API_KEY, process.env.GEMINI_API_KEY];
+    let selectedKey: string | undefined = undefined;
+
+    // 1. Priority: Find a key that looks valid (starts with AIza)
+    for (const candidate of candidates) {
+        if (!candidate) continue;
+        let key = candidate.trim();
+        // Remove surrounding quotes if present
+        if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+            key = key.substring(1, key.length - 1);
+        }
+        if (key.startsWith('AIza')) {
+            selectedKey = key;
+            break;
         }
     }
 
-    if (!apiKey) {
+    // 2. Fallback: If no AIza key found, use the first non-empty one found (sanitized)
+    if (!selectedKey) {
+        for (const candidate of candidates) {
+             if (!candidate) continue;
+             let key = candidate.trim();
+             if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+                 key = key.substring(1, key.length - 1);
+             }
+             if (key.length > 0) {
+                 selectedKey = key;
+                 break;
+             }
+        }
+    }
+
+    if (!selectedKey) {
         throw new Error("API Key not found. Please set API_KEY or GEMINI_API_KEY in environment variables.");
     }
-    return new GoogleGenAI({ apiKey });
+    
+    return new GoogleGenAI({ apiKey: selectedKey });
 };
 
 // Default fallback model

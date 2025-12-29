@@ -21,33 +21,54 @@ export class GeminiProvider implements ILLMProvider {
      */
     private getClient(): GoogleGenAI {
         if (!this.ai) {
-            // Check for API_KEY first, then GEMINI_API_KEY as a fallback.
-            let apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-            
-            // SANITIZATION: Trim whitespace and surrounding quotes
-            if (apiKey) {
-                apiKey = apiKey.trim();
-                if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
-                    apiKey = apiKey.substring(1, apiKey.length - 1);
-                }
-            }
-            
-            if (!apiKey) {
+             const candidates = [process.env.API_KEY, process.env.GEMINI_API_KEY];
+             let selectedKey: string | undefined = undefined;
+
+             // 1. Priority: Find a key that looks valid (starts with AIza)
+             for (const candidate of candidates) {
+                 if (!candidate) continue;
+                 let key = candidate.trim();
+                 // Remove surrounding quotes if present
+                 if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+                     key = key.substring(1, key.length - 1);
+                 }
+                 if (key.startsWith('AIza')) {
+                     selectedKey = key;
+                     break;
+                 }
+             }
+
+             // 2. Fallback: If no AIza key found, use the first non-empty one found
+             if (!selectedKey) {
+                 for (const candidate of candidates) {
+                      if (!candidate) continue;
+                      let key = candidate.trim();
+                      if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+                          key = key.substring(1, key.length - 1);
+                      }
+                      if (key.length > 0) {
+                          selectedKey = key;
+                          break;
+                      }
+                 }
+             }
+
+            if (!selectedKey) {
                 console.error("CRITICAL: Both API_KEY and GEMINI_API_KEY are missing from environment variables.");
                 throw new Error("Configuration Error: API Key is missing. Please add API_KEY to your Vercel project settings.");
             }
-
-            // VALIDATION WARNING
-            if (!apiKey.startsWith("AIza")) {
-                console.warn(`[GeminiProvider] WARNING: API Key does not start with 'AIza'. It might be invalid. Key starts with: '${apiKey.substring(0, 3)}...'`);
+            
+            // Safety check for logs
+            if (!selectedKey.startsWith("AIza")) {
+                 console.warn(`[GeminiProvider] WARNING: Selected API Key does not start with 'AIza'. Length: ${selectedKey.length}`);
             }
 
-            const keySource = process.env.API_KEY ? 'API_KEY' : 'GEMINI_API_KEY';
-            const maskedKey = apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4);
-            console.log(`[GeminiProvider] Initializing client using ${keySource}. Key: ${maskedKey} (Length: ${apiKey.length})`);
+            const keySource = selectedKey === process.env.API_KEY?.trim() ? 'API_KEY' : 'GEMINI_API_KEY';
+            const maskedKey = selectedKey.substring(0, 4) + '...' + selectedKey.substring(selectedKey.length - 4);
+            console.log(`[GeminiProvider] Initializing client using ${keySource}. Key: ${maskedKey}`);
 
             // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
-            this.ai = new GoogleGenAI({ apiKey });
+            this.ai = new GoogleGenAI({ apiKey: selectedKey });
         }
         return this.ai;
     }

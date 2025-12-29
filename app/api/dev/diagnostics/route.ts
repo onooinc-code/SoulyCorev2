@@ -65,11 +65,28 @@ export async function GET() {
     // 6. AI Connectivity Check (Gemini)
     try {
         const aiStart = Date.now();
-        let apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-        const keySource = process.env.API_KEY ? 'API_KEY' : 'GEMINI_API_KEY';
         
+        const candidates = [process.env.API_KEY, process.env.GEMINI_API_KEY];
+        let apiKey: string | undefined = undefined;
+        let selectedSource = 'None';
+
+        // 1. Priority Check
+        if (process.env.API_KEY && process.env.API_KEY.trim().startsWith('AIza')) {
+            apiKey = process.env.API_KEY.trim();
+            selectedSource = 'API_KEY';
+        } else if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().startsWith('AIza')) {
+             apiKey = process.env.GEMINI_API_KEY.trim();
+             selectedSource = 'GEMINI_API_KEY';
+        }
+
+        // 2. Fallback
+        if (!apiKey) {
+             apiKey = process.env.API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim();
+             selectedSource = apiKey === process.env.API_KEY?.trim() ? 'API_KEY (Fallback)' : 'GEMINI_API_KEY (Fallback)';
+        }
+
         if (apiKey) {
-            apiKey = apiKey.trim();
+            // Sanitize
             if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
                 apiKey = apiKey.substring(1, apiKey.length - 1);
             }
@@ -89,7 +106,7 @@ export async function GET() {
                 results.ai_connectivity = { 
                     status: 'healthy', 
                     latency: Date.now() - aiStart, 
-                    source: keySource,
+                    source: selectedSource,
                     keyPrefix: apiKey.substring(0, 4), // Should be AIza
                     keyLength: apiKey.length,
                     model: 'gemini-2.5-flash'

@@ -22,15 +22,38 @@ export async function GET(req: NextRequest) {
     ];
 
     try {
-        let apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+        const candidates = [process.env.API_KEY, process.env.GEMINI_API_KEY];
+        let apiKey: string | undefined = undefined;
+
+        // 1. Priority: Find a key that looks valid (starts with AIza)
+        for (const candidate of candidates) {
+            if (!candidate) continue;
+            let key = candidate.trim();
+            if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+                key = key.substring(1, key.length - 1);
+            }
+            if (key.startsWith('AIza')) {
+                apiKey = key;
+                break;
+            }
+        }
+        
+        // 2. Fallback
+        if (!apiKey) {
+            for (const candidate of candidates) {
+                if (!candidate) continue;
+                let key = candidate.trim();
+                 if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+                    key = key.substring(1, key.length - 1);
+                }
+                if (key.length > 0) {
+                    apiKey = key;
+                    break;
+                }
+            }
+        }
         
         if (apiKey) {
-            apiKey = apiKey.trim();
-             // Remove surrounding quotes if present
-            if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
-                apiKey = apiKey.substring(1, apiKey.length - 1);
-            }
-
             const ai = new GoogleGenAI({ apiKey });
             // Attempt to fetch fresh list, but don't block on it failing
             try {
