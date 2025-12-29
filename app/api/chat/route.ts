@@ -2,10 +2,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Conversation, Message, Contact } from '@/lib/types';
 import { ContextAssemblyPipeline } from '@/core/pipelines/context_assembly';
-import { generateProactiveSuggestion } from '@/lib/gemini-server';
 import { EpisodicMemoryModule } from '@/core/memory/modules/episodic';
-import { MemoryExtractionPipeline } from '@/core/pipelines/memory_extraction';
-import { LinkPredictionPipeline } from '@/core/pipelines/link_prediction';
+import { SemanticMemoryModule } from '@/core/memory/modules/semantic';
+import { StructuredMemoryModule } from '@/core/memory/modules/structured';
+import { ProfileMemoryModule } from '@/core/memory/modules/profile';
+import { EntityVectorMemoryModule } from '@/core/memory/modules/entity_vector';
 import { sql } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -18,123 +19,99 @@ async function logSystem(message: string, payload?: any, level: 'info'|'warn'|'e
 
 export async function POST(req: NextRequest) {
     try {
-        // Basic environment check
         const hasKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-        if (!hasKey) {
-            console.error("CRITICAL: API_KEY/GEMINI_API_KEY is missing.");
-            return NextResponse.json({ error: 'System Configuration Error: Missing AI API Key' }, { status: 500 });
-        }
+        if (!hasKey) return NextResponse.json({ error: 'Missing AI API Key' }, { status: 500 });
 
         const body = await req.json();
-        const { messages, conversation, mentionedContacts, userMessageId, isAgentEnabled, isLinkPredictionEnabled } = body;
-
-        if (!messages || messages.length === 0 || !conversation) {
-            return NextResponse.json({ error: 'Bad Request: Missing messages or conversation data' }, { status: 400 });
-        }
+        const { messages, conversation, mentionedContacts, userMessageId } = body;
 
         const userQuery = messages[messages.length - 1].content;
-        await logSystem(`[Chat API] Received request`, { conversationId: conversation.id, userQueryLength: userQuery.length });
-
-        // 1. READ PATH: Context Assembly
-        let assemblyResult;
-        try {
-            const pipeline = new ContextAssemblyPipeline();
-            const systemOverride = isAgentEnabled 
-                ? "You are in ReAct Mode. Think step-by-step. Choose tools carefully." 
-                : conversation.systemPrompt;
-
-            assemblyResult = await pipeline.run({
-                conversation: { ...conversation, systemPrompt: systemOverride },
-                userQuery,
-                mentionedContacts: mentionedContacts || [],
-                userMessageId,
-                config: { episodicMemoryDepth: 12, semanticMemoryTopK: 5 },
-            });
-        } catch (assemblyError) {
-            console.error("Context Assembly Pipeline failed:", assemblyError);
-            const msg = (assemblyError as Error).message || "Unknown Pipeline Error";
-            await logSystem(`[Chat API] Context Assembly Failed`, { error: msg }, 'error');
-            
-            return NextResponse.json({ 
-                error: `Cognitive Engine Failure: ${msg}`,
-                details: { message: msg },
-                stack: process.env.NODE_ENV === 'development' ? (assemblyError as Error).stack : undefined
-            }, { status: 500 });
-        }
-
-        const { llmResponse, llmResponseTime, metadata } = assemblyResult;
-
-        // Save AI message defensively
-        let savedAiMessage = null;
-        try {
-            const episodicMemory = new EpisodicMemoryModule();
-            savedAiMessage = await episodicMemory.store({
-                conversationId: conversation.id,
-                message: {
-                    role: 'model',
-                    content: llmResponse,
-                    tokenCount: Math.ceil(llmResponse.length / 4),
-                    responseTime: llmResponseTime,
-                    lastUpdatedAt: new Date(),
-                },
-            });
-        } catch (dbError) {
-            console.warn("Non-critical failure: Failed to save AI response to database history.", dbError);
-        }
-
-        // 2. Proactive Link Prediction
-        let linkProposal = null;
-        if (isLinkPredictionEnabled) {
-            try {
-                const linkPipeline = new LinkPredictionPipeline();
-                linkProposal = await linkPipeline.run({ conversationId: conversation.id, brainId: conversation.brainId || null });
-            } catch (lpError) {
-                console.warn("Link prediction failed (non-critical):", lpError);
-            }
-        }
-
-        // 3. BACKGROUND WRITE PATH
-        if (savedAiMessage) {
-            try {
-                const extractionPipeline = new MemoryExtractionPipeline();
-                extractionPipeline.run({
-                    text: `User: ${userQuery}\nAI: ${llmResponse}`,
-                    messageId: savedAiMessage.id,
-                    conversationId: conversation.id,
-                    brainId: conversation.brainId || null,
-                    config: {}
-                }).catch(e => console.error("Auto-extraction failed (background):", e));
-            } catch (extractionTriggerError) {
-                console.warn("Failed to trigger background memory extraction:", extractionTriggerError);
-            }
-        }
-
-        // Suggestion generation
-        let suggestion = null;
-        try {
-            const historyForSuggestion = messages.slice(-1).map((m: any) => ({role: m.role, parts: [{text: m.content}]}));
-            historyForSuggestion.push({role: 'model', parts: [{text: llmResponse}]});
-            suggestion = await generateProactiveSuggestion(historyForSuggestion);
-        } catch (suggestionError) {
-            console.warn("Suggestion generation failed:", suggestionError);
-        }
         
-        await logSystem(`[Chat API] Response sent successfully`, { responseTime: llmResponseTime });
+        // 1. RUN PIPELINE (Single-Shot: Response + Extraction)
+        const pipeline = new ContextAssemblyPipeline();
+        const assemblyResult = await pipeline.run({
+            conversation,
+            userQuery,
+            mentionedContacts: mentionedContacts || [],
+            userMessageId,
+            config: { episodicMemoryDepth: 10, semanticMemoryTopK: 3 },
+        });
+
+        const { llmResponse, extractedMemory, llmResponseTime } = assemblyResult;
+
+        // 2. SAVE AI RESPONSE (The "Reply" part)
+        const episodicMemory = new EpisodicMemoryModule();
+        const savedAiMessage = await episodicMemory.store({
+            conversationId: conversation.id,
+            message: {
+                role: 'model',
+                content: llmResponse,
+                tokenCount: Math.ceil(llmResponse.length / 4),
+                responseTime: llmResponseTime,
+                lastUpdatedAt: new Date(),
+            },
+        });
+
+        // 3. PROCESS EXTRACTED MEMORY (Immediate - No extra API call needed!)
+        if (extractedMemory) {
+            const { entities, facts, userProfileUpdates } = extractedMemory;
+            const brainId = conversation.brainId || null;
+
+            // Store Profile Updates
+            if (userProfileUpdates) {
+                const profileMem = new ProfileMemoryModule();
+                await profileMem.store(userProfileUpdates);
+            }
+
+            // Store Facts (Semantic)
+            if (facts && facts.length > 0) {
+                const semanticMem = new SemanticMemoryModule();
+                for (const fact of facts) {
+                    await semanticMem.store({ 
+                        text: fact, 
+                        metadata: { conversationId: conversation.id, type: 'fact', sourceMessageId: savedAiMessage.id } 
+                    });
+                }
+            }
+
+            // Store Entities (Structured + Vector)
+            if (entities && entities.length > 0) {
+                const structuredMem = new StructuredMemoryModule();
+                const vectorMem = new EntityVectorMemoryModule();
+                
+                for (const entity of entities) {
+                    const savedEntity = await structuredMem.store({ 
+                        type: 'entity', 
+                        data: { ...entity, brainId } 
+                    });
+                    
+                    if (savedEntity?.id) {
+                        await vectorMem.store({
+                            id: savedEntity.id,
+                            text: `${savedEntity.name}: ${savedEntity.description}`,
+                            metadata: { brainId }
+                        });
+                    }
+                }
+            }
+            
+            await logSystem('[Memory] Instant Extraction Processed', { 
+                entities: entities?.length || 0, 
+                facts: facts?.length || 0 
+            });
+        }
 
         return NextResponse.json({ 
             response: llmResponse, 
-            suggestion,
-            linkProposal,
-            monitorMetadata: metadata 
+            suggestion: null, 
+            monitorMetadata: assemblyResult.metadata 
         });
 
     } catch (error) {
-        console.error('UNHANDLED CRITICAL ERROR in chat API route:', error);
-        await logSystem(`[Chat API] Critical Error`, { error: (error as Error).message }, 'error');
+        console.error('Chat API Error:', error);
         return NextResponse.json({ 
             error: 'Internal Server Error',
-            details: { message: (error as Error).message },
-            stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
+            details: { message: (error as Error).message }
         }, { status: 500 });
     }
 }

@@ -10,6 +10,7 @@ import llmProvider from '@/core/llm';
 import { db, sql } from '@/lib/db';
 import type { Conversation, Contact, PipelineRun, Message, EntityDefinition, Experience, Tool } from '@/lib/types';
 import { IContextAssemblyConfig } from '../memory/types';
+import { Type } from '@google/genai';
 
 interface IContextAssemblyParams {
     conversation: Conversation;
@@ -36,7 +37,6 @@ export class ContextAssemblyPipeline {
         this.profileMemory = new ProfileMemoryModule();
     }
 
-    // Helper to write to the main system log table (visible in UI)
     private async logToSystem(message: string, payload?: any, level: 'info' | 'warn' | 'error' = 'info') {
         if (!process.env.POSTGRES_URL) return;
         try {
@@ -44,15 +44,12 @@ export class ContextAssemblyPipeline {
                 INSERT INTO logs (message, payload, level, timestamp) 
                 VALUES (${message}, ${payload ? JSON.stringify(payload) : null}, ${level}, NOW());
             `;
-        } catch (e) {
-            console.warn("Failed to write to system log:", e);
-        }
+        } catch (e) { console.warn("Failed to write to system log:", e); }
     }
 
     private async logStep(runId: string | null, order: number, name: string, input: any, execution: () => Promise<any>) {
         const startTime = Date.now();
-        // Log start of step to system logs for real-time feedback
-        await this.logToSystem(`[Pipeline] Starting step: ${name}`, { runId, input });
+        await this.logToSystem(`[Pipeline] Step: ${name}`, { runId });
 
         try {
             const output = await execution();
@@ -62,30 +59,18 @@ export class ContextAssemblyPipeline {
                 sql`
                     INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "outputPayload", "durationMs", status)
                     VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${JSON.stringify(output)}, ${duration}, 'completed');
-                `.catch(e => console.warn(`DB Log Step ${name} failed:`, e.message));
+                `.catch(() => {});
             }
             return output;
         } catch (error: any) {
             const duration = Date.now() - startTime;
-            const errorMessage = error.message;
-            console.error(`Pipeline step [${name}] failed:`, errorMessage);
-            
-            // Log error to system logs
-            await this.logToSystem(`[Pipeline] Step failed: ${name}`, { error: errorMessage }, 'error');
-
             if (runId && process.env.POSTGRES_URL) {
                 sql`
                     INSERT INTO pipeline_run_steps ("runId", "stepOrder", "stepName", "inputPayload", "durationMs", status, "errorMessage")
-                    VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${duration}, 'failed', ${errorMessage});
-                `.catch(e => console.warn(`DB Log Error Step ${name} failed:`, e.message));
+                    VALUES (${runId}, ${order}, ${name}, ${JSON.stringify(input)}, ${duration}, 'failed', ${error.message});
+                `.catch(() => {});
             }
-
-            // Fail-safe returns for non-critical retrieval steps
-            if (name.includes('Retrieve') || name.includes('Search') || name.includes('Lookup')) {
-                if (name.includes('Episodic')) return [];
-                if (name.includes('Profile')) return { name: 'User', aiName: 'SoulyCore' };
-                return [];
-            }
+            if (name.includes('Retrieve') || name.includes('Search')) return [];
             throw error;
         }
     }
@@ -93,195 +78,119 @@ export class ContextAssemblyPipeline {
     async run(params: IContextAssemblyParams) {
         const { conversation, userQuery, mentionedContacts, userMessageId, config } = params;
         const brainId = conversation.brainId || null;
-
         let runId: string | null = null;
         const startTime = Date.now();
-        const hasDb = !!process.env.POSTGRES_URL;
 
-        await this.logToSystem(`[Pipeline] Context Assembly Initiated`, { userQuery, conversationId: conversation.id });
+        await this.logToSystem(`[Pipeline] Context Assembly Initiated`, { userQuery });
 
-        if (hasDb) {
+        if (process.env.POSTGRES_URL) {
             try {
                 const { rows: runRows } = await sql<PipelineRun>`
                     INSERT INTO pipeline_runs ("messageId", "pipelineType", status)
                     VALUES (${userMessageId}, 'ContextAssembly', 'running') RETURNING id;
                 `;
                 runId = runRows[0].id;
-            } catch (e) {
-                console.warn("Pipeline Run creation failed:", (e as Error).message);
-            }
+            } catch (e) {}
         }
 
         try {
-            // 1. Episodic Retrieval
-            const recentMessages = await this.logStep(runId, 1, 'Retrieve Episodic Memory', { conversationId: conversation.id }, async () => {
-                return this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth });
-            }) as Message[] || [];
-            
-            // 2. Profile Retrieval
-            const userProfile = await this.logStep(runId, 2, 'Retrieve User Profile', {}, async () => {
-                return this.profileMemory.query({});
-            }) || { name: 'User', aiName: 'SoulyCore' };
+            // 1. Retrieval Steps (Parallelized for speed)
+            const [recentMessages, userProfile, proactiveEntities] = await Promise.all([
+                this.episodicMemory.query({ conversationId: conversation.id, limit: config.episodicMemoryDepth }),
+                this.profileMemory.query({}),
+                this.entityVectorMemory.query({ queryText: userQuery, topK: 3 }).then(async (vecResults) => {
+                     if (!vecResults.length) return [];
+                     const ids = vecResults.map(r => r.id);
+                     const { rows } = await db.query(`SELECT * FROM entity_definitions WHERE id = ANY($1::uuid[])`, [ids]);
+                     return rows;
+                }).catch(() => [])
+            ]);
 
-            // 3. Experience Retrieval
-            const matchedExperiences = await this.logStep(runId, 3, 'Retrieve Learned Experiences', { userQuery, brainId }, async () => {
-                const queryWords = userQuery.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-                if (queryWords.length === 0) return [];
-                try {
-                    const { rows } = await db.query(`
-                        SELECT * FROM experiences 
-                        WHERE "triggerKeywords" && $1::text[]
-                        LIMIT 3
-                    `, [queryWords]);
-                    return rows as Experience[];
-                } catch (e) { return []; }
-            }) as Experience[] || [];
+            // 2. Assemble Context
+            const context = `
+=== IDENTITY ===
+User: ${userProfile.name || 'User'}
+AI Name: ${userProfile.aiName || 'SoulyCore'}
+Role: ${userProfile.role || 'Assistant'}
 
-            // 4. Entity Search (Hybrid: Vector + Keyword)
-            const proactiveEntities = await this.logStep(runId, 4, 'Hybrid Search Entities', { userQuery, brainId }, async () => {
-                 try {
-                     // FIX: Construct a richer search query including the last message to resolve pronouns (e.g. "Where does HE work?").
-                     let expandedQuery = userQuery;
-                     if (recentMessages.length > 0) {
-                         const lastMsg = recentMessages[0]; // Assuming index 0 is most recent from query above
-                         expandedQuery = `${lastMsg.content} ${userQuery}`;
-                     }
-                     
-                     const entities = new Map<string, EntityDefinition>();
-
-                     // A. Vector Search with Expanded Query
-                     const vectorResults = await this.entityVectorMemory.query({ queryText: expandedQuery, topK: 5 });
-                     if (vectorResults && vectorResults.length > 0) {
-                         const ids = vectorResults.map(r => r.id);
-                         const { rows } = await db.query(`
-                            SELECT * FROM entity_definitions 
-                            WHERE id = ANY($1::uuid[]) 
-                            AND ("brainId" = $2 OR ("brainId" IS NULL AND $2 IS NULL))
-                         `, [ids, brainId]);
-                         rows.forEach((r: EntityDefinition) => entities.set(r.id, r));
-                     }
-
-                     // B. Keyword Fallback (Direct DB Search)
-                     // Searches for entity names that appear in the user query OR the expanded query
-                     const { rows: keywordRows } = await db.query(`
-                        SELECT * FROM entity_definitions
-                        WHERE 
-                            position(lower(name) in lower($1)) > 0
-                            AND ("brainId" = $2 OR ("brainId" IS NULL AND $2 IS NULL))
-                        LIMIT 3
-                     `, [expandedQuery, brainId]);
-                     
-                     keywordRows.forEach((r: EntityDefinition) => entities.set(r.id, r));
-
-                     return Array.from(entities.values());
-                 } catch (e) { return []; }
-            }) as EntityDefinition[] || [];
-
-            // 5. Graph Lookup
-            const graphContext = await this.logStep(runId, 5, 'Graph Memory Lookup', { entities: proactiveEntities.map(e => e.name) }, async () => {
-                const relationships = [];
-                for (const entity of proactiveEntities) {
-                    try {
-                        const rels = await this.graphMemory.query({ entityName: entity.name, brainId });
-                        if (rels) relationships.push(...rels);
-                    } catch (e) { }
-                }
-                return relationships;
-            }) || [];
-
-            // 6. Tool Discovery
-            const discoveredTools = await this.logStep(runId, 6, 'Semantic Tool Selection', { userQuery }, async () => {
-                try {
-                    const { rows: allTools } = await db.query('SELECT name, description FROM tools');
-                    return allTools.filter((t: Tool) => 
-                        userQuery.toLowerCase().includes(t.name.toLowerCase()) || 
-                        t.description.toLowerCase().split(' ').some(word => userQuery.toLowerCase().includes(word))
-                    );
-                } catch (e) { return []; }
-            }) as Tool[] || [];
-
-            // 7. Context Assembly
-            const assembledData = await this.logStep(runId, 7, 'Assemble Final Prompt', {}, () => {
-                let context = `
-=== IDENTITY & PREFERENCES ===
-Your Name: ${userProfile.aiName || 'SoulyCore'}
-User Name: ${userProfile.name || 'User'}
-Communication Style: ${userProfile.preferences?.join(', ') || 'Helpful Assistant'}
-Role/Persona: ${userProfile.role || 'Assistant'}
-
-=== RELEVANT EXPERIENCES ===
-${matchedExperiences.map(exp => `- Goal: "${exp.goalTemplate}" -> Solution: ${JSON.stringify(exp.stepsJson)}`).join('\n') || 'None'}
-
-=== KNOWLEDGE ENTITIES ===
-${proactiveEntities.map(e => `- ${e.name} (${e.type}): ${e.description}`).join('\n') || 'None'}
-
-=== GRAPH RELATIONSHIPS ===
-${graphContext.join('\n') || 'None'}
+=== RELEVANT KNOWLEDGE ===
+${proactiveEntities.map((e: any) => `- ${e.name} (${e.type}): ${e.description}`).join('\n') || 'None'}
 `;
-                const finalInstruction = `${conversation.systemPrompt || "You are a helpful AI assistant."}\n\nUSE THE FOLLOWING CONTEXT TO INFORM YOUR RESPONSE:\n${context}`;
-                
-                const existingIds = new Set(recentMessages.map(m => m.id));
-                const formattedHistory = recentMessages.map(m => ({
-                    role: m.role as 'user' | 'model',
-                    parts: [{ text: m.content || "" }]
-                }));
-                
-                if (!existingIds.has(userMessageId)) {
-                    formattedHistory.push({ role: 'user', parts: [{ text: userQuery }] });
-                }
-                
-                return Promise.resolve({ systemInstruction: finalInstruction, history: formattedHistory });
-            });
 
-            const { systemInstruction, history } = assembledData;
-
-            await this.logToSystem(`[Pipeline] Calling LLM`, { model: conversation.model });
-
-            // 8. LLM Execution
-            let llmResponse = "";
-            try {
-                llmResponse = await llmProvider.generateContent(
-                    history, 
-                    systemInstruction, 
-                    { temperature: conversation.temperature }, 
-                    conversation.model || undefined
-                );
-            } catch (llmError: any) {
-                console.error("LLM Execution Failed:", llmError.message);
-                throw new Error(`LLM Generation Failed: ${llmError.message}`);
-            }
+            const finalInstruction = `
+            ${conversation.systemPrompt || "You are a helpful AI assistant."}
             
-            if (runId && hasDb) {
+            ${context}
+
+            IMPORTANT INSTRUCTION:
+            You must respond in a specific JSON format. Do not output plain text.
+            
+            JSON Structure:
+            {
+                "reply": "Your natural language response to the user here (use Markdown if needed)",
+                "memory": {
+                    "entities": [ { "name": "Name", "type": "Type", "description": "Description" } ],
+                    "facts": [ "Fact 1", "Fact 2" ],
+                    "userProfileUpdates": { "name": "...", "preference": "..." }
+                }
+            }
+
+            Tasks:
+            1. Answer the user's request in the "reply" field.
+            2. Simultaneously, extract any NEW entities, facts, or user preferences found in this turn into the "memory" field.
+            3. If nothing new to memorize, "memory" arrays should be empty.
+            `;
+            
+            const history = recentMessages.map(m => ({
+                role: m.role as 'user' | 'model',
+                parts: [{ text: m.content || "" }]
+            }));
+            
+            // Add current message
+            history.push({ role: 'user', parts: [{ text: userQuery }] });
+
+            // 3. One-Shot Generation
+            await this.logToSystem(`[Pipeline] Calling LLM (Single-Shot Mode)`);
+            
+            // We use the raw client here to access the JSON mode configuration
+            // forcing the LLM to adhere to the schema in one go.
+            const responseText = await llmProvider.generateContent(
+                history, 
+                finalInstruction, 
+                { temperature: conversation.temperature },
+                conversation.model || undefined
+            );
+
+            // 4. Parse the Dual Output
+            let parsedOutput;
+            try {
+                // Remove markdown code blocks if present
+                const cleanText = responseText.replace(/```json\n?|```/g, '').trim();
+                parsedOutput = JSON.parse(cleanText);
+            } catch (e) {
+                console.error("JSON Parse Error:", responseText);
+                // Fallback if model fails to output JSON (rare with this prompt)
+                parsedOutput = { reply: responseText, memory: {} };
+            }
+
+            if (runId) {
                 const totalDuration = Date.now() - startTime;
                 sql`
                     UPDATE pipeline_runs 
-                    SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${llmResponse}
+                    SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${JSON.stringify(parsedOutput)}
                     WHERE id = ${runId};
-                `.catch(e => console.warn("Failed to update pipeline run status:", e.message));
+                `.catch(() => {});
             }
-            
-            await this.logToSystem(`[Pipeline] Completed successfully`, { durationMs: Date.now() - startTime });
 
             return { 
-                llmResponse, 
+                llmResponse: parsedOutput.reply || "Error: No reply generated.", 
+                extractedMemory: parsedOutput.memory || {},
                 llmResponseTime: Date.now() - startTime,
-                metadata: {
-                    semantic: matchedExperiences,
-                    structured: proactiveEntities,
-                    graph: graphContext, 
-                    episodic: recentMessages.map(m => ({role: m.role, content: m.content.substring(0, 50) + '...'}))
-                }
+                metadata: { structured: proactiveEntities }
             };
 
         } catch (error: any) {
-             const finalErrorMessage = error.message;
-             console.error("Critical ContextAssembly failure:", finalErrorMessage);
-             await this.logToSystem(`[Pipeline] Critical Failure`, { error: finalErrorMessage }, 'error');
-             
-             if (runId && hasDb) {
-                 const totalDuration = Date.now() - startTime;
-                 sql`UPDATE pipeline_runs SET status = 'failed', "durationMs" = ${totalDuration}, "finalOutput" = ${finalErrorMessage} WHERE id = ${runId};`.catch(() => {});
-             }
+             console.error("Pipeline Critical Failure:", error);
              throw error;
         }
     }
