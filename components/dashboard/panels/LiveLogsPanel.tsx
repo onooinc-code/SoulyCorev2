@@ -1,13 +1,14 @@
+
 "use client";
 
 // components/dashboard/panels/LiveLogsPanel.tsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardPanel from '../DashboardPanel';
 import { useLog } from '../../providers/LogProvider';
-import { useUIState } from '@/components/providers/UIStateProvider';
+import { useAppContext } from '@/lib/hooks/useAppContext';
 import type { LogEntry } from '../../providers/LogProvider';
 import { motion, AnimatePresence } from 'framer-motion';
-import { InfoIcon, WarningIcon, ErrorIcon } from '../../Icons';
+import { InfoIcon, WarningIcon, ErrorIcon, ChatBubbleLeftRightIcon } from '../../Icons';
 
 const getRelativeTime = (timestamp: string): string => {
     const now = new Date();
@@ -22,7 +23,7 @@ const getRelativeTime = (timestamp: string): string => {
 const LiveLogsPanel = () => {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const { setLogPanelOpen } = useUIState();
+    const { setLogPanelOpen, setCurrentConversation, setActiveView } = useAppContext();
     const { log } = useLog(); // Main log function from provider
 
     const fetchLogs = useCallback(async () => {
@@ -46,6 +47,11 @@ const LiveLogsPanel = () => {
         return () => clearInterval(interval);
     }, [fetchLogs]);
 
+    const handleJumpToChat = (conversationId: string) => {
+        setCurrentConversation(conversationId);
+        setActiveView('chat');
+    };
+
     const levelInfo: Record<LogEntry['level'], { icon: React.ReactNode; color: string }> = {
         info: { icon: <InfoIcon className="w-3 h-3" />, color: 'text-blue-400' },
         warn: { icon: <WarningIcon className="w-3 h-3" />, color: 'text-yellow-400' },
@@ -67,6 +73,7 @@ const LiveLogsPanel = () => {
                      <AnimatePresence>
                         {logs.map((entry, index) => {
                             const info = levelInfo[entry.level];
+                            const conversationId = entry.payload?.conversationId;
                             return (
                                 <motion.div
                                     key={entry.id || `${entry.timestamp}-${index}`}
@@ -74,11 +81,20 @@ const LiveLogsPanel = () => {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0 }}
-                                    className="flex items-start gap-2"
+                                    className="flex items-start gap-2 bg-gray-900/30 p-1.5 rounded-md border border-transparent hover:border-white/5"
                                 >
                                     <span className={`mt-0.5 ${info.color}`}>{info.icon}</span>
-                                    <span className="text-gray-500">{new Date(entry.timestamp).toLocaleTimeString()}</span>
-                                    <p className={`flex-1 break-all ${info.color}`}>{entry.message}</p>
+                                    <span className="text-gray-500 whitespace-nowrap">{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                                    <p className={`flex-1 break-words ${info.color}`}>{entry.message}</p>
+                                    {conversationId && (
+                                        <button 
+                                            onClick={() => handleJumpToChat(conversationId)}
+                                            className="p-1 hover:bg-indigo-500/20 rounded text-indigo-400 hover:text-indigo-300 transition-colors"
+                                            title="Jump to Conversation"
+                                        >
+                                            <ChatBubbleLeftRightIcon className="w-3 h-3" />
+                                        </button>
+                                    )}
                                 </motion.div>
                             );
                         })}

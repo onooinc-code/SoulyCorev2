@@ -1,30 +1,26 @@
 
-
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLog } from './providers/LogProvider';
-import { InfoIcon, WarningIcon, ErrorIcon, SearchIcon, CopyIcon, CheckIcon } from '@/components/Icons';
+import { useAppContext } from '@/lib/hooks/useAppContext';
+import { InfoIcon, WarningIcon, ErrorIcon, SearchIcon, CopyIcon, CheckIcon, ChatBubbleLeftRightIcon, CommandLineIcon } from '@/components/Icons';
 import { LogEntry as LogEntryType } from './providers/LogProvider';
 
-
-interface LogOutputPanelProps {
-    // isOpen prop is no longer needed as presence is controlled by the parent
-}
+interface LogOutputPanelProps {}
 
 type LogLevel = 'info' | 'warn' | 'error';
 type FilterLevel = LogLevel | 'all';
 
-// FIX: Extracted props to a dedicated interface to fix type error with `key` prop.
 interface LogEntryProps {
     log: LogEntryType;
+    onJumpToChat: (id: string) => void;
 }
 
-// Component for rendering a single log entry
-// FIX: Changed the LogEntry component to be of type React.FC<LogEntryProps> to correctly type it as a React functional component. This resolves the TypeScript error where the 'key' prop, used in list rendering, was being incorrectly checked against the component's own props.
-const LogEntry: React.FC<LogEntryProps> = ({ log }) => {
+const LogEntry: React.FC<LogEntryProps> = ({ log, onJumpToChat }) => {
     const [copied, setCopied] = useState(false);
+    const conversationId = log.payload?.conversationId;
 
     const levelIcon: Record<LogLevel, React.ReactNode> = {
         info: <InfoIcon className="w-4 h-4 text-gray-400" />,
@@ -42,21 +38,39 @@ const LogEntry: React.FC<LogEntryProps> = ({ log }) => {
 
     return (
         <div className="group relative flex gap-3 items-start py-1.5 border-b border-gray-800/50 pr-8">
-             <button 
-                onClick={handleCopy} 
-                className="absolute top-1 right-1 p-1 rounded-md bg-gray-700 text-gray-400 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-gray-600 hover:text-white"
-                title="Copy log details"
-            >
-                {copied ? <CheckIcon className="w-3 h-3 text-green-400" /> : <CopyIcon className="w-3 h-3" />}
-            </button>
+             <div className="absolute top-1 right-1 flex gap-1">
+                 {conversationId && (
+                    <button 
+                        onClick={() => onJumpToChat(conversationId)}
+                        className="p-1 rounded-md bg-gray-700 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-indigo-600 hover:text-white"
+                        title="Jump to Conversation"
+                    >
+                        <ChatBubbleLeftRightIcon className="w-3 h-3" />
+                    </button>
+                 )}
+                 <button 
+                    onClick={handleCopy} 
+                    className="p-1 rounded-md bg-gray-700 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-600 hover:text-white"
+                    title="Copy log details"
+                >
+                    {copied ? <CheckIcon className="w-3 h-3 text-green-400" /> : <CopyIcon className="w-3 h-3" />}
+                </button>
+            </div>
             <span className="mt-0.5">{levelIcon[log.level as LogLevel]}</span>
             <span className="text-gray-500 flex-shrink-0">{new Date(log.timestamp).toISOString().slice(11, 23)}</span>
             <div className="flex-1 whitespace-pre-wrap break-words min-w-0">
-                <p>{log.message}</p>
+                <p>
+                    {log.message}
+                    {conversationId && (
+                         <span className="ml-2 text-[10px] text-gray-600 font-mono bg-black/30 px-1.5 py-0.5 rounded border border-white/5">
+                            CTX: {conversationId.substring(0, 6)}...
+                         </span>
+                    )}
+                </p>
                 {log.payload && (
                     <details className="mt-1 text-gray-500">
                         <summary className="cursor-pointer text-xs outline-none focus:underline">Payload</summary>
-                        <pre className="text-xs bg-gray-800 p-2 rounded-md mt-1 overflow-auto">
+                        <pre className="text-xs bg-gray-800 p-2 rounded-md mt-1 overflow-auto max-h-60">
                             <code>{JSON.stringify(log.payload, null, 2)}</code>
                         </pre>
                     </details>
@@ -69,15 +83,15 @@ const LogEntry: React.FC<LogEntryProps> = ({ log }) => {
 
 const LogOutputPanel = (props: LogOutputPanelProps) => {
     const { logs, clearLogs } = useLog();
+    const { setCurrentConversation, setActiveView, setLogPanelOpen } = useAppContext();
+    
     const [filter, setFilter] = useState<FilterLevel>('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
     const logContainerRef = useRef<HTMLDivElement>(null);
 
-    // Effect to handle auto-scrolling to the top when new logs arrive
     useEffect(() => {
         if (isAutoScrollEnabled && logContainerRef.current) {
-            // New logs are prepended, so we scroll to the top to see the latest.
             logContainerRef.current.scrollTop = 0;
         }
     }, [logs, isAutoScrollEnabled]);
@@ -109,6 +123,15 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
             return messageMatch || payloadMatch;
         });
     }, [logs, filter, searchTerm]);
+    
+    const handleJumpToChat = (id: string) => {
+        setCurrentConversation(id);
+        setActiveView('chat');
+        // Optionally close the panel if on mobile, or keep open if debugging
+        if (window.innerWidth < 1024) {
+            setLogPanelOpen(false);
+        }
+    };
 
     const FilterButton = ({ level, label, count }: { level: FilterLevel, label: string, count: number }) => (
         <button
@@ -123,19 +146,21 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
     return (
         <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: '250px', opacity: 1 }}
+            animate={{ height: '350px', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="bg-gray-900 border-t border-gray-700 overflow-hidden flex flex-col"
+            className="bg-gray-900 border-t border-gray-700 overflow-hidden flex flex-col shadow-[0_-5px_20px_rgba(0,0,0,0.5)] z-50 relative"
         >
             <div className="flex justify-between items-center p-2 bg-gray-800 text-xs font-bold text-gray-300 gap-4">
                 <div className="flex items-center gap-4 flex-grow">
-                    <span className="flex-shrink-0">Log Output</span>
+                    <span className="flex-shrink-0 flex items-center gap-2">
+                        <CommandLineIcon className="w-4 h-4 text-indigo-400"/> System Output
+                    </span>
                      <div className="relative flex-grow max-w-xs">
                         <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search logs..."
+                            placeholder="Filter logs..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             className="w-full bg-gray-700 rounded-md pl-8 pr-2 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -152,18 +177,20 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
                         className={`ml-2 px-2 py-0.5 text-xs rounded transition-colors ${isAutoScrollEnabled ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-500'}`}
                         title="Toggle auto-scrolling to the latest log"
                     >
-                        Auto-Scroll: {isAutoScrollEnabled ? 'ON' : 'OFF'}
+                        {isAutoScrollEnabled ? 'Auto-Scroll: ON' : 'Scroll: OFF'}
                     </button>
                     <button onClick={clearLogs} className="px-2 py-0.5 text-xs bg-red-800 text-white rounded hover:bg-red-700">Clear</button>
                 </div>
             </div>
-            <div ref={logContainerRef} className="flex-1 p-2 overflow-y-auto text-xs font-mono">
+            <div ref={logContainerRef} className="flex-1 p-2 overflow-y-auto text-xs font-mono bg-gray-950">
                 {filteredLogs.length > 0 ? (
                      filteredLogs.map((log, index) => (
-                        <LogEntry key={`${log.id}-${index}`} log={log} />
+                        <LogEntry key={`${log.id}-${index}`} log={log} onJumpToChat={handleJumpToChat} />
                     ))
                 ) : (
-                    <p className="text-gray-500 text-center pt-4">No logs to display for this filter.</p>
+                    <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                        <p>No logs match the current filter.</p>
+                    </div>
                 )}
             </div>
         </motion.div>

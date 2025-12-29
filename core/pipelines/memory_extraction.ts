@@ -56,7 +56,10 @@ export class MemoryExtractionPipeline {
         const { text, messageId, conversationId, brainId } = params;
         const startTime = Date.now();
 
-        await this.logEvent(`[Extraction] Starting pipeline for message ${messageId.slice(0,8)}`, { text });
+        // Include conversationId in ALL logs for UI traceability
+        const logPayload = (extra: any = {}) => ({ ...extra, conversationId, messageId });
+
+        await this.logEvent(`[Extraction] Starting pipeline`, logPayload({ textSnippet: text.substring(0, 50) + '...' }));
 
         // Create a pipeline run record for the "Write Path"
         let runId: string | null = null;
@@ -76,7 +79,7 @@ export class MemoryExtractionPipeline {
             Categories: aiIdentity (name), userProfile (name, role, preferences), entities (name, type, desc), relationships (source, predicate, target), facts (statements).
             Return ONLY JSON.`;
 
-            await this.logEvent(`[Extraction] Calling LLM for analysis...`);
+            await this.logEvent(`[Extraction] Calling LLM for analysis...`, logPayload());
             
             const response = await this.ai.models.generateContent({
                 model: 'gemini-3-flash-preview',
@@ -104,26 +107,26 @@ export class MemoryExtractionPipeline {
             });
 
             const data = JSON.parse(response.text?.trim() || '{}');
-            await this.logEvent(`[Extraction] LLM returned data`, data);
+            await this.logEvent(`[Extraction] LLM returned data`, logPayload(data));
 
             // Syncing steps with individual logs
             if (data.aiIdentity?.name) {
-                await this.logEvent(`[Extraction] Syncing AI Name: ${data.aiIdentity.name}`);
+                await this.logEvent(`[Extraction] Syncing AI Name: ${data.aiIdentity.name}`, logPayload());
                 await this.profileMemory.store({ aiName: data.aiIdentity.name });
             }
 
             if (data.userProfile) {
-                await this.logEvent(`[Extraction] Syncing User Profile`, data.userProfile);
+                await this.logEvent(`[Extraction] Syncing User Profile`, logPayload(data.userProfile));
                 await this.profileMemory.store(data.userProfile);
             }
 
             for (const fact of (data.facts || [])) {
-                await this.logEvent(`[Extraction] Storing Fact: ${fact}`);
+                await this.logEvent(`[Extraction] Storing Fact: ${fact}`, logPayload());
                 await this.semanticMemory.store({ text: fact, metadata: { conversationId, type: 'fact' } });
             }
 
             for (const entity of (data.entities || [])) {
-                await this.logEvent(`[Extraction] Defining Entity: ${entity.name}`);
+                await this.logEvent(`[Extraction] Defining Entity: ${entity.name}`, logPayload(entity));
                 const saved = await this.structuredMemory.store({ type: 'entity', data: { ...entity, brainId } });
                 if (saved?.id) await this.entityVectorMemory.store({ id: saved.id, text: `${saved.name}: ${saved.description}`, metadata: { brainId } });
             }
@@ -132,11 +135,11 @@ export class MemoryExtractionPipeline {
             if (runId) {
                 await sql`UPDATE pipeline_runs SET status = 'completed', "durationMs" = ${duration}, "finalOutput" = ${JSON.stringify(data)} WHERE id = ${runId}`;
             }
-            await this.logEvent(`[Extraction] Pipeline completed in ${duration}ms`);
+            await this.logEvent(`[Extraction] Pipeline completed`, logPayload({ durationMs: duration }));
 
         } catch (error) {
             const err = error as Error;
-            await this.logEvent(`[Extraction] Pipeline failed`, { error: err.message }, 'error');
+            await this.logEvent(`[Extraction] Pipeline failed`, logPayload({ error: err.message }), 'error');
             if (runId) {
                 await sql`UPDATE pipeline_runs SET status = 'failed', "finalOutput" = ${err.message} WHERE id = ${runId}`;
             }
