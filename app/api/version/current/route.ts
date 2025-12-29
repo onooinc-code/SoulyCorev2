@@ -6,19 +6,20 @@ import { VersionHistory } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 const staticCurrentVersion: VersionHistory = {
-    id: 'v-0.5.8',
-    version: '0.5.8',
+    id: 'v-0.5.9',
+    version: '0.5.9',
     releaseDate: new Date(),
     createdAt: new Date(),
     changes: `
-### 🛠️ Key Sanitization & Diagnostics (v0.5.8)
+### 🛠️ Strict Auth Sanitization (v0.5.9)
 
-**Core Logic:**
-- **Key Trimming:** The Google GenAI client initialization now automatically trims whitespace from API keys (\`API_KEY\` or \`GEMINI_API_KEY\`) to prevent copy-paste errors from breaking authentication.
+**Security & Reliability:**
+- **Aggressive Key Cleaning:** Implemented logic to strip surrounding quotes (\`"\` or \`'\`) from API keys retrieved from environment variables. This handles common configuration errors in Vercel.
+- **Prefix Validation:** The system now warns in the server logs if an API Key does not start with \`AIza\`.
+- **Diagnostic Transparency:** The Cognitive Diagnostics panel now reports the key prefix (safe subset) to help verify if the key is loaded correctly or corrupted by formatting.
 
-**Dev Center:**
-- **AI Connectivity Check:** Added a live test in the Cognitive Diagnostics panel that pings Google's API. This definitively separates configuration errors from runtime issues.
-- **Source Visibility:** The diagnostics panel now indicates which environment variable is currently active (\`API_KEY\` vs \`GEMINI_API_KEY\`).
+**System Consistency:**
+- Applied the new sanitization logic across all entry points: Core Provider, Shared Library, and Model Discovery route.
 `
 };
 

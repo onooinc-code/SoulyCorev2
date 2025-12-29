@@ -4,21 +4,21 @@
 
 ---
 
-### Update #40: Key Sanitization & Diagnostics (v0.5.8)
+### Update #41: Strict Auth Sanitization (v0.5.9)
 
 **Details:**
-Addressed the persistent "Invalid API Key" error by implementing rigorous whitespace sanitization for environment variables. Additionally, added a live "AI Connectivity" test to the Dev Center's Cognitive Diagnostics panel, allowing for instant verification of the API key's validity against Google's servers.
+Following a persistent `400 INVALID_ARGUMENT` error from Google (API key not valid), this update implements aggressive sanitization for environment variables. It specifically targets the removal of surrounding quotes (`"` or `'`), which can sometimes be accidentally pasted into Vercel's environment variable fields.
 
 **Changes Made:**
-- **GeminiProvider & Gemini Server:** Added `.trim()` to all API key retrievals to prevent hidden whitespace characters from breaking authentication.
-- **Cognitive Diagnostics:** Added a real-time `ai_connectivity` check that pings the `gemini-2.5-flash` model to verify the key and quota.
-- **UI:** Updated the diagnostics panel to show the source of the key (`API_KEY` vs `GEMINI_API_KEY`) and its status.
-- **Versioning:** Bumped version to `0.5.8`.
+- **Global:** Updated `core/llm/providers/gemini.ts`, `lib/gemini-server.ts`, and `app/api/models/route.ts` to strip quotes and trim whitespace from the API key.
+- **Validation:** Added a server-side warning log if the API key does not start with `AIza`.
+- **Diagnostics:** Updated the `api/dev/diagnostics` endpoint to return the key prefix (first 4 chars) and length, allowing the user to verify if the key is being read correctly in the UI.
+- **Versioning:** Bumped version to `0.5.9`.
 
 **Modified Files:**
 - `core/llm/providers/gemini.ts`
 - `lib/gemini-server.ts`
+- `app/api/models/route.ts`
 - `app/api/dev/diagnostics/route.ts`
-- `components/dev_center/CognitiveDiagnostics.tsx`
 - `app/api/version/current/route.ts`
 - `scripts/seed-version-history.js`

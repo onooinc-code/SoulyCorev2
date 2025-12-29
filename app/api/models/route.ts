@@ -22,9 +22,15 @@ export async function GET(req: NextRequest) {
     ];
 
     try {
-        const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+        let apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
         
         if (apiKey) {
+            apiKey = apiKey.trim();
+             // Remove surrounding quotes if present
+            if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
+                apiKey = apiKey.substring(1, apiKey.length - 1);
+            }
+
             const ai = new GoogleGenAI({ apiKey });
             // Attempt to fetch fresh list, but don't block on it failing
             try {
@@ -39,7 +45,7 @@ export async function GET(req: NextRequest) {
                     }
                 }
             } catch (e) {
-                console.warn("Failed to fetch dynamic model list from Google, using static list.");
+                console.warn("Failed to fetch dynamic model list from Google, using static list.", e);
             }
         }
 

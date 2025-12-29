@@ -4,6 +4,21 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
+        version: '0.5.9',
+        releaseDate: new Date().toISOString(),
+        changes: `
+### 🛠️ Strict Auth Sanitization (v0.5.9)
+
+**Security & Reliability:**
+- **Aggressive Key Cleaning:** Implemented logic to strip surrounding quotes (\`"\` or \`'\`) from API keys retrieved from environment variables. This handles common configuration errors in Vercel.
+- **Prefix Validation:** The system now warns in the server logs if an API Key does not start with \`AIza\`.
+- **Diagnostic Transparency:** The Cognitive Diagnostics panel now reports the key prefix (safe subset) to help verify if the key is loaded correctly or corrupted by formatting.
+
+**System Consistency:**
+- Applied the new sanitization logic across all entry points: Core Provider, Shared Library, and Model Discovery route.
+`
+    },
+    {
         version: '0.5.8',
         releaseDate: new Date().toISOString(),
         changes: `

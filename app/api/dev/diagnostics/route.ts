@@ -65,13 +65,20 @@ export async function GET() {
     // 6. AI Connectivity Check (Gemini)
     try {
         const aiStart = Date.now();
-        const rawApiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+        let apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
         const keySource = process.env.API_KEY ? 'API_KEY' : 'GEMINI_API_KEY';
         
-        if (!rawApiKey) {
+        if (apiKey) {
+            apiKey = apiKey.trim();
+            if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
+                apiKey = apiKey.substring(1, apiKey.length - 1);
+            }
+        }
+        
+        if (!apiKey) {
              results.ai_connectivity = { status: 'error', message: 'No API Key found in environment.' };
         } else {
-            const ai = new GoogleGenAI({ apiKey: rawApiKey.trim() });
+            const ai = new GoogleGenAI({ apiKey });
             // Simple generation to test auth and quota
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
@@ -83,6 +90,8 @@ export async function GET() {
                     status: 'healthy', 
                     latency: Date.now() - aiStart, 
                     source: keySource,
+                    keyPrefix: apiKey.substring(0, 4), // Should be AIza
+                    keyLength: apiKey.length,
                     model: 'gemini-2.5-flash'
                 };
             } else {

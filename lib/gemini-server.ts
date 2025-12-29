@@ -7,11 +7,20 @@ import { AppSettings, CognitiveTask } from '@/lib/types';
 const getClient = () => {
     // @google/genai-api-guideline-fix: Obtained exclusively from the environment variable process.env.API_KEY.
     // Added fallback for GEMINI_API_KEY to support Vercel environment configurations.
-    const rawApiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-    if (!rawApiKey) {
+    let apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    
+    // SANITIZATION: Trim whitespace and surrounding quotes
+    if (apiKey) {
+        apiKey = apiKey.trim();
+        if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
+            apiKey = apiKey.substring(1, apiKey.length - 1);
+        }
+    }
+
+    if (!apiKey) {
         throw new Error("API Key not found. Please set API_KEY or GEMINI_API_KEY in environment variables.");
     }
-    return new GoogleGenAI({ apiKey: rawApiKey.trim() });
+    return new GoogleGenAI({ apiKey });
 };
 
 // Default fallback model

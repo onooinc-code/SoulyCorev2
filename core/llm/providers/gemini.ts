@@ -22,13 +22,24 @@ export class GeminiProvider implements ILLMProvider {
     private getClient(): GoogleGenAI {
         if (!this.ai) {
             // Check for API_KEY first, then GEMINI_API_KEY as a fallback.
-            // TRIM whitespace to prevent copy-paste errors.
-            const rawApiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-            const apiKey = rawApiKey ? rawApiKey.trim() : undefined;
+            let apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+            
+            // SANITIZATION: Trim whitespace and surrounding quotes
+            if (apiKey) {
+                apiKey = apiKey.trim();
+                if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
+                    apiKey = apiKey.substring(1, apiKey.length - 1);
+                }
+            }
             
             if (!apiKey) {
                 console.error("CRITICAL: Both API_KEY and GEMINI_API_KEY are missing from environment variables.");
                 throw new Error("Configuration Error: API Key is missing. Please add API_KEY to your Vercel project settings.");
+            }
+
+            // VALIDATION WARNING
+            if (!apiKey.startsWith("AIza")) {
+                console.warn(`[GeminiProvider] WARNING: API Key does not start with 'AIza'. It might be invalid. Key starts with: '${apiKey.substring(0, 3)}...'`);
             }
 
             const keySource = process.env.API_KEY ? 'API_KEY' : 'GEMINI_API_KEY';
@@ -101,8 +112,8 @@ export class GeminiProvider implements ILLMProvider {
             console.error("GeminiProvider: Chat generation failed:", e);
             // Enhance error message for better debugging
             const errorMessage = (e as Error).message || "Unknown error";
-            if (errorMessage.includes("API Key") || errorMessage.includes("API_KEY") || errorMessage.includes("403")) {
-                throw new Error(`Authentication Error: Google rejected the API Key. (${errorMessage})`);
+            if (errorMessage.includes("API Key") || errorMessage.includes("API_KEY") || errorMessage.includes("400") || errorMessage.includes("403")) {
+                throw new Error(`Authentication Error: Google rejected the API Key. Please check Vercel settings. (${errorMessage})`);
             }
             throw new Error(`AI Provider Error (${model || 'default'}): ${errorMessage}`);
         }
