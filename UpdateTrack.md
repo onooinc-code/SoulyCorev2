@@ -1,24 +1,24 @@
 
-
 ... (Existing entries) ...
 
 ---
 
-### Update #42: Robust Auth Strategy (v0.5.10)
+### Update #43: Mobile UI Resilience Overhaul (v0.5.27)
 
 **Details:**
-Implemented a smart key selection strategy to resolve persistent authentication errors. The system now iterates through available environment variables (`API_KEY`, `GEMINI_API_KEY`) and prioritizes the one that matches the Google API Key format (starts with `AIza`). This fixes issues where one variable might be present but invalid (e.g., placeholder text) and was blocking the fallback to the valid key.
+Comprehensive redesign of the chat interface for mobile devices. The goal was to ensure stability, prevent layout breakage during text interaction, and guarantee that the input area remains visible regardless of browser chrome or keyboard state.
 
 **Changes Made:**
-- **Smart Resolution:** Updated `lib/gemini-server.ts`, `core/llm/providers/gemini.ts`, and `app/api/models/route.ts` to iterate candidates and select the first valid-looking key.
-- **Sanitization:** Hardened quote stripping and whitespace trimming logic.
-- **Diagnostics:** Updated the diagnostics endpoint to transparently report which key source is being used.
-- **Versioning:** Bumped version to `0.5.10`.
+- **Compact Toolbars:** Switched to an icon-only interface for the formatting and macro toolbars on mobile.
+- **Strict Layout Sandwiches:** Enforced a `flex-shrink-0` footer and input area with a `min-h-0` growable message list.
+- **Visual Refinement:** Added animated edge-fading for scrollable toolbars.
+- **Input Optimization:** Reduced max-height of text area on mobile to 120px to prevent viewport takeover.
+- **Versioning:** Bumped version to `0.5.27`.
 
 **Modified Files:**
-- `lib/gemini-server.ts`
-- `core/llm/providers/gemini.ts`
-- `app/api/models/route.ts`
-- `app/api/dev/diagnostics/route.ts`
-- `app/api/version/current/route.ts`
+- `app/globals.css`
+- `components/chat/ChatWindow.tsx`
+- `components/ChatInput.tsx`
+- `BugTrack.md`
 - `scripts/seed-version-history.js`
+- `app/api/admin/seed/route.ts`

@@ -1,24 +1,25 @@
 
 # Bug Tracking Log
-... (Previous entries) ...
+... (Existing entries) ...
 
 ---
-### Bug #40: Identity Persistence & Duplicate History
+### Bug #41: Mobile UI Sandwich Collapse & Overflow
 
 **Error Details:**
-1. AI failed to remember its name (Souly) or user details (Hadra) despite verbal confirmation.
-2. The `Cognitive Process Inspector` showed duplicate user messages in the `history` parts.
-3. Extraction was purely manual and failed to parse Arabic identity facts.
+1. The `ChatInput` component was partially hidden on mobile because `100dvh` was fighting with `position: fixed` on the body.
+2. The `Footer` (Status bar) was pushed out of bounds because the `MessageList` flex growth was unconstrained.
+3. Toolbar buttons overlapped horizontally due to excessive text labels and missing flex-shrink rules in small viewports.
+4. UI broke horizontally when users attempted to select text in the input.
 
 **Solution:**
-1. Deduplicated history logic in `ContextAssemblyPipeline`.
-2. Automated the `MemoryExtractionPipeline` call in the chat route for background "Auto-Sync".
-3. Enhanced the extraction prompt with explicit instructions for Arabic and identity differentiation.
-4. Added `aiName` and `role` fields to `ProfileMemoryModule`.
+1. Removed `position: fixed` from body and used strict `100dvh` flex-col mapping in `ChatWindow`.
+2. Refactored `ChatInput` to use icon-only toolbar buttons on mobile (`sm:` hidden).
+3. Applied `min-width: 0` globally and added `mask-edge-fade` to horizontal scrollbars for better UX.
+4. Reduced padding and font-size of secondary tools in mobile view to maximize vertical chat area.
 
 **Modified Files:**
-- `core/pipelines/context_assembly.ts`
-- `core/pipelines/memory_extraction.ts`
-- `core/memory/modules/profile.ts`
-- `app/api/chat/route.ts`
-- `app/api/version/current/route.ts`
+- `app/globals.css`
+- `components/chat/ChatWindow.tsx`
+- `components/ChatInput.tsx`
+- `scripts/seed-version-history.js`
+- `app/api/admin/seed/route.ts`
