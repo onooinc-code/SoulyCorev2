@@ -4,15 +4,16 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.25',
+        version: '0.5.26',
         releaseDate: new Date().toISOString(),
-        changes: `### 📱 Mobile UI Resilience Update (v0.5.25)
+        changes: `### 📱 Mobile UI Overhaul (v0.5.26)
 
-**Major Fixes:**
-- **The "Width-Break" Solution:** Implemented \`min-w-0\` and explicit \`max-w-full\` constraints on the chat input flex components. This prevents the entire UI from breaking during text selection on mobile browsers.
-- **Stable Layout:** Switched to \`fixed\` positioning for body and \`100dvh\` for the chat container to ensure the footer and input never hide behind browser toolbars.
-- **Touch Optimization:** Enhanced touch targets for primary action buttons (Send, File, Toggles) and enabled native momentum scrolling on horizontal toolbars.
-- **Clutter Reduction:** Reduced vertical internal padding of the input area for 6-inch screens to maximize the chat history viewport.`
+**Critical Fixes:**
+- **Dynamic Viewport Height:** Full transition to \`100dvh\` to ensure the footer and input field never hide behind mobile browser bars.
+- **Scrollable Toolbars:** Redesigned macro and formatting toolbars as single-line horizontal scrollable areas to prevent overlap and clashing.
+- **Selection Width Protection:** Applied global \`min-width: 0\` and Flexbox constraints to prevent layout breakage during text selection.
+- **Cleaner Mobile Typing:** Toolbars are now hidden by default on mobile, with a toggle button to expand them when needed.
+- **Responsive Status Bar:** Simplified the status bar for small screens, showing only core metrics.`
     }
 ];
 
@@ -20,14 +21,10 @@ async function seedVersionHistory() {
     console.log("Seeding version history...");
     try {
         await sql`DELETE FROM "version_history"`;
-
         for (const version of versionData) {
             await sql`
                 INSERT INTO "version_history" ("version", "releaseDate", "changes")
-                VALUES (${version.version}, ${version.releaseDate}, ${version.changes})
-                ON CONFLICT ("version") DO UPDATE SET
-                    "releaseDate" = EXCLUDED."releaseDate",
-                    "changes" = EXCLUDED."changes";
+                VALUES (${version.version}, ${version.releaseDate}, ${version.changes});
         `;
         }
         console.log(`Successfully seeded version ${versionData[0].version}.`);

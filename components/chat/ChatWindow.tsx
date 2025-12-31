@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
-import type { Message as MessageType, Contact, ILinkPredictionProposal } from '@/lib/types';
+import type { Message as MessageType, Contact } from '@/lib/types';
 import { AnimatePresence } from 'framer-motion';
 import { useNotification } from '@/lib/hooks/use-notifications';
 
@@ -23,7 +23,7 @@ const ChatWindow = () => {
         updateCurrentConversation,
     } = useConversation();
     
-    const { isZenMode, isLogPanelOpen, setExtractionTarget, setActiveView, setAgentConfigModalOpen } = useUIState();
+    const { isZenMode, isLogPanelOpen, setExtractionTarget, setActiveView, setAgentConfigModalOpen, isMobileView } = useUIState();
     const { addNotification } = useNotification();
     
     const [proactiveSuggestion, setProactiveSuggestion] = useState<string | null>(null);
@@ -42,7 +42,7 @@ const ChatWindow = () => {
         const userMessage: Omit<MessageType, 'id' | 'createdAt' | 'conversationId'> = {
             role: 'user', content, tokenCount: Math.ceil(content.length / 4), lastUpdatedAt: new Date(),
         };
-        const { aiResponse, suggestion, memoryProposal, linkProposal } = await addMessage(userMessage, mentionedContacts, undefined, replyToMessage?.id);
+        const { aiResponse, suggestion, memoryProposal } = await addMessage(userMessage, mentionedContacts, undefined, replyToMessage?.id);
         setReplyToMessage(null);
         if (aiResponse) setProactiveSuggestion(suggestion);
         if (memoryProposal) {
@@ -54,11 +54,18 @@ const ChatWindow = () => {
     };
 
     return (
-        <div className="flex flex-col h-full bg-gray-900/50 max-w-full w-full overflow-hidden">
-            {/* 
-                CRITICAL FIX: Use flex-1 with min-h-0 to ensure it correctly sizes 
-                within the dynamic viewport and doesn't push the footer out.
-            */}
+        <div className="flex flex-col h-full bg-gray-900/50 w-full overflow-hidden chat-layout">
+            {/* Header/Status for Mobile (Simplified) */}
+            {isMobileView && !isZenMode && currentConversation && (
+                <div className="flex-shrink-0 z-20">
+                     <StatusBar 
+                        onSettingsClick={() => setSettingsModalOpen(true)}
+                        onAgentConfigClick={() => setAgentConfigModalOpen(true)}
+                    />
+                </div>
+            )}
+
+            {/* Message Area: Must be flexible but scrollable */}
             <div className="flex-1 min-h-0 relative w-full overflow-hidden">
                 <MessageList 
                     messages={messages}
@@ -93,9 +100,9 @@ const ChatWindow = () => {
                 <ErrorDisplay status={status} isDbError={!!(status.error && /database|postgres/i.test(status.error))} clearError={clearError} />
             </div>
 
-            {/* Sticky Interaction Area */}
-            <div className="flex-shrink-0 w-full bg-gray-950/80 backdrop-blur-md pb-safe">
-                {!isZenMode && currentConversation && (
+            {/* Interaction Area: Persistent Footer */}
+            <div className="flex-shrink-0 w-full bg-gray-950/90 backdrop-blur-xl border-t border-white/5 safe-bottom">
+                {!isMobileView && !isZenMode && currentConversation && (
                     <StatusBar 
                         onSettingsClick={() => setSettingsModalOpen(true)}
                         onAgentConfigClick={() => setAgentConfigModalOpen(true)}
@@ -104,7 +111,7 @@ const ChatWindow = () => {
                 
                 <ChatFooter 
                     proactiveSuggestion={proactiveSuggestion}
-                    onSuggestionClick={() => { proactiveSuggestion && alert(`Action: ${proactiveSuggestion}`); setProactiveSuggestion(null); }}
+                    onSuggestionClick={() => { proactiveSuggestion && handleSendMessage(proactiveSuggestion, []); setProactiveSuggestion(null); }}
                     onDismissSuggestion={() => setProactiveSuggestion(null)}
                     onSendMessage={handleSendMessage}
                     isLoading={isLoading}
