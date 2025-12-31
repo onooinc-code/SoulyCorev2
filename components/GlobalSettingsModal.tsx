@@ -21,11 +21,20 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
 
     useEffect(() => {
         if (settings) {
-            // Ensure memoryConfig exists with defaults
-            const safeSettings = JSON.parse(JSON.stringify(settings));
+            // DEEP CLONE & MERGE DEFAULTS
+            // This ensures if the DB has partial settings, the UI doesn't crash or show empty fields.
+            const safeSettings: AppSettings = JSON.parse(JSON.stringify(settings));
+            
             if (!safeSettings.memoryConfig) {
                 safeSettings.memoryConfig = { extractionStrategy: 'single-shot', extractionModel: 'gemini-2.5-flash' };
             }
+            if (!safeSettings.defaultModelConfig) {
+                 safeSettings.defaultModelConfig = { model: 'gemini-2.5-flash', temperature: 0.7, topP: 0.95 };
+            }
+            if (!safeSettings.defaultAgentConfig) {
+                 safeSettings.defaultAgentConfig = { systemPrompt: 'You are a helpful AI.', useSemanticMemory: true, useStructuredMemory: true };
+            }
+
             setLocalSettings(safeSettings);
         }
     }, [settings]);
@@ -70,7 +79,7 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
             const newSettings = JSON.parse(JSON.stringify(prev)); // Deep copy
             let current: any = newSettings;
             for (let i = 0; i < keys.length - 1; i++) {
-                // Create object if it doesn't exist (e.g. memoryConfig)
+                // Create object if it doesn't exist
                 if (!current[keys[i]]) current[keys[i]] = {};
                 current = current[keys[i]];
             }
@@ -188,7 +197,7 @@ const GlobalSettingsModal = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => vo
                     <div className="p-4 bg-gray-900/50 rounded-lg">
                         <h3 className="font-semibold text-lg mb-2">Developer Settings</h3>
                         <label className="flex items-center gap-3 text-sm font-medium text-gray-300 cursor-pointer">
-                            <input type="checkbox" checked={localSettings.enableDebugLog.enabled} onChange={e => handleSettingChange('enableDebugLog.enabled', e.target.value)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                            <input type="checkbox" checked={localSettings.enableDebugLog.enabled} onChange={e => handleSettingChange('enableDebugLog.enabled', e.target.checked)} className="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
                             <span>Enable Developer Logging</span>
                         </label>
                     </div>

@@ -101,7 +101,17 @@ Preferences: ${JSON.stringify(userProfile.preferences)}
             const finalInstruction = executionMode === 'dual_output' ? `
                 ${conversation.systemPrompt}
                 ${memoryContext}
-                Respond in JSON format: {"reply": "...", "memory": {...}}
+                
+                IMPORTANT: You must respond in a valid JSON format only. Do not add any text outside the JSON block.
+                Structure:
+                {
+                    "reply": "Your response to the user here...",
+                    "memory": {
+                        "entities": [],
+                        "facts": [],
+                        "userProfileUpdates": {}
+                    }
+                }
             ` : `
                 ${conversation.systemPrompt}
                 ${memoryContext}
@@ -114,13 +124,44 @@ Preferences: ${JSON.stringify(userProfile.preferences)}
             const responseText = await llmProvider.generateContent(history, finalInstruction, { temperature: conversation.temperature }, conversation.model);
 
             let resultData = { reply: responseText, memory: null };
+            
             if (executionMode === 'dual_output') {
                 try {
-                    const cleanText = responseText.replace(/```json\n?|```/g, '').trim();
-                    const parsed = JSON.parse(cleanText);
-                    resultData.reply = parsed.reply;
-                    resultData.memory = parsed.memory;
+                    // ROBUST PARSING LOGIC:
+                    // 1. Try to find a JSON block between ```json and ```
+                    const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+                    let jsonStr = "";
+                    
+                    if (jsonMatch && jsonMatch[1]) {
+                        jsonStr = jsonMatch[1];
+                    } else {
+                        // 2. If no code block, try to find the first '{' and last '}'
+                        const firstBrace = responseText.indexOf('{');
+                        const lastBrace = responseText.lastIndexOf('}');
+                        if (firstBrace !== -1 && lastBrace !== -1) {
+                            jsonStr = responseText.substring(firstBrace, lastBrace + 1);
+                        }
+                    }
+
+                    if (jsonStr) {
+                        const parsed = JSON.parse(jsonStr);
+                        // If we successfully parsed, USE ONLY THE 'reply' field for the user.
+                        if (parsed.reply) {
+                            resultData.reply = parsed.reply;
+                            resultData.memory = parsed.memory || null;
+                        } else {
+                             // Fallback: If parse valid but no reply field, assume structural error
+                             // and keep raw text, but log it.
+                             console.warn("Parsed JSON but 'reply' field missing.");
+                             resultData.reply = responseText; 
+                        }
+                    } else {
+                        // Fallback: No JSON structure found at all.
+                        resultData.reply = responseText;
+                    }
                 } catch (e) {
+                    console.error("Failed to parse dual_output JSON", e);
+                    // On error, we default to showing the full text, assuming the model failed the instruction.
                     resultData.reply = responseText;
                 }
             }
