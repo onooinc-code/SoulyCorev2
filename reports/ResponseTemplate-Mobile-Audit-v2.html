@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير تدقيق واجهة الموبايل v2 | SoulyCore</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        body { font-family: 'Cairo', sans-serif; background: #0a0a0f; color: #e0e0e0; padding: 40px; line-height: 1.6; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .hero { text-align: center; padding-bottom: 50px; border-bottom: 2px solid #6366f1; margin-bottom: 40px; }
+        h1 { font-size: 2.5em; color: #fff; margin: 0; }
+        .status { display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em; margin-top: 10px; background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }
+        .card { background: #161625; border: 1px solid #2d2d3f; padding: 25px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .card h2 { color: #818cf8; margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        .bug { color: #f87171; font-weight: bold; }
+        .fix { color: #34d399; font-weight: bold; }
+        .code { background: #000; padding: 3px 6px; border-radius: 4px; font-family: monospace; color: #f472b6; }
+        .diagram { background: #000; padding: 20px; border-radius: 12px; margin: 20px 0; border: 1px solid #333; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>تقرير التدقيق الشامل: استقرار واجهة الموبايل</h1>
+            <div class="status">الحالة: مستقر (v0.5.25)</div>
+            <p style="color: #9ca3af; margin-top: 15px;">تم حل مشاكل انهيار العرض، اختفاء الفوتر، وتداخل العناصر عند اختيار النصوص.</p>
+        </div>
+
+        <div class="card">
+            <h2>🚨 المشاكل الكبرى التي تم حلها</h2>
+            <ul>
+                <li>
+                    <span class="bug">المشكلة:</span> انهيار الصفحة أفقياً عند اختيار النص (Text Selection) في الموبايل.
+                    <br><span class="fix">الحل:</span> تطبيق <code class="code">min-w-0</code> على حاويات الـ Flex والـ Textarea، مما يمنع المتصفح من تمديد العرض تلقائياً خارج حدود الـ Viewport.
+                </li>
+                <li>
+                    <span class="bug">المشكلة:</span> اختفاء شريط الإدخال والفوتر أسفل شريط أدوات Safari.
+                    <br><span class="fix">الحل:</span> التحويل الكامل لاستخدام <code class="code">100dvh</code> وتثبيت الـ Body بوضعية <code class="code">fixed</code> لمنع الـ Rubber-banding.
+                </li>
+                <li>
+                    <span class="bug">المشكلة:</span> صعوبة النقر على أزرار الإرسال والملفات.
+                    <br><span class="fix">الحل:</span> تفعيل <code class="code">touch-manipulation</code> وزيادة مساحة منطقة اللمس (Padding) للأزرار الرئيسية.
+                </li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>🧠 التحليل المعماري للهيكل الجديد</h2>
+            <p>تم إعادة بناء تسلسل العناصر (Z-Index Hierarchy) لضمان عدم تداخل الاقتراحات الاستباقية مع شريط الأدوات:</p>
+            <div class="diagram">
+                <p style="color: #6366f1; font-weight: bold;">[ الطبقة العلويّة: المربعات الحوارية (Modals) z-100 ]</p>
+                <p style="color: #10b981;">↓</p>
+                <p style="color: #818cf8; font-weight: bold;">[ طبقة التفاعل: مربع الكتابة والأدوات z-40 ]</p>
+                <p style="color: #10b981;">↓</p>
+                <p style="color: #4b5563; font-weight: bold;">[ طبقة العرض: قائمة الرسائل z-10 ]</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🚀 التوصيات القادمة</h2>
+            <p>لتحسين الواجهة أكثر في المستقبل:</p>
+            <ol>
+                <li>تفعيل ميزة "السحب للأسفل" (Pull to Refresh) لتحديث قائمة المحادثات.</li>
+                <li>إضافة Feedback اهتزازي (Haptic Feedback) عند ضغط أزرار الماكرو.</li>
+                <li>تحسين معالجة الملفات المرفوعة لتظهر بصور مصغرة (Thumbnails) بدلاً من روابط نصية فقط.</li>
+            </ol>
+        </div>
+
+        <p style="text-align: center; color: #4b5563; font-size: 0.8em;">SoulyCore Intelligence System - v0.5.25</p>
+    </div>
+</body>
+</html>

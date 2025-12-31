@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -53,13 +54,12 @@ const ChatWindow = () => {
     };
 
     return (
-        <div className="flex flex-col h-full bg-gray-900/50">
+        <div className="flex flex-col h-full bg-gray-900/50 max-w-full w-full overflow-hidden">
             {/* 
-                CRITICAL FIX: Added 'min-h-0' to the container. 
-                In a flexbox environment, a child must have 'min-h-0' to be allowed to 
-                be smaller than its content, which is what enables inner scrolling.
+                CRITICAL FIX: Use flex-1 with min-h-0 to ensure it correctly sizes 
+                within the dynamic viewport and doesn't push the footer out.
             */}
-            <div className="flex-1 min-h-0 relative">
+            <div className="flex-1 min-h-0 relative w-full overflow-hidden">
                 <MessageList 
                     messages={messages}
                     currentConversation={currentConversation}
@@ -89,20 +89,19 @@ const ChatWindow = () => {
             </div>
 
             {/* Error Display */}
-            <ErrorDisplay status={status} isDbError={!!(status.error && /database|postgres/i.test(status.error))} clearError={clearError} />
+            <div className="flex-shrink-0 z-50">
+                <ErrorDisplay status={status} isDbError={!!(status.error && /database|postgres/i.test(status.error))} clearError={clearError} />
+            </div>
 
-            {/* Status Bar (Settings/Stats) */}
-            {!isZenMode && currentConversation && (
-                <div className="flex-shrink-0">
+            {/* Sticky Interaction Area */}
+            <div className="flex-shrink-0 w-full bg-gray-950/80 backdrop-blur-md pb-safe">
+                {!isZenMode && currentConversation && (
                     <StatusBar 
                         onSettingsClick={() => setSettingsModalOpen(true)}
                         onAgentConfigClick={() => setAgentConfigModalOpen(true)}
                     />
-                </div>
-            )}
-            
-            {/* Input Area */}
-            <div className="flex-shrink-0 z-20">
+                )}
+                
                 <ChatFooter 
                     proactiveSuggestion={proactiveSuggestion}
                     onSuggestionClick={() => { proactiveSuggestion && alert(`Action: ${proactiveSuggestion}`); setProactiveSuggestion(null); }}

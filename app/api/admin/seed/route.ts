@@ -49,33 +49,29 @@ export async function GET() {
     const client = await db.connect();
     
     try {
-        console.log("Starting Full Database Self-Repair (v0.5.24) - FORCE MODE...");
+        console.log("Starting Full Database Self-Repair (v0.5.25) - FORCE MODE...");
 
         await client.query('BEGIN');
 
-        // 1. Ensure Schema
         for (const statement of schemaStatements) {
             await client.query(statement);
         }
         
-        // 2. FORCE CLEAN: Delete ALL versions to remove conflicts/stale data
         await client.query('TRUNCATE TABLE "version_history"');
         
-        // 3. Insert v0.5.24
-        const changesText = `### 📱 Critical Mobile Layout Fixes (v0.5.24)
+        const changesText = `### 📱 Mobile UI Resilience Update (v0.5.25)
 
-**UI/UX Stability:**
-- **Dynamic Viewport Height:** Implemented \`h-[100dvh]\` to prevent footer being hidden by mobile browser toolbars.
-- **Selection Width Fix:** Added \`min-w-0\` and constrained overflow on input container to prevent layout breakage during text selection.
-- **Enhanced Footer Stability:** Fixed footer positioning using \`flex-shrink-0\` ensuring controls are always reachable.
-- **Input Refinement:** Adjusted internal padding and max-height for better visibility on small 6-inch screens.`;
+**Major Fixes:**
+- **The "Width-Break" Solution:** Implemented \`min-w-0\` and explicit \`max-w-full\` constraints on the chat input flex components. This prevents the entire UI from breaking during text selection on mobile browsers.
+- **Stable Layout:** Switched to \`fixed\` positioning for body and \`100dvh\` for the chat container to ensure the footer and input never hide behind browser toolbars.
+- **Touch Optimization:** Enhanced touch targets for primary action buttons (Send, File, Toggles) and enabled native momentum scrolling on horizontal toolbars.
+- **Clutter Reduction:** Reduced vertical internal padding of the input area for 6-inch screens to maximize the chat history viewport.`;
 
         await client.query(`
             INSERT INTO "version_history" ("version", "releaseDate", "changes", "createdAt")
             VALUES ($1, NOW(), $2, NOW())
-        `, ['0.5.24', changesText]);
+        `, ['0.5.25', changesText]);
 
-        // 4. Seed Features
         const featuresSql = `
             INSERT INTO features (name, status, category, "lastUpdatedAt")
             VALUES ($1, $2, $3, NOW())
@@ -87,23 +83,14 @@ export async function GET() {
 
         await client.query('COMMIT');
         
-        console.log("Database successfully reset to v0.5.24.");
-        
         return NextResponse.json({ 
             success: true, 
-            message: "System successfully repaired and updated to v0.5.24.",
-            version: '0.5.24'
-        }, {
-            headers: {
-                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0',
-            }
+            message: "System successfully repaired and updated to v0.5.25.",
+            version: '0.5.25'
         });
 
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error("Admin Seed Failed:", error);
         return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     } finally {
         client.release();

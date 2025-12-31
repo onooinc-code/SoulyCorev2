@@ -24,7 +24,6 @@ interface ChatInputProps {
     replyToMessage: import('@/lib/types').Message | null;
 }
 
-// Color palette for diversified buttons
 const COLORS = [
     'text-purple-400', 'text-blue-400', 'text-green-400', 'text-yellow-400', 
     'text-pink-400', 'text-indigo-400', 'text-red-400', 'text-teal-400', 
@@ -47,7 +46,7 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon: Icon, label, onClic
         <button 
             onClick={onClick} 
             onContextMenu={onContextMenu}
-            className="flex items-center justify-center gap-2 px-3 h-9 min-w-[40px] rounded-lg bg-gray-800/60 hover:bg-gray-700 border border-white/5 hover:border-indigo-500/30 transition-all duration-200 relative whitespace-nowrap active:scale-95"
+            className="flex items-center justify-center gap-2 px-3 h-9 min-w-[40px] rounded-lg bg-gray-800/60 hover:bg-gray-700 border border-white/5 hover:border-indigo-500/30 transition-all duration-200 relative whitespace-nowrap active:scale-95 touch-manipulation"
             title={label}
         >
             <Icon className={`w-4 h-4 transition-colors ${COLORS[colorIndex % COLORS.length]}`} />
@@ -91,8 +90,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
-            // Increase max height to accommodate larger default size
-            textareaRef.current.style.height = `${Math.min(Math.max(textareaRef.current.scrollHeight, 44), 180)}px`;
+            textareaRef.current.style.height = `${Math.min(Math.max(textareaRef.current.scrollHeight, 44), 160)}px`;
         }
     }, [content]);
     
@@ -100,7 +98,6 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         if (replyToMessage) textareaRef.current?.focus();
     }, [replyToMessage]);
 
-    // --- Core Handlers ---
     const handleAction = (text: string, replace = false) => {
         if (replace) setContent(text);
         else setContent(prev => prev + (prev ? '\n' : '') + text);
@@ -144,7 +141,6 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         if (textareaRef.current) textareaRef.current.style.height = 'auto';
     };
 
-    // --- Bottom Toolbar Text Manipulation Logic ---
     const modifyText = (modifier: (text: string) => string) => {
         const textarea = textareaRef.current;
         if (!textarea) return;
@@ -163,7 +159,6 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         const newContent = content.substring(0, start) + modifiedText + content.substring(end);
         setContent(newContent);
         
-        // Restore cursor/selection
         requestAnimationFrame(() => {
             textarea.selectionStart = start;
             textarea.selectionEnd = start + modifiedText.length;
@@ -171,7 +166,6 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         });
     };
 
-    // Exactly 12 items for symmetry
     const bottomToolbarActions = [
         { icon: TrashIcon, label: 'Clear', action: () => setContent('') },
         { icon: CopyIcon, label: 'Copy', action: () => navigator.clipboard.writeText(content).then(() => addNotification({type:'success', title:'Copied'})) },
@@ -187,7 +181,6 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         { icon: WrenchScrewdriverIcon, label: 'JSON Fmt', action: () => { try { modifyText(t => JSON.stringify(JSON.parse(t), null, 2)) } catch(e) { addNotification({type:'error', title:'Invalid JSON'}) } } },
     ];
     
-    // --- Top Toolbar Configuration ---
     const defaultTopActions = [
         { key: 'summarize', icon: SummarizeIcon, label: "تلخيص", prompt: "لخص ما سبق باختصار.", replace: true },
         { key: 'enhance', icon: SparklesIcon, label: "تحسين", prompt: "أعد صياغة النص التالي ليكون أكثر احترافية:\n", replace: false },
@@ -211,9 +204,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                  try {
                      const parsed = JSON.parse(custom);
                      return { ...action, label: parsed.label, prompt: parsed.prompt };
-                 } catch (e) {
-                     return action;
-                 }
+                 } catch (e) { return action; }
              }
              return action;
         });
@@ -225,7 +216,6 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         setNewButtonPrompt(currentPrompt);
     };
     
-    // Triggered by Right Click
     const handleContextMenu = (e: React.MouseEvent, key: string, label: string, prompt: string) => {
         e.preventDefault();
         handleEditButton(key, label, prompt);
@@ -242,9 +232,8 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     };
 
     return (
-        <div className="w-full bg-gray-950/90 backdrop-blur-xl border-t border-white/5 pb-safe z-40 relative shadow-[0_-5px_20px_rgba(0,0,0,0.3)] transition-all duration-300 max-w-full overflow-hidden">
+        <div className="w-full bg-gray-950/95 backdrop-blur-xl border-t border-white/5 pb-safe z-40 relative shadow-[0_-8px_30px_rgba(0,0,0,0.5)] transition-all duration-300 max-w-full overflow-hidden">
             
-            {/* Edit Mode Modal */}
             <AnimatePresence>
                 {editingButtonKey && (
                     <MotionDiv initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0, y: 10}} className="absolute bottom-full left-0 right-0 mx-auto w-full max-w-lg mb-4 p-4 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 flex flex-col gap-3">
@@ -268,16 +257,15 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 )}
             </AnimatePresence>
 
-            {/* 1. Top Toolbar (Prompt Macros) - Scrollable on Mobile */}
             <AnimatePresence>
                 {showToolbars && (
                     <MotionDiv 
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="px-2 py-1 relative border-b border-white/5 bg-gray-900/50"
+                        className="px-2 py-1 relative border-b border-white/5 bg-gray-900/50 w-full overflow-hidden"
                     >
-                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 mask-linear-fade">
+                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 mask-linear-fade touch-pan-x">
                             {topActions.map((action, idx) => (
                                 <ToolbarButton 
                                     key={action.key}
@@ -290,48 +278,32 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                                     onEdit={() => handleEditButton(action.key, action.label, action.prompt)}
                                 />
                             ))}
-                             {/* Extra space for scroll end */}
-                             <div className="w-2 flex-shrink-0"></div>
+                             <div className="w-8 flex-shrink-0"></div>
                         </div>
                         <button 
                             onClick={() => setIsEditMode(!isEditMode)} 
-                            className={`absolute right-0 top-0 bottom-0 px-2 bg-gradient-to-l from-gray-900 via-gray-900 to-transparent flex items-center justify-center z-10`}
-                            title="Configure Toolbar"
+                            className={`absolute right-0 top-0 bottom-0 px-3 bg-gradient-to-l from-gray-950 via-gray-950 to-transparent flex items-center justify-center z-10`}
                         >
-                            <div className={`p-1.5 rounded-full ${isEditMode ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 border border-white/10'}`}>
-                                <WrenchScrewdriverIcon className="w-3 h-3" />
+                            <div className={`p-1.5 rounded-full ${isEditMode ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-800 text-gray-400 border border-white/10'}`}>
+                                <WrenchScrewdriverIcon className="w-3.5 h-3.5" />
                             </div>
                         </button>
                     </MotionDiv>
                 )}
             </AnimatePresence>
 
-            {/* 2. Command Menu Popover */}
-            <AnimatePresence>
-                {showCommandMenu && (
-                    <MotionDiv initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: -10 }} exit={{ opacity: 0 }} className="absolute bottom-full left-4 bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-2 w-64 mb-2 z-50">
-                        <div className="text-xs text-gray-400 px-2 py-1 border-b border-gray-700 mb-1">Commands</div>
-                        <button onClick={() => { setContent('/agent '); setShowCommandMenu(false); }} className="block w-full text-left px-2 py-2 text-sm hover:bg-indigo-600 rounded text-gray-200">/agent [goal]</button>
-                        <button onClick={() => { setContent('/workflow '); setShowCommandMenu(false); }} className="block w-full text-left px-2 py-2 text-sm hover:bg-indigo-600 rounded text-gray-200">/workflow [name]</button>
-                    </MotionDiv>
-                )}
-            </AnimatePresence>
-
-            {/* 3. Input Area - Optimized for Mobile */}
-            <div className="px-2 py-2 md:px-4 md:py-3 max-w-full overflow-hidden">
-                <div className="flex items-end gap-2 bg-gray-900 border border-white/10 p-1.5 md:p-2 rounded-2xl shadow-inner focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500/50 transition-all min-h-[48px] min-w-0 overflow-hidden">
+            <div className="px-2 py-2 md:px-4 md:py-3 w-full max-w-full overflow-hidden">
+                <div className="flex items-end gap-2 bg-gray-900/80 border border-white/10 p-1.5 md:p-2 rounded-2xl shadow-inner focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500/50 transition-all min-h-[48px] min-w-0 max-w-full overflow-hidden">
                     <input type="file" ref={fileInputRef} className="hidden" onChange={e => setAttachment(e.target.files?.[0] || null)} />
                     
-                    {/* Toggle Toolbars Button */}
                      <button 
                         onClick={() => setShowToolbars(!showToolbars)} 
-                        className={`p-2 rounded-xl flex-shrink-0 transition-colors h-[36px] w-[36px] md:h-[40px] md:w-[40px] flex items-center justify-center ${showToolbars ? 'text-indigo-400 bg-indigo-500/10' : 'text-gray-500 hover:text-white hover:bg-gray-800'}`}
-                        title="Toggle Toolbars"
+                        className={`p-2 rounded-xl flex-shrink-0 transition-colors h-[40px] w-[40px] flex items-center justify-center touch-manipulation ${showToolbars ? 'text-indigo-400 bg-indigo-500/10' : 'text-gray-500 hover:text-white hover:bg-gray-800'}`}
                     >
                         {showToolbars ? <ChevronDownIcon className="w-5 h-5"/> : <ChevronUpIcon className="w-5 h-5"/>}
                     </button>
 
-                    <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl h-[36px] w-[36px] md:h-[40px] md:w-[40px] flex justify-center items-center flex-shrink-0 transition-colors" title="Attach File">
+                    <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl h-[40px] w-[40px] flex justify-center items-center flex-shrink-0 transition-colors touch-manipulation">
                         <PaperclipIcon className="w-5 h-5" />
                     </button>
 
@@ -341,16 +313,16 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                             value={content}
                             onChange={handleInputChange}
                             placeholder="Type a message..."
-                            className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1.5 text-base leading-relaxed max-h-[180px] custom-scrollbar"
+                            className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1.5 text-base md:text-sm leading-relaxed max-h-[160px] custom-scrollbar overflow-x-hidden"
                             rows={1}
                             dir="auto"
                             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                         />
                          {attachment && (
-                            <div className="absolute bottom-full left-0 mb-2 flex items-center gap-2 bg-gray-800 text-xs text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30 shadow-lg z-20">
+                            <div className="absolute bottom-full left-0 mb-2 flex items-center gap-2 bg-gray-800 text-xs text-indigo-300 px-3 py-1.5 rounded-full border border-indigo-500/30 shadow-2xl z-20">
                                 <PaperclipIcon className="w-3 h-3" />
-                                <span className="max-w-[120px] md:max-w-[200px] truncate">{attachment.name}</span>
-                                <button onClick={() => setAttachment(null)}><XIcon className="w-3 h-3 hover:text-red-400"/></button>
+                                <span className="max-w-[100px] truncate">{attachment.name}</span>
+                                <button onClick={() => setAttachment(null)} className="p-0.5"><XIcon className="w-3.5 h-3.5 hover:text-red-400"/></button>
                             </div>
                         )}
                     </div>
@@ -358,10 +330,10 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                     <button 
                         onClick={handleSend} 
                         disabled={(!content.trim() && !attachment) || isLoading} 
-                        className={`p-2 rounded-xl h-[36px] w-[36px] md:h-[40px] md:w-[40px] flex justify-center items-center shadow-lg transition-all duration-200 flex-shrink-0 ${
+                        className={`p-2 rounded-xl h-[40px] w-[40px] flex justify-center items-center shadow-lg transition-all duration-200 flex-shrink-0 touch-manipulation ${
                             (!content.trim() && !attachment) || isLoading 
                             ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
-                            : 'bg-indigo-600 hover:bg-indigo-500 text-white hover:scale-105 active:scale-95'
+                            : 'bg-indigo-600 hover:bg-indigo-500 text-white hover:scale-105 active:scale-90 shadow-indigo-900/40'
                         }`}
                     >
                         {isUploading ? <span className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full"></span> : <SendIcon className="w-5 h-5" />}
@@ -369,16 +341,15 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 </div>
             </div>
 
-            {/* 4. Bottom Toolbar (Text Manipulation) - Scrollable on Mobile */}
             <AnimatePresence>
                 {showToolbars && (
                      <MotionDiv 
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="px-2 pb-2 overflow-hidden"
+                        className="px-2 pb-2 w-full overflow-hidden"
                      >
-                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 touch-pan-x">
                             {bottomToolbarActions.map((action, idx) => (
                                 <ToolbarButton 
                                     key={idx}
@@ -389,13 +360,11 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                                     colorIndex={idx + 5}
                                 />
                             ))}
-                            {/* Spacer */}
-                             <div className="w-2 flex-shrink-0"></div>
+                             <div className="w-8 flex-shrink-0"></div>
                         </div>
                     </MotionDiv>
                 )}
             </AnimatePresence>
-
         </div>
     );
 };

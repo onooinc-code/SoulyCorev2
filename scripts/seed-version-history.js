@@ -4,22 +4,21 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.24',
+        version: '0.5.25',
         releaseDate: new Date().toISOString(),
-        changes: `### 📱 Critical Mobile Layout Fixes (v0.5.24)
+        changes: `### 📱 Mobile UI Resilience Update (v0.5.25)
 
-**UI/UX Stability:**
-- **Dynamic Viewport Height:** Implemented `h-[100dvh]` to prevent footer being hidden by mobile browser toolbars.
-- **Selection Width Fix:** Added `min-w-0` and constrained overflow on input container to prevent layout breakage during text selection.
-- **Enhanced Footer Stability:** Fixed footer positioning using `flex-shrink-0` ensuring controls are always reachable.
-- **Input Refinement:** Adjusted internal padding and max-height for better visibility on small 6-inch screens.`
+**Major Fixes:**
+- **The "Width-Break" Solution:** Implemented \`min-w-0\` and explicit \`max-w-full\` constraints on the chat input flex components. This prevents the entire UI from breaking during text selection on mobile browsers.
+- **Stable Layout:** Switched to \`fixed\` positioning for body and \`100dvh\` for the chat container to ensure the footer and input never hide behind browser toolbars.
+- **Touch Optimization:** Enhanced touch targets for primary action buttons (Send, File, Toggles) and enabled native momentum scrolling on horizontal toolbars.
+- **Clutter Reduction:** Reduced vertical internal padding of the input area for 6-inch screens to maximize the chat history viewport.`
     }
 ];
 
 async function seedVersionHistory() {
     console.log("Seeding version history...");
     try {
-        // Clear old history to match the strict behavior of the API route
         await sql`DELETE FROM "version_history"`;
 
         for (const version of versionData) {
