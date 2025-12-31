@@ -4,16 +4,15 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.27',
+        version: '0.5.28',
         releaseDate: new Date().toISOString(),
-        changes: `### 📱 Mobile UI Resilience Overhaul (v0.5.27)
+        changes: `### 🛠️ Toolbar Restoration & Stability (v0.5.28)
 
-**Major Structural Fixes:**
-- **Floating Input Fix:** Resolved "Half-Hidden" input issue by refining Dynamic Viewport (dvh) constraints and removing conflicting fixed positioning.
-- **Compact Action Bar:** Toolbars now hide labels on mobile to prevent button overlap, using clear icons and semantic colors.
-- **Layout Sandwich:** Fixed the "Missing Footer" bug by enforcing strict flex-shrink-0 rules on the action bar and status bar.
-- **Text Interaction Guard:** Implemented global min-width constraints to prevent UI expansion during text selection.
-- **Safe Area Padding:** Added iOS home indicator support (safe-bottom) to all persistent footer elements.`
+**Major Layout Improvements:**
+- **Toolbar Recall:** Restored the Macro and Formatting bars to permanent visibility as per user request.
+- **Horizontal Scroll Protection:** Prevented layout breakage by using horizontal scrolling for tools, ensuring the input area remains compact vertically.
+- **Mobile Label Optimization:** Toolbars automatically switch to icon-only mode on mobile to prevent overlapping.
+- **RTL Support:** Refined toolbar alignment and labels for Arabic users.`
     }
 ];
 

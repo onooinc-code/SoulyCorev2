@@ -8,15 +8,12 @@ import {
     SummarizeIcon, BeakerIcon, ArrowsRightLeftIcon, LightbulbIcon,
     DocumentTextIcon, WrenchScrewdriverIcon, CommandLineIcon,
     LinkIcon, CubeIcon, CopyIcon, TrashIcon,
-    ClockIcon, Bars3Icon, ChatBubbleLeftRightIcon,
-    ChevronDownIcon, ChevronUpIcon
+    ClockIcon, Bars3Icon, ChatBubbleLeftRightIcon
 } from '@/components/Icons';
 import { useConversation } from './providers/ConversationProvider';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNotification } from '@/lib/hooks/use-notifications';
 import { useUIState } from './providers/UIStateProvider';
-
-const MotionDiv = motion.div as any;
 
 interface ChatInputProps {
     onSendMessage: (content: string, mentionedContacts: Contact[]) => void;
@@ -30,7 +27,6 @@ const COLORS = [
     'text-orange-400', 'text-cyan-400'
 ];
 
-// FIX: Changed ToolbarButton to a React.FC with an explicit props interface to resolve TypeScript errors when rendering within lists using a 'key' prop.
 interface ToolbarButtonProps {
     icon: any;
     label: string;
@@ -42,10 +38,10 @@ interface ToolbarButtonProps {
 const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon: Icon, label, onClick, colorIndex, showLabel = true }) => (
     <button 
         onClick={onClick} 
-        className="flex items-center justify-center gap-2 p-2.5 min-w-[38px] h-9 rounded-lg bg-gray-800/40 hover:bg-indigo-600/30 border border-white/5 transition-all active:scale-90 flex-shrink-0"
+        className="flex items-center justify-center gap-2 p-2 min-w-[36px] h-8 rounded-lg bg-gray-800/40 hover:bg-indigo-600/30 border border-white/5 transition-all active:scale-90 flex-shrink-0"
         title={label}
     >
-        <Icon className={`w-4 h-4 ${COLORS[colorIndex % COLORS.length]}`} />
+        <Icon className={`w-3.5 h-3.5 ${COLORS[colorIndex % COLORS.length]}`} />
         {showLabel && <span className="text-[10px] text-gray-300 font-bold whitespace-nowrap hidden sm:inline">{label}</span>}
     </button>
 );
@@ -54,7 +50,6 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     const [content, setContent] = useState('');
     const [attachment, setAttachment] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [showToolbars, setShowToolbars] = useState(false); 
     
     const { isMobileView } = useUIState();
     const { addNotification } = useNotification();
@@ -66,7 +61,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
-            const maxHeight = isMobileView ? 120 : 200;
+            const maxHeight = isMobileView ? 100 : 200;
             textareaRef.current.style.height = `${Math.min(Math.max(textareaRef.current.scrollHeight, 40), maxHeight)}px`;
         }
     }, [content, isMobileView]);
@@ -115,13 +110,13 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     };
 
     const formatActions = [
-        { icon: TrashIcon, label: 'Clear', action: () => setContent('') },
-        { icon: CopyIcon, label: 'Copy', action: () => { navigator.clipboard.writeText(content).then(() => addNotification({type:'success', title:'Copied'})); } },
-        { icon: DocumentTextIcon, label: 'Bold', action: () => modifyText(t => `**${t}**`) },
-        { icon: CodeIcon, label: 'Code', action: () => modifyText(t => `\`${t}\``) },
-        { icon: LinkIcon, label: 'Link', action: () => modifyText(t => `[${t}](url)`) },
-        { icon: Bars3Icon, label: 'List', action: () => modifyText(t => t.split('\n').map(l => `- ${l}`).join('\n')) },
-        { icon: ChatBubbleLeftRightIcon, label: 'Quote', action: () => modifyText(t => t.split('\n').map(l => `> ${l}`).join('\n')) },
+        { icon: TrashIcon, label: 'مسح', action: () => setContent('') },
+        { icon: CopyIcon, label: 'نسخ', action: () => { navigator.clipboard.writeText(content).then(() => addNotification({type:'success', title:'Copied'})); } },
+        { icon: DocumentTextIcon, label: 'عريض', action: () => modifyText(t => `**${t}**`) },
+        { icon: CodeIcon, label: 'كود', action: () => modifyText(t => `\`${t}\``) },
+        { icon: LinkIcon, label: 'رابط', action: () => modifyText(t => `[${t}](url)`) },
+        { icon: Bars3Icon, label: 'قائمة', action: () => modifyText(t => t.split('\n').map(l => `- ${l}`).join('\n')) },
+        { icon: ChatBubbleLeftRightIcon, label: 'اقتباس', action: () => modifyText(t => t.split('\n').map(l => `> ${l}`).join('\n')) },
     ];
 
     const macroActions = [
@@ -136,35 +131,19 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
 
     return (
         <div className="w-full flex flex-col gap-1.5 p-2 sm:p-4 max-w-full overflow-hidden bg-gray-950/80 backdrop-blur-xl">
-            <AnimatePresence>
-                {showToolbars && (
-                    <MotionDiv initial={{height: 0, opacity: 0}} animate={{height: 'auto', opacity: 1}} exit={{height: 0, opacity: 0}} className="space-y-1.5 overflow-hidden">
-                        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar mask-edge-fade py-1">
-                            {macroActions.map((m, i) => (
-                                <ToolbarButton key={m.key} icon={m.icon} label={m.label} onClick={() => handleAction(m.prompt, m.replace)} colorIndex={i} showLabel={!isMobileView} />
-                            ))}
-                            <div className="flex-shrink-0 w-6"></div>
-                        </div>
-                        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar mask-edge-fade py-1 border-t border-white/5 pt-1.5">
-                            {formatActions.map((f, i) => (
-                                <ToolbarButton key={f.label} icon={f.icon} label={f.label} onClick={f.action} colorIndex={i + 10} showLabel={!isMobileView} />
-                            ))}
-                            <div className="flex-shrink-0 w-6"></div>
-                        </div>
-                    </MotionDiv>
-                )}
-            </AnimatePresence>
+            
+            {/* Top Toolbar (Macros) - Always Visible & Scrollable */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar mask-edge-fade py-1">
+                {macroActions.map((m, i) => (
+                    <ToolbarButton key={m.key} icon={m.icon} label={m.label} onClick={() => handleAction(m.prompt, m.replace)} colorIndex={i} showLabel={!isMobileView} />
+                ))}
+                <div className="flex-shrink-0 w-6"></div>
+            </div>
 
+            {/* Main Input Row */}
             <div className="flex items-end gap-2 bg-gray-900 border border-white/10 p-1.5 rounded-2xl focus-within:ring-1 focus-within:ring-indigo-500/50 transition-all min-h-[48px] w-full max-w-full overflow-hidden">
                 <input type="file" ref={fileInputRef} className="hidden" onChange={e => setAttachment(e.target.files?.[0] || null)} />
                 
-                <button 
-                    onClick={() => setShowToolbars(!showToolbars)} 
-                    className={`p-2 rounded-xl transition-colors h-10 w-10 flex items-center justify-center shrink-0 ${showToolbars ? 'bg-indigo-500/20 text-indigo-400' : 'text-gray-500 hover:text-white'}`}
-                >
-                    {showToolbars ? <ChevronDownIcon className="w-5 h-5"/> : <ChevronUpIcon className="w-5 h-5"/>}
-                </button>
-
                 <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-500 hover:text-white rounded-xl h-10 w-10 flex items-center justify-center shrink-0 transition-colors">
                     <PaperclipIcon className="w-5 h-5" />
                 </button>
@@ -174,8 +153,8 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                         ref={textareaRef}
                         value={content}
                         onChange={e => setContent(e.target.value)}
-                        placeholder="Type a message..."
-                        className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1.5 text-[16px] leading-snug max-h-[120px] no-scrollbar"
+                        placeholder="اكتب رسالة..."
+                        className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1.5 text-[16px] leading-snug max-h-[100px] no-scrollbar"
                         rows={1}
                         dir="auto"
                         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !isMobileView) { e.preventDefault(); handleSend(); } }}
@@ -199,6 +178,14 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 >
                     {isUploading ? <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" /> : <SendIcon className="w-5 h-5" />}
                 </button>
+            </div>
+
+            {/* Bottom Toolbar (Formatting) - Always Visible & Scrollable */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar mask-edge-fade py-1 border-t border-white/5 pt-1.5">
+                {formatActions.map((f, i) => (
+                    <ToolbarButton key={f.label} icon={f.icon} label={f.label} onClick={f.action} colorIndex={i + 10} showLabel={!isMobileView} />
+                ))}
+                <div className="flex-shrink-0 w-6"></div>
             </div>
         </div>
     );

@@ -3,22 +3,19 @@
 
 ---
 
-### Update #43: Mobile UI Resilience Overhaul (v0.5.27)
+### Update #44: Toolbar Restoration & Mobile Scroll Fix (v0.5.28)
 
 **Details:**
-Comprehensive redesign of the chat interface for mobile devices. The goal was to ensure stability, prevent layout breakage during text interaction, and guarantee that the input area remains visible regardless of browser chrome or keyboard state.
+Following user feedback, the macro and formatting toolbars have been restored to permanent visibility. To prevent the previously reported "half-hidden" input issue, the toolbars utilize a non-wrapping horizontal scroll mechanism.
 
 **Changes Made:**
-- **Compact Toolbars:** Switched to an icon-only interface for the formatting and macro toolbars on mobile.
-- **Strict Layout Sandwiches:** Enforced a `flex-shrink-0` footer and input area with a `min-h-0` growable message list.
-- **Visual Refinement:** Added animated edge-fading for scrollable toolbars.
-- **Input Optimization:** Reduced max-height of text area on mobile to 120px to prevent viewport takeover.
-- **Versioning:** Bumped version to `0.5.27`.
+- **Permanent Toolbars:** Removed the toggle button and expansion state; toolbars are now always visible above and below the text area.
+- **Horizontal Swipe Logic:** Integrated `overflow-x-auto` with `mask-edge-fade` to allow smooth horizontal navigation through buttons on small screens without increasing vertical height.
+- **Compact UI:** Reduced button and icon sizes slightly to maximize conversation real estate.
+- **Arabic Labels:** Updated toolbar labels to Arabic for better user alignment.
+- **Versioning:** Bumped version to `0.5.28`.
 
 **Modified Files:**
-- `app/globals.css`
-- `components/chat/ChatWindow.tsx`
 - `components/ChatInput.tsx`
-- `BugTrack.md`
 - `scripts/seed-version-history.js`
 - `app/api/admin/seed/route.ts`
