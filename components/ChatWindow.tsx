@@ -30,7 +30,6 @@ const ChatWindow = () => {
     const [replyToMessage, setReplyToMessage] = useState<MessageType | null>(null);
     
     const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
-    // Removed local isAgentConfigModalOpen state
     const [summaryModalState, setSummaryModalState] = useState({isOpen: false, text: '', isLoading: false});
     const [inspectorModalState, setInspectorModalState] = useState({ isOpen: false, messageId: null });
     const [contextViewerModalState, setContextViewerModalState] = useState({ isOpen: false, messageId: null, type: null });
@@ -55,11 +54,10 @@ const ChatWindow = () => {
     };
 
     return (
-        <div className="flex flex-col h-full bg-gray-900/50">
+        <div className="flex flex-col h-full bg-gray-900/50 max-w-full overflow-hidden">
             {/* 
-                CRITICAL FIX: Added 'min-h-0' to the container. 
-                In a flexbox environment, a child must have 'min-h-0' to be allowed to 
-                be smaller than its content, which is what enables inner scrolling.
+                CRITICAL FIX: Message list is flex-1 to fill space, but min-h-0 
+                is essential for inner scrolling to work on mobile browsers.
             */}
             <div className="flex-1 min-h-0 relative">
                 <MessageList 
@@ -93,18 +91,15 @@ const ChatWindow = () => {
             {/* Error Display */}
             <ErrorDisplay status={status} isDbError={!!(status.error && /database|postgres/i.test(status.error))} clearError={clearError} />
 
-            {/* Status Bar (Settings/Stats) */}
-            {!isZenMode && currentConversation && (
-                <div className="flex-shrink-0">
+            {/* Container for footer elements - Ensure they don't shrink */}
+            <div className="flex-shrink-0 w-full bg-gray-950">
+                {!isZenMode && currentConversation && (
                     <StatusBar 
                         onSettingsClick={() => setSettingsModalOpen(true)}
                         onAgentConfigClick={() => setAgentConfigModalOpen(true)}
                     />
-                </div>
-            )}
-            
-            {/* Input Area */}
-            <div className="flex-shrink-0 z-20">
+                )}
+                
                 <ChatFooter 
                     proactiveSuggestion={proactiveSuggestion}
                     onSuggestionClick={() => { proactiveSuggestion && alert(`Action: ${proactiveSuggestion}`); setProactiveSuggestion(null); }}

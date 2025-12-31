@@ -49,7 +49,7 @@ export async function GET() {
     const client = await db.connect();
     
     try {
-        console.log("Starting Full Database Self-Repair (v0.5.23) - FORCE MODE...");
+        console.log("Starting Full Database Self-Repair (v0.5.24) - FORCE MODE...");
 
         await client.query('BEGIN');
 
@@ -61,19 +61,19 @@ export async function GET() {
         // 2. FORCE CLEAN: Delete ALL versions to remove conflicts/stale data
         await client.query('TRUNCATE TABLE "version_history"');
         
-        // 3. Insert v0.5.23
-        const changesText = `### 📱 Mobile Experience Overhaul (v0.5.23)
+        // 3. Insert v0.5.24
+        const changesText = `### 📱 Critical Mobile Layout Fixes (v0.5.24)
 
-**UI/UX Improvements:**
-- **Collapsible Toolbars:** Added a toggle to hide/show chat toolbars, maximizing screen real estate on small devices.
-- **Horizontal Scrolling:** Converted macro and formatting toolbars to swipeable lists to prevent button crowding.
-- **Touch Optimization:** Increased touch targets and adjusted spacing for better usability on touch screens.
-- **Visual Polish:** Improved backdrop blur and input container styling for a modern feel.`;
+**UI/UX Stability:**
+- **Dynamic Viewport Height:** Implemented \`h-[100dvh]\` to prevent footer being hidden by mobile browser toolbars.
+- **Selection Width Fix:** Added \`min-w-0\` and constrained overflow on input container to prevent layout breakage during text selection.
+- **Enhanced Footer Stability:** Fixed footer positioning using \`flex-shrink-0\` ensuring controls are always reachable.
+- **Input Refinement:** Adjusted internal padding and max-height for better visibility on small 6-inch screens.`;
 
         await client.query(`
             INSERT INTO "version_history" ("version", "releaseDate", "changes", "createdAt")
             VALUES ($1, NOW(), $2, NOW())
-        `, ['0.5.23', changesText]);
+        `, ['0.5.24', changesText]);
 
         // 4. Seed Features
         const featuresSql = `
@@ -87,12 +87,12 @@ export async function GET() {
 
         await client.query('COMMIT');
         
-        console.log("Database successfully reset to v0.5.23.");
+        console.log("Database successfully reset to v0.5.24.");
         
         return NextResponse.json({ 
             success: true, 
-            message: "System successfully repaired and updated to v0.5.23.",
-            version: '0.5.23'
+            message: "System successfully repaired and updated to v0.5.24.",
+            version: '0.5.24'
         }, {
             headers: {
                 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',

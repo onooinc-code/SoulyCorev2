@@ -92,7 +92,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
             // Increase max height to accommodate larger default size
-            textareaRef.current.style.height = `${Math.min(Math.max(textareaRef.current.scrollHeight, 50), 150)}px`;
+            textareaRef.current.style.height = `${Math.min(Math.max(textareaRef.current.scrollHeight, 44), 180)}px`;
         }
     }, [content]);
     
@@ -242,7 +242,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     };
 
     return (
-        <div className="w-full bg-gray-950/90 backdrop-blur-xl border-t border-white/5 pb-safe z-40 relative shadow-[0_-5px_20px_rgba(0,0,0,0.3)] transition-all duration-300">
+        <div className="w-full bg-gray-950/90 backdrop-blur-xl border-t border-white/5 pb-safe z-40 relative shadow-[0_-5px_20px_rgba(0,0,0,0.3)] transition-all duration-300 max-w-full overflow-hidden">
             
             {/* Edit Mode Modal */}
             <AnimatePresence>
@@ -318,30 +318,30 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
             </AnimatePresence>
 
             {/* 3. Input Area - Optimized for Mobile */}
-            <div className="px-2 py-2 md:px-4 md:py-3">
-                <div className="flex items-end gap-2 bg-gray-900 border border-white/10 p-2 rounded-2xl shadow-inner focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500/50 transition-all min-h-[50px]">
+            <div className="px-2 py-2 md:px-4 md:py-3 max-w-full overflow-hidden">
+                <div className="flex items-end gap-2 bg-gray-900 border border-white/10 p-1.5 md:p-2 rounded-2xl shadow-inner focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500/50 transition-all min-h-[48px] min-w-0 overflow-hidden">
                     <input type="file" ref={fileInputRef} className="hidden" onChange={e => setAttachment(e.target.files?.[0] || null)} />
                     
                     {/* Toggle Toolbars Button */}
                      <button 
                         onClick={() => setShowToolbars(!showToolbars)} 
-                        className={`p-2 rounded-xl flex-shrink-0 transition-colors h-[40px] w-[40px] flex items-center justify-center ${showToolbars ? 'text-indigo-400 bg-indigo-500/10' : 'text-gray-500 hover:text-white hover:bg-gray-800'}`}
+                        className={`p-2 rounded-xl flex-shrink-0 transition-colors h-[36px] w-[36px] md:h-[40px] md:w-[40px] flex items-center justify-center ${showToolbars ? 'text-indigo-400 bg-indigo-500/10' : 'text-gray-500 hover:text-white hover:bg-gray-800'}`}
                         title="Toggle Toolbars"
                     >
                         {showToolbars ? <ChevronDownIcon className="w-5 h-5"/> : <ChevronUpIcon className="w-5 h-5"/>}
                     </button>
 
-                    <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl h-[40px] w-[40px] flex justify-center items-center flex-shrink-0 transition-colors" title="Attach File">
+                    <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl h-[36px] w-[36px] md:h-[40px] md:w-[40px] flex justify-center items-center flex-shrink-0 transition-colors" title="Attach File">
                         <PaperclipIcon className="w-5 h-5" />
                     </button>
 
-                    <div className="flex-1 relative h-full py-1">
+                    <div className="flex-1 relative min-w-0 py-1 overflow-hidden">
                         <textarea
                             ref={textareaRef}
                             value={content}
                             onChange={handleInputChange}
                             placeholder="Type a message..."
-                            className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1 text-base leading-relaxed max-h-[200px]"
+                            className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1.5 text-base leading-relaxed max-h-[180px] custom-scrollbar"
                             rows={1}
                             dir="auto"
                             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
@@ -349,7 +349,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                          {attachment && (
                             <div className="absolute bottom-full left-0 mb-2 flex items-center gap-2 bg-gray-800 text-xs text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30 shadow-lg z-20">
                                 <PaperclipIcon className="w-3 h-3" />
-                                <span className="max-w-[150px] truncate">{attachment.name}</span>
+                                <span className="max-w-[120px] md:max-w-[200px] truncate">{attachment.name}</span>
                                 <button onClick={() => setAttachment(null)}><XIcon className="w-3 h-3 hover:text-red-400"/></button>
                             </div>
                         )}
@@ -358,7 +358,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                     <button 
                         onClick={handleSend} 
                         disabled={(!content.trim() && !attachment) || isLoading} 
-                        className={`p-2 rounded-xl h-[40px] w-[40px] flex justify-center items-center shadow-lg transition-all duration-200 flex-shrink-0 ${
+                        className={`p-2 rounded-xl h-[36px] w-[36px] md:h-[40px] md:w-[40px] flex justify-center items-center shadow-lg transition-all duration-200 flex-shrink-0 ${
                             (!content.trim() && !attachment) || isLoading 
                             ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
                             : 'bg-indigo-600 hover:bg-indigo-500 text-white hover:scale-105 active:scale-95'
@@ -376,7 +376,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="px-2 pb-2"
+                        className="px-2 pb-2 overflow-hidden"
                      >
                         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                             {bottomToolbarActions.map((action, idx) => (

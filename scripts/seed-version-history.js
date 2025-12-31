@@ -4,15 +4,15 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.23',
+        version: '0.5.24',
         releaseDate: new Date().toISOString(),
-        changes: `### 📱 Mobile Experience Overhaul (v0.5.23)
+        changes: `### 📱 Critical Mobile Layout Fixes (v0.5.24)
 
-**UI/UX Improvements:**
-- **Collapsible Toolbars:** Added a toggle to hide/show chat toolbars, maximizing screen real estate on small devices.
-- **Horizontal Scrolling:** Converted macro and formatting toolbars to swipeable lists to prevent button crowding.
-- **Touch Optimization:** Increased touch targets and adjusted spacing for better usability on touch screens.
-- **Visual Polish:** Improved backdrop blur and input container styling for a modern feel.`
+**UI/UX Stability:**
+- **Dynamic Viewport Height:** Implemented `h-[100dvh]` to prevent footer being hidden by mobile browser toolbars.
+- **Selection Width Fix:** Added `min-w-0` and constrained overflow on input container to prevent layout breakage during text selection.
+- **Enhanced Footer Stability:** Fixed footer positioning using `flex-shrink-0` ensuring controls are always reachable.
+- **Input Refinement:** Adjusted internal padding and max-height for better visibility on small 6-inch screens.`
     }
 ];
 
