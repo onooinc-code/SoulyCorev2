@@ -3,19 +3,19 @@
 
 ---
 
-### Update #44: Toolbar Restoration & Mobile Scroll Fix (v0.5.28)
+### Update #45: RAG Enhancement & Memory Sync (v0.5.29)
 
 **Details:**
-Following user feedback, the macro and formatting toolbars have been restored to permanent visibility. To prevent the previously reported "half-hidden" input issue, the toolbars utilize a non-wrapping horizontal scroll mechanism.
+Critical update to the cognitive engine to resolve failures in retrieving entities across different conversations. Implemented Query Expansion to ensure vague user prompts still trigger correct memory lookups.
 
 **Changes Made:**
-- **Permanent Toolbars:** Removed the toggle button and expansion state; toolbars are now always visible above and below the text area.
-- **Horizontal Swipe Logic:** Integrated `overflow-x-auto` with `mask-edge-fade` to allow smooth horizontal navigation through buttons on small screens without increasing vertical height.
-- **Compact UI:** Reduced button and icon sizes slightly to maximize conversation real estate.
-- **Arabic Labels:** Updated toolbar labels to Arabic for better user alignment.
-- **Versioning:** Bumped version to `0.5.28`.
+- **Query Expansion:** Modified `ContextAssemblyPipeline` to use Gemini to generate a dedicated "Search Query" from conversation context before querying memory modules.
+- **Vector Sync Fix:** Updated `MemoryExtractionPipeline` to force-update the Upstash Vector store for every entity extracted, ensuring immediate availability for future RAG cycles.
+- **RAG Scoring:** Increased retrieval depth to top 5 entities to improve the probability of finding cross-conversation links.
+- **Versioning:** Bumped version to `0.5.29`.
 
 **Modified Files:**
-- `components/ChatInput.tsx`
+- `core/pipelines/context_assembly.ts`
+- `core/pipelines/memory_extraction.ts`
 - `scripts/seed-version-history.js`
 - `app/api/admin/seed/route.ts`

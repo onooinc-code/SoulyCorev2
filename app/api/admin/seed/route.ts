@@ -10,21 +10,21 @@ export async function GET() {
         await client.query('BEGIN');
         await client.query('TRUNCATE TABLE "version_history"');
         
-        const changesText = `### 🛠️ Toolbar Restoration & Stability (v0.5.28)
+        const changesText = `### 🧠 Memory Nexus & RAG Fix (v0.5.29)
 
-**Major Layout Improvements:**
-- **Toolbar Recall:** Restored the Macro and Formatting bars to permanent visibility as per user request.
-- **Horizontal Scroll Protection:** Prevented layout breakage by using horizontal scrolling for tools, ensuring the input area remains compact vertically.
-- **Mobile Label Optimization:** Toolbars automatically switch to icon-only mode on mobile to prevent overlapping.
-- **RTL Support:** Refined toolbar alignment and labels for Arabic users.`;
+**Critical Cognitive Improvements:**
+- **Contextual Retrieval:** Entities are now retrieved using "Query Expansion", allowing the AI to remember information from other chats even when the current prompt is vague.
+- **Real-time Vector Sync:** Fixed a bug where updated entities weren't re-indexed in the vector store; memory is now synchronized across all tiers immediately after extraction.
+- **Enhanced Awareness:** Gemini is now explicitly instructed to acknowledge and use the "Shared Memory" block during chat turns.
+- **Stability:** Hardened the pipeline against API quota failures with better error trapping.`;
 
         await client.query(`
             INSERT INTO "version_history" ("version", "releaseDate", "changes", "createdAt")
             VALUES ($1, NOW(), $2, NOW())
-        `, ['0.5.28', changesText]);
+        `, ['0.5.29', changesText]);
 
         await client.query('COMMIT');
-        return NextResponse.json({ success: true, message: "System repaired and updated to v0.5.28.", version: '0.5.28' });
+        return NextResponse.json({ success: true, message: "Cognitive paths re-linked and updated to v0.5.29.", version: '0.5.29' });
     } catch (error) {
         await client.query('ROLLBACK');
         return NextResponse.json({ error: (error as Error).message }, { status: 500 });
