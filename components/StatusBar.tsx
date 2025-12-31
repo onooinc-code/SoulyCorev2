@@ -4,21 +4,17 @@
 import React, { useMemo, useState } from 'react';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { useUIState } from '@/components/providers/UIStateProvider';
-import { CogIcon, ClockIcon, WrenchScrewdriverIcon, LogIcon, SparklesIcon, CpuChipIcon, BrainIcon, CircleStackIcon, LinkIcon, UserCircleIcon } from '@/components/Icons';
+import { 
+    CogIcon, ClockIcon, WrenchScrewdriverIcon, LogIcon, 
+    SparklesIcon, BrainIcon, CircleStackIcon, LinkIcon, 
+    UserCircleIcon 
+} from '@/components/Icons';
 import type { ExecutionStatus, CognitiveStatus } from '@/lib/types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
-const MotionDiv = motion.div as any;
-
-interface StatusBarProps {
-    onSettingsClick: () => void;
-    onAgentConfigClick: () => void;
-}
-
-const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
+const StatusBar = ({ onSettingsClick, onAgentConfigClick }: { onSettingsClick: () => void; onAgentConfigClick: () => void; }) => {
     const { status, currentConversation, toolState, memoryMonitor, runCognitiveSynthesis } = useConversation();
-    const { setLogPanelOpen, isLogPanelOpen, setToolInspectorOpen, setMemoryInspector, setProfileModalOpen, setIsRoutingModalOpen, isMobileView } = useUIState();
-    const [showUsageLog, setShowUsageLog] = useState(false);
+    const { setLogPanelOpen, isLogPanelOpen, setToolInspectorOpen, setMemoryInspector, setIsRoutingModalOpen, isMobileView } = useUIState();
     
     const model = useMemo(() => currentConversation?.model || 'gemini-3-flash-preview', [currentConversation]);
 
@@ -27,8 +23,9 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
         switch (status) {
             case 'executing': return base + "bg-yellow-500/20 text-yellow-400 border-yellow-500/50 animate-pulse";
             case 'success': return base + "bg-green-500/20 text-green-400 border-green-500/50";
+            case 'null': return base + "bg-orange-500/10 text-orange-400/70 border-orange-500/20";
             case 'error': return base + "bg-red-500/20 text-red-400 border-red-500/50";
-            default: return base + "text-gray-500 border-transparent hover:text-white";
+            default: return base + "text-gray-500 border-transparent hover:text-white hover:bg-white/5";
         }
     };
 
@@ -64,15 +61,17 @@ const StatusBar = ({ onSettingsClick, onAgentConfigClick }: StatusBarProps) => {
 
                 {!isMobileView && (
                     <>
-                         <button onClick={() => setLogPanelOpen(!isLogPanelOpen)} className={isLogPanelOpen ? 'text-indigo-400' : 'text-gray-500'}><LogIcon className="w-3.5 h-3.5"/></button>
-                         <button onClick={() => setToolInspectorOpen(true)} className={getStatusStyles(toolState.status)}><WrenchScrewdriverIcon className="w-3 h-3"/></button>
+                         <button onClick={() => setLogPanelOpen(!isLogPanelOpen)} className={isLogPanelOpen ? 'text-indigo-400' : 'text-gray-500'} title="System Logs"><LogIcon className="w-3.5 h-3.5"/></button>
+                         <button onClick={() => setToolInspectorOpen(true)} className={getStatusStyles(toolState.status)} title="Agent Logic Inspector"><WrenchScrewdriverIcon className="w-3 h-3"/></button>
                     </>
                 )}
 
-                {/* Memory Tier Quick Status (Icons only on mobile) */}
-                <div className="flex gap-1">
-                    <button onClick={() => setMemoryInspector('semantic')} className={getStatusStyles(memoryMonitor.semantic.status)}><BrainIcon className="w-3 h-3"/></button>
-                    {!isMobileView && <button onClick={() => setMemoryInspector('episodic')} className={getStatusStyles(memoryMonitor.episodic.status)}><ClockIcon className="w-3 h-3"/></button>}
+                {/* Memory Tier Monitors */}
+                <div className="flex gap-1 items-center bg-black/20 p-0.5 rounded-lg border border-white/5">
+                    <button onClick={() => setMemoryInspector('semantic')} className={getStatusStyles(memoryMonitor.semantic.status)} title="Semantic Memory (Pinecone)"><BrainIcon className="w-3 h-3"/></button>
+                    <button onClick={() => setMemoryInspector('structured')} className={getStatusStyles(memoryMonitor.structured.status)} title="Structured Memory (Postgres/Upstash)"><CircleStackIcon className="w-3 h-3"/></button>
+                    <button onClick={() => setMemoryInspector('graph')} className={getStatusStyles(memoryMonitor.graph.status)} title="Graph Memory (EdgeDB)"><LinkIcon className="w-3 h-3"/></button>
+                    <button onClick={() => setMemoryInspector('episodic')} className={getStatusStyles(memoryMonitor.episodic.status)} title="Episodic Memory (Chat History)"><ClockIcon className="w-3 h-3"/></button>
                 </div>
 
                 <div className="w-px h-3 bg-white/10" />

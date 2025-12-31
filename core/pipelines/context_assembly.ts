@@ -4,6 +4,7 @@ import { EpisodicMemoryModule } from '../memory/modules/episodic';
 import { SemanticMemoryModule } from '../memory/modules/semantic';
 import { StructuredMemoryModule } from '../memory/modules/structured';
 import { EntityVectorMemoryModule } from '../memory/modules/entity_vector';
+import { GraphMemoryModule } from '../memory/modules/graph';
 import { ProfileMemoryModule } from '../memory/modules/profile';
 import llmProvider from '@/core/llm';
 import { db, sql } from '@/lib/db';
@@ -23,12 +24,14 @@ export class ContextAssemblyPipeline {
     private episodicMemory: EpisodicMemoryModule;
     private semanticMemory: SemanticMemoryModule;
     private entityVectorMemory: EntityVectorMemoryModule;
+    private graphMemory: GraphMemoryModule;
     private profileMemory: ProfileMemoryModule;
 
     constructor() {
         this.episodicMemory = new EpisodicMemoryModule();
         this.semanticMemory = new SemanticMemoryModule();
         this.entityVectorMemory = new EntityVectorMemoryModule();
+        this.graphMemory = new GraphMemoryModule();
         this.profileMemory = new ProfileMemoryModule();
     }
 
@@ -51,8 +54,7 @@ export class ContextAssemblyPipeline {
         }
 
         try {
-            // 1. IMPROVEMENT: Generate a Search Query based on context to improve RAG
-            // This fixes the issue where vague prompts don't trigger memory retrieval.
+            // 1. Contextual Query Expansion
             const recentMessages = await this.episodicMemory.query({ conversationId: conversation.id, limit: 5 });
             const contextForSearch = recentMessages.map(m => `${m.role}: ${m.content}`).join('\n');
             
@@ -63,27 +65,33 @@ export class ContextAssemblyPipeline {
             Search Query:`;
             
             const expandedQuery = await llmProvider.generateContent([], searchGenerationPrompt, { temperature: 0.1 });
-            await this.logToSystem(`[Pipeline] Query Expanded`, { original: userQuery, expanded: expandedQuery });
 
-            // 2. Parallel Retrieval
-            const [userProfile, proactiveEntities, semanticKnowledge] = await Promise.all([
+            // 2. Parallel Retrieval across all 4 tiers
+            const [userProfile, proactiveEntities, semanticKnowledge, graphRelationships] = await Promise.all([
                 this.profileMemory.query({}),
+                // Tier: Structured (Postgres + Upstash)
                 this.entityVectorMemory.query({ queryText: expandedQuery, topK: 5 }).then(async (vecResults) => {
                      if (!vecResults.length) return [];
                      const ids = vecResults.map(r => r.id);
                      const { rows } = await db.query(`SELECT * FROM entity_definitions WHERE id = ANY($1::uuid[])`, [ids]);
                      return rows;
                 }).catch(() => []),
-                this.semanticMemory.query({ queryText: expandedQuery, topK: 3 }).catch(() => [])
+                // Tier: Semantic (Pinecone)
+                this.semanticMemory.query({ queryText: expandedQuery, topK: 3 }).catch(() => []),
+                // Tier: Graph (EdgeDB)
+                this.graphMemory.query({ entityName: expandedQuery.split(' ')[0], brainId: conversation.brainId }).catch(() => [])
             ]);
 
             // 3. Assemble Final Prompt
             const memoryContext = `
 === SHARED MEMORY (ENTITIES) ===
-${proactiveEntities.map((e: any) => `- ${e.name} (${e.type}): ${e.description}`).join('\n') || 'No entities found for this context.'}
+${proactiveEntities.map((e: any) => `- ${e.name} (${e.type}): ${e.description}`).join('\n') || 'No entities found.'}
+
+=== RELATIONSHIP GRAPH ===
+${graphRelationships.length > 0 ? graphRelationships.join('\n') : 'No graph paths found.'}
 
 === GLOBAL KNOWLEDGE ===
-${semanticKnowledge.map((k: any) => `- ${k.text}`).join('\n') || 'No specific facts found.'}
+${semanticKnowledge.map((k: any) => `- ${k.text}`).join('\n') || 'No facts found.'}
 
 === USER PROFILE ===
 Name: ${userProfile.name}
@@ -126,11 +134,16 @@ Preferences: ${JSON.stringify(userProfile.preferences)}
                 llmResponse: resultData.reply, 
                 extractedMemory: resultData.memory,
                 llmResponseTime: Date.now() - startTime,
-                metadata: { semantic: semanticKnowledge, structured: proactiveEntities, episodic: recentMessages }
+                metadata: { 
+                    semantic: semanticKnowledge, 
+                    structured: proactiveEntities, 
+                    episodic: recentMessages,
+                    graph: graphRelationships
+                }
             };
 
         } catch (error: any) {
-             await this.logToSystem(`[Pipeline] Critical Failure`, { error: error.message }, 'error');
+             await this.logToSystem(`[Pipeline] Failure`, { error: error.message }, 'error');
              throw error;
         }
     }

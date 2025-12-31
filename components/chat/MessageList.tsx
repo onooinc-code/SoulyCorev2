@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef, useEffect, useMemo } from 'react';
@@ -81,7 +82,7 @@ const MessageList = ({
                 if (scrollContainerRef.current) {
                     scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
                 }
-            }, 100); // Increased delay to ensure DOM is ready
+            }, 100);
             return () => clearTimeout(timer);
         }
     }, [messages, scrollToMessageId, setScrollToMessageId]);
@@ -116,11 +117,11 @@ const MessageList = ({
     return (
         <div 
             ref={scrollContainerRef} 
-            className="absolute inset-0 flex flex-col p-6 custom-scrollbar"
+            className="absolute inset-0 flex flex-col p-4 sm:p-6 custom-scrollbar overflow-y-auto"
         >
             {threadedMessages.length > 0 ? (
                 <div className="w-full">
-                    <div className="space-y-4 pb-20"> {/* Padding bottom to ensure last message is visible above input */}
+                    <div className="space-y-4 pb-24">
                         {threadedMessages.map((msg, index) => {
                             let userMessageIdForInspection: string | null = null;
                             if (msg.role === 'user') {
@@ -159,16 +160,6 @@ const MessageList = ({
                                 </React.Fragment>
                             )
                         })}
-                        {isLoading && activeWorkflow && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="flex items-center justify-center py-4 gap-4 text-sm text-gray-400"
-                            >
-                                <LoadingIndicator />
-                                <span>Executing workflow step {activeWorkflow.currentStepIndex + 1} of {activeWorkflow.prompt.chainDefinition?.length}...</span>
-                            </motion.div>
-                        )}
                     </div>
                 </div>
             ) : (

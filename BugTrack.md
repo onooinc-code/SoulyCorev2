@@ -1,25 +1,18 @@
 
-# Bug Tracking Log
 ... (Existing entries) ...
 
 ---
-### Bug #41: Mobile UI Sandwich Collapse & Overflow
+### Bug #42: Vertical Scrollbar Disappearance in MessageList
 
 **Error Details:**
-1. The `ChatInput` component was partially hidden on mobile because `100dvh` was fighting with `position: fixed` on the body.
-2. The `Footer` (Status bar) was pushed out of bounds because the `MessageList` flex growth was unconstrained.
-3. Toolbar buttons overlapped horizontally due to excessive text labels and missing flex-shrink rules in small viewports.
-4. UI broke horizontally when users attempted to select text in the input.
+After introducing horizontal scrolling for toolbars and `no-scrollbar` classes, the vertical scrollbar for the primary chat history (MessageList) was suppressed due to parent container `overflow: hidden` and missing explicit `overflow-y-auto` on the list component.
 
 **Solution:**
-1. Removed `position: fixed` from body and used strict `100dvh` flex-col mapping in `ChatWindow`.
-2. Refactored `ChatInput` to use icon-only toolbar buttons on mobile (`sm:` hidden).
-3. Applied `min-width: 0` globally and added `mask-edge-fade` to horizontal scrollbars for better UX.
-4. Reduced padding and font-size of secondary tools in mobile view to maximize vertical chat area.
+1. Explicitly added `overflow-y-auto` to the `MessageList` component.
+2. Verified `custom-scrollbar` CSS definitions in `globals.css` were not using `scrollbar-width: none`.
+3. Ensured `ChatWindow` uses `flex-1 min-h-0` to allow the internal list to compute its height correctly for scrolling.
 
 **Modified Files:**
 - `app/globals.css`
-- `components/chat/ChatWindow.tsx`
-- `components/ChatInput.tsx`
-- `scripts/seed-version-history.js`
+- `components/chat/MessageList.tsx`
 - `app/api/admin/seed/route.ts`
