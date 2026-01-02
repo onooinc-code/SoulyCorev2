@@ -29,7 +29,7 @@ const MobileApp = () => {
         if (activeView === 'chat') {
             if (currentConversation) return <ChatWindow />;
             return (
-                <div className="w-full h-full flex items-center justify-center p-8 bg-gray-900">
+                <div className="w-full h-full flex items-center justify-center p-8 bg-gray-950">
                     <EmptyState
                         icon={ChatBubbleLeftRightIcon}
                         title="ابدأ محادثة"

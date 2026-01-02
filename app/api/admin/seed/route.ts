@@ -10,21 +10,23 @@ export async function GET() {
         await client.query('BEGIN');
         await client.query('TRUNCATE TABLE "version_history"');
         
-        const changesText = `### 📱 Architectural Split & Toolbar Recall (v0.5.34)
+        const changesText = `### 📱 Multi-Shell Architecture & Power Tools Recall (v0.5.35)
 
-**Layout Evolution:**
-- **Device-Specific Shells:** Implemented \`MobileApp\` and \`DesktopApp\` to provide distinct, optimized experiences. Mobile now uses a full-screen drawer and integrated navigation, while Desktop maintains a multi-pane command center.
-- **Toolbar Restoration:** Restored all 12+ macro buttons and 7+ formatting tools.
-- **Horizontal Scroll UX:** To handle the increased button count, toolbars now use horizontal scrolling with edge-fade masks, preventing vertical clutter while keeping all power tools accessible.
-- **Stability Fixes:** Applied \`min-w-0\` fixes to prevent horizontal layout overflow during mobile text selection.`;
+**Layout Specialization:**
+- **Architecture Split:** Implemented specialized \`MobileApp\` and \`DesktopApp\` wrappers. The app now adapts its structural hierarchy (Drawer vs Navigation Rail) based on the device type.
+- **Full-Width Toolbars:** Restored all 12+ macro buttons and 7+ formatting tools.
+- **Enhanced Horizontal Scroll:** To maintain a compact vertical footprint, toolbars now use a full-width horizontally scrollable layout with edge-fade masks.
+- **Mobile Labels:** Labels are hidden on mobile to maximize icon visibility, while remaining active on desktop for clarity.
+- **Mobile Drawer:** Conversation history is now housed in a full-screen drawer on mobile for a native-app feel.
+- **Desktop Command Center:** Desktop maintains a persistent, multi-pane "war room" style layout with constant access to cognitive monitors.`;
 
         await client.query(`
             INSERT INTO "version_history" ("version", "releaseDate", "changes", "createdAt")
             VALUES ($1, NOW(), $2, NOW())
-        `, ['0.5.34', changesText]);
+        `, ['0.5.35', changesText]);
 
         await client.query('COMMIT');
-        return NextResponse.json({ success: true, message: "Architecture split and toolbars restored to v0.5.34.", version: '0.5.34' });
+        return NextResponse.json({ success: true, message: "Multi-shell architecture and toolbars restored to v0.5.35.", version: '0.5.35' });
     } catch (error) {
         await client.query('ROLLBACK');
         return NextResponse.json({ error: (error as Error).message }, { status: 500 });

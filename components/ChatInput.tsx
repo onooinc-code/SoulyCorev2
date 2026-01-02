@@ -6,9 +6,8 @@ import type { Contact } from '@/lib/types';
 import { 
     SendIcon, PaperclipIcon, XIcon, SparklesIcon, CodeIcon, 
     SummarizeIcon, BeakerIcon, ArrowsRightLeftIcon, LightbulbIcon,
-    DocumentTextIcon, WrenchScrewdriverIcon, CommandLineIcon,
-    LinkIcon, CubeIcon, CopyIcon, TrashIcon,
-    ClockIcon, Bars3Icon, ChatBubbleLeftRightIcon
+    DocumentTextIcon, WrenchScrewdriverIcon, LinkIcon, CopyIcon, TrashIcon,
+    Bars3Icon, ChatBubbleLeftRightIcon
 } from '@/components/Icons';
 import { useConversation } from './providers/ConversationProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';
@@ -37,11 +36,11 @@ interface ToolbarButtonProps {
 const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon: Icon, label, onClick, colorIndex, showLabel = true }) => (
     <button 
         onClick={onClick} 
-        className="flex items-center justify-center gap-2 p-2 min-w-[36px] h-8 rounded-lg bg-gray-800/60 hover:bg-indigo-600/30 border border-white/5 transition-all active:scale-90 flex-shrink-0"
+        className="flex items-center justify-center gap-2 px-3 h-9 rounded-xl bg-gray-800/40 hover:bg-indigo-600/30 border border-white/5 transition-all active:scale-90 flex-shrink-0"
         title={label}
     >
-        <Icon className={`w-3.5 h-3.5 ${COLORS[colorIndex % COLORS.length]}`} />
-        {showLabel && <span className="text-[10px] text-gray-300 font-bold whitespace-nowrap">{label}</span>}
+        <Icon className={`w-4 h-4 ${COLORS[colorIndex % COLORS.length]}`} />
+        {showLabel && <span className="text-xs text-gray-300 font-bold whitespace-nowrap">{label}</span>}
     </button>
 );
 
@@ -132,19 +131,22 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     return (
         <div className="w-full flex flex-col gap-2 p-3 sm:p-4 max-w-full overflow-hidden">
             
-            {/* 🛠️ TOP TOOLBAR: MACROS (Restored & Scrollable) */}
-            <div className="horizontal-toolbar mask-edge-fade no-scrollbar">
-                {macroActions.map((m, i) => (
-                    <ToolbarButton 
-                        key={m.key} 
-                        icon={m.icon} 
-                        label={m.label} 
-                        onClick={() => handleAction(m.prompt, m.replace)} 
-                        colorIndex={i} 
-                        showLabel={!isMobileView} 
-                    />
-                ))}
-                <div className="flex-shrink-0 w-8" /> {/* Edge padding */}
+            {/* 🛠️ TOP TOOLBAR: MACROS (Restored & Full Width Scrollable) */}
+            <div className="w-full overflow-hidden">
+                <div className="horizontal-toolbar mask-edge-fade no-scrollbar">
+                    <div className="flex-shrink-0 w-4" /> {/* Padding offset for fade */}
+                    {macroActions.map((m, i) => (
+                        <ToolbarButton 
+                            key={m.key} 
+                            icon={m.icon} 
+                            label={m.label} 
+                            onClick={() => handleAction(m.prompt, m.replace)} 
+                            colorIndex={i} 
+                            showLabel={!isMobileView} 
+                        />
+                    ))}
+                    <div className="flex-shrink-0 w-8" />
+                </div>
             </div>
 
             {/* ⌨️ MAIN INPUT AREA */}
@@ -187,19 +189,22 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 </button>
             </div>
 
-            {/* 🖋️ BOTTOM TOOLBAR: FORMATTING (Restored & Scrollable) */}
-            <div className="horizontal-toolbar mask-edge-fade no-scrollbar border-t border-white/5 pt-2">
-                {formatActions.map((f, i) => (
-                    <ToolbarButton 
-                        key={f.label} 
-                        icon={f.icon} 
-                        label={f.label} 
-                        onClick={f.action} 
-                        colorIndex={i + 10} 
-                        showLabel={!isMobileView} 
-                    />
-                ))}
-                <div className="flex-shrink-0 w-8" /> {/* Edge padding */}
+            {/* 🖋️ BOTTOM TOOLBAR: FORMATTING (Restored & Full Width Scrollable) */}
+            <div className="w-full overflow-hidden border-t border-white/5 pt-1">
+                <div className="horizontal-toolbar mask-edge-fade no-scrollbar">
+                    <div className="flex-shrink-0 w-4" /> {/* Padding offset for fade */}
+                    {formatActions.map((f, i) => (
+                        <ToolbarButton 
+                            key={f.label} 
+                            icon={f.icon} 
+                            label={f.label} 
+                            onClick={f.action} 
+                            colorIndex={i + 10} 
+                            showLabel={!isMobileView} 
+                        />
+                    ))}
+                    <div className="flex-shrink-0 w-8" />
+                </div>
             </div>
         </div>
     );

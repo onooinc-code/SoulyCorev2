@@ -106,20 +106,27 @@
     width: 100vw;
 }
 
-/* Horizontal Toolbar Scroll */
+/* Horizontal Toolbar Scroll - FULL WIDTH */
 .horizontal-toolbar {
     display: flex;
+    width: 100%;
     overflow-x: auto;
     gap: 0.5rem;
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem 0;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    white-space: nowrap;
 }
 .horizontal-toolbar::-webkit-scrollbar {
     display: none;
 }
 
 .mask-edge-fade {
-    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+/* Safe areas for mobile */
+.safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
 }
