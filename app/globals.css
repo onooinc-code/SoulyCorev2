@@ -5,33 +5,25 @@
 
 @layer base {
   :root, .theme-dark {
-    --bg-primary: #111827;
-    --bg-secondary: #1f2937;
-    --bg-tertiary: #374151;
-    --bg-interactive: #4f46e5;
-    --bg-interactive-hover: #4338ca;
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --bg-interactive: #6366f1;
     
-    --text-primary: #f9fafb;
-    --text-secondary: #d1d5db;
-    --text-muted: #9ca3af;
-    --text-interactive: #ffffff;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
     
-    --border-primary: #374151;
-    --border-interactive: #6366f1;
-    --border-focus: #818cf8;
+    --border-primary: rgba(255,255,255,0.08);
+    --border-interactive: #818cf8;
 
-    --prose-code-bg: #374151;
-    --prose-pre-bg: #1f2937;
-    --prose-link: #60a5fa;
-
-    --scrollbar-width: 6px; 
-    --scrollbar-track: rgba(31, 41, 55, 0.3);
-    --scrollbar-thumb: #4b5563;
-    --scrollbar-thumb-hover: #6366f1;
+    --mobile-bubble-user: #4f46e5;
+    --mobile-bubble-ai: #1e293b;
+    
+    --desktop-pane-bg: #111827;
   }
 
-  html,
-  body {
+  html, body {
     height: 100dvh;
     width: 100vw;
     overflow: hidden;
@@ -39,74 +31,55 @@
     color: var(--text-secondary);
     font-family: 'Cairo', sans-serif;
     touch-action: manipulation;
-    position: fixed; /* Prevent rubber-banding on iOS */
-  }
-
-  p, h1, h2, h3, h4, h5, h6, pre, code, li {
-    overflow-wrap: break-word;
-    word-wrap: break-word;
+    position: fixed;
   }
 }
 
-/* Fix for layout breakage during text selection */
-* {
-    min-width: 0;
+/* 📱 Mobile Specific Styles */
+.mobile-chat-bubble-user {
+    background-color: var(--mobile-bubble-user);
+    border-radius: 20px 20px 4px 20px;
+    margin-left: auto;
+    max-width: 85%;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
 }
 
-.prose-custom {
-  color: var(--text-secondary);
-  font-family: 'Cairo', sans-serif;
-  line-height: 1.6;
-  direction: rtl;
-  text-align: right;
+.mobile-chat-bubble-ai {
+    background-color: var(--mobile-bubble-ai);
+    border-radius: 20px 20px 20px 4px;
+    margin-right: auto;
+    max-width: 85%;
+    border: 1px solid var(--border-primary);
 }
 
-/* Custom Scrollbar Logic */
-.custom-scrollbar {
-    overflow-y: auto;
+.mobile-bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    z-index: 100;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: var(--scrollbar-width);
+/* 🖥️ Desktop Specific Styles */
+.desktop-message-row {
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
+.desktop-nav-rail-item {
+    @apply p-3 rounded-xl transition-all duration-300 flex items-center justify-center relative group;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb);
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.05);
+.desktop-nav-rail-item:hover .tooltip {
+    @apply opacity-100 translate-x-0;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: var(--scrollbar-thumb-hover);
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Layout Specifics */
-.desktop-layout {
-    display: flex;
-    height: 100dvh;
-    width: 100vw;
-}
-
-.mobile-layout {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    width: 100vw;
-}
-
-/* Horizontal Toolbar Scroll - FULL WIDTH */
+/* Shared Toolbars */
 .horizontal-toolbar {
     display: flex;
     width: 100%;
@@ -117,16 +90,9 @@
     scrollbar-width: none;
     white-space: nowrap;
 }
-.horizontal-toolbar::-webkit-scrollbar {
-    display: none;
-}
+.horizontal-toolbar::-webkit-scrollbar { display: none; }
 
 .mask-edge-fade {
     mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
     -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-}
-
-/* Safe areas for mobile */
-.safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
 }

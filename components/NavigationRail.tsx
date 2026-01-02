@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -30,38 +31,48 @@ const NavigationRail = () => {
     };
 
     const navItems = [
-        { view: 'chat', icon: ChatBubbleLeftRightIcon, label: 'Chat', action: handleChatClick },
-        { view: 'dashboard', icon: DashboardIcon, label: 'Dashboard' },
-        { view: 'search', icon: SearchIcon, label: 'Global Search' },
-        { view: 'agent_center', icon: RocketLaunchIcon, label: 'Agent Center' },
-        { view: 'brain_center', icon: BrainIcon, label: 'Brain Center' },
-        { view: 'memory_extraction_hub', icon: ScissorsIcon, label: 'Memory Extraction' },
-        { view: 'contextual_analyzer', icon: DocumentMagnifyingGlassIcon, label: 'Contextual Analyzer' },
-        { view: 'memory_center', icon: MemoryIcon, label: 'Memory Center' },
-        { view: 'contacts_hub', icon: UsersIcon, label: 'Contacts Hub' },
-        { view: 'prompts_hub', icon: PromptsIcon, label: 'Prompts Hub' },
-        { view: 'tools_hub', icon: ToolsIcon, label: 'Tools Hub' },
-        { view: 'projects_hub', icon: ClipboardDocumentListIcon, label: 'Projects Hub' },
-        { view: 'experiences_hub', icon: LightbulbIcon, label: 'Experiences Hub' },
-        { view: 'comm_hub', icon: RssIcon, label: 'Comm Hub' },
-        { view: 'dev_center', icon: CodeIcon, label: 'Dev Center' },
-        { view: 'reports_hub', icon: ClipboardPasteIcon, label: 'Reports Hub' },
+        { view: 'chat', icon: ChatBubbleLeftRightIcon, label: 'الدردشة', action: handleChatClick },
+        { view: 'dashboard', icon: DashboardIcon, label: 'لوحة التحكم' },
+        { view: 'search', icon: SearchIcon, label: 'البحث الشامل' },
+        { view: 'agent_center', icon: RocketLaunchIcon, label: 'مركز الوكلاء' },
+        { view: 'brain_center', icon: BrainIcon, label: 'إدارة العقل' },
+        { view: 'memory_center', icon: MemoryIcon, label: 'مركز الذاكرة' },
+        { view: 'contacts_hub', icon: UsersIcon, label: 'جهات الاتصال' },
+        { view: 'prompts_hub', icon: PromptsIcon, label: 'الموجهات' },
+        { view: 'tools_hub', icon: ToolsIcon, label: 'الأدوات' },
+        { view: 'projects_hub', icon: ClipboardDocumentListIcon, label: 'المشاريع' },
+        { view: 'dev_center', icon: CodeIcon, label: 'المطورين' },
     ];
 
     return (
-        <nav className="flex flex-col items-center gap-2 p-2 bg-gray-900 border-r border-white/5 rail-scrollbar overflow-y-auto w-16 flex-shrink-0 z-50">
+        <nav className="flex flex-col items-center gap-3 p-3 bg-gray-950 border-r border-white/5 overflow-y-auto w-20 flex-shrink-0 z-50 custom-scrollbar">
+            <div className="mb-4">
+                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <BrainIcon className="w-6 h-6 text-white" />
+                </div>
+            </div>
+
             {navItems.map(item => (
                 <button
                     key={item.view}
                     onClick={item.action || (() => setActiveView(item.view as any))}
-                    title={item.label}
-                    className={`p-3 rounded-xl transition-all duration-200 w-full flex justify-center ${
+                    className={`desktop-nav-rail-item ${
                         activeView === item.view
-                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50'
-                            : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+                            ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40'
+                            : 'text-gray-500 hover:text-gray-200 hover:bg-white/5'
                     }`}
                 >
-                    <item.icon className="w-5 h-5" />
+                    <item.icon className="w-6 h-6" />
+                    
+                    {/* Tooltip */}
+                    <span className="tooltip absolute right-full mr-3 px-2 py-1 bg-gray-800 text-white text-[10px] font-bold rounded opacity-0 pointer-events-none transition-all translate-x-2 whitespace-nowrap border border-white/10 shadow-2xl z-[100]">
+                        {item.label}
+                    </span>
+
+                    {/* Active Indicator */}
+                    {activeView === item.view && (
+                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-400 rounded-l-full" />
+                    )}
                 </button>
             ))}
         </nav>
