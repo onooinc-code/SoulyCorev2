@@ -56,7 +56,7 @@ const NavigationRail = () => {
                 <button
                     key={item.view}
                     onClick={item.action || (() => setActiveView(item.view as any))}
-                    className={`desktop-nav-rail-item ${
+                    className={`group desktop-nav-rail-item ${
                         activeView === item.view
                             ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40'
                             : 'text-gray-500 hover:text-gray-200 hover:bg-white/5'

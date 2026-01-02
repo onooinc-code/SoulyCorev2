@@ -10,28 +10,27 @@ export async function GET() {
         await client.query('BEGIN');
         await client.query('TRUNCATE TABLE "version_history"');
         
-        const changesText = `### 🎨 UX Personalization Engine (v0.5.36)
+        const changesText = `### 🔧 Build Stability & UI Refinement (v0.5.37)
 
-**Mobile Optimization (The Messaging Flow):**
-- **Bubble Chat UI:** Messages now render as distinct bubbles with smart alignment, mimicking high-end messaging apps like Telegram.
-- **Adaptive Sizing:** Font sizes and paddings adjusted specifically for mobile viewport ergonomics.
-- **Header Refinement:** Minimized mobile header to give more vertical space to the conversation.
+**Technical Fixes:**
+- **Vercel Build Fix:** Resolved a critical build error where Tailwind's \`@apply\` was used with the \`group\` marker class in \`globals.css\`. Markers are now applied via JSX classNames.
+- **Persistent Architecture:** Reinforced the split between \`MobileApp\` and \`DesktopApp\` logic.
 
-**Desktop Optimization (The Power Workspace):**
-- **Multi-Pane Architecture:** Persistent navigation rail with interactive tooltips for faster hub switching.
-- **Expanded Layout:** Messages now follow a structured, spacious row-based layout optimized for mouse and keyboard usage.
-- **Enhanced Visual Feedback:** Active indicators in the Navigation Rail and hover-triggered toolbars for better discoverability.
+**Mobile Optimization:**
+- **Native Messaging Experience:** Chat Bubbles are now fully calibrated for RTL (Right-to-Left) and touch ergonomics.
+- **Drawer Navigation:** Sidebar remains a secondary layer on mobile, accessible via the bottom menu.
 
-**Core Restorations:**
-- Full-width toolbars remain persistent across all hubs with horizontal scroll protection.`;
+**Desktop Power Mode:**
+- **Navigation Tooltips:** Restored interactive tooltips on the Sidebar Rail for lightning-fast hub context.
+- **Full-Width Persistence:** Toolbars (Macros & Formatting) are now fixed-width optimized for mouse/keyboard workflows.`;
 
         await client.query(`
             INSERT INTO "version_history" ("version", "releaseDate", "changes", "createdAt")
             VALUES ($1, NOW(), $2, NOW())
-        `, ['0.5.36', changesText]);
+        `, ['0.5.37', changesText]);
 
         await client.query('COMMIT');
-        return NextResponse.json({ success: true, message: "Device-optimized UX applied. Updated to v0.5.36.", version: '0.5.36' });
+        return NextResponse.json({ success: true, message: "Build stabilized and version updated to v0.5.37.", version: '0.5.37' });
     } catch (error) {
         await client.query('ROLLBACK');
         return NextResponse.json({ error: (error as Error).message }, { status: 500 });

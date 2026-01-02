@@ -72,7 +72,7 @@
 }
 
 .desktop-nav-rail-item {
-    @apply p-3 rounded-xl transition-all duration-300 flex items-center justify-center relative group;
+    @apply p-3 rounded-xl transition-all duration-300 flex items-center justify-center relative;
 }
 
 .desktop-nav-rail-item:hover .tooltip {
