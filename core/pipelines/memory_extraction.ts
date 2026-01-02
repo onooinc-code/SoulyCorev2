@@ -68,6 +68,7 @@ export class MemoryExtractionPipeline {
             });
 
             const data = JSON.parse(response.text?.trim() || '{}');
+            await this.logEvent(`[Extraction] Analysis parsed`, { entities: data.entities?.length || 0, facts: data.facts?.length || 0 });
 
             if (data.userProfile) await this.profileMemory.store(data.userProfile);
 
@@ -86,6 +87,13 @@ export class MemoryExtractionPipeline {
                         metadata: { brainId, lastUpdated: new Date().toISOString() } 
                     });
                 }
+            }
+            
+            if ((data.entities && data.entities.length > 0) || (data.facts && data.facts.length > 0)) {
+                await this.logEvent(`[Extraction] Database Updated`, { 
+                    newEntities: data.entities?.map((e:any) => e.name), 
+                    facts: data.facts 
+                });
             }
 
             if (runId) {

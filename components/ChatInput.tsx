@@ -11,7 +11,6 @@ import {
     ClockIcon, Bars3Icon, ChatBubbleLeftRightIcon
 } from '@/components/Icons';
 import { useConversation } from './providers/ConversationProvider';
-import { motion } from 'framer-motion';
 import { useNotification } from '@/lib/hooks/use-notifications';
 import { useUIState } from './providers/UIStateProvider';
 
@@ -38,11 +37,11 @@ interface ToolbarButtonProps {
 const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon: Icon, label, onClick, colorIndex, showLabel = true }) => (
     <button 
         onClick={onClick} 
-        className="flex items-center justify-center gap-2 p-2 min-w-[36px] h-8 rounded-lg bg-gray-800/40 hover:bg-indigo-600/30 border border-white/5 transition-all active:scale-90 flex-shrink-0"
+        className="flex items-center justify-center gap-2 p-2 min-w-[36px] h-8 rounded-lg bg-gray-800/60 hover:bg-indigo-600/30 border border-white/5 transition-all active:scale-90 flex-shrink-0"
         title={label}
     >
         <Icon className={`w-3.5 h-3.5 ${COLORS[colorIndex % COLORS.length]}`} />
-        {showLabel && <span className="text-[10px] text-gray-300 font-bold whitespace-nowrap hidden sm:inline">{label}</span>}
+        {showLabel && <span className="text-[10px] text-gray-300 font-bold whitespace-nowrap">{label}</span>}
     </button>
 );
 
@@ -61,7 +60,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
-            const maxHeight = isMobileView ? 100 : 200;
+            const maxHeight = isMobileView ? 120 : 250;
             textareaRef.current.style.height = `${Math.min(Math.max(textareaRef.current.scrollHeight, 40), maxHeight)}px`;
         }
     }, [content, isMobileView]);
@@ -111,7 +110,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
 
     const formatActions = [
         { icon: TrashIcon, label: 'مسح', action: () => setContent('') },
-        { icon: CopyIcon, label: 'نسخ', action: () => { navigator.clipboard.writeText(content).then(() => addNotification({type:'success', title:'Copied'})); } },
+        { icon: CopyIcon, label: 'نسخ', action: () => { navigator.clipboard.writeText(content).then(() => addNotification({type:'success', title:'تم النسخ'})); } },
         { icon: DocumentTextIcon, label: 'عريض', action: () => modifyText(t => `**${t}**`) },
         { icon: CodeIcon, label: 'كود', action: () => modifyText(t => `\`${t}\``) },
         { icon: LinkIcon, label: 'رابط', action: () => modifyText(t => `[${t}](url)`) },
@@ -127,24 +126,32 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         { key: 'trans_ar', icon: ArrowsRightLeftIcon, label: "AR", prompt: "ترجم إلى العربية:\n", replace: false },
         { key: 'debug', icon: WrenchScrewdriverIcon, label: "Debug", prompt: "جد الخطأ هنا:\n", replace: false },
         { key: 'ideas', icon: LightbulbIcon, label: "أفكار", prompt: "اقترح أفكار إبداعية حول:\n", replace: false },
+        { key: 'analyze', icon: BeakerIcon, label: "تحليل", prompt: "حلل النص التالي واستخرج النقاط الأساسية:\n", replace: false },
     ];
 
     return (
-        <div className="w-full flex flex-col gap-1.5 p-2 sm:p-4 max-w-full overflow-hidden bg-gray-950/80 backdrop-blur-xl">
+        <div className="w-full flex flex-col gap-2 p-3 sm:p-4 max-w-full overflow-hidden">
             
-            {/* Top Toolbar (Macros) - Always Visible & Scrollable */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar mask-edge-fade py-1">
+            {/* 🛠️ TOP TOOLBAR: MACROS (Restored & Scrollable) */}
+            <div className="horizontal-toolbar mask-edge-fade no-scrollbar">
                 {macroActions.map((m, i) => (
-                    <ToolbarButton key={m.key} icon={m.icon} label={m.label} onClick={() => handleAction(m.prompt, m.replace)} colorIndex={i} showLabel={!isMobileView} />
+                    <ToolbarButton 
+                        key={m.key} 
+                        icon={m.icon} 
+                        label={m.label} 
+                        onClick={() => handleAction(m.prompt, m.replace)} 
+                        colorIndex={i} 
+                        showLabel={!isMobileView} 
+                    />
                 ))}
-                <div className="flex-shrink-0 w-6"></div>
+                <div className="flex-shrink-0 w-8" /> {/* Edge padding */}
             </div>
 
-            {/* Main Input Row */}
-            <div className="flex items-end gap-2 bg-gray-900 border border-white/10 p-1.5 rounded-2xl focus-within:ring-1 focus-within:ring-indigo-500/50 transition-all min-h-[48px] w-full max-w-full overflow-hidden">
+            {/* ⌨️ MAIN INPUT AREA */}
+            <div className="flex items-end gap-2 bg-gray-900/80 border border-white/10 p-2 rounded-2xl focus-within:ring-1 focus-within:ring-indigo-500/50 transition-all min-h-[48px] w-full max-w-full overflow-hidden backdrop-blur-md">
                 <input type="file" ref={fileInputRef} className="hidden" onChange={e => setAttachment(e.target.files?.[0] || null)} />
                 
-                <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-500 hover:text-white rounded-xl h-10 w-10 flex items-center justify-center shrink-0 transition-colors">
+                <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-500 hover:text-indigo-400 rounded-xl h-10 w-10 flex items-center justify-center shrink-0 transition-colors">
                     <PaperclipIcon className="w-5 h-5" />
                 </button>
 
@@ -154,13 +161,13 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                         value={content}
                         onChange={e => setContent(e.target.value)}
                         placeholder="اكتب رسالة..."
-                        className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1.5 text-[16px] leading-snug max-h-[100px] no-scrollbar"
+                        className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1 text-[16px] leading-relaxed max-h-[120px] custom-scrollbar"
                         rows={1}
                         dir="auto"
                         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !isMobileView) { e.preventDefault(); handleSend(); } }}
                     />
                     {attachment && (
-                        <div className="mt-1 flex items-center gap-1.5 bg-indigo-900/40 text-[10px] text-indigo-200 px-2 py-0.5 rounded-md border border-indigo-500/30 w-fit max-w-[150px]">
+                        <div className="mt-2 flex items-center gap-1.5 bg-indigo-900/40 text-[10px] text-indigo-200 px-2 py-1 rounded-md border border-indigo-500/30 w-fit max-w-[200px]">
                             <span className="truncate">{attachment.name}</span>
                             <button onClick={() => setAttachment(null)}><XIcon className="w-3 h-3 text-red-400"/></button>
                         </div>
@@ -180,12 +187,19 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 </button>
             </div>
 
-            {/* Bottom Toolbar (Formatting) - Always Visible & Scrollable */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar mask-edge-fade py-1 border-t border-white/5 pt-1.5">
+            {/* 🖋️ BOTTOM TOOLBAR: FORMATTING (Restored & Scrollable) */}
+            <div className="horizontal-toolbar mask-edge-fade no-scrollbar border-t border-white/5 pt-2">
                 {formatActions.map((f, i) => (
-                    <ToolbarButton key={f.label} icon={f.icon} label={f.label} onClick={f.action} colorIndex={i + 10} showLabel={!isMobileView} />
+                    <ToolbarButton 
+                        key={f.label} 
+                        icon={f.icon} 
+                        label={f.label} 
+                        onClick={f.action} 
+                        colorIndex={i + 10} 
+                        showLabel={!isMobileView} 
+                    />
                 ))}
-                <div className="flex-shrink-0 w-6"></div>
+                <div className="flex-shrink-0 w-8" /> {/* Edge padding */}
             </div>
         </div>
     );

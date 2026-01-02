@@ -10,20 +10,21 @@ export async function GET() {
         await client.query('BEGIN');
         await client.query('TRUNCATE TABLE "version_history"');
         
-        const changesText = `### ⚙️ Memory & Settings Hardening (v0.5.32)
+        const changesText = `### 📱 Architectural Split & Toolbar Recall (v0.5.34)
 
-**Critical Architecture Improvements:**
-- **Response Parsing V2:** Implemented a regex-based parser in \`ContextAssemblyPipeline\` that isolates JSON output from "chatty" model responses. This prevents the raw JSON/Markdown from leaking into the user chat interface when using Single-Shot extraction.
-- **Settings Persistence:** Fixed a state synchronization issue in the Global Settings modal where defaults were overwriting database values on load. Deep merging is now used to preserve nested configurations like \`memoryConfig\`.
-- **UI Integrity:** Confirmed 4-tier memory monitors (Semantic, Structured, Graph, Episodic) are accurately reflecting retrieval status.`;
+**Layout Evolution:**
+- **Device-Specific Shells:** Implemented \`MobileApp\` and \`DesktopApp\` to provide distinct, optimized experiences. Mobile now uses a full-screen drawer and integrated navigation, while Desktop maintains a multi-pane command center.
+- **Toolbar Restoration:** Restored all 12+ macro buttons and 7+ formatting tools.
+- **Horizontal Scroll UX:** To handle the increased button count, toolbars now use horizontal scrolling with edge-fade masks, preventing vertical clutter while keeping all power tools accessible.
+- **Stability Fixes:** Applied \`min-w-0\` fixes to prevent horizontal layout overflow during mobile text selection.`;
 
         await client.query(`
             INSERT INTO "version_history" ("version", "releaseDate", "changes", "createdAt")
             VALUES ($1, NOW(), $2, NOW())
-        `, ['0.5.32', changesText]);
+        `, ['0.5.34', changesText]);
 
         await client.query('COMMIT');
-        return NextResponse.json({ success: true, message: "System hardened and updated to v0.5.32.", version: '0.5.32' });
+        return NextResponse.json({ success: true, message: "Architecture split and toolbars restored to v0.5.34.", version: '0.5.34' });
     } catch (error) {
         await client.query('ROLLBACK');
         return NextResponse.json({ error: (error as Error).message }, { status: 500 });

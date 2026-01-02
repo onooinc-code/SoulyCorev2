@@ -50,6 +50,7 @@ export class ContextAssemblyPipeline {
             try {
                 const { rows } = await sql<PipelineRun>`INSERT INTO pipeline_runs ("messageId", "pipelineType", status) VALUES (${userMessageId}, 'ContextAssembly', 'running') RETURNING id;`;
                 runId = rows[0].id;
+                await this.logToSystem(`[Context] Pipeline started for message: ${userMessageId}`, { query: userQuery });
             } catch (e) {}
         }
 
@@ -65,6 +66,7 @@ export class ContextAssemblyPipeline {
             Search Query:`;
             
             const expandedQuery = await llmProvider.generateContent([], searchGenerationPrompt, { temperature: 0.1 });
+            await this.logToSystem(`[Context] Query Expanded`, { original: userQuery, expanded: expandedQuery });
 
             // 2. Parallel Retrieval across all 4 tiers
             const [userProfile, proactiveEntities, semanticKnowledge, graphRelationships] = await Promise.all([
@@ -81,6 +83,12 @@ export class ContextAssemblyPipeline {
                 // Tier: Graph (EdgeDB)
                 this.graphMemory.query({ entityName: expandedQuery.split(' ')[0], brainId: conversation.brainId }).catch(() => [])
             ]);
+            
+            await this.logToSystem(`[Context] Retrieval Complete`, { 
+                entitiesFound: proactiveEntities.length,
+                factsFound: semanticKnowledge.length,
+                graphPaths: graphRelationships.length
+            });
 
             // 3. Assemble Final Prompt
             const memoryContext = `
