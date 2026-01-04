@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XIcon, CodeIcon, CheckIcon, TrashIcon, RefreshIcon, SparklesIcon, EyeIcon } from '@/components/Icons';
+import { XIcon, CodeIcon, CheckIcon, TrashIcon, RefreshIcon, SparklesIcon, EyeIcon, SearchIcon, BeakerIcon } from '@/components/Icons';
 import { useLog } from '../providers/LogProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';
 
@@ -20,8 +20,14 @@ interface StoredContextItem {
     createdAt: string;
 }
 
+interface SearchMatch {
+    id: string;
+    text: string;
+    score: number;
+}
+
 const ProjectContextModal = ({ projectId, projectName, onClose }: ProjectContextModalProps) => {
-    const [activeTab, setActiveTab] = useState<'inject' | 'view'>('inject');
+    const [activeTab, setActiveTab] = useState<'inject' | 'view' | 'test'>('inject');
     
     // Inject State
     const [contextType, setContextType] = useState<'business' | 'schema' | 'code'>('business');
@@ -33,6 +39,12 @@ const ProjectContextModal = ({ projectId, projectName, onClose }: ProjectContext
     // View State
     const [storedItems, setStoredItems] = useState<StoredContextItem[]>([]);
     const [isLoadingItems, setIsLoadingItems] = useState(false);
+
+    // Test Recall State
+    const [testQuery, setTestQuery] = useState('');
+    const [isTesting, setIsTesting] = useState(false);
+    const [testResults, setTestResults] = useState<SearchMatch[]>([]);
+    const [hasTested, setHasTested] = useState(false);
     
     const { log } = useLog();
     const { addNotification } = useNotification();
@@ -101,7 +113,9 @@ const ProjectContextModal = ({ projectId, projectName, onClose }: ProjectContext
             addNotification({ type: 'success', title: 'Context Ingested', message: 'This knowledge is now available to the AI.' });
             setContent('');
             setAnalysisResult(null);
-            setActiveTab('view'); // Auto-switch to view to verify
+            // Switch to test tab to verify immediately
+            setTestQuery('Check recent addition...');
+            setActiveTab('test'); 
             
         } catch (error) {
             addNotification({ type: 'error', title: 'Ingestion Failed', message: (error as Error).message });
@@ -122,6 +136,28 @@ const ProjectContextModal = ({ projectId, projectName, onClose }: ProjectContext
             }
         } catch (error) {
              addNotification({ type: 'error', title: 'Delete Failed' });
+        }
+    };
+
+    const handleTestRecall = async () => {
+        if (!testQuery.trim()) return;
+        setIsTesting(true);
+        setHasTested(false);
+        try {
+            const res = await fetch(`/api/projects/${projectId}/context/search`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: testQuery }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setTestResults(data.matches || []);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsTesting(false);
+            setHasTested(true);
         }
     };
 
@@ -152,7 +188,13 @@ const ProjectContextModal = ({ projectId, projectName, onClose }: ProjectContext
                         onClick={() => setActiveTab('view')} 
                         className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'view' ? 'bg-gray-800 text-indigo-400 border-b-2 border-indigo-500' : 'bg-gray-900/30 text-gray-400 hover:text-gray-200'}`}
                     >
-                        View Stored Context
+                        View Archive
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('test')} 
+                        className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'test' ? 'bg-gray-800 text-indigo-400 border-b-2 border-indigo-500' : 'bg-gray-900/30 text-gray-400 hover:text-gray-200'}`}
+                    >
+                        Test Recall (Vectors)
                     </button>
                 </div>
 
@@ -207,7 +249,7 @@ const ProjectContextModal = ({ projectId, projectName, onClose }: ProjectContext
                 {activeTab === 'view' && (
                     <main className="flex-1 p-4 overflow-y-auto bg-gray-900/30 custom-scrollbar">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-sm font-semibold text-gray-400">Stored Knowledge Blocks</h3>
+                            <h3 className="text-sm font-semibold text-gray-400">Stored Knowledge Blocks (Archive)</h3>
                             <button onClick={fetchStoredContext} className="p-1.5 bg-gray-700 rounded-md hover:bg-gray-600"><RefreshIcon className={`w-4 h-4 ${isLoadingItems ? 'animate-spin' : ''}`} /></button>
                         </div>
                         
@@ -247,6 +289,67 @@ const ProjectContextModal = ({ projectId, projectName, onClose }: ProjectContext
                             </div>
                         )}
                     </main>
+                )}
+                
+                {activeTab === 'test' && (
+                    <div className="flex flex-col h-full overflow-hidden">
+                        <div className="p-6 bg-gray-900/30 border-b border-gray-700 flex-shrink-0">
+                            <p className="text-sm text-gray-400 mb-3">
+                                Test if the <strong>Vectors</strong> (AI Memory) are working correctly. Ask a question about the project or type a keyword.
+                            </p>
+                            <div className="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    value={testQuery}
+                                    onChange={e => setTestQuery(e.target.value)}
+                                    placeholder="e.g., What are the business rules?"
+                                    className="flex-1 bg-gray-950 border border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    onKeyDown={e => e.key === 'Enter' && handleTestRecall()}
+                                />
+                                <button 
+                                    onClick={handleTestRecall}
+                                    disabled={isTesting || !testQuery.trim()}
+                                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    <BeakerIcon className="w-4 h-4" />
+                                    {isTesting ? 'Checking...' : 'Test'}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-black/20">
+                            {hasTested && testResults.length === 0 && (
+                                <div className="text-center text-gray-500 py-8">
+                                    <p>No matches found in Vector Memory for this query.</p>
+                                </div>
+                            )}
+                            {testResults.map((match, i) => (
+                                <motion.div 
+                                    key={i} 
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.1 }}
+                                    className="bg-gray-800 p-4 rounded-lg border border-gray-700"
+                                >
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Match #{i+1}</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-24 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full rounded-full ${match.score > 0.8 ? 'bg-green-500' : match.score > 0.7 ? 'bg-yellow-500' : 'bg-red-500'}`} 
+                                                    style={{ width: `${match.score * 100}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-xs font-mono text-gray-300">{(match.score * 100).toFixed(1)}% Match</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-gray-200 whitespace-pre-wrap font-mono bg-black/30 p-3 rounded-md border border-white/5">
+                                        {match.text}
+                                    </p>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
                 )}
 
             </motion.div>

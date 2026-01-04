@@ -3,19 +3,21 @@
 
 ---
 
-### Update #50: Fault Tolerance Patch (v0.5.46)
+### Update #51: Cognitive Assurance Patch (v0.5.47)
 
 **Details:**
-Addressed a 500 Internal Server Error when saving Project Context. The error occurred because the system attempted to save to all configured memory modules (Semantic, Document, SQL) sequentially without isolated error handling. If one service (e.g., MongoDB) was misconfigured or timed out, the entire request failed.
+Added a verification mechanism to the Project Context ingestion workflow. Users can now verify that their data was successfully vectorized and is retrievable by the AI engine.
 
 **Changes Made:**
-- **Context API:** Refactored `app/api/projects/[projectId]/context/route.ts` to use individual `try-catch` blocks for each memory tier.
-- **Logic:** The system now attempts to save to Semantic Memory (Pinecone), Document Memory (MongoDB), and System Logs (Postgres) independently.
-- **Response:** The API now returns a `200 OK` if *any* storage attempt succeeds, along with a list of warnings for failed tiers, ensuring the user's data isn't lost due to partial infrastructure failures.
-- **Versioning:** Bumped system version to v0.5.46.
+- **Vector Search Simulator:** Added a `Test Recall` tab in the Project Context Modal. It provides a real-time interface to query the Pinecone vector database specifically for the current project.
+- **Visual Confidence:** Results display a "Match Percentage" bar, allowing users to gauge the AI's understanding confidence for specific queries.
+- **Workflow:** The system automatically prompts the user to test recall immediately after saving new context.
+- **Backend:** Added `/api/projects/[projectId]/context/search` endpoint to handle scoped vector queries.
+- **Versioning:** Bumped system version to v0.5.47.
 
 **Modified Files:**
-- `app/api/projects/[projectId]/context/route.ts`
+- `app/api/projects/[projectId]/context/search/route.ts` (New File)
+- `components/modals/ProjectContextModal.tsx`
 - `scripts/seed-version-history.js`
 - `app/api/admin/seed/route.ts`
 - `package.json`

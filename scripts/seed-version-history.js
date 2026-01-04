@@ -4,16 +4,17 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.46',
+        version: '0.5.47',
         releaseDate: new Date().toISOString(),
-        changes: `### 🛡️ Fault Tolerance Patch (v0.5.46)
+        changes: `### 🧠 Cognitive Assurance Patch (v0.5.47)
 
-**Fixes:**
-- **Context Ingestion Hardening:** The API route for injecting project context (`/api/projects/.../context`) is now fault-tolerant. It wraps storage operations for Semantic (Pinecone), Document (MongoDB), and System (Postgres) memories in individual error handlers.
-- **500 Error Prevention:** Prevents the entire "Save to Memory" operation from failing if a secondary storage service (like MongoDB) is disconnected or misconfigured. It will now save to available services and report warnings instead of crashing.
+**New Features:**
+- **Vector Memory Simulator:** Added a "Test Recall" tab to the Project Context modal.
+  - Allows users to type a query and perform a live semantic search against the specific project's vector embeddings.
+  - Displays matching text snippets and a visual "Similarity Score" bar to verify that memory ingestion was successful and accurate.
 
 **Improvements:**
-- **Granular Logging:** The system log now records exactly which storage tiers succeeded and which failed during ingestion.`
+- **Context Workflow:** The system now automatically switches to the "Test Recall" tab after successfully ingesting new context, prompting the user to verify the memory immediately.`
     }
 ];
 
