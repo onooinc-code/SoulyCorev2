@@ -25,7 +25,6 @@ interface ExtendedConversationContextType extends Omit<ConversationContextType, 
     activeSegmentId: string | null;
     activeRunId: string | null;
 
-    // Feature Flags & Controls
     isAgentEnabled: boolean;
     setIsAgentEnabled: (val: boolean) => void;
     isLinkPredictionEnabled: boolean;
@@ -60,7 +59,6 @@ interface ExtendedConversationContextType extends Omit<ConversationContextType, 
     setScrollToMessageId: (messageId: string | null) => void;
     setActiveSegmentId: (segmentId: string | null) => void;
 }
-
 
 const ConversationContext = createContext<ExtendedConversationContextType | undefined>(undefined);
 
@@ -106,7 +104,13 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             ...prev,
             [tier]: { status, data, error, query }
         }));
-    }, []);
+        // Log the monitor update for visibility
+        if (status === 'error') {
+            log(`[Monitor: ${tier}] Error: ${error}`, null, 'error');
+        } else if (status === 'success') {
+            log(`[Monitor: ${tier}] Updated`, { dataCount: Array.isArray(data) ? data.length : 1 });
+        }
+    }, [log]);
 
     const resetMonitors = useCallback(() => {
         setToolState({ status: 'idle', toolName: undefined, input: undefined, output: undefined, error: undefined, usage: undefined });
@@ -125,13 +129,12 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setMessages([]); 
         setActiveView('chat');
         resetMonitors();
-    }, [log, setActiveView, resetMonitors]); // removed setMessages dependency to avoid cyclic dependency during initialization, handled below
+    }, [log, setActiveView, resetMonitors]); 
 
     const onConversationDeleted = useCallback((conversationId: string) => {
         log('Conversation deleted, clearing state if active...', { id: conversationId });
         if (currentConversationId === conversationId) {
             setCurrentConversationId(null);
-            // setMessages([]); // Handled by effect
         }
     }, [log, currentConversationId]);
 
@@ -154,7 +157,6 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         onNewMessageWhileHidden: (id) => setUnreadConversations(prev => new Set(prev).add(id))
     });
     
-    // Alias for clearer usage inside this component
     const { setMessages } = messageManager;
 
     const setCurrentConversationWithMessages = useCallback(async (id: string | null) => {
@@ -180,32 +182,34 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
              return { aiResponse: null, suggestion: null, memoryProposal: null, linkProposal: null };
         }
 
-        resetMonitors();
         const q = msgData.content;
         
-        // Initialize monitors to visually show activity in the Tool Inspector
+        // Reset and set to executing
+        resetMonitors();
         setToolState({ 
             status: 'executing', 
             toolName: 'Context Orchestrator', 
             input: { query: q, mode: isAgentEnabled ? 'ReAct' : 'Standard' } 
         });
         
+        // Optimistically set monitors to executing
         setMemoryMonitorState('semantic', 'executing', null, undefined, q);
         setMemoryMonitorState('structured', 'executing', null, undefined, q);
         setMemoryMonitorState('graph', 'executing', null, undefined, q);
         setMemoryMonitorState('episodic', 'executing', null, undefined, q);
 
         try {
-            // Simulate detailed tool steps for visual feedback if Agent Loop monitor is open
-            setTimeout(() => setToolState({ status: 'executing', toolName: 'Semantic Retrieval', input: { query: q } }), 500);
-            setTimeout(() => setToolState({ status: 'executing', toolName: 'Knowledge Graph Lookup', input: { entities: 'Extracting...' } }), 1200);
-
             const result = await messageManager.addMessage(msgData, mentioned, history, parent, isAgentEnabled, isLinkPredictionEnabled);
             
+            // CRITICAL UPDATE: Process metadata returned from API to update monitors
             if (result.aiResponse && (result as any).monitorMetadata) {
                 const meta = (result as any).monitorMetadata;
-                recordUsage({ origin: 'generation', model: currentConversation?.model || 'gemini-3-flash-preview', timestamp: new Date().toISOString() });
                 
+                log("[Monitor] Received metadata updates from API", { 
+                    semantic: meta.semantic?.length, 
+                    structured: meta.structured?.length 
+                });
+
                 const getStatus = (data: any): ExecutionStatus => {
                     if (!data) return 'null';
                     if (Array.isArray(data) && data.length === 0) return 'null';
@@ -228,7 +232,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     } 
                 });
             } else {
-                 setToolState({ status: 'error', error: "No response received" });
+                 setToolState({ status: 'error', error: "No response metadata received" });
             }
 
             return result;
@@ -238,7 +242,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             setToolState({ status: 'error', error: errMsg });
             throw error;
         }
-    }, [messageManager, resetMonitors, setMemoryMonitorState, recordUsage, currentConversation, isAgentEnabled, isLinkPredictionEnabled, setAppStatus, setToolState]);
+    }, [messageManager, resetMonitors, setMemoryMonitorState, currentConversation, isAgentEnabled, isLinkPredictionEnabled, setAppStatus, setToolState, log]);
 
     const runCognitiveSynthesis = useCallback(async () => {
         setAppStatus({ currentAction: { phase: 'reasoning', details: 'Synthesizing knowledge nexus...' }});

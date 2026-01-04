@@ -46,12 +46,15 @@ export class ContextAssemblyPipeline {
         const startTime = Date.now();
         let runId: string | null = null;
 
+        // Log Start
         if (process.env.POSTGRES_URL) {
             try {
                 const { rows } = await sql<PipelineRun>`INSERT INTO pipeline_runs ("messageId", "pipelineType", status) VALUES (${userMessageId}, 'ContextAssembly', 'running') RETURNING id;`;
                 runId = rows[0].id;
                 await this.logToSystem(`[Context] Pipeline started for message: ${userMessageId}`, { query: userQuery });
-            } catch (e) {}
+            } catch (e) {
+                 console.error("Failed to init pipeline run log", e);
+            }
         }
 
         try {
@@ -77,17 +80,27 @@ export class ContextAssemblyPipeline {
                      const ids = vecResults.map(r => r.id);
                      const { rows } = await db.query(`SELECT * FROM entity_definitions WHERE id = ANY($1::uuid[])`, [ids]);
                      return rows;
-                }).catch(() => []),
+                }).catch((e) => {
+                    this.logToSystem(`[Context] Entity retrieval failed`, { error: e.message }, 'warn');
+                    return [];
+                }),
                 // Tier: Semantic (Pinecone)
-                this.semanticMemory.query({ queryText: expandedQuery, topK: 3 }).catch(() => []),
+                this.semanticMemory.query({ queryText: expandedQuery, topK: 3 }).catch((e) => {
+                    this.logToSystem(`[Context] Semantic retrieval failed`, { error: e.message }, 'warn');
+                    return [];
+                }),
                 // Tier: Graph (EdgeDB)
-                this.graphMemory.query({ entityName: expandedQuery.split(' ')[0], brainId: conversation.brainId }).catch(() => [])
+                this.graphMemory.query({ entityName: expandedQuery.split(' ')[0], brainId: conversation.brainId }).catch((e) => {
+                     this.logToSystem(`[Context] Graph retrieval failed`, { error: e.message }, 'warn');
+                     return [];
+                })
             ]);
             
             await this.logToSystem(`[Context] Retrieval Complete`, { 
                 entitiesFound: proactiveEntities.length,
                 factsFound: semanticKnowledge.length,
-                graphPaths: graphRelationships.length
+                graphPaths: graphRelationships.length,
+                profileName: userProfile.name
             });
 
             // 3. Assemble Final Prompt
@@ -129,7 +142,6 @@ Preferences: ${JSON.stringify(userProfile.preferences)}
             const history = recentMessages.map(m => ({ role: m.role as 'user' | 'model', parts: [{ text: m.content || "" }] }));
             history.push({ role: 'user', parts: [{ text: userQuery }] });
             
-            // Capture the prompt content for logging/inspection
             const fullPromptLog = JSON.stringify(history, null, 2);
 
             const modelConfig = { 
@@ -144,7 +156,6 @@ Preferences: ${JSON.stringify(userProfile.preferences)}
             
             if (executionMode === 'dual_output') {
                 try {
-                    // ROBUST PARSING LOGIC
                     const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
                     let jsonStr = "";
                     
@@ -171,6 +182,7 @@ Preferences: ${JSON.stringify(userProfile.preferences)}
                     }
                 } catch (e) {
                     resultData.reply = responseText;
+                    this.logToSystem(`[Context] JSON Parse Failed (Fallback to raw)`, { response: responseText }, 'warn');
                 }
             }
 

@@ -34,7 +34,7 @@ export class MemoryExtractionPipeline {
 
     private async logEvent(message: string, payload?: any, level: 'info' | 'warn' | 'error' = 'info') {
         try {
-            await sql`INSERT INTO logs (message, payload, level) VALUES (${message}, ${JSON.stringify(payload)}, ${level})`;
+            await sql`INSERT INTO logs (message, payload, level, timestamp) VALUES (${message}, ${JSON.stringify(payload)}, ${level}, NOW())`;
         } catch (e) {}
     }
 
@@ -45,9 +45,13 @@ export class MemoryExtractionPipeline {
         const startTime = Date.now();
         let runId: string | null = null;
         try {
+            // Log start of extraction
             const { rows } = await sql`INSERT INTO pipeline_runs ("messageId", "pipelineType", status) VALUES (${messageId}, 'MemoryExtraction', 'running') RETURNING id;`;
             runId = rows[0].id;
-        } catch (e) {}
+            await this.logEvent(`[Extraction] Pipeline Started`, { messageId });
+        } catch (e) {
+             console.error("Failed to start extraction log", e);
+        }
 
         try {
             const prompt = `Analyze: "${text}". Extract Entities, Facts, User Profile. Return JSON.`;

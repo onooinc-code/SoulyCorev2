@@ -30,11 +30,14 @@ const MessageFooter = ({ message, isContextAssemblyRunning, isMemoryExtractionRu
         setExtractionVisible(true);
         setIsLoading(true);
         try {
+            // This API returns all pipeline runs associated with the message ID
             const res = await fetch(`/api/inspect/${message.id}`);
             const data = await res.json();
             
-            // Fix: Check 'allRuns' for the MemoryExtraction run
+            // Fix: Check 'allRuns' for the MemoryExtraction run specifically
             const runs = data.allRuns || (Array.isArray(data) ? data : [data.pipelineRun]);
+            
+            // Look for the specific extraction pipeline
             const extractionRun = runs.find((r: any) => r?.pipelineType === 'MemoryExtraction');
             
             if (extractionRun && extractionRun.finalOutput) {
@@ -129,7 +132,7 @@ const MessageFooter = ({ message, isContextAssemblyRunning, isMemoryExtractionRu
                                 )}
                             </div>
                         ) : (
-                            <div className="text-[10px] text-gray-500 italic">Extraction data still processing or not found.</div>
+                            <div className="text-[10px] text-gray-500 italic">Extraction data still processing or not found. Check the "Inspector" for pipeline status.</div>
                         )}
                     </MotionDiv>
                 )}
