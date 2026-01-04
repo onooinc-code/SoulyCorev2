@@ -6,9 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { Contact } from '@/lib/types';
 import { 
     SendIcon, PaperclipIcon, XIcon, SparklesIcon, CodeIcon, 
-    SummarizeIcon, BeakerIcon, ArrowsRightLeftIcon, LightbulbIcon,
+    SummarizeIcon, BeakerIcon, LightbulbIcon,
     DocumentTextIcon, WrenchScrewdriverIcon, LinkIcon, CopyIcon, TrashIcon,
-    Bars3Icon, ChatBubbleLeftRightIcon
+    Bars3Icon, ChatBubbleLeftRightIcon, RocketLaunchIcon
 } from '@/components/Icons';
 import { useConversation } from './providers/ConversationProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';
@@ -24,9 +24,22 @@ interface ChatInputProps {
     onSendMessage: (content: string, mentionedContacts: Contact[]) => void;
     isLoading: boolean;
     replyToMessage: import('@/lib/types').Message | null;
+    // New Props for Feature Toggles
+    isAgentEnabled: boolean;
+    onToggleAgent: () => void;
+    isLinkPredictionEnabled: boolean;
+    onToggleLinkPrediction: () => void;
 }
 
-const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps) => {
+const ChatInput = ({ 
+    onSendMessage, 
+    isLoading, 
+    replyToMessage,
+    isAgentEnabled,
+    onToggleAgent,
+    isLinkPredictionEnabled,
+    onToggleLinkPrediction
+}: ChatInputProps) => {
     const [content, setContent] = useState('');
     const [attachment, setAttachment] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -87,7 +100,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     ];
 
     return (
-        <div className="w-full flex flex-col items-center px-4 pb-2 relative z-50 overflow-visible">
+        <div className="w-full flex flex-col items-center relative z-50 overflow-visible">
             
             {/* 🛸 POP-UP MENUS (Elevated) */}
             <AnimatePresence>
@@ -134,21 +147,51 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
             <div className="w-full max-w-full flex flex-col bg-gray-900/90 border border-white/10 p-2 rounded-2xl shadow-xl focus-within:border-indigo-500/50 transition-all backdrop-blur-md overflow-hidden">
                 
                 {/* Menu Toggle Row */}
-                <div className="flex items-center gap-2 mb-2 px-1">
+                <div className="flex items-center gap-2 mb-2 px-1 overflow-x-auto no-scrollbar">
                      <button 
                         onClick={() => setActiveMenu(activeMenu === 'macros' ? null : 'macros')}
-                        className={`flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold transition-all border ${activeMenu === 'macros' ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10'}`}
+                        className={`flex-shrink-0 flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold transition-all border ${activeMenu === 'macros' ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10'}`}
                     >
                         <SparklesIcon className="w-3.5 h-3.5" /> الإجراءات
                     </button>
                     <button 
                         onClick={() => setActiveMenu(activeMenu === 'formatting' ? null : 'formatting')}
-                        className={`flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold transition-all border ${activeMenu === 'formatting' ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10'}`}
+                        className={`flex-shrink-0 flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold transition-all border ${activeMenu === 'formatting' ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10'}`}
                     >
                         <DocumentTextIcon className="w-3.5 h-3.5" /> التنسيق
                     </button>
+
+                    <div className="w-px h-4 bg-white/10 mx-1 flex-shrink-0"></div>
+
+                    {/* Integrated Agent & Predict Buttons */}
+                    <button 
+                        onClick={onToggleAgent}
+                        className={`flex-shrink-0 flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold transition-all border ${
+                            isAgentEnabled 
+                            ? 'bg-orange-600/20 border-orange-500/50 text-orange-400' 
+                            : 'bg-white/5 border-transparent text-gray-500 hover:bg-white/10 hover:text-gray-300'
+                        }`}
+                        title={isAgentEnabled ? "Agent Mode Active" : "Enable Agent Mode"}
+                    >
+                        <RocketLaunchIcon className={`w-3.5 h-3.5 ${isAgentEnabled ? 'animate-pulse' : ''}`} /> 
+                        <span className="hidden sm:inline">Agent</span>
+                    </button>
+                    
+                    <button 
+                        onClick={onToggleLinkPrediction}
+                        className={`flex-shrink-0 flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold transition-all border ${
+                            isLinkPredictionEnabled 
+                            ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-400' 
+                            : 'bg-white/5 border-transparent text-gray-500 hover:bg-white/10 hover:text-gray-300'
+                        }`}
+                        title={isLinkPredictionEnabled ? "Prediction Active" : "Enable Prediction"}
+                    >
+                        <LinkIcon className="w-3.5 h-3.5" /> 
+                        <span className="hidden sm:inline">Predict</span>
+                    </button>
+
                     <div className="flex-1" />
-                    <button onClick={() => fileInputRef.current?.click()} className="p-1.5 text-gray-500 hover:text-indigo-400 rounded-lg transition-colors">
+                    <button onClick={() => fileInputRef.current?.click()} className="p-1.5 text-gray-500 hover:text-indigo-400 rounded-lg transition-colors flex-shrink-0">
                         <PaperclipIcon className="w-4.5 h-4.5" />
                     </button>
                 </div>
