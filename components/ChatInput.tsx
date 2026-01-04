@@ -8,7 +8,7 @@ import {
     SendIcon, PaperclipIcon, XIcon, SparklesIcon, CodeIcon, 
     SummarizeIcon, BeakerIcon, ArrowsRightLeftIcon, LightbulbIcon,
     DocumentTextIcon, WrenchScrewdriverIcon, LinkIcon, CopyIcon, TrashIcon,
-    Bars3Icon, ChatBubbleLeftRightIcon, ChevronUpIcon
+    Bars3Icon, ChatBubbleLeftRightIcon
 } from '@/components/Icons';
 import { useConversation } from './providers/ConversationProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';
@@ -43,7 +43,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
             const maxHeight = isMobileView ? 120 : 250;
-            textareaRef.current.style.height = `${Math.min(Math.max(textareaRef.current.scrollHeight, 40), maxHeight)}px`;
+            textareaRef.current.style.height = `${Math.min(Math.max(textareaRef.current.scrollHeight, 44), maxHeight)}px`;
         }
     }, [content, isMobileView]);
 
@@ -67,7 +67,130 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         setTimeout(() => textarea.focus(), 10);
     };
 
-    const handleSend = async () => {
+    const formatActions = [
+        { icon: TrashIcon, label: 'مسح', action: () => setContent('') },
+        { icon: CopyIcon, label: 'نسخ', action: () => { navigator.clipboard.writeText(content).then(() => addNotification({type:'success', title:'تم النسخ'})); } },
+        { icon: DocumentTextIcon, label: 'عريض', action: () => modifyText(t => `**${t}**`) },
+        { icon: CodeIcon, label: 'كود', action: () => modifyText(t => `\`${t}\``) },
+        { icon: LinkIcon, label: 'رابط', action: () => modifyText(t => `[${t}](url)`) },
+        { icon: Bars3Icon, label: 'قائمة', action: () => modifyText(t => t.split('\n').map(l => `- ${l}`).join('\n')) },
+        { icon: ChatBubbleLeftRightIcon, label: 'اقتباس', action: () => modifyText(t => t.split('\n').map(l => `> ${l}`).join('\n')) },
+    ];
+
+    const macroActions = [
+        { key: 'summarize', icon: SummarizeIcon, label: "تلخيص", prompt: "لخص ما سبق باختصار.", replace: true },
+        { key: 'enhance', icon: SparklesIcon, label: "تحسين", prompt: "أعد صياغة النص بلمسة احترافية:\n", replace: false },
+        { key: 'explain', icon: CodeIcon, label: "شرح", prompt: "اشرح لي الكود التالي:\n", replace: false },
+        { key: 'debug', icon: WrenchScrewdriverIcon, label: "Debug", prompt: "جد الخطأ هنا:\n", replace: false },
+        { key: 'ideas', icon: LightbulbIcon, label: "أفكار", prompt: "اقترح أفكار إبداعية حول:\n", replace: false },
+        { key: 'analyze', icon: BeakerIcon, label: "تحليل", prompt: "حلل النص التالي واستخرج النقاط الأساسية:\n", replace: false },
+    ];
+
+    return (
+        <div className="w-full flex flex-col items-center px-4 pb-2 relative z-50 overflow-visible">
+            
+            {/* 🛸 POP-UP MENUS (Elevated) */}
+            <AnimatePresence>
+                {activeMenu && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute bottom-full mb-4 w-full max-w-lg bg-gray-900 border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] p-2 overflow-hidden backdrop-blur-2xl"
+                    >
+                        <div className="flex flex-wrap gap-2 justify-center p-2 max-h-64 overflow-y-auto custom-scrollbar">
+                            {activeMenu === 'macros' ? (
+                                macroActions.map((m, i) => (
+                                    <button 
+                                        key={m.key} 
+                                        onClick={() => handleAction(m.prompt, m.replace)}
+                                        className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-indigo-600/30 rounded-xl border border-white/5 transition-all active:scale-95"
+                                    >
+                                        <m.icon className={`w-4 h-4 ${COLORS[i % COLORS.length]}`} />
+                                        <span className="text-xs font-bold text-gray-200">{m.label}</span>
+                                    </button>
+                                ))
+                            ) : (
+                                formatActions.map((f, i) => (
+                                    <button 
+                                        key={f.label} 
+                                        onClick={f.action}
+                                        className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-indigo-600/30 rounded-xl border border-white/5 transition-all active:scale-95"
+                                    >
+                                        <f.icon className={`w-4 h-4 ${COLORS[(i+10) % COLORS.length]}`} />
+                                        <span className="text-xs font-bold text-gray-200">{f.label}</span>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                        <div className="bg-white/5 p-1 text-center border-t border-white/5">
+                            <button onClick={() => setActiveMenu(null)} className="text-[10px] text-gray-500 font-bold uppercase">إغلاق القائمة</button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ⌨️ CONSOLIDATED INPUT AREA */}
+            <div className="w-full max-w-full flex flex-col bg-gray-900/90 border border-white/10 p-2 rounded-2xl shadow-xl focus-within:border-indigo-500/50 transition-all backdrop-blur-md overflow-hidden">
+                
+                {/* Menu Toggle Row */}
+                <div className="flex items-center gap-2 mb-2 px-1">
+                     <button 
+                        onClick={() => setActiveMenu(activeMenu === 'macros' ? null : 'macros')}
+                        className={`flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold transition-all border ${activeMenu === 'macros' ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10'}`}
+                    >
+                        <SparklesIcon className="w-3.5 h-3.5" /> الإجراءات
+                    </button>
+                    <button 
+                        onClick={() => setActiveMenu(activeMenu === 'formatting' ? null : 'formatting')}
+                        className={`flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold transition-all border ${activeMenu === 'formatting' ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10'}`}
+                    >
+                        <DocumentTextIcon className="w-3.5 h-3.5" /> التنسيق
+                    </button>
+                    <div className="flex-1" />
+                    <button onClick={() => fileInputRef.current?.click()} className="p-1.5 text-gray-500 hover:text-indigo-400 rounded-lg transition-colors">
+                        <PaperclipIcon className="w-4.5 h-4.5" />
+                    </button>
+                </div>
+
+                <div className="flex items-end gap-2">
+                    <div className="flex-1 min-w-0 flex flex-col relative pb-1 px-1">
+                        <textarea
+                            ref={textareaRef}
+                            value={content}
+                            onChange={e => setContent(e.target.value)}
+                            placeholder="اكتب رسالة..."
+                            className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-600 resize-none py-1.5 text-[16px] leading-relaxed max-h-[120px] custom-scrollbar overflow-x-hidden"
+                            rows={1}
+                            dir="auto"
+                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !isMobileView) { e.preventDefault(); handleSendMessage(); } }}
+                        />
+                        {attachment && (
+                            <div className="mt-1 flex items-center gap-1.5 bg-indigo-900/40 text-[10px] text-indigo-200 px-2 py-0.5 rounded-md border border-indigo-500/30 w-fit max-w-full">
+                                <span className="truncate max-w-[150px]">{attachment.name}</span>
+                                <button onClick={() => setAttachment(null)}><XIcon className="w-3 h-3 text-red-400"/></button>
+                            </div>
+                        )}
+                    </div>
+
+                    <button 
+                        onClick={handleSendMessage} 
+                        disabled={(!content.trim() && !attachment) || isLoading} 
+                        className={`p-2.5 rounded-xl shadow-lg transition-all mb-1 shrink-0 ${
+                            (!content.trim() && !attachment) || isLoading 
+                            ? 'bg-gray-800 text-gray-600' 
+                            : 'bg-indigo-600 text-white shadow-indigo-500/30'
+                        }`}
+                    >
+                        {isUploading ? <div className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full" /> : <SendIcon className="w-5 h-5" />}
+                    </button>
+                </div>
+            </div>
+            <input type="file" ref={fileInputRef} className="hidden" onChange={e => setAttachment(e.target.files?.[0] || null)} />
+        </div>
+    );
+
+    async function handleSendMessage() {
         if ((!content.trim() && !attachment) || isLoading) return;
         if (content.startsWith('/agent')) {
             startAgentRun(content.replace('/agent', '').trim());
@@ -90,138 +213,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         }
         onSendMessage(finalContent, []);
         setContent('');
-    };
-
-    const formatActions = [
-        { icon: TrashIcon, label: 'مسح', action: () => setContent('') },
-        { icon: CopyIcon, label: 'نسخ', action: () => { navigator.clipboard.writeText(content).then(() => addNotification({type:'success', title:'تم النسخ'})); } },
-        { icon: DocumentTextIcon, label: 'عريض', action: () => modifyText(t => `**${t}**`) },
-        { icon: CodeIcon, label: 'كود', action: () => modifyText(t => `\`${t}\``) },
-        { icon: LinkIcon, label: 'رابط', action: () => modifyText(t => `[${t}](url)`) },
-        { icon: Bars3Icon, label: 'قائمة', action: () => modifyText(t => t.split('\n').map(l => `- ${l}`).join('\n')) },
-        { icon: ChatBubbleLeftRightIcon, label: 'اقتباس', action: () => modifyText(t => t.split('\n').map(l => `> ${l}`).join('\n')) },
-    ];
-
-    const macroActions = [
-        { key: 'summarize', icon: SummarizeIcon, label: "تلخيص", prompt: "لخص ما سبق باختصار.", replace: true },
-        { key: 'enhance', icon: SparklesIcon, label: "تحسين", prompt: "أعد صياغة النص بلمسة احترافية:\n", replace: false },
-        { key: 'explain', icon: CodeIcon, label: "شرح", prompt: "اشرح لي الكود التالي:\n", replace: false },
-        { key: 'trans_en', icon: ArrowsRightLeftIcon, label: "EN", prompt: "ترجم إلى الإنجليزية:\n", replace: false },
-        { key: 'trans_ar', icon: ArrowsRightLeftIcon, label: "AR", prompt: "ترجم إلى العربية:\n", replace: false },
-        { key: 'debug', icon: WrenchScrewdriverIcon, label: "Debug", prompt: "جد الخطأ هنا:\n", replace: false },
-        { key: 'ideas', icon: LightbulbIcon, label: "أفكار", prompt: "اقترح أفكار إبداعية حول:\n", replace: false },
-        { key: 'analyze', icon: BeakerIcon, label: "تحليل", prompt: "حلل النص التالي واستخرج النقاط الأساسية:\n", replace: false },
-    ];
-
-    return (
-        <div className="w-full flex flex-col items-center px-3 pb-3 sm:pb-6 relative max-w-full overflow-visible">
-            
-            {/* 🛸 POP-UP MENUS */}
-            <AnimatePresence>
-                {activeMenu && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute bottom-full mb-3 w-[95%] max-w-lg bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden"
-                    >
-                        <div className="flex flex-wrap gap-2 justify-center p-2 max-h-48 overflow-y-auto custom-scrollbar">
-                            {activeMenu === 'macros' ? (
-                                macroActions.map((m, i) => (
-                                    <button 
-                                        key={m.key} 
-                                        onClick={() => handleAction(m.prompt, m.replace)}
-                                        className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-indigo-600/30 rounded-xl border border-white/5 transition-all active:scale-95 whitespace-nowrap"
-                                    >
-                                        <m.icon className={`w-4 h-4 ${COLORS[i % COLORS.length]}`} />
-                                        <span className="text-xs font-bold text-gray-200">{m.label}</span>
-                                    </button>
-                                ))
-                            ) : (
-                                formatActions.map((f, i) => (
-                                    <button 
-                                        key={f.label} 
-                                        onClick={f.action}
-                                        className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-indigo-600/30 rounded-xl border border-white/5 transition-all active:scale-95 whitespace-nowrap"
-                                    >
-                                        <f.icon className={`w-4 h-4 ${COLORS[(i+10) % COLORS.length]}`} />
-                                        <span className="text-xs font-bold text-gray-200">{f.label}</span>
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* ⌨️ MAIN INPUT PILL */}
-            <div className="w-full max-w-full flex flex-col gap-2 bg-gray-900/80 border border-white/10 p-2 rounded-3xl shadow-2xl focus-within:border-indigo-500/50 transition-all backdrop-blur-md">
-                
-                <div className="flex items-end gap-1 sm:gap-2 min-w-0">
-                    {/* Multi-Menu Toggles */}
-                    <div className="flex items-center gap-1 shrink-0">
-                        <button 
-                            onClick={() => setActiveMenu(activeMenu === 'macros' ? null : 'macros')} 
-                            className={`p-2 rounded-full transition-colors ${activeMenu === 'macros' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-indigo-400 hover:bg-white/5'}`}
-                            title="Quick Actions"
-                        >
-                            <SparklesIcon className="w-5 h-5" />
-                        </button>
-                        <button 
-                            onClick={() => setActiveMenu(activeMenu === 'formatting' ? null : 'formatting')} 
-                            className={`p-2 rounded-full transition-colors ${activeMenu === 'formatting' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-indigo-400 hover:bg-white/5'}`}
-                            title="Formatting Tools"
-                        >
-                            <DocumentTextIcon className="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="w-px h-6 bg-white/10 self-center" />
-
-                    {/* Text Input */}
-                    <div className="flex-1 min-w-0 flex flex-col relative py-1">
-                        <textarea
-                            ref={textareaRef}
-                            value={content}
-                            onChange={e => setContent(e.target.value)}
-                            placeholder="اكتب رسالة..."
-                            className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1.5 text-[16px] leading-relaxed max-h-[120px] custom-scrollbar overflow-x-hidden"
-                            rows={1}
-                            dir="auto"
-                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !isMobileView) { e.preventDefault(); handleSend(); } }}
-                        />
-                        {attachment && (
-                            <div className="mt-1 flex items-center gap-1.5 bg-indigo-900/40 text-[10px] text-indigo-200 px-2 py-1 rounded-md border border-indigo-500/30 w-fit max-w-full">
-                                <span className="truncate">{attachment.name}</span>
-                                <button onClick={() => setAttachment(null)}><XIcon className="w-3 h-3 text-red-400"/></button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* File & Send */}
-                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                        <input type="file" ref={fileInputRef} className="hidden" onChange={e => setAttachment(e.target.files?.[0] || null)} />
-                        <button onClick={() => fileInputRef.current?.click()} className="p-2.5 text-gray-500 hover:text-indigo-400 hover:bg-white/5 rounded-full transition-colors">
-                            <PaperclipIcon className="w-5 h-5" />
-                        </button>
-
-                        <button 
-                            onClick={handleSend} 
-                            disabled={(!content.trim() && !attachment) || isLoading} 
-                            className={`p-3 rounded-full shadow-lg transition-all active:scale-90 ${
-                                (!content.trim() && !attachment) || isLoading 
-                                ? 'bg-gray-800 text-gray-600' 
-                                : 'bg-indigo-600 text-white shadow-indigo-500/30'
-                            }`}
-                        >
-                            {isUploading ? <div className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full" /> : <SendIcon className="w-5 h-5" />}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+    }
 };
 
 export default ChatInput;
