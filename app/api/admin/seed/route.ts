@@ -10,27 +10,24 @@ export async function GET() {
         await client.query('BEGIN');
         await client.query('TRUNCATE TABLE "version_history"');
         
-        const changesText = `### 🔧 Build Stability & UI Refinement (v0.5.37)
+        const changesText = `### 🧱 Layout Horizontal Lock & Full-Width Recall (v0.5.38)
 
-**Technical Fixes:**
-- **Vercel Build Fix:** Resolved a critical build error where Tailwind's \`@apply\` was used with the \`group\` marker class in \`globals.css\`. Markers are now applied via JSX classNames.
-- **Persistent Architecture:** Reinforced the split between \`MobileApp\` and \`DesktopApp\` logic.
+**Critical Responsive Fixes:**
+- **Zero Horizontal Scroll:** Added \`overflow-x: hidden\` and \`min-w-0\` to all major layout containers and flex items to prevent width expansion on mobile.
+- **Full-Width Toolbars:** Adjusted \`ChatInput\` toolbars to span the full width of the mobile viewport with edge-fade masks for aesthetic scrolling.
+- **Bubble Constraint:** Forced chat bubbles to a max-width of 88% on mobile with enforced \`word-break\` to prevent layout breakage from long text or links.
+- **Code Block Isolation:** Markdown code blocks now have internal horizontal scrolling, protecting the main conversation layout from stretching.
 
-**Mobile Optimization:**
-- **Native Messaging Experience:** Chat Bubbles are now fully calibrated for RTL (Right-to-Left) and touch ergonomics.
-- **Drawer Navigation:** Sidebar remains a secondary layer on mobile, accessible via the bottom menu.
-
-**Desktop Power Mode:**
-- **Navigation Tooltips:** Restored interactive tooltips on the Sidebar Rail for lightning-fast hub context.
-- **Full-Width Persistence:** Toolbars (Macros & Formatting) are now fixed-width optimized for mouse/keyboard workflows.`;
+**Stability:**
+- Reinforce \`box-sizing: border-box\` globally to ensure padding doesn't push elements out of the viewport.`;
 
         await client.query(`
             INSERT INTO "version_history" ("version", "releaseDate", "changes", "createdAt")
             VALUES ($1, NOW(), $2, NOW())
-        `, ['0.5.37', changesText]);
+        `, ['0.5.38', changesText]);
 
         await client.query('COMMIT');
-        return NextResponse.json({ success: true, message: "Build stabilized and version updated to v0.5.37.", version: '0.5.37' });
+        return NextResponse.json({ success: true, message: "Layout locked to viewport. Updated to v0.5.38.", version: '0.5.38' });
     } catch (error) {
         await client.query('ROLLBACK');
         return NextResponse.json({ error: (error as Error).message }, { status: 500 });

@@ -5,7 +5,6 @@ import React, { useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import type { Conversation, Message as MessageType, ActiveWorkflowState } from '@/lib/types';
 import Message from '../Message';
-import LoadingIndicator from '../LoadingIndicator';
 import { useConversation } from '@/components/providers/ConversationProvider';
 import { CpuChipIcon } from '../Icons';
 
@@ -29,17 +28,17 @@ interface MessageListProps {
 
 const ConversationTurnSeparator: React.FC = () => (
     <motion.div 
-        className="relative my-4"
+        className="relative my-4 w-full"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
     >
         <div className="absolute inset-0 flex items-center" aria-hidden="true">
-            <div className="w-full h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
+            <div className="w-full h-px bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"></div>
         </div>
         <div className="relative flex justify-center">
             <span className="bg-gray-800 p-1 rounded-full border border-gray-700 shadow-lg shadow-indigo-500/10">
-                <CpuChipIcon className="w-4 h-4 text-indigo-400" />
+                <CpuChipIcon className="w-3.5 h-3.5 text-indigo-400" />
             </span>
         </div>
     </motion.div>
@@ -71,9 +70,9 @@ const MessageList = ({
             const element = document.querySelector(`[data-message-id="${scrollToMessageId}"]`);
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                element.classList.add('animate-pulse', 'bg-indigo-900/50', 'rounded-lg');
+                element.classList.add('bg-indigo-900/30');
                 setTimeout(() => {
-                    element.classList.remove('animate-pulse', 'bg-indigo-900/50', 'rounded-lg');
+                    element.classList.remove('bg-indigo-900/30');
                 }, 2500);
             }
             setScrollToMessageId(null);
@@ -117,11 +116,11 @@ const MessageList = ({
     return (
         <div 
             ref={scrollContainerRef} 
-            className="absolute inset-0 flex flex-col p-4 sm:p-6 custom-scrollbar overflow-y-auto"
+            className="absolute inset-0 flex flex-col p-3 sm:p-6 custom-scrollbar overflow-y-auto overflow-x-hidden w-full max-w-full"
         >
-            {threadedMessages.length > 0 ? (
-                <div className="w-full">
-                    <div className="space-y-4 pb-24">
+            <div className="w-full max-w-full flex flex-col flex-1">
+                {threadedMessages.length > 0 ? (
+                    <div className="space-y-4 pb-32 w-full max-w-full">
                         {threadedMessages.map((msg, index) => {
                             let userMessageIdForInspection: string | null = null;
                             if (msg.role === 'user') {
@@ -137,7 +136,7 @@ const MessageList = ({
 
                             return (
                                 <React.Fragment key={msg.id}>
-                                    <div data-message-id={msg.id}>
+                                    <div data-message-id={msg.id} className="w-full max-w-full flex flex-col">
                                         <Message 
                                             message={msg}
                                             onSummarize={onSummarize}
@@ -161,18 +160,18 @@ const MessageList = ({
                             )
                         })}
                     </div>
-                </div>
-            ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 m-auto">
-                     <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2, duration: 0.5 }}>
-                        <svg className="w-16 h-16 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                ) : (
+                    <div className="flex flex-col items-center justify-center flex-1 text-center text-gray-400">
+                         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2, duration: 0.5 }}>
+                            <svg className="w-16 h-16 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V8.25a2.25 2.25 0 00-2.25-2.25H8.25a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25z" />
-                        </svg>
-                    </motion.div>
-                    <h1 className="text-3xl font-bold text-gray-200 mt-4">SoulyCore</h1>
-                    <p className="mt-2 max-w-md">Your AI assistant with a persistent, intelligent memory. Start a new conversation to begin.</p>
-                </div>
-            )}
+                            </svg>
+                        </motion.div>
+                        <h1 className="text-2xl font-bold text-gray-200 mt-4">SoulyCore</h1>
+                        <p className="mt-2 max-w-xs text-sm">مساعدك الذكي بذاكرة دائمة ومستدامة. ابدأ محادثة جديدة الآن.</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

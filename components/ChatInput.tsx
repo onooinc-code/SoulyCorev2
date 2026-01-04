@@ -129,12 +129,12 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     ];
 
     return (
-        <div className="w-full flex flex-col gap-2 p-3 sm:p-4 max-w-full overflow-hidden">
+        <div className="w-full flex flex-col gap-2 p-3 sm:p-4 w-full max-w-full overflow-hidden">
             
-            {/* 🛠️ TOP TOOLBAR: MACROS (Restored & Full Width Scrollable) */}
-            <div className="w-full overflow-hidden">
-                <div className="horizontal-toolbar mask-edge-fade no-scrollbar">
-                    <div className="flex-shrink-0 w-4" /> {/* Padding offset for fade */}
+            {/* 🛠️ TOP TOOLBAR: MACROS */}
+            <div className="w-full max-w-full overflow-hidden">
+                <div className="horizontal-toolbar mask-edge-fade no-scrollbar w-full">
+                    <div className="flex-shrink-0 w-2" />
                     {macroActions.map((m, i) => (
                         <ToolbarButton 
                             key={m.key} 
@@ -145,7 +145,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                             showLabel={!isMobileView} 
                         />
                     ))}
-                    <div className="flex-shrink-0 w-8" />
+                    <div className="flex-shrink-0 w-4" />
                 </div>
             </div>
 
@@ -163,13 +163,13 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                         value={content}
                         onChange={e => setContent(e.target.value)}
                         placeholder="اكتب رسالة..."
-                        className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1 text-[16px] leading-relaxed max-h-[120px] custom-scrollbar"
+                        className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1 text-[16px] leading-relaxed max-h-[120px] custom-scrollbar overflow-x-hidden"
                         rows={1}
                         dir="auto"
                         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !isMobileView) { e.preventDefault(); handleSend(); } }}
                     />
                     {attachment && (
-                        <div className="mt-2 flex items-center gap-1.5 bg-indigo-900/40 text-[10px] text-indigo-200 px-2 py-1 rounded-md border border-indigo-500/30 w-fit max-w-[200px]">
+                        <div className="mt-2 flex items-center gap-1.5 bg-indigo-900/40 text-[10px] text-indigo-200 px-2 py-1 rounded-md border border-indigo-500/30 w-fit max-w-full">
                             <span className="truncate">{attachment.name}</span>
                             <button onClick={() => setAttachment(null)}><XIcon className="w-3 h-3 text-red-400"/></button>
                         </div>
@@ -189,10 +189,10 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                 </button>
             </div>
 
-            {/* 🖋️ BOTTOM TOOLBAR: FORMATTING (Restored & Full Width Scrollable) */}
-            <div className="w-full overflow-hidden border-t border-white/5 pt-1">
-                <div className="horizontal-toolbar mask-edge-fade no-scrollbar">
-                    <div className="flex-shrink-0 w-4" /> {/* Padding offset for fade */}
+            {/* 🖋️ BOTTOM TOOLBAR: FORMATTING */}
+            <div className="w-full max-w-full overflow-hidden border-t border-white/5 pt-1">
+                <div className="horizontal-toolbar mask-edge-fade no-scrollbar w-full">
+                    <div className="flex-shrink-0 w-2" />
                     {formatActions.map((f, i) => (
                         <ToolbarButton 
                             key={f.label} 
@@ -203,7 +203,7 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
                             showLabel={!isMobileView} 
                         />
                     ))}
-                    <div className="flex-shrink-0 w-8" />
+                    <div className="flex-shrink-0 w-4" />
                 </div>
             </div>
         </div>
