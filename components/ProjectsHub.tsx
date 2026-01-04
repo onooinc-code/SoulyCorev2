@@ -1,16 +1,18 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Project, ProjectTask } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';
-import { PlusIcon, SparklesIcon, PlusCircleIcon, TrashIcon } from '@/components/Icons';
+import { PlusIcon, SparklesIcon, PlusCircleIcon, TrashIcon, CodeIcon } from '@/components/Icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 const SummaryModal = dynamic(() => import('./modals/SummaryModal'));
 const CreateProjectModal = dynamic(() => import('./modals/CreateProjectModal'));
 const CreateTaskModal = dynamic(() => import('./modals/CreateTaskModal'));
+const ProjectContextModal = dynamic(() => import('./modals/ProjectContextModal'));
 
 const ProjectsHub = () => {
     const [projects, setProjects] = useState<Project[]>([]);
@@ -20,7 +22,9 @@ const ProjectsHub = () => {
     
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-    const [currentProjectIdForTask, setCurrentProjectIdForTask] = useState<string | null>(null);
+    const [isContextModalOpen, setIsContextModalOpen] = useState(false);
+    const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+    const [currentProjectName, setCurrentProjectName] = useState<string>('');
 
     const { log } = useLog();
     const { addNotification } = useNotification();
@@ -63,35 +67,34 @@ const ProjectsHub = () => {
     };
     
     const handleOpenTaskModal = (projectId: string) => {
-        setCurrentProjectIdForTask(projectId);
+        setCurrentProjectId(projectId);
         setIsTaskModalOpen(true);
+    };
+
+    const handleOpenContextModal = (projectId: string, projectName: string) => {
+        setCurrentProjectId(projectId);
+        setCurrentProjectName(projectName);
+        setIsContextModalOpen(true);
     };
     
     const handleTaskStatusToggle = async (task: ProjectTask) => {
         const newStatus = task.status === 'done' ? 'todo' : 'done';
-        
-        // Optimistic update
         setTasks(prev => ({
             ...prev,
-            // FIX: Corrected property name from `project_id` to `projectId`.
             [task.projectId]: prev[task.projectId].map(t => t.id === task.id ? {...t, status: newStatus} : t)
         }));
 
         try {
-            // FIX: Corrected property name from `project_id` to `projectId`.
             const res = await fetch(`/api/projects/${task.projectId}/tasks/${task.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus }),
             });
             if (!res.ok) throw new Error("Failed to update task status");
-            // No need to re-fetch on success due to optimistic update
         } catch(error) {
             addNotification({ type: 'error', title: 'Update Failed', message: (error as Error).message });
-            // Revert optimistic update
             setTasks(prev => ({
                 ...prev,
-                // FIX: Corrected property name from `project_id` to `projectId`.
                 [task.projectId]: prev[task.projectId].map(t => t.id === task.id ? {...t, status: task.status} : t)
             }));
         }
@@ -99,23 +102,18 @@ const ProjectsHub = () => {
 
     const handleDeleteTask = async (task: ProjectTask) => {
         if (!window.confirm(`Are you sure you want to delete the task "${task.title}"?`)) return;
-        
         const originalTasks = { ...tasks };
-        // Optimistic update
         setTasks(prev => ({
             ...prev,
-            // FIX: Corrected property name from `project_id` to `projectId`.
             [task.projectId]: prev[task.projectId].filter(t => t.id !== task.id)
         }));
         
         try {
-             // FIX: Corrected property name from `project_id` to `projectId`.
              const res = await fetch(`/api/projects/${task.projectId}/tasks/${task.id}`, { method: 'DELETE' });
              if (!res.ok) throw new Error("Failed to delete task");
              addNotification({ type: 'success', title: 'Task Deleted' });
         } catch (error) {
             addNotification({ type: 'error', title: 'Delete Failed', message: (error as Error).message });
-            // Revert
             setTasks(originalTasks);
         }
     };
@@ -131,18 +129,21 @@ const ProjectsHub = () => {
             </header>
             <main className="flex-1 overflow-y-auto pr-2 space-y-4">
                 {isLoading ? <p>Loading projects...</p> : projects.map(project => (
-                    <div key={project.id} className="bg-gray-800 p-4 rounded-lg">
+                    <div key={project.id} className="bg-gray-800 p-4 rounded-lg border border-gray-700 hover:border-gray-600 transition-all">
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="font-semibold text-lg">{project.name}</h3>
                                 <p className="text-sm text-gray-400">{project.description}</p>
                             </div>
                             <div className="flex gap-2">
+                                <button onClick={() => handleOpenContextModal(project.id, project.name)} className="flex items-center gap-1 px-2 py-1 bg-gray-700 text-xs rounded-md hover:bg-gray-600 text-indigo-300 border border-indigo-500/30 transition-colors" title="Inject Code/Business Logic">
+                                    <CodeIcon className="w-3.5 h-3.5" /> Technical Context
+                                </button>
                                 <button onClick={() => handleGenerateSummary(project.id, project.name)} disabled={summaryState.isLoading} className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-xs rounded-md hover:bg-blue-500 disabled:opacity-50">
-                                    <SparklesIcon className="w-4 h-4" /> AI Summary
+                                    <SparklesIcon className="w-3.5 h-3.5" /> AI Summary
                                 </button>
                                 <button onClick={() => handleOpenTaskModal(project.id)} className="flex items-center gap-1 px-2 py-1 bg-green-600 text-xs rounded-md hover:bg-green-500">
-                                    <PlusCircleIcon className="w-4 h-4" /> Add Task
+                                    <PlusCircleIcon className="w-3.5 h-3.5" /> Add Task
                                 </button>
                             </div>
                         </div>
@@ -167,7 +168,10 @@ const ProjectsHub = () => {
                 {isProjectModalOpen && <CreateProjectModal onClose={() => setIsProjectModalOpen(false)} onProjectCreated={fetchProjectsAndTasks} />}
             </AnimatePresence>
              <AnimatePresence>
-                {isTaskModalOpen && currentProjectIdForTask && <CreateTaskModal projectId={currentProjectIdForTask} onClose={() => setIsTaskModalOpen(false)} onTaskCreated={fetchProjectsAndTasks} />}
+                {isTaskModalOpen && currentProjectId && <CreateTaskModal projectId={currentProjectId} onClose={() => setIsTaskModalOpen(false)} onTaskCreated={fetchProjectsAndTasks} />}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isContextModalOpen && currentProjectId && <ProjectContextModal projectId={currentProjectId} projectName={currentProjectName} onClose={() => setIsContextModalOpen(false)} />}
             </AnimatePresence>
         </div>
     );
