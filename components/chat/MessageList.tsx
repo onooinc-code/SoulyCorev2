@@ -125,7 +125,7 @@ const MessageList = ({
                                         onSetConversationAlign={onSetConversationAlign}
                                         onReply={onReply}
                                         findMessageById={(id) => messages.find(m => m.id === id)}
-                                        onViewContext={onViewContext}
+                                        onViewContext={(type) => onViewContext(msg.id, type)}
                                     />
                                 </div>
                                 {msg.role === 'model' && index < threadedMessages.length - 1 && <ConversationTurnSeparator key={`sep-${msg.id}`} />}
