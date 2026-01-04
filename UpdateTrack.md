@@ -3,20 +3,22 @@
 
 ---
 
-### Update #46: Cognitive Pipeline & Inspector Fixes (v0.5.42)
+### Update #47: Observability & Monitor Fixes (v0.5.43)
 
 **Details:**
-Comprehensive fix for the debugging tools and memory feedback loop. The Cognitive Inspector now correctly displays the prompts used, and the Extracted Memory button successfully retrieves the background extraction results.
+Major overhaul of the logging and monitoring infrastructure to ensure developer visibility into the Cognitive Engine's operations.
 
 **Changes Made:**
-- **Context Assembly:** Modified `ContextAssemblyPipeline` to persist prompt/system data to `pipeline_runs`.
-- **Inspector API:** Updated `api/inspect` to differentiate between Context and Extraction runs.
-- **UI:** Updated `MessageFooter` to locate the correct pipeline run for extraction data.
-- **Versioning:** Bumped to v0.5.42.
+- **Log Panel:** Added specialized Copy buttons (Errors/Logs/All) and a Download JSON feature.
+- **Memory Monitors:** Connected the UI state to the backend's `monitorMetadata` payload, making the semantic/graph/structured indicators live.
+- **Core Pipelines:** Injected `logToSystem` calls into every critical step of `ContextAssembly` and `MemoryExtraction`.
+- **UI Tweaks:** Improved the logic for the "Extracted" button to find the correct pipeline run.
 
 **Modified Files:**
-- `core/pipelines/context_assembly.ts`
-- `app/api/inspect/[messageId]/route.ts`
+- `components/LogOutputPanel.tsx`
+- `components/providers/ConversationProvider.tsx`
 - `components/MessageFooter.tsx`
+- `core/pipelines/context_assembly.ts`
+- `core/pipelines/memory_extraction.ts`
 - `scripts/seed-version-history.js`
 - `app/api/admin/seed/route.ts`

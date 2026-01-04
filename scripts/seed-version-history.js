@@ -4,17 +4,19 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.42',
+        version: '0.5.43',
         releaseDate: new Date().toISOString(),
-        changes: `### 🧠 Cognitive Engine Stabilization (v0.5.42)
+        changes: `### 🧠 Cognitive & Observability Enhancement (v0.5.43)
 
 **Core Fixes:**
-- **Cognitive Inspector:** Fixed the blank "Context Viewer" modals. The \`ContextAssemblyPipeline\` now explicitly saves \`finalLlmPrompt\`, \`finalSystemInstruction\`, and \`modelConfigJson\` to the database upon completion.
-- **Memory Extraction UI:** Resolved the persistent "Extraction data still processing" message. The UI now intelligently searches for the specific \`MemoryExtraction\` pipeline run instead of assuming the first run is the extraction.
-- **Pipeline Logging:** Enhanced visibility by ensuring strictly typed pipeline runs for 'ContextAssembly' vs 'MemoryExtraction' are correctly queryable.
+- **Full Observability:** Implemented granular logging for all Context Assembly and Memory Extraction steps directly to the central \`logs\` table, visible in the Dev Center.
+- **Memory Monitors:** Fixed the 4 Memory Monitor indicators in the Status Bar to react in real-time to the API's returned metadata (Context retrieval stats).
+- **Log Panel:** Added "Copy Errors", "Copy Logs", and "Download JSON" buttons for better debugging.
+- **Extraction UI:** Refined the "Extracted" button logic to correctly locate the background extraction run even if it completes after the initial response.
 
-**UI Improvements:**
-- **Visual Clarity:** Updated Message bubbles for better RTL support and distinct User/AI visual separation.`
+**Improvements:**
+- **Unified Logging:** Frontend and Backend logs now flow into a single stream.
+- **Stability:** Hardened JSON parsing logic in pipeline outputs.`
     }
 ];
 

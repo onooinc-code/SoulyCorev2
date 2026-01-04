@@ -108,11 +108,6 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
     }, [logs]);
 
     const filteredLogs = useMemo(() => {
-        // Reverse to show newest at bottom (terminal style) or top? 
-        // Let's keep new logs appending to the list (standard array order).
-        // But for display, usually we want to see the latest. 
-        // Let's render in order of arrival (oldest -> newest) so auto-scroll makes sense.
-        // The context provides [newest, ..., oldest]. So we reverse it for display.
         const sortedLogs = [...logs].reverse();
 
         const levelFiltered = filter === 'all'
@@ -143,7 +138,7 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
 
     const copyToClipboard = (type: 'errors' | 'logs' | 'all') => {
         let contentToCopy = [];
-        const sourceLogs = [...logs].reverse(); // Get chronological order
+        const sourceLogs = [...logs].reverse(); 
 
         if (type === 'errors') {
             contentToCopy = sourceLogs.filter(l => l.level === 'error');
@@ -173,7 +168,7 @@ const LogOutputPanel = (props: LogOutputPanelProps) => {
         const downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href",     dataStr);
         downloadAnchorNode.setAttribute("download", `soulycore_logs_${new Date().toISOString()}.json`);
-        document.body.appendChild(downloadAnchorNode); // required for firefox
+        document.body.appendChild(downloadAnchorNode); 
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
         setCopyStatus("Downloaded JSON");
