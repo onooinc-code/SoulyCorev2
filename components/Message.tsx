@@ -52,16 +52,32 @@ const Message: React.FC<MessageProps> = (props) => {
         return (
             <MotionDiv
                 layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className={`flex flex-col gap-1 mb-4 ${isUser ? 'items-end' : 'items-start'}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full mb-3 px-2"
             >
-                <div className={`px-4 py-2 shadow-sm relative group ${isUser ? 'mobile-chat-bubble-user text-white' : 'mobile-chat-bubble-ai text-gray-200'}`}>
-                    <div className="prose-custom text-[15px] leading-relaxed">
+                <div className={`mobile-chat-bubble-base ${isUser ? 'mobile-chat-bubble-user' : 'mobile-chat-bubble-ai'} group`}>
+                    
+                    {/* Header: Role Label */}
+                    <div className="flex items-center gap-2 mb-2 opacity-70 text-[10px] uppercase tracking-wider font-bold">
+                        {isUser ? (
+                            <>
+                                <UserCircleIcon className="w-3 h-3 text-indigo-400" />
+                                <span>أنت</span>
+                            </>
+                        ) : (
+                            <>
+                                <CpuChipIcon className="w-3 h-3 text-emerald-400" />
+                                <span>الذكاء الاصطناعي</span>
+                            </>
+                        )}
+                    </div>
+
+                    <div className="prose-custom text-[15px] leading-relaxed w-full">
                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                     </div>
                     
-                    <div className="absolute -top-8 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 scale-90">
+                    <div className="absolute -top-3 left-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 scale-90">
                          <MessageToolbar
                             isBookmarked={!!message.isBookmarked}
                             isCollapsed={isCollapsed}
@@ -80,55 +96,62 @@ const Message: React.FC<MessageProps> = (props) => {
                             onViewContext={props.onViewContext}
                         />
                     </div>
-                </div>
-                <div className="px-2">
-                    <MessageFooter
-                        message={message}
-                        isContextAssemblyRunning={props.isContextAssemblyRunning}
-                        isMemoryExtractionRunning={props.isMemoryExtractionRunning}
-                        findMessageById={props.findMessageById}
-                    />
+
+                    <div className="mt-2 pt-2 border-t border-white/5">
+                        <MessageFooter
+                            message={message}
+                            isContextAssemblyRunning={props.isContextAssemblyRunning}
+                            isMemoryExtractionRunning={props.isMemoryExtractionRunning}
+                            findMessageById={props.findMessageById}
+                        />
+                    </div>
                 </div>
             </MotionDiv>
         );
     }
 
+    // Desktop Layout (Keeping similar logic but enforcing RTL and full width container feel)
     return (
         <MotionDiv
             layout
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-start gap-4 group w-full mb-8 desktop-message-row"
+            className="flex flex-col w-full mb-6 desktop-message-row px-4"
         >
-            <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center mt-1 ${isUser ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-800 text-indigo-400 border border-white/10'}`}>
-                {isUser ? <UserCircleIcon className="w-6 h-6" /> : <CpuChipIcon className="w-6 h-6" />}
-            </div>
-            
-            <div className="flex-1 min-w-0">
-                <div className="relative">
-                    <div className="absolute -top-3 right-0 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 translate-y-2 group-hover:translate-y-0">
-                        <MessageToolbar
-                            isBookmarked={!!message.isBookmarked}
-                            isCollapsed={isCollapsed}
-                            isUser={isUser}
-                            onCopy={() => navigator.clipboard.writeText(message.content)}
-                            onBookmark={() => props.onToggleBookmark(message.id)}
-                            onSummarize={() => props.onSummarize(message.content)}
-                            onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-                            onSetAlign={props.onSetConversationAlign}
-                            onEdit={() => setIsEditing(true)}
-                            onDelete={props.onDelete}
-                            onRegenerate={props.onRegenerate}
-                            onInspect={props.onInspect}
-                            onViewHtml={hasHtml ? () => props.onViewHtml(message.content) : undefined}
-                            onReply={() => props.onReply(message)}
-                            onViewContext={props.onViewContext}
-                        />
+            <div className={`relative p-6 rounded-2xl border ${isUser ? 'bg-indigo-900/10 border-indigo-500/30' : 'bg-gray-800/40 border-gray-700/50'} w-full group`}>
+                
+                {/* Marker Line */}
+                <div className={`absolute right-0 top-6 bottom-6 w-1 rounded-l-full ${isUser ? 'bg-indigo-500' : 'bg-emerald-500'}`}></div>
+
+                <div className="flex items-start gap-4">
+                    <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${isUser ? 'bg-indigo-600/20 text-indigo-400' : 'bg-emerald-600/20 text-emerald-400'}`}>
+                        {isUser ? <UserCircleIcon className="w-6 h-6" /> : <CpuChipIcon className="w-6 h-6" />}
                     </div>
-                    
-                    <div className={`rounded-2xl p-6 ${isUser ? 'bg-gray-800/40 border border-white/5 shadow-inner' : 'bg-transparent border border-white/5'}`}>
+
+                    <div className="flex-1 min-w-0">
+                        {/* Toolbar */}
+                        <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
+                            <MessageToolbar
+                                isBookmarked={!!message.isBookmarked}
+                                isCollapsed={isCollapsed}
+                                isUser={isUser}
+                                onCopy={() => navigator.clipboard.writeText(message.content)}
+                                onBookmark={() => props.onToggleBookmark(message.id)}
+                                onSummarize={() => props.onSummarize(message.content)}
+                                onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+                                onSetAlign={props.onSetConversationAlign}
+                                onEdit={() => setIsEditing(true)}
+                                onDelete={props.onDelete}
+                                onRegenerate={props.onRegenerate}
+                                onInspect={props.onInspect}
+                                onViewHtml={hasHtml ? () => props.onViewHtml(message.content) : undefined}
+                                onReply={() => props.onReply(message)}
+                                onViewContext={props.onViewContext}
+                            />
+                        </div>
+
                         {isEditing ? (
-                            <div className="space-y-3">
+                            <div className="space-y-3" dir="rtl">
                                 <textarea
                                     value={editedContent}
                                     onChange={(e) => setEditedContent(e.target.value)}
@@ -141,7 +164,7 @@ const Message: React.FC<MessageProps> = (props) => {
                                 </div>
                             </div>
                         ) : (
-                             <div className="prose-custom max-w-none text-[16px]">
+                             <div className="prose-custom max-w-none text-[16px] w-full" dir="rtl">
                                 {!isCollapsed ? (
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                                 ) : (
@@ -149,14 +172,17 @@ const Message: React.FC<MessageProps> = (props) => {
                                 )}
                             </div>
                         )}
+                        
+                        <div className="mt-4 pt-2 border-t border-white/5" dir="rtl">
+                            <MessageFooter
+                                message={message}
+                                isContextAssemblyRunning={props.isContextAssemblyRunning}
+                                isMemoryExtractionRunning={props.isMemoryExtractionRunning}
+                                findMessageById={props.findMessageById}
+                            />
+                        </div>
                     </div>
                 </div>
-                 <MessageFooter
-                    message={message}
-                    isContextAssemblyRunning={props.isContextAssemblyRunning}
-                    isMemoryExtractionRunning={props.isMemoryExtractionRunning}
-                    findMessageById={props.findMessageById}
-                />
             </div>
         </MotionDiv>
     );
