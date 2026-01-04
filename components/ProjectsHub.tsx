@@ -5,14 +5,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Project, ProjectTask } from '@/lib/types';
 import { useLog } from '@/components/providers/LogProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';
-import { PlusIcon, SparklesIcon, PlusCircleIcon, TrashIcon, CodeIcon } from '@/components/Icons';
-import { AnimatePresence, motion } from 'framer-motion';
+import { PlusIcon, SparklesIcon, PlusCircleIcon, TrashIcon, DocumentTextIcon } from '@/components/Icons';
+import { AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
-const SummaryModal = dynamic(() => import('./modals/SummaryModal'));
-const CreateProjectModal = dynamic(() => import('./modals/CreateProjectModal'));
-const CreateTaskModal = dynamic(() => import('./modals/CreateTaskModal'));
-const ProjectContextModal = dynamic(() => import('./modals/ProjectContextModal'));
+const SummaryModal = dynamic(() => import('./modals/SummaryModal'), { ssr: false });
+const CreateProjectModal = dynamic(() => import('./modals/CreateProjectModal'), { ssr: false });
+const CreateTaskModal = dynamic(() => import('./modals/CreateTaskModal'), { ssr: false });
+const ProjectContextModal = dynamic(() => import('./modals/ProjectContextModal'), { ssr: false });
 
 const ProjectsHub = () => {
     const [projects, setProjects] = useState<Project[]>([]);
@@ -33,18 +33,39 @@ const ProjectsHub = () => {
         setIsLoading(true);
         try {
             const projectsRes = await fetch('/api/projects');
-            const projectsData: Project[] = await projectsRes.json();
+            if (!projectsRes.ok) throw new Error("Failed to fetch projects");
+            
+            const projectsData = await projectsRes.json();
+            
+            // Check if projectsData is actually an array
+            if (!Array.isArray(projectsData)) {
+                console.error("Projects API returned invalid data:", projectsData);
+                setProjects([]);
+                return;
+            }
             setProjects(projectsData);
 
             const tasksData: Record<string, ProjectTask[]> = {};
             for (const project of projectsData) {
-                const tasksRes = await fetch(`/api/projects/${project.id}/tasks`);
-                tasksData[project.id] = await tasksRes.json();
+                try {
+                    const tasksRes = await fetch(`/api/projects/${project.id}/tasks`);
+                    if (tasksRes.ok) {
+                        const tData = await tasksRes.json();
+                        // Strictly validate that tData is an array before assigning
+                        tasksData[project.id] = Array.isArray(tData) ? tData : [];
+                    } else {
+                        tasksData[project.id] = [];
+                    }
+                } catch (e) {
+                    console.error(`Failed to fetch tasks for project ${project.id}`, e);
+                    tasksData[project.id] = [];
+                }
             }
             setTasks(tasksData);
         } catch (error) {
             log('Error fetching projects/tasks', { error }, 'error');
             addNotification({ type: 'error', title: 'Failed to load projects' });
+            setProjects([]); // Fallback to empty to prevent UI crash
         } finally {
             setIsLoading(false);
         }
@@ -79,10 +100,15 @@ const ProjectsHub = () => {
     
     const handleTaskStatusToggle = async (task: ProjectTask) => {
         const newStatus = task.status === 'done' ? 'todo' : 'done';
-        setTasks(prev => ({
-            ...prev,
-            [task.projectId]: prev[task.projectId].map(t => t.id === task.id ? {...t, status: newStatus} : t)
-        }));
+        setTasks(prev => {
+            const projectTasks = prev[task.projectId] || [];
+            if (!Array.isArray(projectTasks)) return prev; // Safety check
+            
+            return {
+                ...prev,
+                [task.projectId]: projectTasks.map(t => t.id === task.id ? {...t, status: newStatus} : t)
+            };
+        });
 
         try {
             const res = await fetch(`/api/projects/${task.projectId}/tasks/${task.id}`, {
@@ -93,20 +119,30 @@ const ProjectsHub = () => {
             if (!res.ok) throw new Error("Failed to update task status");
         } catch(error) {
             addNotification({ type: 'error', title: 'Update Failed', message: (error as Error).message });
-            setTasks(prev => ({
-                ...prev,
-                [task.projectId]: prev[task.projectId].map(t => t.id === task.id ? {...t, status: task.status} : t)
-            }));
+            // Revert state on error
+            setTasks(prev => {
+                const projectTasks = prev[task.projectId] || [];
+                if (!Array.isArray(projectTasks)) return prev;
+                return {
+                    ...prev,
+                    [task.projectId]: projectTasks.map(t => t.id === task.id ? {...t, status: task.status} : t)
+                };
+            });
         }
     };
 
     const handleDeleteTask = async (task: ProjectTask) => {
         if (!window.confirm(`Are you sure you want to delete the task "${task.title}"?`)) return;
         const originalTasks = { ...tasks };
-        setTasks(prev => ({
-            ...prev,
-            [task.projectId]: prev[task.projectId].filter(t => t.id !== task.id)
-        }));
+        
+        setTasks(prev => {
+             const projectTasks = prev[task.projectId] || [];
+             if (!Array.isArray(projectTasks)) return prev;
+             return {
+                ...prev,
+                [task.projectId]: projectTasks.filter(t => t.id !== task.id)
+            };
+        });
         
         try {
              const res = await fetch(`/api/projects/${task.projectId}/tasks/${task.id}`, { method: 'DELETE' });
@@ -128,7 +164,12 @@ const ProjectsHub = () => {
                 </button>
             </header>
             <main className="flex-1 overflow-y-auto pr-2 space-y-4">
-                {isLoading ? <p>Loading projects...</p> : projects.map(project => (
+                {isLoading ? (
+                    <div className="text-center py-10 text-gray-500">Loading projects...</div>
+                ) : projects.length === 0 ? (
+                    <div className="text-center py-10 text-gray-500">No projects found. Create one to get started.</div>
+                ) : (
+                    projects.map(project => (
                     <div key={project.id} className="bg-gray-800 p-4 rounded-lg border border-gray-700 hover:border-gray-600 transition-all">
                         <div className="flex justify-between items-start">
                             <div>
@@ -137,7 +178,7 @@ const ProjectsHub = () => {
                             </div>
                             <div className="flex gap-2">
                                 <button onClick={() => handleOpenContextModal(project.id, project.name)} className="flex items-center gap-1 px-2 py-1 bg-gray-700 text-xs rounded-md hover:bg-gray-600 text-indigo-300 border border-indigo-500/30 transition-colors" title="Inject Code/Business Logic">
-                                    <CodeIcon className="w-3.5 h-3.5" /> Technical Context
+                                    <DocumentTextIcon className="w-3.5 h-3.5" /> Technical Context
                                 </button>
                                 <button onClick={() => handleGenerateSummary(project.id, project.name)} disabled={summaryState.isLoading} className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-xs rounded-md hover:bg-blue-500 disabled:opacity-50">
                                     <SparklesIcon className="w-3.5 h-3.5" /> AI Summary
@@ -147,8 +188,9 @@ const ProjectsHub = () => {
                                 </button>
                             </div>
                         </div>
+                        {/* Defensive rendering: Check Array.isArray explicitly inside JSX */}
                         <ul className="mt-4 space-y-2 text-sm">
-                            {(tasks[project.id] || []).map(task => (
+                            {(Array.isArray(tasks[project.id]) ? tasks[project.id] : []).map(task => (
                                 <li key={task.id} className="group flex items-center gap-2 p-1 rounded-md hover:bg-gray-700/50">
                                     <input type="checkbox" checked={task.status === 'done'} onChange={() => handleTaskStatusToggle(task)} className="h-4 w-4 rounded-sm bg-gray-700 border-gray-600 text-indigo-600 focus:ring-0 cursor-pointer" />
                                     <span className={`flex-1 ${task.status === 'done' ? 'line-through text-gray-500' : ''}`}>{task.title}</span>
@@ -159,7 +201,7 @@ const ProjectsHub = () => {
                             ))}
                         </ul>
                     </div>
-                ))}
+                )))}
             </main>
             <AnimatePresence>
                 {summaryState.isOpen && <SummaryModal title={summaryState.title} summaryText={summaryState.text} isLoading={summaryState.isLoading} onClose={() => setSummaryState({ isOpen: false, text: '', isLoading: false, title: '' })} />}

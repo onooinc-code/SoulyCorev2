@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Tool } from '@/lib/types';
@@ -19,15 +20,16 @@ export async function PUT(req: NextRequest, { params }: { params: { toolId: stri
             return NextResponse.json({ error: 'schema_json must be valid JSON.' }, { status: 400 });
         }
 
+        // FIX: Use "schemaJson" for update query.
         const { rows } = await sql<Tool>`
             UPDATE tools
             SET 
                 name = ${name}, 
                 description = ${description}, 
-                schema_json = ${JSON.stringify(parsedSchema)},
+                "schemaJson" = ${JSON.stringify(parsedSchema)},
                 "lastUpdatedAt" = CURRENT_TIMESTAMP
             WHERE id = ${toolId}
-            RETURNING id, name, description, schema_json, "createdAt", "lastUpdatedAt";
+            RETURNING id, name, description, "schemaJson", "createdAt", "lastUpdatedAt";
         `;
 
         if (rows.length === 0) {

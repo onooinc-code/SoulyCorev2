@@ -10,24 +10,22 @@ export async function GET() {
         await client.query('BEGIN');
         await client.query('TRUNCATE TABLE "version_history"');
         
-        const changesText = `### 🧠 Project Knowledge Injection (v0.5.44)
+        const changesText = `### 🛠️ Stability Patch (v0.5.45)
 
-**New Features:**
-- **Project Technical Context:** Added a dedicated module to inject Business Logic, DB Schemas, and Code Snippets directly into a project's memory.
-- **Context Modal:** A new UI in Projects Hub to paste and categorize technical data.
-- **Smart Ingestion:** The system now automatically routes project context to both Semantic Memory (for RAG) and Document Memory (for Archival).
+**Bug Fixes:**
+- **Projects Hub Crash:** Fixed a critical client-side crash caused by the task list renderer expecting an array but receiving a different type during error states. Added strict type guards in the UI rendering loop.
+- **Tools API Error:** Fixed a 500 Internal Server Error in the Tools API endpoints caused by a case-sensitivity mismatch in the SQL column name ('schemaJson').
 
 **Improvements:**
-- **Projects Hub:** Updated UI to include the new "Technical Context" action.
-- **Versioning:** Bumped system version to v0.5.44.`;
+- **Robustness:** Enhanced error handling in the Projects data fetching logic.`;
 
         await client.query(`
             INSERT INTO "version_history" ("version", "releaseDate", "changes", "createdAt")
             VALUES ($1, NOW(), $2, NOW())
-        `, ['0.5.44', changesText]);
+        `, ['0.5.45', changesText]);
 
         await client.query('COMMIT');
-        return NextResponse.json({ success: true, message: "System updated to v0.5.44 (Project Knowledge Injection).", version: '0.5.44' });
+        return NextResponse.json({ success: true, message: "System updated to v0.5.45 (Stability Patch).", version: '0.5.45' });
     } catch (error) {
         await client.query('ROLLBACK');
         return NextResponse.json({ error: (error as Error).message }, { status: 500 });

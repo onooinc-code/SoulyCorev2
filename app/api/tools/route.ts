@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { Tool } from '@/lib/types';
@@ -7,8 +8,9 @@ export const dynamic = 'force-dynamic';
 // GET all tools
 export async function GET() {
     try {
+        // FIX: Use "schemaJson" (quoted) to match the case-sensitive column name in the DB schema.
         const { rows } = await sql<Tool>`
-            SELECT id, name, description, schema_json, "createdAt", "lastUpdatedAt" 
+            SELECT id, name, description, "schemaJson", "createdAt", "lastUpdatedAt" 
             FROM tools ORDER BY name ASC;
         `;
         return NextResponse.json(rows);
@@ -34,10 +36,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'schema_json must be valid JSON.' }, { status: 400 });
         }
 
+        // FIX: Use "schemaJson" (quoted) for insertion as well.
         const { rows } = await sql<Tool>`
-            INSERT INTO tools (name, description, schema_json, "lastUpdatedAt")
+            INSERT INTO tools (name, description, "schemaJson", "lastUpdatedAt")
             VALUES (${name}, ${description}, ${JSON.stringify(parsedSchema)}, CURRENT_TIMESTAMP)
-            RETURNING id, name, description, schema_json, "createdAt", "lastUpdatedAt";
+            RETURNING id, name, description, "schemaJson", "createdAt", "lastUpdatedAt";
         `;
         
         return NextResponse.json(rows[0], { status: 201 });

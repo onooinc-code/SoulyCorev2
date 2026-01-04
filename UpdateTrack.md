@@ -3,21 +3,20 @@
 
 ---
 
-### Update #48: Project Knowledge Injection (v0.5.44)
+### Update #49: Stability Patch (v0.5.45)
 
 **Details:**
-Implemented a specialized workflow for injecting technical context (Business Logic, Schema, Code) directly into specific Projects. This allows the AI to reference large, project-specific knowledge bases without polluting the conversational context window.
+Addressed critical crashes in the Projects Hub and 500 errors in the Tools API. These issues prevented users from viewing project tasks and utilizing tool-based agent features.
 
 **Changes Made:**
-- **Projects Hub:** Added a "Technical Context" button to each project card.
-- **Context Modal:** Created `ProjectContextModal.tsx` to handle large text input and categorization (Business, Schema, Code).
-- **Backend API:** Implemented `app/api/projects/[projectId]/context/route.ts` to process and store this context in both Semantic Memory (Pinecone) for RAG and Document Memory (MongoDB) for archives.
-- **Versioning:** Updated system version to v0.5.44.
+- **Projects Hub:** Added defensive coding patterns (`Array.isArray`) in the rendering logic to prevent the app from crashing when API responses are malformed or empty during error states.
+- **Tools API:** Corrected SQL query syntax to respect case-sensitivity for the `"schemaJson"` column in Postgres, resolving persistent 500 Internal Server Errors.
+- **Versioning:** Bumped system version to v0.5.45.
 
 **Modified Files:**
 - `components/ProjectsHub.tsx`
-- `components/modals/ProjectContextModal.tsx` (New)
-- `app/api/projects/[projectId]/context/route.ts` (New)
+- `app/api/tools/route.ts`
+- `app/api/tools/[toolId]/route.ts`
 - `scripts/seed-version-history.js`
 - `app/api/admin/seed/route.ts`
 - `package.json`
