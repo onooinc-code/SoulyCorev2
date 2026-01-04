@@ -1,6 +1,7 @@
 
 import { ISingleMemoryModule } from '../types';
 import clientPromise from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
 
 export class DocumentMemoryModule implements ISingleMemoryModule {
     private dbName = 'soulycore_data';
@@ -35,7 +36,8 @@ export class DocumentMemoryModule implements ISingleMemoryModule {
         }
     }
 
-    async query(params: { type?: string, limit?: number }): Promise<any[]> {
+    // Enhanced query to accept any filter criteria
+    async query(params: Record<string, any>): Promise<any[]> {
         if (!this.isConfigured()) return [];
 
         try {
@@ -43,13 +45,30 @@ export class DocumentMemoryModule implements ISingleMemoryModule {
             const db = client.db(this.dbName);
             const collection = db.collection(this.collectionName);
 
-            const filter = params.type ? { type: params.type } : {};
-            const limit = params.limit || 10;
+            // Extract limit if present, otherwise use rest as filter
+            const { limit, ...filter } = params;
+            const limitVal = typeof limit === 'number' ? limit : 50;
 
-            return await collection.find(filter).sort({ createdAt: -1 }).limit(limit).toArray();
+            return await collection.find(filter).sort({ createdAt: -1 }).limit(limitVal).toArray();
         } catch (error) {
             console.error("MongoDB Query Error:", error);
             return [];
+        }
+    }
+
+    // New delete method
+    async delete(id: string): Promise<boolean> {
+        if (!this.isConfigured()) return false;
+        try {
+            const client = await clientPromise;
+            const db = client.db(this.dbName);
+            const collection = db.collection(this.collectionName);
+            
+            const result = await collection.deleteOne({ _id: new ObjectId(id) });
+            return result.deletedCount === 1;
+        } catch (error) {
+            console.error("MongoDB Delete Error:", error);
+            return false;
         }
     }
 }

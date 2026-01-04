@@ -1,3 +1,4 @@
+
 // app/api/projects/[projectId]/tasks/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
@@ -9,10 +10,11 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest, { params }: { params: { projectId: string } }) {
     try {
         const { projectId } = params;
+        // FIX: Use quoted "projectId" to match case-sensitive DB schema
         const { rows } = await sql<ProjectTask>`
             SELECT * FROM project_tasks 
             WHERE "projectId" = ${projectId} 
-            ORDER BY "status" ASC, "orderIndex" ASC, "createdAt" ASC;
+            ORDER BY status ASC, "orderIndex" ASC, "createdAt" ASC;
         `;
         return NextResponse.json(rows);
     } catch (error) {
@@ -31,6 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: { projectId: 
             return NextResponse.json({ error: 'Title is required' }, { status: 400 });
         }
 
+        // FIX: Use quoted "projectId"
         const { rows } = await sql<ProjectTask>`
             INSERT INTO project_tasks ("projectId", title, description)
             VALUES (${projectId}, ${title}, ${description || null})
