@@ -3,19 +3,20 @@
 
 ---
 
-### Update #45: RAG Enhancement & Memory Sync (v0.5.29)
+### Update #46: Cognitive Pipeline & Inspector Fixes (v0.5.42)
 
 **Details:**
-Critical update to the cognitive engine to resolve failures in retrieving entities across different conversations. Implemented Query Expansion to ensure vague user prompts still trigger correct memory lookups.
+Comprehensive fix for the debugging tools and memory feedback loop. The Cognitive Inspector now correctly displays the prompts used, and the Extracted Memory button successfully retrieves the background extraction results.
 
 **Changes Made:**
-- **Query Expansion:** Modified `ContextAssemblyPipeline` to use Gemini to generate a dedicated "Search Query" from conversation context before querying memory modules.
-- **Vector Sync Fix:** Updated `MemoryExtractionPipeline` to force-update the Upstash Vector store for every entity extracted, ensuring immediate availability for future RAG cycles.
-- **RAG Scoring:** Increased retrieval depth to top 5 entities to improve the probability of finding cross-conversation links.
-- **Versioning:** Bumped version to `0.5.29`.
+- **Context Assembly:** Modified `ContextAssemblyPipeline` to persist prompt/system data to `pipeline_runs`.
+- **Inspector API:** Updated `api/inspect` to differentiate between Context and Extraction runs.
+- **UI:** Updated `MessageFooter` to locate the correct pipeline run for extraction data.
+- **Versioning:** Bumped to v0.5.42.
 
 **Modified Files:**
 - `core/pipelines/context_assembly.ts`
-- `core/pipelines/memory_extraction.ts`
+- `app/api/inspect/[messageId]/route.ts`
+- `components/MessageFooter.tsx`
 - `scripts/seed-version-history.js`
 - `app/api/admin/seed/route.ts`

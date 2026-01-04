@@ -4,15 +4,17 @@ const { sql } = require('@vercel/postgres');
 
 const versionData = [
     {
-        version: '0.5.28',
+        version: '0.5.42',
         releaseDate: new Date().toISOString(),
-        changes: `### 🛠️ Toolbar Restoration & Stability (v0.5.28)
+        changes: `### 🧠 Cognitive Engine Stabilization (v0.5.42)
 
-**Major Layout Improvements:**
-- **Toolbar Recall:** Restored the Macro and Formatting bars to permanent visibility as per user request.
-- **Horizontal Scroll Protection:** Prevented layout breakage by using horizontal scrolling for tools, ensuring the input area remains compact vertically.
-- **Mobile Label Optimization:** Toolbars automatically switch to icon-only mode on mobile to prevent overlapping.
-- **RTL Support:** Refined toolbar alignment and labels for Arabic users.`
+**Core Fixes:**
+- **Cognitive Inspector:** Fixed the blank "Context Viewer" modals. The \`ContextAssemblyPipeline\` now explicitly saves \`finalLlmPrompt\`, \`finalSystemInstruction\`, and \`modelConfigJson\` to the database upon completion.
+- **Memory Extraction UI:** Resolved the persistent "Extraction data still processing" message. The UI now intelligently searches for the specific \`MemoryExtraction\` pipeline run instead of assuming the first run is the extraction.
+- **Pipeline Logging:** Enhanced visibility by ensuring strictly typed pipeline runs for 'ContextAssembly' vs 'MemoryExtraction' are correctly queryable.
+
+**UI Improvements:**
+- **Visual Clarity:** Updated Message bubbles for better RTL support and distinct User/AI visual separation.`
     }
 ];
 
