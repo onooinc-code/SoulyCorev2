@@ -2,22 +2,17 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Contact } from '@/lib/types';
 import { 
     SendIcon, PaperclipIcon, XIcon, SparklesIcon, CodeIcon, 
     SummarizeIcon, BeakerIcon, ArrowsRightLeftIcon, LightbulbIcon,
     DocumentTextIcon, WrenchScrewdriverIcon, LinkIcon, CopyIcon, TrashIcon,
-    Bars3Icon, ChatBubbleLeftRightIcon
+    Bars3Icon, ChatBubbleLeftRightIcon, ChevronUpIcon
 } from '@/components/Icons';
 import { useConversation } from './providers/ConversationProvider';
 import { useNotification } from '@/lib/hooks/use-notifications';
 import { useUIState } from './providers/UIStateProvider';
-
-interface ChatInputProps {
-    onSendMessage: (content: string, mentionedContacts: Contact[]) => void;
-    isLoading: boolean;
-    replyToMessage: import('@/lib/types').Message | null;
-}
 
 const COLORS = [
     'text-purple-400', 'text-blue-400', 'text-green-400', 'text-yellow-400', 
@@ -25,29 +20,17 @@ const COLORS = [
     'text-orange-400', 'text-cyan-400'
 ];
 
-interface ToolbarButtonProps {
-    icon: any;
-    label: string;
-    onClick: () => void;
-    colorIndex: number;
-    showLabel?: boolean;
+interface ChatInputProps {
+    onSendMessage: (content: string, mentionedContacts: Contact[]) => void;
+    isLoading: boolean;
+    replyToMessage: import('@/lib/types').Message | null;
 }
-
-const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon: Icon, label, onClick, colorIndex, showLabel = true }) => (
-    <button 
-        onClick={onClick} 
-        className="flex items-center justify-center gap-2 px-3 h-9 rounded-xl bg-gray-800/40 hover:bg-indigo-600/30 border border-white/5 transition-all active:scale-90 flex-shrink-0"
-        title={label}
-    >
-        <Icon className={`w-4 h-4 ${COLORS[colorIndex % COLORS.length]}`} />
-        {showLabel && <span className="text-xs text-gray-300 font-bold whitespace-nowrap">{label}</span>}
-    </button>
-);
 
 const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps) => {
     const [content, setContent] = useState('');
     const [attachment, setAttachment] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [activeMenu, setActiveMenu] = useState<'macros' | 'formatting' | null>(null);
     
     const { isMobileView } = useUIState();
     const { addNotification } = useNotification();
@@ -67,7 +50,21 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     const handleAction = (text: string, replace = false) => {
         if (replace) setContent(text);
         else setContent(prev => prev + (prev ? '\n' : '') + text);
+        setActiveMenu(null);
         setTimeout(() => textareaRef.current?.focus(), 10);
+    };
+
+    const modifyText = (modifier: (text: string) => string) => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = content.substring(start, end);
+        const modified = selectedText ? modifier(selectedText) : modifier(content);
+        const newContent = selectedText ? content.substring(0, start) + modified + content.substring(end) : modified;
+        setContent(newContent);
+        setActiveMenu(null);
+        setTimeout(() => textarea.focus(), 10);
     };
 
     const handleSend = async () => {
@@ -95,18 +92,6 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
         setContent('');
     };
 
-    const modifyText = (modifier: (text: string) => string) => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selectedText = content.substring(start, end);
-        const modified = selectedText ? modifier(selectedText) : modifier(content);
-        const newContent = selectedText ? content.substring(0, start) + modified + content.substring(end) : modified;
-        setContent(newContent);
-        setTimeout(() => textarea.focus(), 10);
-    };
-
     const formatActions = [
         { icon: TrashIcon, label: 'مسح', action: () => setContent('') },
         { icon: CopyIcon, label: 'نسخ', action: () => { navigator.clipboard.writeText(content).then(() => addNotification({type:'success', title:'تم النسخ'})); } },
@@ -129,81 +114,110 @@ const ChatInput = ({ onSendMessage, isLoading, replyToMessage }: ChatInputProps)
     ];
 
     return (
-        <div className="w-full flex flex-col gap-2 p-3 sm:p-4 w-full max-w-full overflow-hidden">
+        <div className="w-full flex flex-col items-center px-3 pb-3 sm:pb-6 relative max-w-full overflow-visible">
             
-            {/* 🛠️ TOP TOOLBAR: MACROS */}
-            <div className="w-full max-w-full overflow-hidden">
-                <div className="horizontal-toolbar mask-edge-fade no-scrollbar w-full">
-                    <div className="flex-shrink-0 w-2" />
-                    {macroActions.map((m, i) => (
-                        <ToolbarButton 
-                            key={m.key} 
-                            icon={m.icon} 
-                            label={m.label} 
-                            onClick={() => handleAction(m.prompt, m.replace)} 
-                            colorIndex={i} 
-                            showLabel={!isMobileView} 
-                        />
-                    ))}
-                    <div className="flex-shrink-0 w-4" />
-                </div>
-            </div>
-
-            {/* ⌨️ MAIN INPUT AREA */}
-            <div className="flex items-end gap-2 bg-gray-900/80 border border-white/10 p-2 rounded-2xl focus-within:ring-1 focus-within:ring-indigo-500/50 transition-all min-h-[48px] w-full max-w-full overflow-hidden backdrop-blur-md">
-                <input type="file" ref={fileInputRef} className="hidden" onChange={e => setAttachment(e.target.files?.[0] || null)} />
-                
-                <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-500 hover:text-indigo-400 rounded-xl h-10 w-10 flex items-center justify-center shrink-0 transition-colors">
-                    <PaperclipIcon className="w-5 h-5" />
-                </button>
-
-                <div className="flex-1 min-w-0 flex flex-col relative py-1">
-                    <textarea
-                        ref={textareaRef}
-                        value={content}
-                        onChange={e => setContent(e.target.value)}
-                        placeholder="اكتب رسالة..."
-                        className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1 text-[16px] leading-relaxed max-h-[120px] custom-scrollbar overflow-x-hidden"
-                        rows={1}
-                        dir="auto"
-                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !isMobileView) { e.preventDefault(); handleSend(); } }}
-                    />
-                    {attachment && (
-                        <div className="mt-2 flex items-center gap-1.5 bg-indigo-900/40 text-[10px] text-indigo-200 px-2 py-1 rounded-md border border-indigo-500/30 w-fit max-w-full">
-                            <span className="truncate">{attachment.name}</span>
-                            <button onClick={() => setAttachment(null)}><XIcon className="w-3 h-3 text-red-400"/></button>
+            {/* 🛸 POP-UP MENUS */}
+            <AnimatePresence>
+                {activeMenu && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute bottom-full mb-3 w-[95%] max-w-lg bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden"
+                    >
+                        <div className="flex flex-wrap gap-2 justify-center p-2 max-h-48 overflow-y-auto custom-scrollbar">
+                            {activeMenu === 'macros' ? (
+                                macroActions.map((m, i) => (
+                                    <button 
+                                        key={m.key} 
+                                        onClick={() => handleAction(m.prompt, m.replace)}
+                                        className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-indigo-600/30 rounded-xl border border-white/5 transition-all active:scale-95 whitespace-nowrap"
+                                    >
+                                        <m.icon className={`w-4 h-4 ${COLORS[i % COLORS.length]}`} />
+                                        <span className="text-xs font-bold text-gray-200">{m.label}</span>
+                                    </button>
+                                ))
+                            ) : (
+                                formatActions.map((f, i) => (
+                                    <button 
+                                        key={f.label} 
+                                        onClick={f.action}
+                                        className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-indigo-600/30 rounded-xl border border-white/5 transition-all active:scale-95 whitespace-nowrap"
+                                    >
+                                        <f.icon className={`w-4 h-4 ${COLORS[(i+10) % COLORS.length]}`} />
+                                        <span className="text-xs font-bold text-gray-200">{f.label}</span>
+                                    </button>
+                                ))
+                            )}
                         </div>
-                    )}
-                </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-                <button 
-                    onClick={handleSend} 
-                    disabled={(!content.trim() && !attachment) || isLoading} 
-                    className={`p-2.5 rounded-xl shadow-lg transition-all h-10 w-10 flex items-center justify-center shrink-0 ${
-                        (!content.trim() && !attachment) || isLoading 
-                        ? 'bg-gray-800 text-gray-600' 
-                        : 'bg-indigo-600 text-white active:scale-95 shadow-indigo-500/30 border border-indigo-400/30'
-                    }`}
-                >
-                    {isUploading ? <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" /> : <SendIcon className="w-5 h-5" />}
-                </button>
-            </div>
+            {/* ⌨️ MAIN INPUT PILL */}
+            <div className="w-full max-w-full flex flex-col gap-2 bg-gray-900/80 border border-white/10 p-2 rounded-3xl shadow-2xl focus-within:border-indigo-500/50 transition-all backdrop-blur-md">
+                
+                <div className="flex items-end gap-1 sm:gap-2 min-w-0">
+                    {/* Multi-Menu Toggles */}
+                    <div className="flex items-center gap-1 shrink-0">
+                        <button 
+                            onClick={() => setActiveMenu(activeMenu === 'macros' ? null : 'macros')} 
+                            className={`p-2 rounded-full transition-colors ${activeMenu === 'macros' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-indigo-400 hover:bg-white/5'}`}
+                            title="Quick Actions"
+                        >
+                            <SparklesIcon className="w-5 h-5" />
+                        </button>
+                        <button 
+                            onClick={() => setActiveMenu(activeMenu === 'formatting' ? null : 'formatting')} 
+                            className={`p-2 rounded-full transition-colors ${activeMenu === 'formatting' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-indigo-400 hover:bg-white/5'}`}
+                            title="Formatting Tools"
+                        >
+                            <DocumentTextIcon className="w-5 h-5" />
+                        </button>
+                    </div>
 
-            {/* 🖋️ BOTTOM TOOLBAR: FORMATTING */}
-            <div className="w-full max-w-full overflow-hidden border-t border-white/5 pt-1">
-                <div className="horizontal-toolbar mask-edge-fade no-scrollbar w-full">
-                    <div className="flex-shrink-0 w-2" />
-                    {formatActions.map((f, i) => (
-                        <ToolbarButton 
-                            key={f.label} 
-                            icon={f.icon} 
-                            label={f.label} 
-                            onClick={f.action} 
-                            colorIndex={i + 10} 
-                            showLabel={!isMobileView} 
+                    {/* Divider */}
+                    <div className="w-px h-6 bg-white/10 self-center" />
+
+                    {/* Text Input */}
+                    <div className="flex-1 min-w-0 flex flex-col relative py-1">
+                        <textarea
+                            ref={textareaRef}
+                            value={content}
+                            onChange={e => setContent(e.target.value)}
+                            placeholder="اكتب رسالة..."
+                            className="w-full bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-1.5 text-[16px] leading-relaxed max-h-[120px] custom-scrollbar overflow-x-hidden"
+                            rows={1}
+                            dir="auto"
+                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !isMobileView) { e.preventDefault(); handleSend(); } }}
                         />
-                    ))}
-                    <div className="flex-shrink-0 w-4" />
+                        {attachment && (
+                            <div className="mt-1 flex items-center gap-1.5 bg-indigo-900/40 text-[10px] text-indigo-200 px-2 py-1 rounded-md border border-indigo-500/30 w-fit max-w-full">
+                                <span className="truncate">{attachment.name}</span>
+                                <button onClick={() => setAttachment(null)}><XIcon className="w-3 h-3 text-red-400"/></button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* File & Send */}
+                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                        <input type="file" ref={fileInputRef} className="hidden" onChange={e => setAttachment(e.target.files?.[0] || null)} />
+                        <button onClick={() => fileInputRef.current?.click()} className="p-2.5 text-gray-500 hover:text-indigo-400 hover:bg-white/5 rounded-full transition-colors">
+                            <PaperclipIcon className="w-5 h-5" />
+                        </button>
+
+                        <button 
+                            onClick={handleSend} 
+                            disabled={(!content.trim() && !attachment) || isLoading} 
+                            className={`p-3 rounded-full shadow-lg transition-all active:scale-90 ${
+                                (!content.trim() && !attachment) || isLoading 
+                                ? 'bg-gray-800 text-gray-600' 
+                                : 'bg-indigo-600 text-white shadow-indigo-500/30'
+                            }`}
+                        >
+                            {isUploading ? <div className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full" /> : <SendIcon className="w-5 h-5" />}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
