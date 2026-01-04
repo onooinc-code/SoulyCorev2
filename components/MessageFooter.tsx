@@ -32,8 +32,9 @@ const MessageFooter = ({ message, isContextAssemblyRunning, isMemoryExtractionRu
         try {
             const res = await fetch(`/api/inspect/${message.id}`);
             const data = await res.json();
-            // Look for the MemoryExtraction pipeline run
-            const runs = Array.isArray(data) ? data : [data.pipelineRun]; // Support both formats
+            
+            // Fix: Check 'allRuns' for the MemoryExtraction run
+            const runs = data.allRuns || (Array.isArray(data) ? data : [data.pipelineRun]);
             const extractionRun = runs.find((r: any) => r?.pipelineType === 'MemoryExtraction');
             
             if (extractionRun && extractionRun.finalOutput) {
@@ -123,7 +124,7 @@ const MessageFooter = ({ message, isContextAssemblyRunning, isMemoryExtractionRu
                                         <span className="text-gray-300">{extractionData.facts.join(' | ')}</span>
                                     </div>
                                 )}
-                                {!extractionData.userProfile && (!extractionData.entities || extractionData.entities.length === 0) && (
+                                {!extractionData.userProfile && (!extractionData.entities || extractionData.entities.length === 0) && (!extractionData.facts || extractionData.facts.length === 0) && (
                                     <div className="text-[10px] text-gray-500 italic">No structural data harvested from this specific turn.</div>
                                 )}
                             </div>

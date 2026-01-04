@@ -20,10 +20,15 @@ export async function GET(req: NextRequest, { params }: { params: { messageId: s
                     pipelineType: 'N/A',
                     status: 'not_found'
                 },
+                allRuns: [],
                 pipelineSteps: [],
             });
         }
         
+        // Ensure the 'pipelineRun' returned for the inspector modal is primarily the 'ContextAssembly' run,
+        // as that contains the prompt/system context.
+        const contextRun = runRows.find(r => r.pipelineType === 'ContextAssembly') || runRows[0];
+
         // Fetch all steps for all runs associated with this message
         const runIds = runRows.map(r => r.id);
         const { rows: stepRows } = await sql`
@@ -32,8 +37,8 @@ export async function GET(req: NextRequest, { params }: { params: { messageId: s
         
         // Return structured data
         return NextResponse.json({
-            pipelineRun: runRows[0], // For legacy compatibility
-            allRuns: runRows,
+            pipelineRun: contextRun, // Primary run for Context Viewer
+            allRuns: runRows,        // All runs for advanced analysis (Extraction button)
             pipelineSteps: stepRows,
         });
 

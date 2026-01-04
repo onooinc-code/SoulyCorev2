@@ -128,6 +128,15 @@ Preferences: ${JSON.stringify(userProfile.preferences)}
 
             const history = recentMessages.map(m => ({ role: m.role as 'user' | 'model', parts: [{ text: m.content || "" }] }));
             history.push({ role: 'user', parts: [{ text: userQuery }] });
+            
+            // Capture the prompt content for logging/inspection
+            const fullPromptLog = JSON.stringify(history, null, 2);
+
+            const modelConfig = { 
+                temperature: conversation.temperature, 
+                topP: conversation.topP,
+                model: conversation.model 
+            };
 
             const responseText = await llmProvider.generateContent(history, finalInstruction, { temperature: conversation.temperature }, conversation.model);
 
@@ -135,15 +144,13 @@ Preferences: ${JSON.stringify(userProfile.preferences)}
             
             if (executionMode === 'dual_output') {
                 try {
-                    // ROBUST PARSING LOGIC:
-                    // 1. Try to find a JSON block between ```json and ```
+                    // ROBUST PARSING LOGIC
                     const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
                     let jsonStr = "";
                     
                     if (jsonMatch && jsonMatch[1]) {
                         jsonStr = jsonMatch[1];
                     } else {
-                        // 2. If no code block, try to find the first '{' and last '}'
                         const firstBrace = responseText.indexOf('{');
                         const lastBrace = responseText.lastIndexOf('}');
                         if (firstBrace !== -1 && lastBrace !== -1) {
@@ -153,30 +160,33 @@ Preferences: ${JSON.stringify(userProfile.preferences)}
 
                     if (jsonStr) {
                         const parsed = JSON.parse(jsonStr);
-                        // If we successfully parsed, USE ONLY THE 'reply' field for the user.
                         if (parsed.reply) {
                             resultData.reply = parsed.reply;
                             resultData.memory = parsed.memory || null;
                         } else {
-                             // Fallback: If parse valid but no reply field, assume structural error
-                             // and keep raw text, but log it.
-                             console.warn("Parsed JSON but 'reply' field missing.");
                              resultData.reply = responseText; 
                         }
                     } else {
-                        // Fallback: No JSON structure found at all.
                         resultData.reply = responseText;
                     }
                 } catch (e) {
-                    console.error("Failed to parse dual_output JSON", e);
-                    // On error, we default to showing the full text, assuming the model failed the instruction.
                     resultData.reply = responseText;
                 }
             }
 
             if (runId) {
                 const totalDuration = Date.now() - startTime;
-                await sql`UPDATE pipeline_runs SET status = 'completed', "durationMs" = ${totalDuration}, "finalOutput" = ${JSON.stringify(resultData)} WHERE id = ${runId};`;
+                await sql`
+                    UPDATE pipeline_runs 
+                    SET 
+                        status = 'completed', 
+                        "durationMs" = ${totalDuration}, 
+                        "finalOutput" = ${JSON.stringify(resultData)},
+                        "finalLlmPrompt" = ${fullPromptLog},
+                        "finalSystemInstruction" = ${finalInstruction},
+                        "modelConfigJson" = ${JSON.stringify(modelConfig)}
+                    WHERE id = ${runId};
+                `;
             }
 
             return { 
